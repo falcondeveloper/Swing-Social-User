@@ -1,0 +1,403 @@
+import React, { useEffect, useState } from 'react';
+import { useRouter } from "next/navigation";
+import {
+    Box,
+    Typography,
+    Avatar,
+    Card,
+    CardContent,
+    Grid,
+    Paper,
+    Chip,
+    Stack,
+    ImageList,
+    ImageListItem,
+    Button
+} from '@mui/material';
+import {
+    Man,
+    Woman,
+    LocationOn,
+    Cake,
+    CardMembership,
+    CalendarMonth,
+    CameraAlt,
+    VolunteerActivism,
+    Interests,
+    Message
+} from '@mui/icons-material';
+
+interface UserProfile {
+    Id: string;
+    Age: number;
+    Username: string;
+    Avatar: string;
+    ProfileBanner: string;
+    Tagline: string;
+    About: string;
+    Location: string;
+    Gender: string;
+    PartnerGender: string;
+    AccountType: string;
+    DateOfBirth: Date;
+    PartnerDateOfBirth: Date;
+    LookingFor: string[];
+    SwingStyleTags: string[];
+    KinkTags: string[];
+    galleryImages: string[];
+}
+
+interface ProfileCardProps {
+    profile: UserProfile | null;
+}
+
+const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
+
+    const router = useRouter();
+    const [profileImages, setProfileImages] = useState<any[]>([]);
+
+    useEffect(() => {
+        console.log("PROFILE", profile)
+        const fetchProfileImages = async () => {
+            if (profile?.Id) {
+                try {
+                    const response = await fetch(`/api/user/sweeping/images/profile?id=${profile.Id}`);
+                    const data = await response.json();
+                    console.log(profile.Id);
+                    console.log(data);
+                    setProfileImages(data?.images || []);
+                } catch (error) {
+                    console.error('Error fetching profile images:', error);
+                }
+            }
+        };
+
+        fetchProfileImages();
+    }, [profile?.Id]);
+
+    if (!profile) return null;
+
+    return (
+        <Box sx={{
+            width: '100%', mx: 'auto', bgcolor: '#1e1e1e', minHeight: '100vh', overflow: 'auto', '&::-webkit-scrollbar': {
+                width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+                backgroundColor: '#1e1e1e',
+                borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+                backgroundColor: 'white',
+                borderRadius: '4px',
+                '&:hover': {
+                    backgroundColor: 'rgba(255,128,171,0.5)',
+                },
+            },
+            userSelect: "none"
+        }}>
+            <Card sx={{
+                bgcolor: '#1e1e1e',
+                borderRadius: 2,
+                boxShadow: 'none',
+                overflow: 'hidden'
+            }}>
+                {/* Profile Banner */}
+                <Box sx={{ position: 'relative', height: 300 }}>
+                    <img
+                        src={profile.ProfileBanner != null ? profile.ProfileBanner : "./bannderDefault.jpg"}
+                        alt="Profile Banner"
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                        }}
+                    />
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: '100%',
+                            background: 'linear-gradient(to top, #1e1e1e 0%, rgba(58, 56, 58, 0.7) 50%, rgba(189, 189, 189, 0) 100%)'
+                        }}
+                    />
+                </Box>
+
+                {/* Profile Header */}
+                <Box sx={{ p: 3, display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                    <Avatar
+                        src={profile.Avatar}
+                        sx={{
+                            width: 120,
+                            height: 120,
+                            border: '4px solid #d81160'
+                        }}
+                    />
+                    <Box sx={{ flex: 1 }}>
+                        <Typography variant="h4" sx={{ color: 'white', mb: 1 }}>
+                            {profile.Username + " "}
+
+                            {profile?.DateOfBirth
+                                ? new Date().getFullYear() - new Date(profile.DateOfBirth).getFullYear()
+                                : ""}
+                            {profile?.Gender === "Male"
+                                ? "M"
+                                : profile?.Gender === "Female"
+                                    ? "F"
+                                    : ""}
+
+                            {profile?.PartnerDateOfBirth && (
+                                <>
+                                    {" | "}
+                                    {new Date().getFullYear() - new Date(profile.PartnerDateOfBirth).getFullYear()}
+                                    {profile?.PartnerGender === "Male"
+                                        ? "M"
+                                        : profile?.PartnerGender === "Female"
+                                            ? "F"
+                                            : ""}
+                                </>
+                            )}
+                        </Typography>
+                        <Typography variant="subtitle1"
+                            dangerouslySetInnerHTML={{ __html: profile?.Tagline }}
+                            sx={{
+                                color: '#d81160',
+                                mb: 2,
+                                fontWeight: 'bold',
+                                maxWidth: '100%',
+                                whiteSpace: 'normal', // Change this to allow wrapping
+                                wordWrap: 'break-word', // Ensures long text breaks within words                                
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box', // Enables a flex container for text truncation
+                                WebkitLineClamp: 3, // Limits the text to 3 lines
+                                WebkitBoxOrient: 'vertical', // Establishes vertical orientation for line clamping                                
+                            }}>
+                        </Typography>
+                        <Stack direction="row" spacing={2}>
+                            {/* <Chip
+                                icon={<CardMembership sx={{ color: '#ff80ab' }} />}
+                                label={profile.AccountType}
+                                size="medium"
+                                sx={{ bgcolor: 'rgba(0,0,0,0.2)', color: 'white' }}
+                            /> */}
+                            {/* <Chip
+                                icon={<CalendarMonth />}
+                                label={`${new Date(profile.DateOfBirth).getMonth() + 1}/${new Date(profile.DateOfBirth).getDate()}/${new Date(profile.DateOfBirth).getFullYear()}`}
+                                size="medium"
+                                sx={{ bgcolor: 'rgba(0,0,0,0.2)', color: 'white' }}
+                            /> */}
+                            <Chip
+                                icon={<Cake />}
+                                label={`Age: ${new Date().getFullYear() - new Date(profile.DateOfBirth).getFullYear()} years`}
+                                size="medium"
+                                sx={{ bgcolor: 'rgba(0,0,0,0.2)', color: 'white' }}
+                            />
+                            <Chip
+                                icon={<LocationOn />}
+                                label={profile?.Location?.replace(", USA", "")}
+                                size="medium"
+                                sx={{ bgcolor: 'rgba(0,0,0,0.2)', color: 'white' }}
+                            />
+                            <Chip
+                                icon={<Message sx={{ fontSize: 24 }} />}
+                                label={`Chat with ${profile?.Username}`}
+                                // size="large"
+                                sx={{ 
+                                    bgcolor: '#453a3ade', 
+                                    color: 'white',
+                                    '& .MuiChip-label': {
+                                        fontSize: '1.1rem'
+                                    }
+                                }}
+                                onClick={() => router.push(`/messaging/${profile?.Id}`)}
+                            />
+
+                        </Stack>
+                    </Box>
+                </Box>
+
+                {/* <Box sx={{ px: 3}}>
+                    <Button
+						variant="contained"
+                        onClick={() => router.push(`/messaging/${profile?.Id}`)}
+                        sx={{
+                            flex: 2, // Make the last box wider
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor: "#333",
+                            color: "white",
+                            borderRadius: 1,
+                            padding: 0.5, // Reduce padding inside
+                            minWidth: "80px", // Further reduce box size for the button container
+                        }}
+                    >
+                        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
+                            Chat with {profile?.Username}
+                        </span>
+                    </Button>		
+                </Box> */}
+
+                <Box sx={{ px: 3, paddingBottom: "120px" }}>
+                    <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+                        {/* <Chip
+                            icon={<Cake />}
+                            label={`Age: ${new Date().getFullYear() - new Date(profile.DateOfBirth).getFullYear()} years`}
+                            size="medium"
+                            sx={{ bgcolor: 'rgba(0,0,0,0.2)', color: 'white' }}
+                        /> */}
+                        {/* <Chip
+                            icon={<Cake />}
+                            label={`Partner Age: ${new Date().getFullYear() - new Date(profile.PartnerDateOfBirth).getFullYear()} years`}
+                            size="medium"
+                            sx={{ bgcolor: 'rgba(0,0,0,0.2)', color: 'white' }}
+                        /> */}
+                        
+                        {/* <Chip
+                            icon={profile.Gender === "Male" ? < Man /> : <Woman />}
+                            label={profile.Gender}
+                            size="medium"
+                            sx={{ bgcolor: 'rgba(0,0,0,0.2)', color: 'white' }}
+                        /> */}
+                    </Stack>
+                    <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+                        <Typography
+                            variant="subtitle1"
+                            dangerouslySetInnerHTML={{ __html: profile?.About }}
+                            sx={{
+                            color: 'white',
+                            mb: 2,
+                            fontWeight: 'bold',
+                            maxWidth: '100%',
+                            whiteSpace: 'normal',
+                            overflow: 'hidden',
+                            display: '-webkit-box', // Use flexbox-like behavior for text layout
+                            WebkitBoxOrient: 'vertical', // Required for line clamping
+                            WebkitLineClamp: 3, // Limits text to 3 lines
+                            textOverflow: 'ellipsis',
+                            }}
+                        />
+                    </Stack>
+
+                    <Grid container spacing={3}>
+                        {/* Left Column - Photo Gallery */}
+                        <Grid item xs={12} md={7}>
+                            <Paper sx={{ p: 3, bgcolor: 'rgba(0,0,0,0.2)', borderRadius: 2 }}>
+                                <Typography variant="h6" sx={{ color: 'white', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <CameraAlt sx={{ color: '#d81160' }} />
+                                    Photo Gallery
+                                </Typography>
+                                <ImageList cols={3} gap={16} sx={{ mb: 0 }}>
+                                    {profileImages.length > 0 ? (
+                                        profileImages.map((image, index) => (
+                                            <ImageListItem key={index}>
+                                                <img
+                                                    src={image.Url}
+                                                    alt={`Gallery ${index + 1}`}
+                                                    style={{
+                                                        borderRadius: '8px',
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        aspectRatio: '1',
+                                                        objectFit: 'cover'
+                                                    }}
+                                                />
+                                            </ImageListItem>
+                                        ))) : (
+                                        <Typography variant="body2" color="white">
+                                            No Photos Provided
+                                        </Typography>
+                                    )
+                                    }
+                                </ImageList>
+                            </Paper>
+                        </Grid>
+
+                        {/* Right Column - Looking For & Interests */}
+                        <Grid item xs={12} md={5}>
+                            <Stack spacing={3}>
+                                {/* Looking For */}
+                                <Paper sx={{ p: 3, bgcolor: 'rgba(0,0,0,0.2)', borderRadius: 2 }}>
+                                    <Typography variant="h6" sx={{ color: 'white', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <VolunteerActivism sx={{ color: '#d81160' }} />
+                                        Looking For
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                        {
+                                            profile.LookingFor?.length > 0 ? (
+                                                profile.LookingFor.map((item) => (
+                                                    <Chip
+                                                        key={item}
+                                                        label={item}
+                                                        size="small"
+                                                        sx={{
+                                                            bgcolor: 'rgba(255,128,171,0.1)',
+                                                            color: '#ff80ab'
+                                                        }}
+                                                    />
+                                                ))
+                                            ) : (
+                                                <Typography variant="body2" color="white">No data</Typography>
+                                            )
+                                        }
+                                    </Box>
+                                </Paper>
+
+                                {/* Interests & Preferences */}
+                                <Paper sx={{ p: 3, bgcolor: 'rgba(0,0,0,0.2)', borderRadius: 2 }}>
+                                    <Typography variant="h6" sx={{ color: 'white', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Interests sx={{ color: '#d81160' }} />
+                                        Interests & Preferences
+                                    </Typography>
+
+                                    <Typography variant="subtitle2" sx={{ color: '#ff80ab', mb: 1 }}>
+                                        Swing Styles
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3 }}>
+                                        {profile.SwingStyleTags.map((tag) => (
+                                            <Chip
+                                                key={tag}
+                                                label={tag}
+                                                size="small"
+                                                sx={{
+                                                    bgcolor: 'rgba(255,128,171,0.1)',
+                                                    color: '#ff80ab'
+                                                }}
+                                            />
+                                        ))}
+                                    </Box>
+
+                                    {/* <Typography variant="subtitle2" sx={{ color: '#ff80ab', mb: 1 }}>
+                                        Kink Tags
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                        {profile.KinkTags && profile.KinkTags.length > 0 ?
+                                            profile.KinkTags.map((tag) => (
+                                                <Chip
+                                                    key={tag}
+                                                    label={tag}
+                                                    size="small"
+                                                    sx={{
+                                                        bgcolor: 'rgba(255,128,171,0.1)',
+                                                        color: '#ff80ab'
+                                                    }}
+                                                />
+                                            )) : (
+                                                <Typography variant="body2" color="white">No tags data</Typography>
+                                            )
+                                        }
+                                    </Box> */}
+                                </Paper>
+                            </Stack>
+                        </Grid>
+                    </Grid>
+                </Box>
+            </Card>
+        </Box>
+    );
+};
+
+export default ProfileCard;

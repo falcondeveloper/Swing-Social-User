@@ -1,0 +1,21 @@
+import admin from "firebase-admin";
+
+// if (!admin.apps.length) {
+//   admin.initializeApp({
+//     credential: admin.credential.cert({
+//       projectId: "swing-social-beta",
+//       clientEmail: "firebase-adminsdk-fbsvc@swing-social-beta.iam.gserviceaccount.com",
+//       privateKey: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC6mSqypQ9RXRY7\nbWBrHg+zozxVM5q7ppCsgfv62OQ1Z6urpGw7KdMgH50JIKQajeChyVtyA/1piRlb\njeC46iKdwB+zrpfuMTCev0QM1vYwBiVzoMqv8Gw+dmdlL3PPntRKG0QW1jXyFnRa\nJbURn4+zrg/iXnWfQckSiWUJIgZyArU8ilo2qYcztgpvWOfpLPiAPNhCTlniUP2S\nRXu9Joo7NiZ2gnQHsm+pNf78qT/inXwrLrAuHWvgJAUU/6NTDSPbSytdgaHAMSEB\ntp4h+Nbx7vzYmdtgKKwzmvUmmKKqMP90noOCdgWMe2BbubFHe4S1EYkLjdBL+nw5\nQDwg+4hLAgMBAAECggEAOjbayU0RkFK4QuYGtKR2RZbhlbs5xN1cOVV8JXBREhA7\n0JrFYVfVFCqItXZHfDlTIWZOby2re6dYD+Yde9Mf5ZMw0L/himAySPRm6JKPz7+7\nI23Ajk81le8epsS9HsLwfAYxoeZGgjZbKlylNtBO5sGhFwBdNcgyUOQob0b8N8j0\nBmXyZTfZXkOLKT8IfHp0+z2Zd4U1DDSpg1mJpWkjH1LBM3rLftRY1xat2nVd7PFG\nr9n518fkVbu+JHnq9u2iQ4fnj1oEkHnNzIiJ9xUNX5Qzu5d4iaeS0hBBrh10nMn9\nDoJLUQiyKfKQ0Ku27YpIJErSi0TAfxMWigFE+BFYYQKBgQDiw7KIb9O4PD7AwVGX\nENnKYuVV7cn7UFpAmRnzlhL6ScCaEIOz8/A5Awsx2MZK7cmg3mFkrIxiVqn+tXNn\nqD0tiZylSAxfQwTR4WYdlUlcew9T0Nl4CcHskvLXES3q2qCnrkfqFkpMDjx0Q1Cd\nZ90cvRXfBPr2Nh8O939fKCe1KQKBgQDSp8vdWzp+SANnEZdoilvThJsjNU6MR0S4\nna4WDSYJSfUnWkz+NcRfBe6jwdvKSBnNabENR+YtWeWOEh5VJiJ1kNWgAtuBaYkv\nUbed+menR+anzkqEBxfi/aXKtzI9espkI5npyhOYNHBrfcwSbjC6X5Fm/P3VGrID\nStIhMYrsUwKBgE4p4ppA4Zu5uG+8syD9P/URDbgG1P55fgKSQ23BJx162pbAZoVa\n6kzcjblK3V7qg/uda7jF+UXUVZhkdzkdtqjBrGsUYJ9dfIXTyd0cnkLwcCIV9T/5\nLQ0cwfP8CfXQElx6KHO55zY8Gf6BTYJUUNUdIDLVhqPjl+USzqbAMp+xAoGAJh5M\n6pI+hGldjEIHptgag6zkMbvMqd+flNSbksvwTQ//944Ejp+GGDfHlgRXVEQ1vxDY\nA/I1uZEh09J9gKT06Vc7AMhjlghV1aUw17pfFUsSdt0CaN+rt9x0Krl5stxMUVCL\n4l05rHoYuaq6yb78vEzcz8kJ2Y0KF0Rrv6vqWpcCgYEApZIoYnhygcC7LjRN5eYf\nDdkIsC9fZOBlPX0WkbqT4WDhQfnURoQ5GF5UDEpFtYyquG+8cXrR4F4d0E3VXg7y\n80J/4ZVz3TYvbVfVMQ5EGmBL18Mp+02Vu83rL/xCCINz/r226MvlT/ohASJfZPaP\n1DSeAwri9t7e5wfJDXDmGtY=\n-----END PRIVATE KEY-----\n",
+//     }),
+//   });
+// }
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: "swingsocial-1357a",
+      clientEmail: "firebase-adminsdk-fbsvc@swingsocial-1357a.iam.gserviceaccount.com",
+      privateKey: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCrAra+JlGfhK12\n/L+oS31wSjcQrPomun8cNIEtMdZjtRWIPoizZ/N8i2WU5ohwZHdt1h7unclfj26f\nYD0FF6IfbExgG5S3NWuqwkpKDV+yIrKDVUQkrbrC+PRXFuNPjE2HlvxUHTWsVC2J\n0wQ3EGaYjn9nD53ZmcoFbkforY4QKYUfzc4WxNaxLnI1qa/fxENkzXof6FJD890B\n0UsBtljs9q8mDIG46XYOSvbWWl/A7KCiKUNpObwuD98enUXxgyln0vm/pRDFFd/D\n5h79fokdmAcp45vWynUkM31XO3GFes690GNEDj1XJyG0Wuk7ikYuEb48rdCo+j+0\nkmq9K1rDAgMBAAECggEABL6pmloFrr5MKPVb4ELfXpzdGvnXY0IgtE1HNR1O80bW\nmVF+26CZO6lUd9fPDStEcL8UgHyF1i4jZdLJHFmz333AiHQdvP2Vz4a5y2BWngcr\n/zokV/LBMCmM3WqVp9ne7a0Wsnnnkfn5XTKGSVf5XVTz90SScSE9A37YwOtOHrEP\n8dsw9yW3JfC3hO5ZyqYCpWMdp32MAfjYZ8U59OlYeUCfDNavJqPCHlGpGD9mUtGO\nO41gllWT20BRZZYER7eK7HFOmYjb4n2BxRsCQAzXzOWL02pzOgWS88rfDExVX8xG\n1k13nVTMvFrhup25rYyUa4j4zh3F2C1g1JP4v70QmQKBgQDt+hot/Sdj+xcu+yPk\nDcE8cRigLCuGO9C/GVinhIN1pyd/A3gHGeIDcPdqzsU6qjLhDptCiTKiVO/ltUrz\nO1SV6SY+VzSNpsTUVRFAeSX4HTfHgVvJR3959A6mI+RwBRSzTJDvpHppjcExwWRL\nBwqKwLWdjJTTchQO8jgK4baoawKBgQC39kSFDTNLMuMJWsfxyuZbE4R5sIOJk/Lf\n4BiUi9kppF09OUtIFWSaGCIffHTLURapAVUgTRBQ1EiPbD1vZjCeLTKDb/9chiG0\nK3TFymTqlArUk1LOcM9+u0aZ/rPR97bW2R2NzDqW5RixrnopX8Em4Z/bwB29vKKS\nWbdbqhYNCQKBgDWObKfe6ieBEaWcFWa0hcFxfmZFqoHqIj9vl9kTZHZs6OGXyUJn\n28qEeNoLsK1UMmEd5Wki8UdBMEAU/cohlxapwtaSz5v1ZSSYBGrrGNVu1efLP/nb\nYl/ywf035KglLJRxbcjQzk/E/C6TZFvSONgjKHxNcAzqBoOalWw1geMDAoGAE0rf\nari0rWk7yCpeF6x4tgp49S4ezVnXucTNrx5vet+C673LeFbOAx8OzRCHSx9I6hZ6\nr/WFBYUNywTF+J3V8XC6AHDJbhGfDT8VcvzD0poN/Lcqkv3ftOG9CL9eamG5KhUA\n9XL6ngKOsWuj4hzpq8MzuZ8PP2u9/O0tvo4628kCgYEAq7B67/GyPcjZ1WBNLZac\n6C7V2mSnpc6zWhS3tc+RMjIw5kyOzFXJnMo70q5ok6hUY0HZ3gCYHOZ4WhKscoXw\ndnlv4H/w/6r7Xa7SdtM95ok7vvRjLy58xpl/fIKgk6dwpHcIqAFpzW6GMqrLjY0f\ndilMF1IgQiE7if0e4NBsSlA=\n-----END PRIVATE KEY-----\n",
+    }),
+  });
+}
+export const messaging = admin.messaging();

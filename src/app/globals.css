@@ -1,0 +1,230 @@
+:root {
+  --background: #121212;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #121212;
+    --foreground: #0a0a0a;
+  }
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background: #121212;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+label {
+  color: white !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+.css-adhozc,
+.css-1jszrx9,
+.css-1q7fmto {
+  color: white !important;
+}
+
+.css-1qmghj6,
+.css-1vm28ub,
+.css-1jszrx9.Mui-focused {
+  color: #c2185b !important;
+}
+
+.css-1v2p1ol::after,
+.css-3ey3pf::after,
+.css-cfkamj::after,
+.css-182l6hl::after {
+  border-bottom: 2px solid #c2185b !important;
+}
+
+.css-iz33ar.Mui-focused .MuiOutlinedInput-notchedOutline,
+.css-11vm0qa.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #c2185b !important;
+}
+
+.custom-form-container {
+  border: 1px solid;
+}
+/* Custom CSS */
+.custom-form-container > div > div {
+  background-color: #000 !important; /* Dark background */
+  color: #fff; /* White text */
+  padding: 20px;
+  border-radius: 10px;
+  /* border: 1px solid; */
+}
+.custom-form-container > div > div > div > div {
+  background-color: transparent !important;
+}
+
+.custom-form-container button {
+  background-color: #f50057; /* Custom button background */
+  color: #fff; /* Button text color */
+  border: none;
+  padding: 10px 15px;
+  font-weight: bold;
+}
+
+.custom-form-container button:hover {
+  background-color: #c51162; /* Darker hover background */
+}
+
+/* TinderSwipe.css */
+.tinder-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding-top: 2rem;
+}
+
+.card-container {
+  position: relative;
+  width: 384px;
+  height: 600px;
+}
+
+.swipe-card {
+  width: 384px;
+  height: 600px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  cursor: grab;
+  position: absolute;
+}
+
+.swipe-card:active {
+  cursor: grabbing;
+}
+
+.profile-image {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+}
+
+.profile-info {
+  padding: 1rem;
+}
+
+.profile-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.profile-bio {
+  color: #666;
+  font-size: 1rem;
+}
+
+.button-container {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 2rem;
+}
+
+.action-button {
+  padding: 1rem;
+  border-radius: 50%;
+  border: none;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-button.dislike {
+  color: #ff4444;
+}
+
+.action-button.like {
+  color: #4caf50;
+}
+
+.action-button.dislike:hover {
+  background-color: #ffebee;
+}
+
+.action-button.like:hover {
+  background-color: #e8f5e9;
+}
+
+.no-more-profiles {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-top: 2rem;
+}
+
+.dragging {
+  cursor: grabbing !important;
+}
+
+.react-tinder-card {
+  position: absolute;
+  will-change: transform;
+  touch-action: none;
+}
+.tox-editor-header,
+.tox-toolbar__primary {
+  background-color: #282828 !important;
+}
+.tox .tox-tbtn {
+  border-radius: 0.25rem !important;
+  border: 0.0625rem solid rgb(55, 58, 64) !important;
+  color: rgb(193, 194, 197) !important;
+  min-width: 1.625rem !important;
+  background: rgb(37, 38, 43) !important;
+  padding: 0px !important;
+  font-size: 1rem !important;
+  display: flex !important;
+}
+.MuiListItem-gutters img{
+  max-width: 100%;
+}
+.tox .tox-tbtn svg {
+  fill: white !important;
+}
+.tox-tinymce {
+  border-radius: 0px !important;
+  border: none !important;
+}
+
+/* img {
+  filter: blur(40px); 
+} */
