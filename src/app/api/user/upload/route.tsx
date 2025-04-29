@@ -1,42 +1,28 @@
 import { NextResponse } from 'next/server';
 import https from 'https';
 import nodeFetch from 'node-fetch';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
 
-interface UploadResponse {
-  blobName: string;
-  blobUrl: string;
+// Define the type for the response
+type UploadResponse = {
+  url: string;
+  blob: string;
+};
+
+// Type guard to check if the response matches the expected structure
+function isUploadResponse(obj: any): obj is UploadResponse {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    typeof obj.url === 'string' &&
+    typeof obj.blob === 'string'
+  );
 }
 
-export async function POST(req: any) {
+export async function POST(req: Request) {
   try {
     const formData = await req.formData();
-    console.log(formData)
-    // const imageBlob = formData.get('image');
-
-    // if (!imageBlob || !imageBlob.type.startsWith('image/')) {
-    //   return NextResponse.json({ message: "Invalid image file" }, { status: 400 });
-    // }
-
-    // // Generate a unique filename using timestamp
-    // const fileName = `${Date.now()}_${imageBlob.name || 'uploaded_image'}`;
-    // const publicDir = path.join(process.cwd(), 'public', 'swing_images');
-
-    // // Ensure the directory exists
-    // if (!existsSync(publicDir)) {
-    //   await mkdir(publicDir, { recursive: true });
-    // }
-
-    // const filePath = path.join(publicDir, fileName);
-
-    // // Convert the blob to buffer and save locally
-    // const buffer = Buffer.from(await imageBlob.arrayBuffer());
-    // await writeFile(filePath, buffer);
-
-    // Now sync the file to the external server
     const imageFile = formData.get('image');
+
     if (!imageFile || !(imageFile instanceof Blob)) {
       return NextResponse.json(
         { message: 'Invalid image file' },
@@ -44,45 +30,42 @@ export async function POST(req: any) {
       );
     }
 
-    const contentType = imageFile.type;
-    console.log("Content-Type:", contentType);
+    const newFormData = new FormData();
+    newFormData.append('image', imageFile);
 
-    const apiEndpoint = 'https://swingsocial.app/api/user/upload'; // External server's upload endpoint
-    // const formDataToSync = new FormData();
-    // formDataToSync.append('image', new Blob([buffer]), fileName);
-    const httpsAgent = new https.Agent({
-      rejectUnauthorized: false
-    });
+    const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
-    const uploadResponse = await nodeFetch(apiEndpoint, {
+    // External API URL
+    const uploadResponse = await nodeFetch('https://images.andystutor.com', {
       method: 'POST',
-      body: formData,
-      agent: httpsAgent
+      body: newFormData,
+      agent: httpsAgent,
     });
 
-    if (!uploadResponse.ok) {
-      const errorResponse = await uploadResponse.json();
-      console.error("Upload to external server failed:", errorResponse);
-      return NextResponse.json({
-        message: "Failed to upload image to external server",
-        error: errorResponse,
-      }, { status: uploadResponse.status });
+    // Parse the JSON response
+    const json = await uploadResponse.json();
+
+    // Validate the response
+    if (!uploadResponse.ok || !isUploadResponse(json)) {
+      console.error("Unexpected upload response:", json);
+      return NextResponse.json(
+        { message: 'Invalid or failed response from upload server' },
+        { status: 500 }
+      );
     }
 
-    const responseBody = await uploadResponse.json() as UploadResponse;
-
-    // Assuming the external server responds with a URL to the uploaded image
+    // Return the success response with both URL and blob
     return NextResponse.json({
-      message: "Image uploaded successfully",
-      blobName: responseBody.blobName, // Local path for debugging
-      blobUrl: responseBody.blobUrl, // External server's URL
+      message: 'Image uploaded successfully',
+      imageUrl: json.url,
+      blobUrl: json.blob
     });
 
   } catch (error) {
-    console.error("Upload failed:", error);
-    return NextResponse.json({
-      message: "Image upload failed",
-      error: error,
-    }, { status: 500 });
+    console.error('Upload failed:', error);
+    return NextResponse.json(
+      { message: 'Image upload failed', error },
+      { status: 500 }
+    );
   }
 }
