@@ -130,6 +130,8 @@ export async function POST(req: Request) {
 
     // Convert images to a valid PostgreSQL array format
     const imagesArray = images.map((url: string) => url).join(",");
+
+    console.log(imagesArray,"=======================imagesArray");
     // const formattedImagesArray = imagesArray; // PostgreSQL array format
 
     const formattedImagesArray = `{${imagesArray}}`;

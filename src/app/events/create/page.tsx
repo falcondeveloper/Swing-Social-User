@@ -781,12 +781,38 @@ const EventForm: React.FC = () => {
 		}
 	};
 
+	const uploadEventImage = async (
+		imageData: string
+	): Promise<string | null> => {
+		setIsUploading(true);
+		try {
+			const formData = new FormData();
+			formData.append("image", imageData);
+
+			console.log(imageData);
+
+			const response = await fetch("/api/user/upload", {
+				method: "POST",
+				body: formData,
+			});
+
+			const data = await response.json();
+			console.log(data);
+			return data?.blobUrl || null;
+		} catch (error) {
+			console.error("Error uploading image:", error);
+			return null;
+		} finally {
+			setIsUploading(false);
+		}
+	};
+
 	const uploadImagesSequentially = async (
 		images: string[]
 	): Promise<(string | null)[]> => {
 		const results: (string | null)[] = [];
 		for (const image of images) {
-			const result = await uploadCoverImage(image); // Wait for each upload to finish
+			const result = await uploadEventImage(image); // Wait for each upload to finish
 			console.log(image);
 			results.push(result);
 		}
@@ -853,6 +879,8 @@ const EventForm: React.FC = () => {
 				const images = formData?.photos;
 				const photoURLs = await uploadImagesSequentially(images);
 				console.log("SwingSocial----->Uploading Images", photoURLs);
+
+				// return false;
 
 				const locationName = formData?.venue;
 				const coordinates = await getLatLngByLocationName(locationName);
@@ -1206,7 +1234,7 @@ const EventForm: React.FC = () => {
 							Describe your event
 						</Typography>
 						<Editor
-							apiKey={"l1j8914ctmajvo6bed8vxy873jf3a7w4hp7t3837ostucw87"}
+							apiKey={"3yffl36ic8qni4zhtxbmc0t1sujg1m25sc4l638375rwb5vs"}
 							value={formData.description}
 							onEditorChange={(content) => handleChange("description", content)}
 							init={{
@@ -1789,7 +1817,7 @@ const EventForm: React.FC = () => {
 												>
 													<Editor
 														apiKey={
-															"l1j8914ctmajvo6bed8vxy873jf3a7w4hp7t3837ostucw87"
+															"3yffl36ic8qni4zhtxbmc0t1sujg1m25sc4l638375rwb5vs"
 														}
 														value={formData.description}
 														onEditorChange={(content) =>
