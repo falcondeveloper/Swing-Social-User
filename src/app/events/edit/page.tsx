@@ -760,6 +760,8 @@ const EditEvent: React.FC = () => {
             return null; // Explicitly return undefined
         }
     };
+		const [isUploading, setIsUploading] = useState(false);
+
 
     const uploadEventImage = async (
 		imageData: string
