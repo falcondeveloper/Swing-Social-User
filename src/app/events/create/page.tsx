@@ -798,7 +798,7 @@ const EventForm: React.FC = () => {
 
 			const data = await response.json();
 			console.log(data);
-			return data?.blobUrl || null;
+			return data?.imageUrl || null;
 		} catch (error) {
 			console.error("Error uploading image:", error);
 			return null;
