@@ -36,7 +36,7 @@ export async function POST(req: Request) {
     const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
     // External API URL
-    const uploadResponse = await nodeFetch('https://images.andystutor.com', {
+    const uploadResponse = await nodeFetch('https://andystutor.com/upload.php', {
       method: 'POST',
       body: newFormData,
       agent: httpsAgent,
