@@ -63,7 +63,7 @@ export async function POST(req: Request) {
         // const formattedImagesArray = `{${imagesArray}}`;
 
         console.log(imagesArray);
-        const updateTimeQuery = `Select * from event_edit_($1, $2, $3 , $4)`;
+        const updateTimeQuery = `select * From event_edit_2($1,$2,$3,$4,$5,$6)`;
         const updateCoverImageQuery = `Select * from event_edit_cover($1, $2)`;
         const updateImagesQuery = `Select * from event_edit_images($1, $2)`;
         const updateVenueQuery = `Select * from event_edit_venue($1, $2, $3)`;
@@ -72,7 +72,9 @@ export async function POST(req: Request) {
             eventId,
             eventName,
             startTime,
-            endTime
+            endTime,
+            description,
+            emailDescription
         ];
 
         const CoverImagePayload = [

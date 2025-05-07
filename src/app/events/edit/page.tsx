@@ -875,6 +875,7 @@ const EditEvent: React.FC = () => {
                 photoURLs = await uploadImagesSequentially(images);
                 console.log(typeof photoURLs);
                 console.log("SwingSocial----->Uploading Images", photoURLs);
+                // return false;
 
                 console.log(typeof (formData?.photos));
                 console.log(coverURL);
