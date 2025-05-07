@@ -40,3 +40,4 @@ test
 -- adding another change to commit may 7
 -- another change commit may 7
 -- change commit again
+-- change commit again
