@@ -1164,7 +1164,7 @@ const EditEvent: React.FC = () => {
                             Describe your event
                         </Typography>
                         <Editor
-                            apiKey={"l1j8914ctmajvo6bed8vxy873jf3a7w4hp7t3837ostucw87"}
+                            apiKey={"3yffl36ic8qni4zhtxbmc0t1sujg1m25sc4l638375rwb5vs"}
                             value={formData.description}
                             onEditorChange={(content) => handleChange('description', content)}
                             init={{
@@ -1185,7 +1185,7 @@ const EditEvent: React.FC = () => {
                             Enter the description of the email
                         </Typography>
                         <Editor
-                            apiKey={"l1j8914ctmajvo6bed8vxy873jf3a7w4hp7t3837ostucw87"}
+                            apiKey={"3yffl36ic8qni4zhtxbmc0t1sujg1m25sc4l638375rwb5vs"}
                             value={formData.emailDescription}
                             onEditorChange={(content) => handleChange('emailDescription', content)}
                             init={{
@@ -1631,7 +1631,7 @@ const EditEvent: React.FC = () => {
                                                 </Typography>
                                                 <Paper elevation={2} sx={{ p: 1, mb: 1, border: "0.0625rem solid rgb(55, 58, 64);" }}>
                                                     <Editor
-                                                        apiKey={"l1j8914ctmajvo6bed8vxy873jf3a7w4hp7t3837ostucw87"}
+                                                        apiKey={"3yffl36ic8qni4zhtxbmc0t1sujg1m25sc4l638375rwb5vs"}
                                                         value={formData.description}
                                                         onEditorChange={(content) => handleChange('description', content)}
                                                         onBlur={() => handleBlur('description')}
@@ -1660,7 +1660,7 @@ const EditEvent: React.FC = () => {
                                                 </Typography>
                                                 <Paper elevation={2} sx={{ p: 1, mb: 1, border: "0.0625rem solid rgb(55, 58, 64);" }}>
                                                     <Editor
-                                                        apiKey={"l1j8914ctmajvo6bed8vxy873jf3a7w4hp7t3837ostucw87"}
+                                                        apiKey={"3yffl36ic8qni4zhtxbmc0t1sujg1m25sc4l638375rwb5vs"}
                                                         value={formData.emailDescription}
                                                         onEditorChange={(content) => handleChange('emailDescription', content)}
                                                         onBlur={() => handleBlur('emailDescription')}
