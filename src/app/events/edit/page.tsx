@@ -761,11 +761,37 @@ const EditEvent: React.FC = () => {
         }
     };
 
+    const uploadEventImage = async (
+		imageData: string
+	): Promise<string | null> => {
+		setIsUploading(true);
+		try {
+			const formData = new FormData();
+			formData.append("image", imageData);
+
+			console.log(imageData);
+
+			const response = await fetch("/api/user/upload", {
+				method: "POST",
+				body: formData,
+			});
+
+			const data = await response.json();
+			console.log(data);
+			return data?.imageUrl || null;
+		} catch (error) {
+			console.error("Error uploading image:", error);
+			return null;
+		} finally {
+			setIsUploading(false);
+		}
+	};
+
     const uploadImagesSequentially = async (images: string[]): Promise<(string | null)[]> => {
         const results: (string | null)[] = [];
         for (const image of images) {
             if (typeof image === "object") {
-                const result = await uploadCoverImage(image); // Wait for each upload to finish
+                const result = await uploadEventImage(image); // Wait for each upload to finish
                 console.log(image);
                 results.push(result);
             } else {
