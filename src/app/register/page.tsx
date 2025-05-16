@@ -334,6 +334,7 @@ export default function ProfileDetail() {
     const [openCity, setOpenCity] = useState(false)
     const [cityOption, setCityOption] = useState<CityType[] | []>([])
     const [cityInput, setCityInput] = useState<string | ''>('')
+    const [isCityInputFocused, setIsCityInputFocused] = useState(false);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -750,9 +751,13 @@ export default function ProfileDetail() {
                 <Autocomplete
                     id='autocomplete-filled'
                     open={openCity}
-                    clearOnBlur
+                    clearOnBlur={false}
                     onOpen={() => setOpenCity(true)}
-                    onClose={() => setOpenCity(false)}
+                    onClose={() => {
+                        if (!isCityInputFocused) {
+                            setOpenCity(false);
+                        }
+                    }}
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                     getOptionLabel={(option) => option.City}
                     options={cityOption.map((city) => ({
@@ -766,60 +771,73 @@ export default function ProfileDetail() {
                             setCityInput(newInputValue)
                     }}
                     onChange={(event, newValue) => {
-                        if (newValue?.City)
+                        if (newValue?.City) {
                             setFormData({
                                 ...formData,
-                                city: newValue?.City,
+                                city: newValue.City,
                             });
+                            setOpenCity(false);
+                        }
                     }}
                     renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            variant='filled'
-                            label="City"
-                            error={!!errors.city}
-                            helperText={errors.city}
-                            InputProps={{
-                                ...params.InputProps,
-                                endAdornment: (
-                                    <>
-                                        {cityLoading ? <CircularProgress color="inherit" size={15} /> : null}
-                                        {params.InputProps.endAdornment}
-                                    </>
-                                ),
-                            }}
-                            sx={{
-                                backgroundColor: '#2a2a2a',
-                                input: { color: '#fff' },
-                                mb: 3,
-                                borderRadius: '4px',
-                                '& .MuiOutlinedInput-root': {
-                                    color: '#FF2D55', // Input text color
-                                    backgroundColor: 'white', // Input background color
-                                    '& fieldset': {
-                                        borderColor: '#FF2D55', // Default border color
+                        <div onBlur={(e) => {
+                            // Only close if the blur was not caused by the keyboard dismissal
+                            if (e.relatedTarget === document.body || e.relatedTarget === null) {
+                                return;
+                            }
+                            setOpenCity(false);
+                            setIsCityInputFocused(false);
+                        }}>
+                            <TextField
+                                {...params}
+                                variant='filled'
+                                label="City"
+                                error={!!errors.city}
+                                helperText={errors.city}
+                                onFocus={() => setIsCityInputFocused(true)}
+                                onBlur={() => setIsCityInputFocused(false)}
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <>
+                                            {cityLoading ? <CircularProgress color="inherit" size={15} /> : null}
+                                            {params.InputProps.endAdornment}
+                                        </>
+                                    ),
+                                }}
+                                sx={{
+                                    backgroundColor: '#2a2a2a',
+                                    input: { color: '#fff' },
+                                    mb: 3,
+                                    borderRadius: '4px',
+                                    '& .MuiOutlinedInput-root': {
+                                        color: '#FF2D55',
+                                        backgroundColor: 'white',
+                                        '& fieldset': {
+                                            borderColor: '#FF2D55',
+                                        },
+                                        '&:hover fieldset': {
+                                            borderColor: '#FF617B',
+                                        },
+                                        '&.Mui-focused fieldset': {
+                                            borderColor: '#7000FF',
+                                        },
+                                        '&.Mui-error fieldset': {
+                                            borderColor: '#FF0000',
+                                        },
                                     },
-                                    '&:hover fieldset': {
-                                        borderColor: '#FF617B', // Border color on hover
+                                    '& .MuiInputLabel-root': {
+                                        color: '#FF2D55!important',
                                     },
-                                    '&.Mui-focused fieldset': {
-                                        borderColor: '#7000FF', // Border color when focused
+                                    '& .MuiInputLabel-root.Mui-focused': {
+                                        color: '#7000FF',
                                     },
-                                    '&.Mui-error fieldset': {
-                                        borderColor: '#FF0000', // Border color when there's an error
+                                    '& .MuiInputLabel-root.Mui-error': {
+                                        color: '#FF0000',
                                     },
-                                },
-                                '& .MuiInputLabel-root': {
-                                    color: '#FF2D55!important', // Default label color
-                                },
-                                '& .MuiInputLabel-root.Mui-focused': {
-                                    color: '#7000FF', // Label color when focused
-                                },
-                                '& .MuiInputLabel-root.Mui-error': {
-                                    color: '#FF0000', // Label color when there's an error
-                                },
-                            }}
-                        />
+                                }}
+                            />
+                        </div>
                     )}
                 />
 
