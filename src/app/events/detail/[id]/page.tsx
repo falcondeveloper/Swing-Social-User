@@ -134,7 +134,6 @@ export default function EventDetail(props: { params: Params }) {
   //const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
 
-  console.log(summary, "============summary");
   const handleTicketsChange = (
     quantity: any = 0,
     price: any = 0,
@@ -161,8 +160,12 @@ export default function EventDetail(props: { params: Params }) {
       });
 
       const eventData = await checkResponse.json();
-      console.log(eventData);
-      console.log(eventData?.events, "===========events");
+      const eventDescription = eventData?.event?.Description;
+      //Populate the tickets with the description of the event BUG
+      eventData?.tickets.forEach((ticket: any) => {
+        ticket.Description = eventDescription;
+      });
+
       setEventDetail(eventData?.event);
       setRsvp(eventData?.rsvp);
       setAttendees(eventData?.attendees);
@@ -171,6 +174,7 @@ export default function EventDetail(props: { params: Params }) {
       console.error("Error:", error);
     }
   };
+
   const [profileId, setProfileId] = useState<any>(); // Animation direction
   const [profileUsername, setProfileUsername] = useState<any>(); // Animation direction
   useEffect(() => {
@@ -180,7 +184,6 @@ export default function EventDetail(props: { params: Params }) {
     }
   }, []);
 
-  console.log(eventDetail, "===========", profileId);
   const [targetId, setTargetId] = useState<any>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const handleReportModalToggle = (pid: string) => {
@@ -314,9 +317,10 @@ export default function EventDetail(props: { params: Params }) {
   const handleCloseHere = () => setOpen(false);
 
   const [openSaveRsvp, setOpenSaveRsvp] = useState(false);
+
   const handleSaveRsvp = async (eventId: any) => {
     if (membership == 0) {
-      Swal.fire({
+      return Swal.fire({
         title: `Upgrade your membership.`,
         text: `Sorry, you need to upgrade your membership.`,
         icon: "error",
@@ -328,26 +332,26 @@ export default function EventDetail(props: { params: Params }) {
           router.push("/membership");
         }
       });
-    } else {
-      const response = await fetch("/api/user/events/rsvp/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          eventId: eventId,
-          profileId: profileId,
-        }),
-      });
-
-      const data = await response.json();
-      console.log(data);
-
-      if (data.status == 200) {
-        setOpenSaveRsvp(!openSaveRsvp);
-      }
-      console.log(eventId);
     }
+
+    const response = await fetch("/api/user/events/rsvp/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        eventId: eventId,
+        profileId: profileId,
+      }),
+    });
+
+    const data = await response.json();
+    console.log(data);
+
+    if (data.status == 200) {
+      setOpenSaveRsvp(!openSaveRsvp);
+    }
+    console.log(eventId);
   };
 
   const deleteEvent = async (eventId: any) => {
@@ -468,8 +472,10 @@ export default function EventDetail(props: { params: Params }) {
       }
 
       const csvData = userData.users.map((user: any) => {
-        const originalEntry = data.find((entry: any) => entry.ProfileId === user.ProfileId);
-        
+        const originalEntry = data.find(
+          (entry: any) => entry.ProfileId === user.ProfileId
+        );
+
         return {
           ProfileId: user.ProfileId || originalEntry?.ProfileId || "N/A",
           Username: user.Username || "N/A",
@@ -480,9 +486,10 @@ export default function EventDetail(props: { params: Params }) {
           TicketId: originalEntry?.TicketId || "N/A",
           TicketType: originalEntry?.TicketType || "N/A",
           Price: originalEntry?.Price || "N/A",
-          Status: type === "RSVP"
-            ? originalEntry?.RSVPStatus || "N/A"
-            : originalEntry?.AttendanceStatus || "N/A",
+          Status:
+            type === "RSVP"
+              ? originalEntry?.RSVPStatus || "N/A"
+              : originalEntry?.AttendanceStatus || "N/A",
         };
       });
 
@@ -509,7 +516,6 @@ export default function EventDetail(props: { params: Params }) {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
     } catch (error) {
       console.error("Error exportando CSV:", error);
     }
@@ -1634,7 +1640,7 @@ export default function EventDetail(props: { params: Params }) {
                         Available Tickets
                       </Typography>
                       <IconButton
-                        disabled={membership === 0 ? true : false}
+                        // disabled={membership === 0 ? true : false}
                         onClick={() => setExpanded(!expanded)}
                         sx={{
                           color: "white",
@@ -1647,7 +1653,6 @@ export default function EventDetail(props: { params: Params }) {
                         <AddIcon />
                       </IconButton>
                     </Box>
-
                     <Grow in={expanded} timeout={500}>
                       <Box sx={{ display: expanded ? "block" : "none", px: 5 }}>
                         <DTicketListComponent

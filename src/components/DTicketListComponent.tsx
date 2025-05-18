@@ -18,6 +18,7 @@ interface Ticket {
   Name: string;
   Quantity: number;
   EventName: string;
+  Description: string;
 }
 
 interface TicketQuantities {
@@ -26,6 +27,7 @@ interface TicketQuantities {
 
 interface TicketListProps {
   tickets: Ticket[];
+  eventDescription?: string;
   onTicketsChange: (quantity: number, price: number, name?: string, type?: string, eventName?: string) => void;
 }
 
@@ -36,6 +38,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
   const [totalQuantity, setTotalQuantity] = useState<number>(0);
   const [selectedTicketName, setSelectedTicketName] = useState<string>('');
   const [selectedEventName, setSelectedEventName] = useState<string>('');
+  const [selectedEventDescription, setSelectedEventDescription] = useState<string>('');
   const [selectedTicketType, setSelectedTicketType] = useState<string>('');
   const [selectedTicket, setSelectedTicket] = useState<{ name?: string; type?: string }>({});
 
@@ -63,6 +66,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
       let ticketName = '';
       let ticketType = '';
       let eventName = '';
+      let eventDescription = '';
 
       // Calculate totals from all tickets
       Object.entries(ticketQuantities).forEach(([ticketId, ticketQuantity]) => {
@@ -75,6 +79,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
             ticketName = ticket.Name;
             ticketType = ticket.Type;
             eventName = ticket.EventName;
+            eventDescription = ticket.Description;
           }
         }
       });
@@ -84,6 +89,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
       setSelectedTicketName(ticketName);
       setSelectedTicketType(ticketType);
       setSelectedEventName(eventName);
+      setSelectedEventDescription(eventDescription);
 
       // Call parent component's callback with updated summary
       onTicketsChange(quantity, price, ticketName, ticketType, eventName );
@@ -96,6 +102,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
     if (totalQuantity > 0) {
       // Store overall ticket information
       localStorage.setItem('event_name', selectedEventName || '');
+      localStorage.setItem('event_description', selectedEventDescription || '');
       localStorage.setItem('ticketPrice', totalPrice.toString());
       localStorage.setItem('ticketQuantity', totalQuantity.toString());
       localStorage.setItem('eventId', tickets[0]?.TicketPackageId || '');
@@ -106,13 +113,13 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
       const ticketDetails = tickets.map(ticket => ({
         id: ticket.TicketPackageId,
         name: ticket.Name,
+        description: ticket.Description,
         type: ticket.Type,
         price: ticket.Price,
         quantity: ticketQuantities[ticket.TicketPackageId] || 0,
         eventName: ticket.EventName
       })).filter(ticket => ticket.quantity > 0);
 
-      console.log(ticketDetails);
       localStorage.setItem('ticketDetails', JSON.stringify(ticketDetails));
 
       // Navigate to ticket page
@@ -379,7 +386,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
                   transition: 'all 0.3s ease'
                 }}
               >
-                Proceed to Checkout
+                Proceed to Checkout 
               </Button>
             </Box>
           </Box>
