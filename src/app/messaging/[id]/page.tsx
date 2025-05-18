@@ -63,35 +63,37 @@ export default function ChatPage(props: { params: Params }) {
 			setMembership(decodeToken?.membership);
 			console.log(decodeToken);
 
-			if (decodeToken?.membership == 0) {
-				Swal.fire({
-					title: `Upgrade your membership.`,
-					text: `Sorry, to access this page, you need to upgrade your membership`,
-					icon: "error",
-					showCancelButton: true,
-					confirmButtonText: "Upgrade the membership",
-					cancelButtonText: "Continue as the free member",
-				}).then((result: any) => {
-					if (result.isConfirmed) {
-						router.push("/membership");
-					} else if (result.dismiss === Swal.DismissReason.cancel) {
-						router.back();
-					} else {
-						router.back();
-					}
-				});
-			} else {
-				// router.push("/messaging");
-			}
-		} else {
-			router.push("/login");
+		// 	if (decodeToken?.membership == 0) {
+		// 		Swal.fire({
+		// 			title: `Upgrade your membership.`,
+		// 			text: `Sorry, to access this page, you need to upgrade your membership`,
+		// 			icon: "error",
+		// 			showCancelButton: true,
+		// 			confirmButtonText: "Upgrade the membership",
+		// 			cancelButtonText: "Continue as the free member",
+		// 		}).then((result: any) => {
+		// 			if (result.isConfirmed) {
+		// 				router.push("/membership");
+		// 			} else if (result.dismiss === Swal.DismissReason.cancel) {
+		// 				router.back();
+		// 			} else {
+		// 				router.back();
+		// 			}
+		// 		});
+		// 	} else {
+		// 		// router.push("/messaging");
+		// 	}
+		// } else {
+		// 	router.push("/login");
 		}
 	}, []);
 
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 	}, [messages]);
+
 	const [chatList, setChatList] = useState<any>([]);
+
 	useEffect(() => {
 		socket.on("connect", () => {
 			console.log("Connected to WebSocket server");
@@ -141,8 +143,10 @@ export default function ChatPage(props: { params: Params }) {
 			socket.off("message");
 		};
 	}, []);
+
 	const [newMessage, setNewMessage] = useState("");
 	const [realtimeMessage, setRealTimeMessage] = useState<any>();
+
 	useEffect(() => {
 		console.log(realtimeMessage, "================realtimeMessage");
 		if (
@@ -391,6 +395,7 @@ export default function ChatPage(props: { params: Params }) {
 			return null; // Return null in case of an error
 		}
 	};
+
 	const handleImageUpload = async (event: any) => {
 		const file = event.target.files[0];
 		if (file) {
@@ -821,7 +826,6 @@ export default function ChatPage(props: { params: Params }) {
 								<Picker onEmojiClick={handleEmojiClick} />
 							</Box>
 						</Modal>
-
 						{/* Input Box */}
 						<Box
 							component="form"

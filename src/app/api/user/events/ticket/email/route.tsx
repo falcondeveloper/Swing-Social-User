@@ -29,6 +29,7 @@ export async function POST(req: any) {
 		const {
 			eventName,
 			email,
+			eventDescription, // Added event description
 			firstName,
 			lastName,
 			phone,
@@ -60,6 +61,11 @@ export async function POST(req: any) {
             <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                 <h1 style="font-weight: bold; font-size: 18px; margin-bottom: 10px;">${title}</h1>
                 <p style="margin: 5px 0;"><strong>Event:</strong> ${eventName}</p>
+                
+                ${eventDescription ? `
+                <h1 style="font-weight: bold; font-size: 18px; margin: 20px 0 10px;">Event Description</h1>
+                <div style="margin: 5px 0;">${eventDescription}</div>
+                ` : ''}
                 
                 <h1 style="font-weight: bold; font-size: 18px; margin: 20px 0 10px;">User Information</h1>
                 <p style="margin: 5px 0;"><strong>Email:</strong> ${
