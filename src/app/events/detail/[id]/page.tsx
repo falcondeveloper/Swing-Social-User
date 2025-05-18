@@ -1640,7 +1640,7 @@ export default function EventDetail(props: { params: Params }) {
                         Available Tickets
                       </Typography>
                       <IconButton
-                        // disabled={membership === 0 ? true : false}
+                        disabled={membership === 0 ? true : false}
                         onClick={() => setExpanded(!expanded)}
                         sx={{
                           color: "white",
