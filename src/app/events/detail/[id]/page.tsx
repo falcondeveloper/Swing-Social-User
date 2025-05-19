@@ -1054,9 +1054,6 @@ export default function EventDetail(props: { params: Params }) {
                   loginId={profileId}
                   eventId={id}
                 />
-                <Typography variant="body1" color="white" sx={{ marginTop: 4 }}>
-                  Attendees editado!
-                </Typography>
                 <AttendeesListComponent
                   attendees={attendees}
                   loginId={profileId}
