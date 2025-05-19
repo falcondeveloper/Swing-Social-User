@@ -349,15 +349,19 @@ const Home = () => {
 		}
 	}, [notificationPermissionStatus]);
 
-	if (navigator?.serviceWorker) {
-		// Register the SW
-		navigator.serviceWorker
-			.register("/firebase-messaging-sw.js")
-			.then(function (registration) {})
-			.catch(console.log);
-	} else {
-		console.log("Service Worker not supported");
-	}
+	// Service Worker registration moved to useEffect to prevent SSR issues
+	useEffect(() => {
+		if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+			navigator.serviceWorker
+				.register("/firebase-messaging-sw.js")
+				.then(registration => {
+					console.log("Service Worker registered with scope:", registration.scope);
+				})
+				.catch(error => {
+					console.error("Service Worker registration failed:", error);
+				});
+		}
+	}, []);
 
 	const sliderSettings = {
 		dots: true,
