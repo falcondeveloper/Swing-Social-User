@@ -13,6 +13,7 @@ import {
   LinearProgress,
   ThemeProvider,
   createTheme,
+  useMediaQuery,
 } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -74,6 +75,8 @@ export default function ProfileDetail() {
     age: "01/01/0101",
     city: "",
   });
+
+  const isMobile = useMediaQuery("(max-width:600px)");
 
   const [profileId, setProfileId] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -707,27 +710,28 @@ export default function ProfileDetail() {
         <Autocomplete
           id="autocomplete-filled"
           open={openCity}
-          clearOnBlur
           onOpen={() => setOpenCity(true)}
-          onClose={() => setOpenCity(false)}
+          onClose={(event, reason) => {
+            if (isMobile && reason === "blur") {
+              return;
+            }
+            setOpenCity(false);
+          }}
+          disableClearable 
           isOptionEqualToValue={(option, value) => option.id === value.id}
           getOptionLabel={(option) => option.City}
-          options={cityOption.map((city) => ({
-            ...city,
-            key: city.id,
-          }))}
+          options={cityOption.map((city) => ({ ...city, key: city.id }))}
           loading={cityLoading}
           inputValue={cityInput}
           onInputChange={(event, newInputValue) => {
-            if (event?.type === "change" || event?.type === "click")
+            if (event?.type === "change" || event?.type === "click") {
               setCityInput(newInputValue);
+            }
           }}
           onChange={(event, newValue) => {
-            if (newValue?.City)
-              setFormData({
-                ...formData,
-                city: newValue?.City,
-              });
+            if (newValue?.City) {
+              setFormData({ ...formData, city: newValue.City });
+            }
           }}
           renderInput={(params) => (
             <TextField
@@ -753,29 +757,21 @@ export default function ProfileDetail() {
                 mb: 3,
                 borderRadius: "4px",
                 "& .MuiOutlinedInput-root": {
-                  color: "#FF2D55", // Input text color
-                  backgroundColor: "white", // Input background color
-                  "& fieldset": {
-                    borderColor: "#FF2D55", // Default border color
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "#FF617B", // Border color on hover
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#7000FF", // Border color when focused
-                  },
-                  "&.Mui-error fieldset": {
-                    borderColor: "#FF0000", // Border color when there's an error
-                  },
+                  color: "#FF2D55",
+                  backgroundColor: "white",
+                  "& fieldset": { borderColor: "#FF2D55" },
+                  "&:hover fieldset": { borderColor: "#FF617B" },
+                  "&.Mui-focused fieldset": { borderColor: "#7000FF" },
+                  "&.Mui-error fieldset": { borderColor: "#FF0000" },
                 },
                 "& .MuiInputLabel-root": {
-                  color: "#FF2D55!important", // Default label color
+                  color: "#FF2D55!important",
                 },
                 "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#7000FF", // Label color when focused
+                  color: "#7000FF",
                 },
                 "& .MuiInputLabel-root.Mui-error": {
-                  color: "#FF0000", // Label color when there's an error
+                  color: "#FF0000",
                 },
               }}
             />

@@ -12,28 +12,29 @@ const pool = new Pool({
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const searchTerm = searchParams.get("city");
+    const rawTerm = searchParams.get("city") || "";
+
+    const normalized = rawTerm.replace(/\s*,\s*/, ",");
+    const searchPattern = normalized ? `%${normalized}%` : "%";
 
     const rawQuery = `
       SELECT "City" || ', ' || "State" AS "City"
-      FROM "UsCities" 
-      WHERE 
-        "City" ILIKE $1
+      FROM "UsCities"
+      WHERE
+        "City"   ILIKE $1
         OR "State" ILIKE $1
+        -- coincidencia con coma y espacio
         OR ("City" || ', ' || "State") ILIKE $1
+        -- coincidencia con coma pegada
+        OR ("City" || ','  || "State") ILIKE $1
       ORDER BY "City", "State"
       LIMIT 100
     `;
 
-    const searchPattern = searchTerm ? `%${searchTerm}%` : "%";
-
     const result = await pool.query(rawQuery, [searchPattern]);
 
     return NextResponse.json({
-      cities: result.rows.map((row, index) => ({
-        id: index,
-        City: row.City,
-      })),
+      cities: result.rows.map((row, i) => ({ id: i, City: row.City })),
     });
   } catch (error) {
     console.error("Error en la búsqueda de ciudades:", error);
