@@ -35,7 +35,7 @@ import {
   useMediaQuery,
   Alert,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import DTicketListComponent from "@/components/DTicketListComponent";
 import MTicketListComponent from "@/components/MTicketListComponent";
 import RSVPListComponent from "@/components/RSVPListComponent";
@@ -94,22 +94,16 @@ export default function EventDetail(props: { params: Params }) {
     }
   }, []);
 
-  useEffect(() => {
-    const getIdFromParam = async () => {
-      const params = await props.params;
-      const pid: any = params.id;
-      console.log(pid);
-      setId(pid);
-      console.log(pid, "===========id");
-    };
-    getIdFromParam();
+  // Memoized function to get ID from params
+  const getIdFromParam = useCallback(async () => {
+    const params = await props.params;
+    const pid: any = params.id;
+    setId(pid);
   }, [props]);
 
   useEffect(() => {
-    if (id) {
-      handleGetEventDetail(id);
-    }
-  }, [id]);
+    getIdFromParam();
+  }, [getIdFromParam]);
 
   useEffect(() => {
     setShowContent(true);
@@ -131,26 +125,25 @@ export default function EventDetail(props: { params: Params }) {
   const [selectedUserId, setSelectedUserId] = useState<any>(null);
 
   const theme = useTheme();
-  //const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
+  const isMobile = useMediaQuery("(max-width: 480px)");
 
-  const handleTicketsChange = (
-    quantity: any = 0,
-    price: any = 0,
-    name: any,
-    type: any
-  ) => {
-    if (isMobile) {
-      setSummary({
-        totalQuantity: quantity,
-        totalPrice: price,
-        ticketName: name,
-        ticketType: type,
-      });
-    }
-  };
+  // Memoized ticket change handler to prevent unnecessary recalculations
+  const handleTicketsChange = useCallback(
+    (quantity: any = 0, price: any = 0, name: any, type: any) => {
+      if (isMobile) {
+        setSummary({
+          totalQuantity: quantity,
+          totalPrice: price,
+          ticketName: name,
+          ticketType: type,
+        });
+      }
+    },
+    [isMobile]
+  );
 
-  const handleGetEventDetail = async (eventId: any) => {
+  // Memoized function to get event details to prevent unnecessary API calls
+  const handleGetEventDetail = useCallback(async (eventId: any) => {
     try {
       const checkResponse = await fetch("/api/user/events?eventId=" + eventId, {
         method: "GET",
@@ -173,7 +166,14 @@ export default function EventDetail(props: { params: Params }) {
     } catch (error) {
       console.error("Error:", error);
     }
-  };
+  }, []);
+
+  // Add useEffect to call handleGetEventDetail when id changes
+  useEffect(() => {
+    if (id) {
+      handleGetEventDetail(id);
+    }
+  }, [id, handleGetEventDetail]);
 
   const [profileId, setProfileId] = useState<any>(); // Animation direction
   const [profileUsername, setProfileUsername] = useState<any>(); // Animation direction
@@ -186,31 +186,34 @@ export default function EventDetail(props: { params: Params }) {
 
   const [targetId, setTargetId] = useState<any>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const handleReportModalToggle = (pid: string) => {
+  // Memoized function to toggle report modal
+  const handleReportModalToggle = useCallback((pid: string) => {
     setTargetId(pid);
     setIsReportModalOpen((prev) => !prev);
-  };
+  }, []);
 
   const [reportOptions, setReportOptions] = useState({
     reportUser: false,
     blockUser: false,
   });
 
-  const handleCheckboxChange = (event: any) => {
+  // Memoized checkbox change handler
+  const handleCheckboxChange = useCallback((event: any) => {
     const { name, checked } = event.target;
     setReportOptions((prev) => ({
       ...prev,
       [name]: checked,
     }));
-  };
-  const handleEmailCheckboxChange = (field: any) => {
+  }, []);
+  // Memoized email checkbox change handler
+  const handleEmailCheckboxChange = useCallback((field: any) => {
     setFormState((prev: any) => ({ ...prev, [field]: !prev[field] }));
-  };
+  }, []);
 
-  const handleReportUser = async () => {
+  // Memoized report user handler
+  const handleReportUser = useCallback(async () => {
     try {
-      // Check if t
-      // he username exists
+      // Check if the username exists
       const checkResponse = await fetch("/api/user/sweeping/report", {
         method: "POST",
         headers: {
@@ -223,13 +226,14 @@ export default function EventDetail(props: { params: Params }) {
     } catch (error) {
       console.error("Error:", error);
     }
-  };
-  const handleReportSubmit = () => {
-    console.log("Report Options:", reportOptions);
+  }, [profileId, targetId]);
+  // Memoized report submit handler
+  const handleReportSubmit = useCallback(() => {
+    // Removed console.log to avoid unnecessary operations
     setIsReportModalOpen(false);
     handleReportUser();
     // Add logic to handle report or block user action
-  };
+  }, [handleReportUser]);
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -1366,12 +1370,18 @@ export default function EventDetail(props: { params: Params }) {
                               alt={person.Name}
                               src={person.Avatar || `/api/placeholder/56/56`}
                               onClick={() => {
-                                console.log(person);
-                                // router.push(`/members?q=${person.ProfileId}`);
-                                router.push(
-                                  `/attendeeswing?q=${person.ProfileId}&id=${profileId}&eventid=${id}`
-                                );
+                                setOpenModalUser({
+                                  state: true,
+                                  id: person.ProfileId,
+                                });
                               }}
+                              // onClick={() => {
+                              //   console.log(person);
+                              //   // router.push(`/members?q=${person.ProfileId}`);
+                              //   // router.push(
+                              //   //   `/attendeeswing?q=${person.ProfileId}&id=${profileId}&eventid=${id}`
+                              //   // );
+                              // }}
                               sx={{
                                 width: 56,
                                 height: 56,

@@ -31,8 +31,11 @@ export async function POST(req: Request) {
       storedEventDetails = JSON.parse(storedEventDetails);
     }
 
-    // Define the query
+    // Define the queries
     const insertQuery = `SELECT * FROM public.ticket_insert($1, $2, $3, $4, $5)`;
+    const updateQtyQuery = `SELECT * FROM public.event_ticket_updateqty($1, $2, $3)`;
+    
+    console.log('Received event details:', storedEventDetails);
 
     // Check if `storedEventDetails` is a valid array
     if (Array.isArray(storedEventDetails) && storedEventDetails.length > 0) {
@@ -40,19 +43,48 @@ export async function POST(req: Request) {
 
       // Use a for...of loop to handle async operations properly
       for (const [index, event] of storedEventDetails.entries()) {
-        const { name, type, price, quantity, id: eventId } = event;
+        const { name, type, price, quantity, id: eventId, profileId } = event;
 
         try {
-          // Execute the query for each event
+          // Execute the query for each event to insert the ticket
           const result = await pool.query(insertQuery, [name, type, price, quantity, eventId]);
           console.log(`Event ${index} inserted successfully:`, result);
+          
+          // Update the ticket quantity in the event using the stored procedure event_ticket_updateqty
+          // Parameters: qprofileid (UUID), qticketpackageid (UUID), qty (integer)
+          
+          if (!profileId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profileId)) {
+            throw new Error(`Invalid profileId: ${profileId}`);
+          }
+          
+          if (!type || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(type)) {
+            throw new Error(`Invalid ticketPackageId: ${type}`);
+          }
+          
+          if (!Number.isInteger(quantity) || quantity <= 0) {
+            throw new Error(`Invalid quantity: ${quantity}`);
+          }
+          
+          
+          try {
+            const updateResult = await pool.query(updateQtyQuery, [profileId, type, quantity]);
+            console.log(`Event ${index} quantity updated successfully:`, updateResult.rows);
+            
+            if (updateResult.rows && updateResult.rows.length > 0) {
+              console.log(`Update result: ${JSON.stringify(updateResult.rows[0])}`);
+            } else {
+              console.warn(`No rows returned from event_ticket_updateqty for event ${index}`);
+            }
+          } catch (updateError) {
+            console.error(`Error updating ticket quantity for event ${index}:`, updateError);
+          }
 
           // Store the result in the results array
           results.push(result.rows[0]);
         } catch (error) {
-          console.error(`Error inserting event ${index}:`, error);
+          console.error(`Error processing event ${index}:`, error);
           return NextResponse.json(
-            { error: `Failed to insert event ${index}`, details: error },
+            { error: `Failed to process event ${index}`, details: error },
             { status: 500 }
           );
         }

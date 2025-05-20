@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo, memo } from "react";
 import {
   Box,
   Container,
@@ -146,15 +146,21 @@ interface RestValidationState {
 }
 
 // Particle animation component
-const ParticleField = () => {
-  const particles = [...Array(50)].map((_, i) => ({
-    id: i,
-    size: Math.random() * 6 + 2,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    duration: Math.random() * 20 + 10,
-    delay: -Math.random() * 20,
-  }));
+const ParticleField = memo(() => {
+
+  const isMobile = useMediaQuery('(max-width:600px)');
+
+  const particles = useMemo(() => {
+    const count = isMobile ? 15 : 50;
+    return [...Array(count)].map((_, i) => ({
+      id: i,
+      size: Math.random() * (isMobile ? 4 : 6) + 2,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      duration: Math.random() * (isMobile ? 15 : 20) + 10,
+      delay: -Math.random() * 20,
+    }));
+  }, [isMobile]);
 
   return (
     <Box
@@ -197,7 +203,7 @@ const ParticleField = () => {
       ))}
     </Box>
   );
-};
+});
 
 // 3D Card component
 const RotatingCard: React.FC<{ children: React.ReactNode }> = ({

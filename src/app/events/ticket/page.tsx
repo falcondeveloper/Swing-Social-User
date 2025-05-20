@@ -587,6 +587,14 @@ const BillingUpgrade: any = () => {
       if (typeof storedEventDetails === "string") {
         ticketDetailsArray = JSON.parse(storedEventDetails);
       }
+      
+      ticketDetailsArray = ticketDetailsArray.map((ticket: any) => ({
+        ...ticket,
+        profileId: profileId
+      }));
+      
+      console.log("Sending tickets with profileId:", ticketDetailsArray);
+      
       // Send POST request to the backend
       const response = await fetch("/api/user/events/ticket", {
         method: "POST",
