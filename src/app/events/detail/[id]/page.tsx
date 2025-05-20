@@ -1366,12 +1366,18 @@ export default function EventDetail(props: { params: Params }) {
                               alt={person.Name}
                               src={person.Avatar || `/api/placeholder/56/56`}
                               onClick={() => {
-                                console.log(person);
-                                // router.push(`/members?q=${person.ProfileId}`);
-                                router.push(
-                                  `/attendeeswing?q=${person.ProfileId}&id=${profileId}&eventid=${id}`
-                                );
+                                setOpenModalUser({
+                                  state: true,
+                                  id: person.ProfileId,
+                                });
                               }}
+                              // onClick={() => {
+                              //   console.log(person);
+                              //   // router.push(`/members?q=${person.ProfileId}`);
+                              //   // router.push(
+                              //   //   `/attendeeswing?q=${person.ProfileId}&id=${profileId}&eventid=${id}`
+                              //   // );
+                              // }}
                               sx={{
                                 width: 56,
                                 height: 56,
