@@ -107,36 +107,33 @@ export default function MobileSweaping() {
     }
   }, [profileId]);
 
-  const fetchCurrentProfileInfo = useCallback(
-    async (currentProfileId: any) => {
-      if (currentProfileId) {
-        try {
-          const response = await fetch(
-            `/api/user/sweeping/user?id=${currentProfileId}`
+  const fetchCurrentProfileInfo = useCallback(async (currentProfileId: any) => {
+    if (currentProfileId) {
+      try {
+        const response = await fetch(
+          `/api/user/sweeping/user?id=${currentProfileId}`
+        );
+        if (!response.ok) {
+          console.error(
+            "Failed to fetch advertiser data:",
+            response.statusText
           );
-          if (!response.ok) {
-            console.error(
-              "Failed to fetch advertiser data:",
-              response.statusText
-            );
-            setCustomProfile(undefined);
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const { user: advertiserData } = await response.json();
-          if (!advertiserData) {
-            console.error("Advertiser not found");
-          } else {
-            setSelectedUserProfile(advertiserData);
-          }
-        } catch (error: any) {
-          console.error("Error fetching data:", error.message);
-        } finally {
+          setCustomProfile(undefined);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        const { user: advertiserData } = await response.json();
+        if (!advertiserData) {
+          console.error("Advertiser not found");
+        } else {
+          setSelectedUserProfile(advertiserData);
+        }
+      } catch (error: any) {
+        console.error("Error fetching data:", error.message);
+      } finally {
       }
-    },
-    []
-  );
+    }
+  }, []);
 
   const getUserList = useCallback(
     async (profileId: string) => {
@@ -287,9 +284,35 @@ export default function MobileSweaping() {
     null
   );
   const [swipeOffset, setSwipeOffset] = useState(0);
+
+  // Helper function to check if user is premium
+  const isUserPremium = () => membership === 1;
+
+  // Helper function to check if user has reached daily swipe limit
+  const hasReachedSwipeLimit = () => swipeCount >= dailyLimit;
+
   const handleSwipe = async (direction: string) => {
+    // Check if this is the last available profile
     if (currentIndex + 1 >= userProfiles.length) {
       setShowEndPopup(true); // Show the preferences modal
+    }
+
+    // Handle daily swipe limit
+    if (hasReachedSwipeLimit()) {
+      if (isUserPremium()) {
+        // Premium users can continue swiping
+        setSwipeDirection(direction);
+      } else {
+        // Non-premium users reached their limit
+        setShowLimitPopup(true);
+        return; // Stop swiping process for non-premium users
+      }
+    } else {
+      setSwipeDirection(direction);
+      // Only increment counter for non-premium users
+      if (!isUserPremium()) {
+        setSwipeCount((prev) => prev + 1);
+      }
     }
 
     // Update category relation based on direction
@@ -411,15 +434,15 @@ export default function MobileSweaping() {
       }
     },
     [
-      router, 
-      currentIndex, 
-      swipeCount, 
-      dailyLimit, 
-      membership, 
-      userProfiles, 
-      idParam, 
-      handleUpdateCategoryRelation, 
-      handleUpdateLikeMatch
+      router,
+      currentIndex,
+      swipeCount,
+      dailyLimit,
+      membership,
+      userProfiles,
+      idParam,
+      handleUpdateCategoryRelation,
+      handleUpdateLikeMatch,
     ]
   );
 
@@ -428,41 +451,13 @@ export default function MobileSweaping() {
       const offsetX = eventData.deltaX;
       const offsetY = eventData.deltaY;
 
-      if (swipeCount >= dailyLimit) {
-        if (membership == 0) {
-          setShowLimitPopup(true);
-          return;
-        } else {
-          if (eventData.dir === "Down") {
-            setSwipeOffset(offsetY);
-          } else {
-            setSwipeOffset(offsetX);
-          }
-
-          setIsSwiping(true);
-          setSwipeDirection(eventData.dir.toLowerCase());
-
-          // Set dynamic position and swipe image based on direction
-          switch (eventData.dir) {
-            case "Left":
-              setDynmicPosition("77%");
-              setCurrentSwipeImage("delete.png");
-              break;
-            case "Right":
-              setDynmicPosition("30%");
-              setCurrentSwipeImage("like.png");
-              break;
-            case "Down":
-              setDynmicPosition("77%");
-              setCurrentSwipeImage("maybe.png");
-              break;
-            default:
-              setCurrentSwipeImage(null);
-              break;
-          }
-        }
+      // Check daily limit and membership using helper functions
+      if (hasReachedSwipeLimit() && !isUserPremium()) {
+        setShowLimitPopup(true);
+        return;
       }
 
+      // Set offset based on swipe direction
       if (eventData.dir === "Down") {
         setSwipeOffset(offsetY);
       } else {
@@ -497,38 +492,27 @@ export default function MobileSweaping() {
       const isRight = direction === "right" && Math.abs(eventData.deltaX) > 100;
       const isDown = direction === "down" && Math.abs(eventData.deltaY) > 100;
 
-      if (swipeCount >= dailyLimit) {
-        if (membership == 0) {
+      // Check if swipe is valid (sufficient displacement)
+      if (isLeft || isRight || isDown) {
+        // Check daily limit using helper function
+        if (hasReachedSwipeLimit() && !isUserPremium()) {
           setShowLimitPopup(true);
           return;
-        } else {
-          if (isLeft || isRight || isDown) {
-            setSwipeCount((prev) => prev + 1);
-            setSwipeOffset(0);
-            setIsSwiping(false);
-            setCurrentSwipeImage(null);
-
-            // Handle swipe and move to the next profile
-            handleSwipe(direction);
-            setCurrentIndex((prevIndex) => prevIndex + 1);
-          } else {
-            // Reset states for incomplete swipes
-            setIsSwiping(false);
-            setSwipeOffset(0);
-            setCurrentSwipeImage(null);
-          }
         }
-      }
 
-      if (isLeft || isRight || isDown) {
-        setSwipeCount((prev) => prev + 1);
+        // Clean animation states
         setSwipeOffset(0);
         setIsSwiping(false);
         setCurrentSwipeImage(null);
 
-        // Handle swipe and move to the next profile
+        // Process swipe (counter increment is handled inside handleSwipe)
         handleSwipe(direction);
-        setCurrentIndex((prevIndex) => prevIndex + 1);
+
+        // Use setTimeout like in members/page.tsx to allow animation to complete
+        setTimeout(() => {
+          setSwipeDirection(null);
+          setCurrentIndex((prevIndex) => prevIndex + 1);
+        }, 500);
       } else {
         // Reset states for incomplete swipes
         setIsSwiping(false);
