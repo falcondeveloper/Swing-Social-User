@@ -797,13 +797,10 @@ export default function MobileSweaping() {
             </CardContent>
           </Card>
         ) : (
-          // Render userProfiles when idParam is not null
-          userProfiles
-            .slice(currentIndex, currentIndex + 2)
-            .map((profile: any, index: number) => (
-              <Card
-                key={index}
-                elevation={0}
+          visibleProfiles.map((profile: any, index: number) => (
+            <Card
+              key={index}
+              elevation={0}
                 sx={{
                   border: "none",
                   marginLeft: "5px",
