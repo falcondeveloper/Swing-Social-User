@@ -24,9 +24,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('id'); // User ID to fetch a single record
-    console.log("-----------------------------", userId)
     let query = `SELECT * FROM public.get_swipescreenhome($1)`;
-    const values: any[] = [userId];
     const swipeResults = await pool.query(query, [userId]);
     return NextResponse.json({
       swipes: swipeResults.rows,

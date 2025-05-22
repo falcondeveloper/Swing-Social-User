@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSwipeable } from "react-swipeable";
 import {
@@ -43,24 +43,32 @@ export interface DetailViewHandle {
 
 export default function MobileSweaping() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [userProfiles, setUserProfiles] = useState<any>([]); // User profiles fetched from API
-  const [loading, setLoading] = useState(true); // Tracks loading state
-  const [swipeDirection, setSwipeDirection] = useState<any>(null); // Animation direction
+  const [userProfiles, setUserProfiles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [swipeDirection, setSwipeDirection] = useState<any>(null);
   const [showMatchPopup, setShowMatchPopup] = useState(false);
   const [showLimitPopup, setShowLimitPopup] = useState(false);
   const [showEndPopup, setShowEndPopup] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState<any>(null);
   const [swipeCount, setSwipeCount] = useState(0);
-  const [dailyLimit, setDailyLimit] = useState(15);
-  const [profileId, setProfileId] = useState<any>(); // Animation direction
+  const DAILY_LIMIT = 15;
+  const [profileId, setProfileId] = useState<any>();
   const [showDetail, setShowDetail] = useState<any>(false);
   const [selectedUserId, setSelectedUserId] = useState<any>(null);
-  const [relationCategory, setRelationCategory] = useState(null);
   const [idParam, setIdparam] = useState<any>(null);
   const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
   const [membership, setMembership] = useState(0);
   const [id, setId] = useState("");
   const [memberalarm, setMemberAlarm] = useState("0");
+
+  // Nuevas variables de estado para optimización
+  const [isProcessingSwipe, setIsProcessingSwipe] = useState(false);
+  const [pendingSwipeDirection, setPendingSwipeDirection] = useState<
+    string | null
+  >(null);
+  const swipeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSwipeTimeRef = useRef<number>(0);
+  const SWIPE_THROTTLE_MS = 300; // Throttle swipes to prevent lag
 
   const router = useRouter();
 
@@ -68,7 +76,16 @@ export default function MobileSweaping() {
     setShowDetail(false);
     setSelectedUserId(null);
   };
-  const [bottomNav, setBottomNav] = useState(); // Bottom navigation state
+
+  // Memoizar perfiles visibles para evitar re-renders innecesarios
+  const visibleProfiles = useMemo(() => {
+    return userProfiles.slice(currentIndex, currentIndex + 2);
+  }, [userProfiles, currentIndex]);
+
+  // Memoizar perfil actual
+  const currentProfile = useMemo(() => {
+    return userProfiles[currentIndex];
+  }, [userProfiles, currentIndex]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -77,9 +94,11 @@ export default function MobileSweaping() {
 
       setIdparam(param);
       const id = localStorage.getItem("logged_in_profile");
-      getUserList(id as string);
-      fetchCurrentProfileInfo(param);
-      setProfileId(localStorage.getItem("logged_in_profile"));
+      if (id) {
+        getUserList(id);
+        fetchCurrentProfileInfo(param);
+        setProfileId(id);
+      }
     }
   }, []);
 
@@ -101,12 +120,6 @@ export default function MobileSweaping() {
     }
   }, []);
 
-  useEffect(() => {
-    if (profileId) {
-      //fetchData(profileId);
-    }
-  }, [profileId]);
-
   const fetchCurrentProfileInfo = useCallback(async (currentProfileId: any) => {
     if (currentProfileId) {
       try {
@@ -118,7 +131,6 @@ export default function MobileSweaping() {
             "Failed to fetch advertiser data:",
             response.statusText
           );
-          setCustomProfile(undefined);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
@@ -130,243 +142,361 @@ export default function MobileSweaping() {
         }
       } catch (error: any) {
         console.error("Error fetching data:", error.message);
-      } finally {
       }
     }
   }, []);
 
-  const getUserList = useCallback(
-    async (profileId: string) => {
-      try {
-        const response = await fetch(
-          "/api/user/sweeping/swipes?id=" + profileId,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        const data = await response.json();
-        setUserProfiles(data?.swipes || []);
-
-        if (data?.totalRows !== undefined && data.totalRows <= 0) {
-          setShowEndPopup(true);
+  const getUserList = useCallback(async (profileId: string) => {
+    try {
+      const response = await fetch(
+        "/api/user/sweeping/swipes?id=" + profileId,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
-      } catch (error) {
-        console.error("Error fetching user profiles:", error);
-      } finally {
-        setLoading(false);
+      );
+      const data = await response.json();
+      const profiles = data?.swipes || [];
+      setUserProfiles(profiles);
+
+      if (data?.totalRows !== undefined && data.totalRows <= 0) {
+        setShowEndPopup(true);
       }
+    } catch (error) {
+      console.error("Error fetching user profiles:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Optimizar las llamadas API con debounce
+  const debouncedApiCall = useCallback(
+    (apiCall: () => Promise<void>, delay: number = 300) => {
+      return new Promise<void>((resolve) => {
+        setTimeout(async () => {
+          await apiCall();
+          resolve();
+        }, delay);
+      });
     },
-    [profileId]
+    []
   );
 
   const handleUpdateCategoryRelation = useCallback(
-    async (category: any) => {
+    async (category: any, targetProfile: any) => {
       try {
-        // Check if the username exists
         setIdparam(null);
-        const checkResponse = await fetch("/api/user/sweeping/relation", {
+        const response = await fetch("/api/user/sweeping/relation", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             pid: profileId,
-            targetid: userProfiles[currentIndex]?.Id,
+            targetid: targetProfile?.Id,
             newcategory: category,
-          }), // Pass the username to check
+          }),
         });
 
-        const checkData = await checkResponse.json();
+        const data = await response.json();
+        return data;
       } catch (error) {
         console.error("Error:", error);
+        return null;
       }
     },
-    [profileId, currentIndex, userProfiles]
+    [profileId]
   );
 
   const sendNotification = useCallback(
-    async (message: any) => {
-      // const params = await props.params
-      const id = userProfiles[currentIndex]?.Id;
+    async (message: any, targetProfile: any) => {
       const response = await fetch("/api/user/notification", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          id: id,
+          id: targetProfile?.Id,
           body: message,
           image: "https://example.com/path/to/image.jpg",
           url: `https://swing-social-website.vercel.app/members/${profileId}`,
         }),
       });
 
-      const result = await response.json();
+      return await response.json();
     },
-    [currentIndex, profileId, userProfiles]
+    [profileId]
   );
 
-  const handleUpdateLikeMatch = useCallback(async () => {
-    try {
-      const response = await fetch("/api/user/sweeping/match", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          profileid: profileId,
-          targetid: userProfiles[currentIndex]?.Id,
-        }), // Pass the username to check
-      });
+  const handleUpdateLikeMatch = useCallback(
+    async (targetProfile: any) => {
+      try {
+        const response = await fetch("/api/user/sweeping/match", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            profileid: profileId,
+            targetid: targetProfile?.Id,
+          }),
+        });
 
-      const username = localStorage.getItem("profileUsername");
+        const username = localStorage.getItem("profileUsername");
+        const data = await response.json();
 
-      const data = await response.json();
+        if (data?.isMatch) {
+          setMatchedProfile(targetProfile);
+          setShowMatchPopup(true);
+          setId(targetProfile?.Id);
+          sendNotification(
+            `You have a new match with ${username}!`,
+            targetProfile
+          );
+        }
 
-      if (data?.isMatch) {
-        setMatchedProfile(userProfiles[currentIndex]);
-        setShowMatchPopup(true);
-        setId(userProfiles[currentIndex]?.Id);
-        sendNotification(`You have a new match with ${username}!`);
+        return data;
+      } catch (error) {
+        console.error("Error:", error);
+        return null;
       }
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  }, [profileId, currentIndex, userProfiles, sendNotification]);
+    },
+    [profileId, sendNotification]
+  );
 
-  const handleReportUser = useCallback(async () => {
-    try {
-      // Check if t
-      // he username exists
-      const checkResponse = await fetch("/api/user/sweeping/report", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          profileid: profileId,
-          targetid: userProfiles[currentIndex]?.Id,
-        }), // Pass the username to check
-      });
+  const handleReportUser = useCallback(
+    async (targetProfile: any) => {
+      try {
+        const response = await fetch("/api/user/sweeping/report", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            profileid: profileId,
+            targetid: targetProfile?.Id,
+          }),
+        });
 
-      const checkData = await checkResponse.json();
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  }, [profileId, currentIndex, userProfiles]);
+        return await response.json();
+      } catch (error) {
+        console.error("Error:", error);
+        return null;
+      }
+    },
+    [profileId]
+  );
 
   const handleGrantAccess = useCallback(async () => {
     try {
-      // Check if t
-      // he username exists
-      const checkResponse = await fetch("/api/user/sweeping/grant", {
+      const response = await fetch("/api/user/sweeping/grant", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           profileid: profileId,
-          targetid: userProfiles[currentIndex]?.Id,
-        }), // Pass the username to check
+          targetid: currentProfile?.Id,
+        }),
       });
 
-      const checkData = await checkResponse.json();
+      return await response.json();
     } catch (error) {
       console.error("Error:", error);
+      return null;
     }
-  }, [profileId, currentIndex, userProfiles]);
+  }, [profileId, currentProfile]);
 
-  const [isSwiping, setIsSwiping] = useState(false);
   const [currentSwipeImage, setCurrentSwipeImage] = useState<string | null>(
     null
   );
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const [dynamicPosition, setDynamicPosition] = useState<any>("77%");
 
-  // Helper function to check if user is premium
+  // Helper functions
   const isUserPremium = () => membership === 1;
+  const hasReachedSwipeLimit = () => swipeCount >= DAILY_LIMIT;
 
-  // Helper function to check if user has reached daily swipe limit
-  const hasReachedSwipeLimit = () => swipeCount >= dailyLimit;
+  // Función principal de swipe optimizada
+  const processSwipe = useCallback(
+    async (direction: string, targetProfile: any) => {
+      if (isProcessingSwipe) return;
 
-  const handleSwipe = async (direction: string) => {
-    // Check if this is the last available profile
-    if (currentIndex + 1 >= userProfiles.length) {
-      setShowEndPopup(true); // Show the preferences modal
-    }
+      setIsProcessingSwipe(true);
 
-    // Handle daily swipe limit
-    if (hasReachedSwipeLimit()) {
-      if (isUserPremium()) {
-        // Premium users can continue swiping
-        setSwipeDirection(direction);
-      } else {
-        // Non-premium users reached their limit
+      try {
+        // Realizar todas las operaciones API de forma paralela cuando sea posible
+        const promises: Promise<any>[] = [];
+
+        if (direction === "left") {
+          promises.push(handleUpdateCategoryRelation("Denied", targetProfile));
+        } else if (direction === "right") {
+          promises.push(handleUpdateCategoryRelation("Liked", targetProfile));
+          promises.push(handleUpdateLikeMatch(targetProfile));
+        } else if (direction === "down") {
+          promises.push(handleUpdateCategoryRelation("Maybe", targetProfile));
+        }
+
+        // Ejecutar todas las promesas en paralelo
+        await Promise.all(promises);
+
+        // Actualizar el índice inmediatamente después de las operaciones API
+        setCurrentIndex((prevIndex) => prevIndex + 1);
+
+        // Verificar límites y mostrar popups si es necesario
+        if (currentIndex + 1 >= userProfiles.length) {
+          setShowEndPopup(true);
+        }
+
+        if (!isUserPremium() && hasReachedSwipeLimit()) {
+          setShowLimitPopup(true);
+        } else if (!isUserPremium()) {
+          setSwipeCount((prev) => prev + 1);
+        }
+      } catch (error) {
+        console.error("Error processing swipe:", error);
+      } finally {
+        setIsProcessingSwipe(false);
+      }
+    },
+    [
+      isProcessingSwipe,
+      currentIndex,
+      userProfiles.length,
+      isUserPremium,
+      hasReachedSwipeLimit,
+      handleUpdateCategoryRelation,
+      handleUpdateLikeMatch,
+    ]
+  );
+
+  // Optimizar handleSwipeAction con throttling
+  const handleSwipeAction = useCallback(
+    async (action: string) => {
+      const now = Date.now();
+
+      // Throttle swipes to prevent rapid fire
+      if (now - lastSwipeTimeRef.current < SWIPE_THROTTLE_MS) {
+        return;
+      }
+
+      lastSwipeTimeRef.current = now;
+
+      if (isProcessingSwipe) return;
+
+      const targetProfile = currentProfile;
+      if (!targetProfile) return;
+
+      if (idParam != null) {
+        router.push("/members");
+        return;
+      }
+
+      // Mapear acciones a direcciones
+      const actionMap: { [key: string]: string } = {
+        deiend: "left",
+        delete: "left",
+        like: "right",
+        maybe: "down",
+      };
+
+      const direction = actionMap[action] || action;
+      await processSwipe(direction, targetProfile);
+    },
+    [currentProfile, idParam, router, processSwipe, isProcessingSwipe]
+  );
+
+  // Optimizar swipe handlers
+  const swipeHandlers = useSwipeable({
+    onSwiping: (eventData) => {
+      if (isProcessingSwipe) return;
+
+      const offsetX = eventData.deltaX;
+      const offsetY = eventData.deltaY;
+
+      if (hasReachedSwipeLimit() && !isUserPremium()) {
         setShowLimitPopup(true);
-        return; // Stop swiping process for non-premium users
+        return;
       }
-    } else {
-      setSwipeDirection(direction);
-      // Only increment counter for non-premium users
-      if (!isUserPremium()) {
-        setSwipeCount((prev) => prev + 1);
+
+      // Set offset based on swipe direction
+      if (eventData.dir === "Down") {
+        setSwipeOffset(offsetY);
+      } else {
+        setSwipeOffset(offsetX);
       }
-    }
 
-    // Update category relation based on direction
-    if (direction === "left") {
-      await handleUpdateCategoryRelation("Denied");
-    } else if (direction === "right") {
-      await handleUpdateCategoryRelation("Liked");
-      await handleUpdateLikeMatch();
-    } else if (direction === "down") {
-      await handleUpdateCategoryRelation("Maybe");
-    }
-  };
+      setSwipeDirection(eventData.dir.toLowerCase());
 
+      // Set dynamic position and swipe image based on direction
+      switch (eventData.dir) {
+        case "Left":
+          setDynamicPosition("77%");
+          setCurrentSwipeImage("delete.png");
+          break;
+        case "Right":
+          setDynamicPosition("30%");
+          setCurrentSwipeImage("like.png");
+          break;
+        case "Down":
+          setDynamicPosition("77%");
+          setCurrentSwipeImage("maybe.png");
+          break;
+        default:
+          setCurrentSwipeImage(null);
+          break;
+      }
+    },
+    onSwiped: (eventData) => {
+      if (isProcessingSwipe) return;
+
+      const direction = eventData.dir.toLowerCase();
+      const isLeft = direction === "left" && Math.abs(eventData.deltaX) > 100;
+      const isRight = direction === "right" && Math.abs(eventData.deltaX) > 100;
+      const isDown = direction === "down" && Math.abs(eventData.deltaY) > 100;
+
+      // Reset visual states immediately
+      setSwipeOffset(0);
+      setCurrentSwipeImage(null);
+
+      if (isLeft || isRight || isDown) {
+        if (hasReachedSwipeLimit() && !isUserPremium()) {
+          setShowLimitPopup(true);
+          return;
+        }
+
+        // Clear any existing timeout
+        if (swipeTimeoutRef.current) {
+          clearTimeout(swipeTimeoutRef.current);
+        }
+
+        // Set pending direction and process after a short delay
+        setPendingSwipeDirection(direction);
+
+        // Process swipe immediately instead of waiting
+        const targetProfile = currentProfile;
+        if (targetProfile) {
+          processSwipe(direction, targetProfile);
+        }
+
+        // Clean up animation state
+        swipeTimeoutRef.current = setTimeout(() => {
+          setSwipeDirection(null);
+          setPendingSwipeDirection(null);
+        }, 300);
+      } else {
+        // Reset states for incomplete swipes
+        setSwipeDirection(null);
+      }
+    },
+    preventScrollOnSwipe: true,
+    trackMouse: true,
+  });
+
+  // Report modal states
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [showCustomProfile, setShowCustomProfile] = useState(true);
-  const [customProfile, setCustomProfile] = useState<any>(null);
-  // const fetchData = async (userId: string) => {
-  //     if (userId) {
-  //         console.log(userId, "======userId in view");
-  //         setLoading(true);
-  //         try {
-  //             // Fetch advertiser data using the custom API
-  //             const response = await fetch(`/api/user/sweeping/user?id=${userId}`);
-  //             if (!response.ok) {
-  //                 console.error('Failed to fetch advertiser data:', response.statusText);
-  //                 setCustomProfile(undefined);
-  //                 throw new Error(`HTTP error! status: ${response.status}`);
-  //             }
-
-  //             const { user: advertiserData } = await response.json();
-  //             if (!advertiserData) {
-  //                 console.error('Advertiser not found');
-  //                 setCustomProfile(undefined);
-  //             } else {
-  //                 console.log(advertiserData, "=========advertiser data");
-  //                 setCustomProfile(advertiserData);
-  //                 setSwipeCount(advertiserData?.SwipeCount)
-  //                 setDailyLimit(advertiserData?.SwipeMax)
-  //                 if (parseInt(advertiserData?.SwipeCount) >= parseInt(advertiserData?.SwipeMax)) {
-  //                     if (membership == 0) {
-  //                         setShowLimitPopup(true);
-  //                     } else {
-  //                         setShowLimitPopup(false);
-  //                     }
-  //                 }
-  //             }
-  //         } catch (error: any) {
-  //             console.error('Error fetching data:', error.message);
-  //         } finally {
-  //             setLoading(false);
-  //         }
-
-  //     }
-  // };
   const [reportOptions, setReportOptions] = useState({
     reportUser: false,
     blockUser: false,
@@ -386,164 +516,40 @@ export default function MobileSweaping() {
 
   const handleReportSubmit = useCallback(() => {
     setIsReportModalOpen(false);
-    handleReportUser();
-    // Add logic to handle report or block user action
-  }, [handleReportUser]);
-
-  const [dynamicPosition, setDynmicPosition] = useState<any>("77%");
-
-  const handleSwipeAction = useCallback(
-    async (action: string) => {
-      if (currentIndex + 1 >= userProfiles.length) {
-        setShowEndPopup(true); // Show the preferences modal
-      }
-
-      if (idParam != null) {
-        router.push("/members");
-        // fetchCurrentProfileInfo(userProfiles[currentIndex]?.Id);
-      }
-
-      if (swipeCount >= dailyLimit) {
-        if (membership == 0) {
-          setShowLimitPopup(true);
-          return;
-        } else {
-          setCurrentIndex((prevIndex) => prevIndex + 1);
-
-          // Update category relation based on direction
-          if (action === "deiend") {
-            await handleUpdateCategoryRelation("Denied");
-          } else if (action === "like") {
-            await handleUpdateCategoryRelation("Liked");
-            await handleUpdateLikeMatch();
-          } else if (action === "maybe") {
-            await handleUpdateCategoryRelation("Maybe");
-          }
-        }
-      }
-      setCurrentIndex((prevIndex) => prevIndex + 1);
-
-      // Update category relation based on direction
-      if (action === "deiend") {
-        await handleUpdateCategoryRelation("Denied");
-      } else if (action === "like") {
-        await handleUpdateCategoryRelation("Liked");
-        await handleUpdateLikeMatch();
-      } else if (action === "maybe") {
-        await handleUpdateCategoryRelation("Maybe");
-      }
-    },
-    [
-      router,
-      currentIndex,
-      swipeCount,
-      dailyLimit,
-      membership,
-      userProfiles,
-      idParam,
-      handleUpdateCategoryRelation,
-      handleUpdateLikeMatch,
-    ]
-  );
-
-  const swipeHandlers = useSwipeable({
-    onSwiping: (eventData) => {
-      const offsetX = eventData.deltaX;
-      const offsetY = eventData.deltaY;
-
-      // Check daily limit and membership using helper functions
-      if (hasReachedSwipeLimit() && !isUserPremium()) {
-        setShowLimitPopup(true);
-        return;
-      }
-
-      // Set offset based on swipe direction
-      if (eventData.dir === "Down") {
-        setSwipeOffset(offsetY);
-      } else {
-        setSwipeOffset(offsetX);
-      }
-
-      setIsSwiping(true);
-      setSwipeDirection(eventData.dir.toLowerCase());
-
-      // Set dynamic position and swipe image based on direction
-      switch (eventData.dir) {
-        case "Left":
-          setDynmicPosition("77%");
-          setCurrentSwipeImage("delete.png");
-          break;
-        case "Right":
-          setDynmicPosition("30%");
-          setCurrentSwipeImage("like.png");
-          break;
-        case "Down":
-          setDynmicPosition("77%");
-          setCurrentSwipeImage("maybe.png");
-          break;
-        default:
-          setCurrentSwipeImage(null);
-          break;
-      }
-    },
-    onSwiped: (eventData) => {
-      const direction = eventData.dir.toLowerCase();
-      const isLeft = direction === "left" && Math.abs(eventData.deltaX) > 100;
-      const isRight = direction === "right" && Math.abs(eventData.deltaX) > 100;
-      const isDown = direction === "down" && Math.abs(eventData.deltaY) > 100;
-
-      // Check if swipe is valid (sufficient displacement)
-      if (isLeft || isRight || isDown) {
-        // Check daily limit using helper function
-        if (hasReachedSwipeLimit() && !isUserPremium()) {
-          setShowLimitPopup(true);
-          return;
-        }
-
-        // Clean animation states
-        setSwipeOffset(0);
-        setIsSwiping(false);
-        setCurrentSwipeImage(null);
-
-        // Process swipe (counter increment is handled inside handleSwipe)
-        handleSwipe(direction);
-
-        // Use setTimeout like in members/page.tsx to allow animation to complete
-        setTimeout(() => {
-          setSwipeDirection(null);
-          setCurrentIndex((prevIndex) => prevIndex + 1);
-        }, 500);
-      } else {
-        // Reset states for incomplete swipes
-        setIsSwiping(false);
-        setSwipeOffset(0);
-        setCurrentSwipeImage(null);
-      }
-    },
-    preventScrollOnSwipe: true,
-    trackMouse: true,
-  });
+    if (currentProfile) {
+      handleReportUser(currentProfile);
+    }
+  }, [handleReportUser, currentProfile]);
 
   const handleChatAction = () => {
     router.push(`/messaging/${id}`);
   };
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (swipeTimeoutRef.current) {
+        clearTimeout(swipeTimeoutRef.current);
+      }
+    };
+  }, []);
+
   if (loading) {
     return (
       <Box
         display="flex"
-        justifyContent="center" // Centers horizontally
-        alignItems="center" // Centers vertically
-        height="100vh" // Full viewport height
-        bgcolor="#121212" // Background color
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+        bgcolor="#121212"
       >
         <Box
           component="img"
           src="/loading.png"
           alt="Logo"
           sx={{
-            width: "50px", // Set a fixed width
-            height: "auto", // Maintain aspect ratio
+            width: "50px",
+            height: "auto",
             flexShrink: 0,
           }}
         />
@@ -674,140 +680,7 @@ export default function MobileSweaping() {
           />
         </Box>
 
-        {/* {userProfiles.slice(currentIndex, currentIndex + 2).map((profile: any, index: number) => (
-                    <Card
-                        key={index}
-                        elevation={0}
-                        sx={{
-                            border: 'none',
-                            marginLeft: "5px",
-                            marginRight: "5px",
-                            width: { xs: 395, sm: 405, md: 300 },
-                            height: { md: 450, lg: 450, sm: 580, xs: 580 },
-                            marginTop: { sm: "30px" },
-                            boxShadow: 'none',
-                            position: "absolute",
-                            transform: index === 0
-                                ? swipeDirection === "down"
-                                    ? `translateY(${swipeOffset}px)`
-                                    : `translateX(${swipeOffset}px)`
-                                : "translate(0px, 0px)",
-                            zIndex: index === 0 ? 2 : 1,
-                            backgroundColor: "#0a0a0a",
-                            color: "white",
-                        }}
-                    >
-                        <Box
-                            color="white"
-                            p={1}
-                            sx={{
-                                width: 55,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                cursor: "pointer",
-                                marginLeft: 'auto',
-                                marginBottom: "5px",
-                                marginRight: { sm: "10px", xs: "10px" }
-                            }}
-                            onClick={() => {
-                                setShowDetail(true);
-                                setSelectedUserId(userProfiles[currentIndex]?.Id);
-                            }}
-                        >
-                            <img
-                                src="/ProfileInfo.png"
-                                alt="Profile Info"
-                                style={{
-                                    width: "100%",
-                                }}
-                            />
-                        </Box>
-                        <Box position="relative" width="100%" sx={{ height: { lg: 270, md: 270, sm: 380, xs: 380 } }}>
-                            <Avatar
-                                alt={idParam === null
-                                    ? selectedUserProfile?.Username
-                                    : profile?.Username || "Unknown"}
-                                src={idParam === null
-                                    ? selectedUserProfile?.Avatar
-                                    : profile?.Avatar}
-                                sx={{
-                                    width: "100%",
-                                    height: "100%",
-                                    borderRadius: 0,
-                                }}
-                            />
-
-                            {currentSwipeImage && index === 0 && (
-                                <Box
-                                    sx={{
-                                        position: "absolute",
-                                        top: "50%",
-                                        left: dynamicPosition,
-                                        transform: "translate(-50%, -50%)",
-                                        zIndex: 2,
-                                        borderRadius: 1,
-                                        padding: 2,
-                                    }}
-                                >
-                                    <img
-                                        src={`/${currentSwipeImage}`}
-                                        alt={currentSwipeImage}
-                                        style={{ width: "150px", height: "150px" }}
-                                    />
-                                </Box>
-                            )}
-
-                            <Box
-                                position="absolute"
-                                bottom={8}
-                                bgcolor="rgba(0,0,0,0.6)"
-                                color="white"
-                                p={1}
-                                borderRadius={1}
-                                fontSize={12}
-                                sx={{ cursor: "pointer", right: { sm: 20, xs: 20, lg: 8, md: 8 } }}
-                                onClick={handleReportModalToggle}
-                            >
-                                <Flag sx={{ color: "#9c27b0" }} />
-                            </Box>
-
-                        </Box>
-                        <CardContent>
-                            <Typography variant="h6" component="div" gutterBottom>
-                                {profile?.Username || "Unknown"} ,{" "}
-                                {profile?.DateOfBirth
-                                    ? new Date().getFullYear() - new Date(profile.DateOfBirth).getFullYear()
-                                    : ""}
-                                {profile?.Gender === "Male"
-                                    ? "M"
-                                    : profile?.Gender === "Female"
-                                        ? "F"
-                                        : ""}
-
-                                {profile?.PartnerDateOfBirth && (
-                                    <>
-                                        {" | "}
-                                        {new Date().getFullYear() - new Date(profile.PartnerDateOfBirth).getFullYear()}{" "}
-                                        {profile?.PartnerGender === "Male"
-                                            ? "M"
-                                            : profile?.PartnerGender === "Female"
-                                                ? "F"
-                                                : ""}
-                                    </>
-                                )}
-                            </Typography>
-                            <Typography variant="body2" color="secondary">
-                                {profile?.Location || ""}
-                            </Typography>
-                            <AboutSection aboutText={profile?.About} />
-
-                        </CardContent>
-
-                    </Card>
-                ))} */}
         {idParam !== null ? (
-          // Render userSelectedProfile when idParam is null
           <Card
             elevation={0}
             sx={{
@@ -1168,8 +1041,8 @@ export default function MobileSweaping() {
         <DialogTitle sx={{ color: "#e91e63" }}>Daily Limit Reached</DialogTitle>
         <DialogContent>
           <Typography>
-            You've reached your daily limit of {dailyLimit} swipes. Upgrade your
-            membership to swipe more!
+            You've reached your daily limit of {DAILY_LIMIT} swipes. Upgrade
+            your membership to swipe more!
           </Typography>
           <Button
             onClick={() => router.push(`/membership`)}
@@ -1312,7 +1185,7 @@ export default function MobileSweaping() {
           </Button>
         </DialogContent>
       </Dialog>
-      {/* Bottom Navigation Bar */}
+
       <Footer />
     </>
   );
