@@ -44,6 +44,7 @@ export interface DetailViewHandle {
 export default function MobileSweaping() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
+  const [preloadedImages, setPreloadedImages] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [swipeDirection, setSwipeDirection] = useState<any>(null);
   const [showMatchPopup, setShowMatchPopup] = useState(false);
@@ -77,12 +78,14 @@ export default function MobileSweaping() {
     setSelectedUserId(null);
   };
 
-  // Memoizar perfiles visibles para evitar re-renders innecesarios
   const visibleProfiles = useMemo(() => {
     return userProfiles.slice(currentIndex, currentIndex + 2);
   }, [userProfiles, currentIndex]);
+  
+  const preloadProfiles = useMemo(() => {
+    return userProfiles.slice(currentIndex + 2, currentIndex + 7);
+  }, [userProfiles, currentIndex]);
 
-  // Memoizar perfil actual
   const currentProfile = useMemo(() => {
     return userProfiles[currentIndex];
   }, [userProfiles, currentIndex]);
@@ -164,25 +167,42 @@ export default function MobileSweaping() {
       if (data?.totalRows !== undefined && data.totalRows <= 0) {
         setShowEndPopup(true);
       }
+      
+      // Precargar todas las imágenes de perfil
+      preloadProfileImages(profiles);
     } catch (error) {
       console.error("Error fetching user profiles:", error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, []);  
+  
+  const preloadProfileImages = useCallback((profiles: any[]) => {
+    if (!profiles || profiles.length === 0) return;
+    
+    const imageUrls = new Set<string>();
+    
+    profiles.forEach(profile => {
+      if (profile?.Avatar) {
+        imageUrls.add(profile.Avatar);
+      }
+    });
+    
+    imageUrls.forEach(url => {
+      if (!preloadedImages.has(url)) {
+        const img = new Image();
+        img.src = url;
+        img.onload = () => {
+          setPreloadedImages(prev => {
+            const updated = new Set(prev);
+            updated.add(url);
+            return updated;
+          });
+        };
+      }
+    });
+  }, [preloadedImages]);
 
-  // Optimizar las llamadas API con debounce
-  const debouncedApiCall = useCallback(
-    (apiCall: () => Promise<void>, delay: number = 300) => {
-      return new Promise<void>((resolve) => {
-        setTimeout(async () => {
-          await apiCall();
-          resolve();
-        }, delay);
-      });
-    },
-    []
-  );
 
   const handleUpdateCategoryRelation = useCallback(
     async (category: any, targetProfile: any) => {
@@ -315,11 +335,9 @@ export default function MobileSweaping() {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [dynamicPosition, setDynamicPosition] = useState<any>("77%");
 
-  // Helper functions
   const isUserPremium = () => membership === 1;
   const hasReachedSwipeLimit = () => swipeCount >= DAILY_LIMIT;
 
-  // Función principal de swipe optimizada
   const processSwipe = useCallback(
     async (direction: string, targetProfile: any) => {
       if (isProcessingSwipe) return;
@@ -372,12 +390,10 @@ export default function MobileSweaping() {
     ]
   );
 
-  // Optimizar handleSwipeAction con throttling
   const handleSwipeAction = useCallback(
     async (action: string) => {
       const now = Date.now();
 
-      // Throttle swipes to prevent rapid fire
       if (now - lastSwipeTimeRef.current < SWIPE_THROTTLE_MS) {
         return;
       }
@@ -394,7 +410,6 @@ export default function MobileSweaping() {
         return;
       }
 
-      // Mapear acciones a direcciones
       const actionMap: { [key: string]: string } = {
         deiend: "left",
         delete: "left",
@@ -408,7 +423,6 @@ export default function MobileSweaping() {
     [currentProfile, idParam, router, processSwipe, isProcessingSwipe]
   );
 
-  // Optimizar swipe handlers
   const swipeHandlers = useSwipeable({
     onSwiping: (eventData) => {
       if (isProcessingSwipe) return;
@@ -581,6 +595,26 @@ export default function MobileSweaping() {
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
+      
+      <div style={{ display: 'none' }}>
+        {preloadProfiles.map((profile, index) => (
+          <img 
+            key={`preload-${index}`} 
+            src={profile?.Avatar || ''} 
+            alt="preload" 
+            onLoad={() => {
+              // Marcar la imagen como precargada
+              if (profile?.Avatar) {
+                setPreloadedImages(prev => {
+                  const updated = new Set(prev);
+                  updated.add(profile.Avatar);
+                  return updated;
+                });
+              }
+            }}
+          />
+        ))}
+      </div>
       <Box
         display="flex"
         justifyContent="center"
@@ -719,6 +753,10 @@ export default function MobileSweaping() {
                   height: "100%",
                   borderRadius: 0,
                 }}
+                imgProps={{
+                  loading: 'eager', // Cargar la imagen con alta prioridad
+                  style: { objectFit: 'cover' }
+                }}
               />
 
               <Box
@@ -842,6 +880,10 @@ export default function MobileSweaping() {
                       width: "100%",
                       height: "100%",
                       borderRadius: 0,
+                    }}
+                    imgProps={{
+                      loading: 'eager', // Cargar la imagen con alta prioridad
+                      style: { objectFit: 'cover' }
                     }}
                   />
 
