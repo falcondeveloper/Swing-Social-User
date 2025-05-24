@@ -35,7 +35,7 @@ import {
   useMediaQuery,
   Alert,
 } from "@mui/material";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState } from "react";
 import DTicketListComponent from "@/components/DTicketListComponent";
 import MTicketListComponent from "@/components/MTicketListComponent";
 import RSVPListComponent from "@/components/RSVPListComponent";
@@ -94,16 +94,22 @@ export default function EventDetail(props: { params: Params }) {
     }
   }, []);
 
-  // Memoized function to get ID from params
-  const getIdFromParam = useCallback(async () => {
-    const params = await props.params;
-    const pid: any = params.id;
-    setId(pid);
+  useEffect(() => {
+    const getIdFromParam = async () => {
+      const params = await props.params;
+      const pid: any = params.id;
+      console.log(pid);
+      setId(pid);
+      console.log(pid, "===========id");
+    };
+    getIdFromParam();
   }, [props]);
 
   useEffect(() => {
-    getIdFromParam();
-  }, [getIdFromParam]);
+    if (id) {
+      handleGetEventDetail(id);
+    }
+  }, [id]);
 
   useEffect(() => {
     setShowContent(true);
@@ -125,25 +131,26 @@ export default function EventDetail(props: { params: Params }) {
   const [selectedUserId, setSelectedUserId] = useState<any>(null);
 
   const theme = useTheme();
-  const isMobile = useMediaQuery("(max-width: 480px)");
+  //const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
 
-  // Memoized ticket change handler to prevent unnecessary recalculations
-  const handleTicketsChange = useCallback(
-    (quantity: any = 0, price: any = 0, name: any, type: any) => {
-      if (isMobile) {
-        setSummary({
-          totalQuantity: quantity,
-          totalPrice: price,
-          ticketName: name,
-          ticketType: type,
-        });
-      }
-    },
-    [isMobile]
-  );
+  const handleTicketsChange = (
+    quantity: any = 0,
+    price: any = 0,
+    name: any,
+    type: any
+  ) => {
+    if (isMobile) {
+      setSummary({
+        totalQuantity: quantity,
+        totalPrice: price,
+        ticketName: name,
+        ticketType: type,
+      });
+    }
+  };
 
-  // Memoized function to get event details to prevent unnecessary API calls
-  const handleGetEventDetail = useCallback(async (eventId: any) => {
+  const handleGetEventDetail = async (eventId: any) => {
     try {
       const checkResponse = await fetch("/api/user/events?eventId=" + eventId, {
         method: "GET",
@@ -166,14 +173,7 @@ export default function EventDetail(props: { params: Params }) {
     } catch (error) {
       console.error("Error:", error);
     }
-  }, []);
-
-  // Add useEffect to call handleGetEventDetail when id changes
-  useEffect(() => {
-    if (id) {
-      handleGetEventDetail(id);
-    }
-  }, [id, handleGetEventDetail]);
+  };
 
   const [profileId, setProfileId] = useState<any>(); // Animation direction
   const [profileUsername, setProfileUsername] = useState<any>(); // Animation direction
@@ -186,34 +186,31 @@ export default function EventDetail(props: { params: Params }) {
 
   const [targetId, setTargetId] = useState<any>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  // Memoized function to toggle report modal
-  const handleReportModalToggle = useCallback((pid: string) => {
+  const handleReportModalToggle = (pid: string) => {
     setTargetId(pid);
     setIsReportModalOpen((prev) => !prev);
-  }, []);
+  };
 
   const [reportOptions, setReportOptions] = useState({
     reportUser: false,
     blockUser: false,
   });
 
-  // Memoized checkbox change handler
-  const handleCheckboxChange = useCallback((event: any) => {
+  const handleCheckboxChange = (event: any) => {
     const { name, checked } = event.target;
     setReportOptions((prev) => ({
       ...prev,
       [name]: checked,
     }));
-  }, []);
-  // Memoized email checkbox change handler
-  const handleEmailCheckboxChange = useCallback((field: any) => {
+  };
+  const handleEmailCheckboxChange = (field: any) => {
     setFormState((prev: any) => ({ ...prev, [field]: !prev[field] }));
-  }, []);
+  };
 
-  // Memoized report user handler
-  const handleReportUser = useCallback(async () => {
+  const handleReportUser = async () => {
     try {
-      // Check if the username exists
+      // Check if t
+      // he username exists
       const checkResponse = await fetch("/api/user/sweeping/report", {
         method: "POST",
         headers: {
@@ -226,14 +223,13 @@ export default function EventDetail(props: { params: Params }) {
     } catch (error) {
       console.error("Error:", error);
     }
-  }, [profileId, targetId]);
-  // Memoized report submit handler
-  const handleReportSubmit = useCallback(() => {
-    // Removed console.log to avoid unnecessary operations
+  };
+  const handleReportSubmit = () => {
+    console.log("Report Options:", reportOptions);
     setIsReportModalOpen(false);
     handleReportUser();
     // Add logic to handle report or block user action
-  }, [handleReportUser]);
+  };
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
