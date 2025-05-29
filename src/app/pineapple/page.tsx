@@ -463,7 +463,7 @@ export default function Pineapple() {
             WebkitTextFillColor: "transparent",
           }}
         >
-          Profiles Recently Active
+          Profiles Recently Active.
         </Typography>
 
         {loading ? (
