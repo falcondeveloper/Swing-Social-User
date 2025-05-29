@@ -190,7 +190,9 @@ export default function ChatPage() {
         if (file) {
             const reader: any = new FileReader();
             reader.onload = () => {
-                setMessages([...messages, { sender: "user", text: <img src={reader.result} alt="Uploaded" style={{ maxWidth: "100px", borderRadius: "8px" }} /> }]);
+                if (reader.result && typeof reader.result === 'string' && reader.result.trim() !== '') {
+                    setMessages([...messages, { sender: "user", text: <img src={reader.result} alt="Uploaded" style={{ maxWidth: "100px", borderRadius: "8px" }} /> }]);
+                }
             };
             reader.readAsDataURL(file);
         }

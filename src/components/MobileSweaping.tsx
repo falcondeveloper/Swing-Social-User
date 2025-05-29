@@ -597,23 +597,22 @@ export default function MobileSweaping() {
       <ToastContainer position="top-right" autoClose={3000} />
       
       <div style={{ display: 'none' }}>
-        {preloadProfiles.map((profile, index) => (
-          <img 
-            key={`preload-${index}`} 
-            src={profile?.Avatar || ''} 
-            alt="preload" 
-            onLoad={() => {
-              // Marcar la imagen como precargada
-              if (profile?.Avatar) {
+        {preloadProfiles.map((profile, index) =>
+          profile?.Avatar ? (
+            <img
+              key={`preload-${index}`}
+              src={profile.Avatar}
+              alt="preload"
+              onLoad={() => {
                 setPreloadedImages(prev => {
                   const updated = new Set(prev);
                   updated.add(profile.Avatar);
                   return updated;
                 });
-              }
-            }}
-          />
-        ))}
+              }}
+            />
+          ) : null
+        )}
       </div>
       <Box
         display="flex"

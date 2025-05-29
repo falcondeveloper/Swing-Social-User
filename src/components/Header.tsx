@@ -311,8 +311,8 @@ const Header = () => {
 								onClick={() => router.push("/profile/")}
 							>
 								<img
-									src={avatar}
-									alt="Profile"
+									src={avatar && avatar.trim() !== '' ? avatar : '/noavatar.png'}
+									alt="Avatar"
 									style={{
 										width: "100%",
 										height: "100%",

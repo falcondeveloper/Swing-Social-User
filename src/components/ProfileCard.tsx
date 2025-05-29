@@ -292,21 +292,26 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                                 </Typography>
                                 <ImageList cols={3} gap={16} sx={{ mb: 0 }}>
                                     {profileImages.length > 0 ? (
-                                        profileImages.map((image, index) => (
-                                            <ImageListItem key={index}>
-                                                <img
-                                                    src={image.Url}
-                                                    alt={`Gallery ${index + 1}`}
-                                                    style={{
-                                                        borderRadius: '8px',
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        aspectRatio: '1',
-                                                        objectFit: 'cover'
-                                                    }}
-                                                />
-                                            </ImageListItem>
-                                        ))) : (
+    profileImages.map((image, index) => {
+        
+        const uniqueKey = image?.Url ? `${image.Url}-${index}-${Math.random().toString(36).substr(2, 9)}` : `profile-image-${index}-${Math.random().toString(36).substr(2, 9)}`;
+        return (
+            <ImageListItem key={uniqueKey}>
+                <img
+                    src={image.Url && image.Url.trim() !== '' ? image.Url : '/noavatar.png'}
+                    alt={`Gallery ${index + 1}`}
+                    style={{
+                        borderRadius: '8px',
+                        width: '100%',
+                        height: '100%',
+                        aspectRatio: '1',
+                        objectFit: 'cover'
+                    }}
+                />
+            </ImageListItem>
+        );
+    })
+) : (
                                         <Typography variant="body2" color="white">
                                             No Photos Provided
                                         </Typography>
@@ -328,9 +333,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                                         {
                                             profile.LookingFor?.length > 0 ? (
-                                                profile.LookingFor.map((item) => (
+                                                profile.LookingFor.map((item, idx) => (
                                                     <Chip
-                                                        key={item}
+                                                        key={`${item}-${idx}`}
                                                         label={item}
                                                         size="small"
                                                         sx={{
@@ -357,9 +362,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                                         Swing Styles
                                     </Typography>
                                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3 }}>
-                                        {profile.SwingStyleTags.map((tag) => (
+                                        {profile.SwingStyleTags.map((tag, idx) => (
                                             <Chip
-                                                key={tag}
+                                                key={`${tag}-${idx}`}
                                                 label={tag}
                                                 size="small"
                                                 sx={{
