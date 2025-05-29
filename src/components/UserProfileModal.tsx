@@ -529,24 +529,22 @@ export default function UserProfileModal(props: any) {
                 {advertiser.Username},
                 {advertiser?.DateOfBirth
                   ? new Date().getFullYear() -
-                    new Date(advertiser.DateOfBirth).getFullYear()
+                  new Date(advertiser.DateOfBirth).getFullYear()
                   : ""}
                 {advertiser?.Gender === "Male"
                   ? "M"
                   : advertiser?.Gender === "Female"
-                  ? "F"
-                  : ""}
+                    ? "F"
+                    : ""}
                 {advertiser?.PartnerDateOfBirth && advertiser?.PartnerGender
-                  ? `| ${
-                      new Date().getFullYear() -
-                      new Date(advertiser.PartnerDateOfBirth).getFullYear()
-                    }${
-                      advertiser.PartnerGender === "Male"
-                        ? "M"
-                        : advertiser.PartnerGender === "Female"
-                        ? "F"
-                        : ""
-                    }`
+                  ? `| ${new Date().getFullYear() -
+                  new Date(advertiser.PartnerDateOfBirth).getFullYear()
+                  }${advertiser.PartnerGender === "Male"
+                    ? "M"
+                    : advertiser.PartnerGender === "Female"
+                      ? "F"
+                      : ""
+                  }`
                   : ""}
               </span>
             </Typography>
@@ -1191,9 +1189,9 @@ export default function UserProfileModal(props: any) {
                         sx={{ marginTop: 2 }}
                         dangerouslySetInnerHTML={{
                           __html:
-                            event.Description.length > 300
+                            event.Description && typeof event.Description === 'string' && event.Description.length > 300
                               ? `${event.Description.slice(0, 300)}...`
-                              : event.Description,
+                              : (event.Description || ''),
                         }}
                       />
                       <Typography variant="body2" color="text.secondary" mt={1}>

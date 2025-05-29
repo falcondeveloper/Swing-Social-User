@@ -406,7 +406,7 @@ export default function ChatPage(props: { params: Params }) {
 					AvatarFrom: myProfile?.Avatar || "/noavatar.png", // User's avatar
 					AvatarTo: userProfile?.Avatar, // This can be set to the recipient's avatar if needed
 					ChatId: "temporary-chat-id", // Temporary ID or handle as needed
-					Conversation: `<img src="${reader.result}" alt="Uploaded" style="max-width:"100px";border-radius:"8px"/>`, // The text of the message
+					Conversation: `<img src="${reader.result && typeof reader.result === 'string' && reader.result.trim() !== '' ? reader.result : '/noavatar.png'}" alt="Uploaded" style="max-width:"100px";border-radius:"8px"/>`, // The text of the message
 					ConversationId: "temporary-conversation-id", // Temporary ID for this message
 					CreatedAt: new Date().toISOString(), // Current timestamp
 					FromUsername: userProfile?.Username || "You", // Sender's username
