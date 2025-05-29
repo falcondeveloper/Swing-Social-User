@@ -41,9 +41,6 @@ test
 -- another change commit may 7
 -- DEPLOY 18 MAY 2025
 -- deploy may 19 dAVID
- -- deploy may 20 for David
- -- deploy may 21 for David
- -- deplo may 22 for David
 -- deploy may 29 for Christian
 -- deploy may 29 for Christian
 -- deploy may29 again for Christian
