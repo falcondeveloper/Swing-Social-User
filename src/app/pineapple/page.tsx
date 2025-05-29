@@ -194,15 +194,15 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               }}
             >
               <Avatar
-                src={user.Avatar}
-                alt={user.Username}
-                sx={{
-                  width: { xs: 50, sm: 65, md: 80 },
-                  height: { xs: 50, sm: 65, md: 80 },
-                  borderRadius: "12px",
-                  border: "2px solid rgba(233, 30, 99, 0.5)",
-                }}
-              />
+  src={user.Avatar && user.Avatar.trim() !== "" ? user.Avatar : "/fallback.jpg"}
+  alt={user.Username}
+  sx={{
+    width: { xs: 50, sm: 65, md: 80 },
+    height: { xs: 50, sm: 65, md: 80 },
+    borderRadius: "12px",
+    border: "2px solid rgba(233, 30, 99, 0.5)",
+  }}
+/>
             </Box>
           </Grid>
 
@@ -472,9 +472,9 @@ export default function Pineapple() {
           </Box>
         ) : (
           <>
-            {pineapple.map((user) => (
+            {pineapple.map((user, idx) => (
               <ProfileCard
-                key={user.Id}
+                key={`${user.Id}-${idx}`}
                 user={user}
                 onProfileClick={(id) => router.push(`/members?q=${id}`)}
                 onReport={handleReportModalToggle}

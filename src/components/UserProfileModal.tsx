@@ -1190,11 +1190,11 @@ export default function UserProfileModal(props: any) {
                         color="text.secondary"
                         sx={{ marginTop: 2 }}
                         dangerouslySetInnerHTML={{
-                          __html:
-                            event.Description.length > 300
-                              ? `${event.Description.slice(0, 300)}...`
-                              : event.Description,
-                        }}
+  __html:
+    (event.Description && typeof event.Description === "string" && event.Description.length > 300)
+      ? `${event.Description.slice(0, 300)}...`
+      : (event.Description || ""),
+}}
                       />
                       <Typography variant="body2" color="text.secondary" mt={1}>
                         <strong>Venue:</strong> {event.Venue}

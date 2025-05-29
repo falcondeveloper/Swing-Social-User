@@ -145,8 +145,8 @@ export default function ChangeImageModal({
 					}}
 				>
 					{[...Array(5)].map((_, index) => (
-						<Box
-							key={index}
+  <Box
+    key={`preview-box-${index}`}
 							sx={{
 								flexShrink: 0,
 								width: { xs: "40px", sm: "55px", md: "75px", lg: "120px" },
@@ -158,18 +158,18 @@ export default function ChangeImageModal({
 								backgroundColor: "black",
 							}}
 						>
-							{previewImages[index] ? (
-								<img
-									src={previewImages[index]}
-									alt={`Preview ${index + 1}`}
-									style={{
-										width: "100%",
-										height: "100%",
-										objectFit: "cover",
-										display: "block",
-									}}
-								/>
-							) : (
+							{previewImages[index] && previewImages[index].trim() !== "" ? (
+  <img
+    src={previewImages[index]}
+    alt={`Preview ${index + 1}`}
+    style={{
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+      display: "block",
+    }}
+  />
+) : (
 								<label
 									htmlFor={`file-input-${index}`}
 									style={{

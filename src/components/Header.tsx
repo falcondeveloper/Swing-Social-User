@@ -310,15 +310,27 @@ const Header = () => {
 								}}
 								onClick={() => router.push("/profile/")}
 							>
-								<img
-									src={avatar}
-									alt="Profile"
-									style={{
-										width: "100%",
-										height: "100%",
-										objectFit: "cover",
-									}}
-								/>
+								{avatar && avatar.trim() !== "" ? (
+  <img
+    src={avatar}
+    alt="Profile"
+    style={{
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+    }}
+  />
+) : (
+  <img
+    src="/fallback.jpg"
+    alt="Profile"
+    style={{
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+    }}
+  />
+)}
 							</Box>
 						</Box>
 					</Toolbar>
