@@ -86,18 +86,18 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
 
                 {/* Profile Avatar */}
                 <Avatar
-                    src={profile.Avatar}
-                    alt={profile.Username}
-                    sx={{
-                        width: 100,
-                        height: 100,
-                        border: '3px solid white',
-                        position: 'absolute',
-                        top: profile.ProfileBanner ? 140 : 20, // Adjust position if banner is missing
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                    }}
-                />
+  src={profile.Avatar && profile.Avatar.trim() !== "" ? profile.Avatar : "/fallback.jpg"}
+  alt={profile.Username}
+  sx={{
+    width: 100,
+    height: 100,
+    border: '3px solid white',
+    position: 'absolute',
+    top: profile.ProfileBanner ? 140 : 20, // Adjust position if banner is missing
+    left: '50%',
+    transform: 'translateX(-50%)',
+  }}
+/>
 
                 {/* Card Content */}
                 <CardContent sx={{ textAlign: 'center', mt: profile.ProfileBanner ? 8 : 4 }}>
@@ -114,10 +114,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                         mt={2}
                         sx={{ flexWrap: 'wrap' }}
                     >
-                        {profile.SwingStyleTags.map((tag) => (
-                            <Chip
-                                key={tag}
-                                label={tag}
+                        {profile.SwingStyleTags.map((tag, index) => (
+  <Chip
+    key={`${tag}-${index}`}
+    label={tag}
                                 variant="outlined"
                                 sx={{
                                     color: 'white',
@@ -136,18 +136,20 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                         {profileImages.length > 0 ? (
                             <Grid container spacing={2}>
                                 {profileImages.map((image: any, index: number) => (
-                                    <Grid item xs={6} sm={4} md={3} key={index}>
-                                        <CardMedia
-                                            component="img"
-                                            image={image?.Url}
-                                            alt={`Profile Image ${index + 1}`}
-                                            sx={{
-                                                borderRadius: '8px',
-                                                height: 266,
-                                                objectFit: 'cover',
-                                                boxShadow: 3,
-                                            }}
-                                        />
+  <Grid item xs={6} sm={4} md={3} key={index}>
+    {image?.Url && image?.Url.trim() !== "" ? (
+      <CardMedia
+    component="img"
+    image={image.Url}
+    alt={`Profile Image ${index + 1}`}
+    sx={{
+      borderRadius: '8px',
+      height: 266,
+      objectFit: 'cover',
+      boxShadow: 3,
+    }}
+  />
+) : null}
                                     </Grid>
                                 ))}
                             </Grid>
