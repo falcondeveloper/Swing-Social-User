@@ -472,9 +472,9 @@ export default function Pineapple() {
           </Box>
         ) : (
           <>
-            {pineapple.map((user) => (
+            {pineapple.map((user, idx) => (
               <ProfileCard
-                key={user.Id}
+                key={`${user.Id}-${idx}`}
                 user={user}
                 onProfileClick={(id) => router.push(`/members?q=${id}`)}
                 onReport={handleReportModalToggle}
