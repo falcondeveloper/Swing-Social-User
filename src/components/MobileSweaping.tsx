@@ -1,45 +1,91 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSwipeable } from "react-swipeable";
 import {
   Box,
   Card,
   CardContent,
   Typography,
   Avatar,
-  CircularProgress,
   Button,
-  IconButton,
-  BottomNavigation,
-  BottomNavigationAction,
   FormControlLabel,
   Checkbox,
   Modal,
   Dialog,
   DialogTitle,
   DialogContent,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  DialogActions,
   alpha,
 } from "@mui/material";
-import InfoIcon from "@mui/icons-material/Info";
 import InstructionModal from "@/components/InstructionModal";
 import UserProfileModal from "@/components/UserProfileModal";
 import { Flag } from "@mui/icons-material";
-import UserBottomNavigation from "@/components/BottomNavigation";
 import Header from "@/components/Header";
 import AboutSection from "@/components/AboutSection";
 import "react-toastify/dist/ReactToastify.css";
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import Footer from "./Footer";
 import { jwtDecode } from "jwt-decode";
 export interface DetailViewHandle {
   open: (id: string) => void;
 }
+
+const spring = 'cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+
+const SwipeIndicator = ({ type, opacity }: any) => {
+  if (!type) return null;
+  const style = {
+    position: 'absolute',
+    top: '40px',
+    borderRadius: '12px',
+    fontSize: '2rem',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    padding: '0.5rem 1rem',
+    opacity: opacity,
+    transition: 'opacity 0.2s ease-in-out',
+    zIndex: 10,
+  };
+  const typeStyles: any = {
+    delete: {
+      left: '65%',
+      top: '40%',
+      transform: 'rotate(-25deg)',
+      color: `#4CAF50`,
+    },
+    like: {
+      right: '65%',
+      top: '40%',
+      transform: 'rotate(25deg)',
+      color: `#F44336`,
+    },
+    maybe: {
+      left: '50%',
+      top: '70%',
+      transform: 'translateX(-50%)',
+      color: `#FFC107`,
+    }
+  };
+  return <div style={{ ...style, ...typeStyles[type] }}>
+    {type === "maybe" ?
+      <img
+        src="/maybe.png"
+        alt="Maybe"
+        style={{ width: "80px", height: "80px" }}
+      />
+      : type === "delete" ?
+        <img
+          src="/delete.png"
+          alt="Delete"
+          style={{ width: "80px", height: "80px" }}
+        />
+        : <img
+          src="/like.png"
+          alt="Like"
+          style={{ width: "80px", height: "80px" }}
+        />
+    }
+  </div>;
+};
 
 export default function MobileSweaping() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -62,15 +108,16 @@ export default function MobileSweaping() {
   const [id, setId] = useState("");
   const [memberalarm, setMemberAlarm] = useState("0");
 
-  // Nuevas variables de estado para optimización
   const [isProcessingSwipe, setIsProcessingSwipe] = useState(false);
   const [pendingSwipeDirection, setPendingSwipeDirection] = useState<
     string | null
   >(null);
-  const swipeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [cardStyles, setCardStyles] = useState<any>({ active: {}, next: {} });
   const lastSwipeTimeRef = useRef<number>(0);
-  const SWIPE_THROTTLE_MS = 300; // Throttle swipes to prevent lag
-
+  const SWIPE_THROTTLE_MS = 500;
+  const currentCardRef = useRef<HTMLDivElement | null>(null);
+  const isSwiping = useRef(false);
+  const startPoint = useRef({ x: 0, y: 0 });
   const router = useRouter();
 
   const handleClose = () => {
@@ -78,17 +125,11 @@ export default function MobileSweaping() {
     setSelectedUserId(null);
   };
 
-  const visibleProfiles = useMemo(() => {
-    return userProfiles.slice(currentIndex, currentIndex + 2);
-  }, [userProfiles, currentIndex]);
-  
-  const preloadProfiles = useMemo(() => {
-    return userProfiles.slice(currentIndex + 2, currentIndex + 7);
-  }, [userProfiles, currentIndex]);
-
-  const currentProfile = useMemo(() => {
-    return userProfiles[currentIndex];
-  }, [userProfiles, currentIndex]);
+  const profilesToRender = useMemo(() => ({
+    visible: userProfiles.slice(currentIndex, currentIndex + 2),
+    preload: userProfiles.slice(currentIndex + 2, currentIndex + 7),
+    current: userProfiles[currentIndex] ?? null,
+  }), [userProfiles, currentIndex]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -167,42 +208,29 @@ export default function MobileSweaping() {
       if (data?.totalRows !== undefined && data.totalRows <= 0) {
         setShowEndPopup(true);
       }
-      
-      // Precargar todas las imágenes de perfil
       preloadProfileImages(profiles);
     } catch (error) {
       console.error("Error fetching user profiles:", error);
     } finally {
       setLoading(false);
     }
-  }, []);  
-  
+  }, []);
+
   const preloadProfileImages = useCallback((profiles: any[]) => {
-    if (!profiles || profiles.length === 0) return;
-    
-    const imageUrls = new Set<string>();
-    
-    profiles.forEach(profile => {
-      if (profile?.Avatar) {
-        imageUrls.add(profile.Avatar);
-      }
-    });
-    
-    imageUrls.forEach(url => {
-      if (!preloadedImages.has(url)) {
-        const img = new Image();
-        img.src = url;
-        img.onload = () => {
-          setPreloadedImages(prev => {
-            const updated = new Set(prev);
-            updated.add(url);
-            return updated;
-          });
-        };
-      }
+
+    if (!Array.isArray(profiles) || profiles.length === 0) return;
+    const newUrls = new Set<string>();
+    for (const profile of profiles) {
+      const url = profile?.Avatar;
+      if (url && !preloadedImages.has(url)) newUrls.add(url);
+    }
+    if (newUrls.size === 0) return;
+    newUrls.forEach((url) => {
+      const img = new Image();
+      img.src = url;
+      img.onload = () => setPreloadedImages((prev) => new Set(prev).add(url));
     });
   }, [preloadedImages]);
-
 
   const handleUpdateCategoryRelation = useCallback(
     async (category: any, targetProfile: any) => {
@@ -210,25 +238,15 @@ export default function MobileSweaping() {
         setIdparam(null);
         const response = await fetch("/api/user/sweeping/relation", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            pid: profileId,
-            targetid: targetProfile?.Id,
-            newcategory: category,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pid: profileId, targetid: targetProfile?.Id, newcategory: category }),
         });
-
-        const data = await response.json();
-        return data;
+        return await response.json();
       } catch (error) {
         console.error("Error:", error);
         return null;
       }
-    },
-    [profileId]
-  );
+    }, [profileId]);
 
   const sendNotification = useCallback(
     async (message: any, targetProfile: any) => {
@@ -255,36 +273,23 @@ export default function MobileSweaping() {
       try {
         const response = await fetch("/api/user/sweeping/match", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            profileid: profileId,
-            targetid: targetProfile?.Id,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profileid: profileId, targetid: targetProfile?.Id }),
         });
-
         const username = localStorage.getItem("profileUsername");
         const data = await response.json();
-
         if (data?.isMatch) {
           setMatchedProfile(targetProfile);
           setShowMatchPopup(true);
           setId(targetProfile?.Id);
-          sendNotification(
-            `You have a new match with ${username}!`,
-            targetProfile
-          );
+          sendNotification(`You have a new match with ${username}!`, targetProfile);
         }
-
         return data;
       } catch (error) {
         console.error("Error:", error);
         return null;
       }
-    },
-    [profileId, sendNotification]
-  );
+    }, [profileId, sendNotification]);
 
   const handleReportUser = useCallback(
     async (targetProfile: any) => {
@@ -318,7 +323,7 @@ export default function MobileSweaping() {
         },
         body: JSON.stringify({
           profileid: profileId,
-          targetid: currentProfile?.Id,
+          targetid: profilesToRender?.current?.Id,
         }),
       });
 
@@ -327,189 +332,163 @@ export default function MobileSweaping() {
       console.error("Error:", error);
       return null;
     }
-  }, [profileId, currentProfile]);
+  }, [profileId, profilesToRender?.current]);
 
-  const [currentSwipeImage, setCurrentSwipeImage] = useState<string | null>(
-    null
-  );
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [dynamicPosition, setDynamicPosition] = useState<any>("77%");
 
   const isUserPremium = () => membership === 1;
   const hasReachedSwipeLimit = () => swipeCount >= DAILY_LIMIT;
 
-  const processSwipe = useCallback(
-    async (direction: string, targetProfile: any) => {
-      if (isProcessingSwipe) return;
+  const processSwipe = useCallback(async (action: string, targetProfile: any) => {
+    if (isProcessingSwipe) return;
+    setIsProcessingSwipe(true);
 
-      setIsProcessingSwipe(true);
+    const now = Date.now();
+    if (now - lastSwipeTimeRef.current < SWIPE_THROTTLE_MS) {
+      setIsProcessingSwipe(false);
+      return;
+    }
+    lastSwipeTimeRef.current = now;
 
-      try {
-        // Realizar todas las operaciones API de forma paralela cuando sea posible
-        const promises: Promise<any>[] = [];
+    if (idParam != null) {
+      router.push("/members");
+      setIsProcessingSwipe(false);
+      return;
+    }
 
-        if (direction === "left") {
-          promises.push(handleUpdateCategoryRelation("Denied", targetProfile));
-        } else if (direction === "right") {
-          promises.push(handleUpdateCategoryRelation("Liked", targetProfile));
-          promises.push(handleUpdateLikeMatch(targetProfile));
-        } else if (direction === "down") {
-          promises.push(handleUpdateCategoryRelation("Maybe", targetProfile));
-        }
+    if (membership !== 1) {
+      setCardStyles({
+        active: { transform: 'scale(1)', transition: `transform 0.4s ${spring}` },
+        next: { transform: 'scale(0.95)', transition: `transform 0.4s ${spring}` }
+      });
+      setShowLimitPopup(true);
+      setIsProcessingSwipe(false);
+      return;
+    }
 
-        // Ejecutar todas las promesas en paralelo
-        await Promise.all(promises);
+    if (action === "delete") await handleUpdateLikeMatch(targetProfile);
+    else if (action === "like") await handleUpdateCategoryRelation(1, targetProfile);
+    else if (action === "maybe") await handleUpdateCategoryRelation(2, targetProfile);
 
-        // Actualizar el índice inmediatamente después de las operaciones API
-        setCurrentIndex((prevIndex) => prevIndex + 1);
+    if (membership !== 1) {
+      setSwipeCount((p) => p + 1);
+    }
 
-        // Verificar límites y mostrar popups si es necesario
-        if (currentIndex + 1 >= userProfiles.length) {
-          setShowEndPopup(true);
-        }
-
-        if (!isUserPremium() && hasReachedSwipeLimit()) {
-          setShowLimitPopup(true);
-        } else if (!isUserPremium()) {
-          setSwipeCount((prev) => prev + 1);
-        }
-      } catch (error) {
-        console.error("Error processing swipe:", error);
-      } finally {
-        setIsProcessingSwipe(false);
+    setCurrentIndex((prev) => {
+      const nextIndex = prev + 1;
+      if (nextIndex >= userProfiles.length) {
+        setShowEndPopup(true);
       }
-    },
-    [
-      isProcessingSwipe,
-      currentIndex,
-      userProfiles.length,
-      isUserPremium,
-      hasReachedSwipeLimit,
-      handleUpdateCategoryRelation,
-      handleUpdateLikeMatch,
-    ]
-  );
+      return nextIndex;
+    });
 
-  const handleSwipeAction = useCallback(
-    async (action: string) => {
-      const now = Date.now();
+    setIsProcessingSwipe(false);
+  }, [
+    isProcessingSwipe, currentIndex, userProfiles.length, idParam, membership,
+    handleUpdateLikeMatch, handleUpdateCategoryRelation
+  ]);
 
-      if (now - lastSwipeTimeRef.current < SWIPE_THROTTLE_MS) {
-        return;
+  const getEventPoint = (e: any) => e.touches ? e.touches[0] : e;
+
+  const handleSwipeStart = (e: any) => {
+    if (!profilesToRender.current || isProcessingSwipe) return;
+    isSwiping.current = true;
+    const point = getEventPoint(e);
+    startPoint.current = { x: point.clientX, y: point.clientY };
+    setCardStyles((prev: any) => ({
+      ...prev,
+      active: { ...prev.active, transition: 'transform 0s' },
+    }));
+  };
+
+  const handleSwipeMove = (e: any) => {
+    if (!isSwiping.current) return;
+    const point = getEventPoint(e);
+    const deltaX = point.clientX - startPoint.current.x;
+    const deltaY = point.clientY - startPoint.current.y;
+    const rotate = deltaX * 0.1;
+    const isVertical = Math.abs(deltaY) > Math.abs(deltaX);
+
+    let swipeType = null;
+    let swipeOpacity = 0;
+    if (isVertical) {
+      if (deltaY > 50) swipeType = 'maybe';
+      swipeOpacity = Math.min(Math.abs(deltaY) / 100, 1);
+    } else {
+      if (deltaX > 50) swipeType = 'like';
+      if (deltaX < -50) swipeType = 'delete';
+      swipeOpacity = Math.min(Math.abs(deltaX) / 100, 1);
+    }
+
+    const nextCardScale = 0.95 + Math.min(Math.abs(deltaX) / 2000, 0.05);
+
+    setCardStyles({
+      active: {
+        transform: `translateX(${deltaX}px) translateY(${deltaY}px) rotate(${rotate}deg)`,
+        swipeType,
+        swipeOpacity,
+      },
+      next: {
+        transform: `scale(${nextCardScale})`
       }
+    });
+  };
 
-      lastSwipeTimeRef.current = now;
+  const handleSwipeEnd = () => {
+    if (!isSwiping.current) return;
+    isSwiping.current = false;
 
-      if (isProcessingSwipe) return;
+    const swipeThreshold = 120;
+    const { transform = '' } = cardStyles.active || {};
+    const deltaX = parseInt(transform.match(/translateX\(([^p]+)px\)/)?.[1] || '0');
+    const deltaY = parseInt(transform.match(/translateY\(([^p]+)px\)/)?.[1] || '0');
 
-      const targetProfile = currentProfile;
-      if (!targetProfile) return;
+    let action = null;
+    if (deltaX > swipeThreshold) action = 'like';
+    if (deltaX < -swipeThreshold) action = 'delete';
+    if (deltaY > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX)) action = 'maybe';
 
-      if (idParam != null) {
-        router.push("/members");
-        return;
-      }
+    if (action) {
+      handleSwipeAction(action);
+    } else {
+      // Snap back
+      setCardStyles({
+        active: { transform: 'scale(1)', transition: `transform 0.4s ${spring}` },
+        next: { transform: 'scale(0.95)', transition: `transform 0.4s ${spring}` }
+      });
+    }
+  };
 
-      const actionMap: { [key: string]: string } = {
-        deiend: "left",
-        delete: "left",
-        like: "right",
-        maybe: "down",
-      };
+  const handleSwipeAction = useCallback((action: string) => {
+    const targetProfile = profilesToRender.current;
+    if (!targetProfile || isProcessingSwipe) return;
 
-      const direction = actionMap[action] || action;
-      await processSwipe(direction, targetProfile);
-    },
-    [currentProfile, idParam, router, processSwipe, isProcessingSwipe]
-  );
+    let finalStyle: any = {
+      transition: 'transform 0.3s ease-out, opacity 0.3s ease-out',
+      swipeType: action,
+      swipeOpacity: 0
+    };
 
-  const swipeHandlers = useSwipeable({
-    onSwiping: (eventData) => {
-      if (isProcessingSwipe) return;
+    if (action === 'delete') finalStyle.transform = 'translateX(-150%) rotate(-45deg)';
+    else if (action === 'like') finalStyle.transform = 'translateX(150%) rotate(45deg)';
+    else if (action === 'maybe') finalStyle.transform = 'translateY(150%)';
 
-      const offsetX = eventData.deltaX;
-      const offsetY = eventData.deltaY;
+    setCardStyles({
+      active: finalStyle,
+      next: { transform: 'scale(1)', transition: `transform 0.6s ${spring}` }
+    });
 
-      if (hasReachedSwipeLimit() && !isUserPremium()) {
-        setShowLimitPopup(true);
-        return;
-      }
+    processSwipe(action, targetProfile);
+  }, [profilesToRender.current, isProcessingSwipe, processSwipe]);
 
-      // Set offset based on swipe direction
-      if (eventData.dir === "Down") {
-        setSwipeOffset(offsetY);
-      } else {
-        setSwipeOffset(offsetX);
-      }
 
-      setSwipeDirection(eventData.dir.toLowerCase());
+  useEffect(() => {
+    setCardStyles({
+      active: { transform: 'scale(1)', transition: `transform 0.5s ${spring}` },
+      next: { transform: 'scale(0.95)', transition: `transform 0.5s ${spring}` }
+    });
+  }, [currentIndex]);
 
-      // Set dynamic position and swipe image based on direction
-      switch (eventData.dir) {
-        case "Left":
-          setDynamicPosition("77%");
-          setCurrentSwipeImage("delete.png");
-          break;
-        case "Right":
-          setDynamicPosition("30%");
-          setCurrentSwipeImage("like.png");
-          break;
-        case "Down":
-          setDynamicPosition("77%");
-          setCurrentSwipeImage("maybe.png");
-          break;
-        default:
-          setCurrentSwipeImage(null);
-          break;
-      }
-    },
-    onSwiped: (eventData) => {
-      if (isProcessingSwipe) return;
-
-      const direction = eventData.dir.toLowerCase();
-      const isLeft = direction === "left" && Math.abs(eventData.deltaX) > 100;
-      const isRight = direction === "right" && Math.abs(eventData.deltaX) > 100;
-      const isDown = direction === "down" && Math.abs(eventData.deltaY) > 100;
-
-      // Reset visual states immediately
-      setSwipeOffset(0);
-      setCurrentSwipeImage(null);
-
-      if (isLeft || isRight || isDown) {
-        if (hasReachedSwipeLimit() && !isUserPremium()) {
-          setShowLimitPopup(true);
-          return;
-        }
-
-        // Clear any existing timeout
-        if (swipeTimeoutRef.current) {
-          clearTimeout(swipeTimeoutRef.current);
-        }
-
-        // Set pending direction and process after a short delay
-        setPendingSwipeDirection(direction);
-
-        // Process swipe immediately instead of waiting
-        const targetProfile = currentProfile;
-        if (targetProfile) {
-          processSwipe(direction, targetProfile);
-        }
-
-        // Clean up animation state
-        swipeTimeoutRef.current = setTimeout(() => {
-          setSwipeDirection(null);
-          setPendingSwipeDirection(null);
-        }, 300);
-      } else {
-        // Reset states for incomplete swipes
-        setSwipeDirection(null);
-      }
-    },
-    preventScrollOnSwipe: true,
-    trackMouse: true,
-  });
-
-  // Report modal states
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportOptions, setReportOptions] = useState({
     reportUser: false,
@@ -530,48 +509,20 @@ export default function MobileSweaping() {
 
   const handleReportSubmit = useCallback(() => {
     setIsReportModalOpen(false);
-    if (currentProfile) {
-      handleReportUser(currentProfile);
+    if (profilesToRender?.current) {
+      handleReportUser(profilesToRender?.current);
     }
-  }, [handleReportUser, currentProfile]);
+  }, [handleReportUser, profilesToRender?.current]);
 
   const handleChatAction = () => {
     router.push(`/messaging/${id}`);
   };
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (swipeTimeoutRef.current) {
-        clearTimeout(swipeTimeoutRef.current);
-      }
-    };
-  }, []);
-
   if (loading) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="100vh"
-        bgcolor="#121212"
-      >
-        <Box
-          component="img"
-          src="/loading.png"
-          alt="Logo"
-          sx={{
-            width: "50px",
-            height: "auto",
-            flexShrink: 0,
-          }}
-        />
-        <span
-          style={{ color: "#C2185B", paddingLeft: "10px", fontSize: "32px" }}
-        >
-          SWINGSOCIAL
-        </span>
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh" bgcolor="#121212">
+        <Box component="img" src="/loading.png" alt="Logo" sx={{ width: 50, height: "auto" }} />
+        <span style={{ color: "#C2185B", paddingLeft: 10, fontSize: 32 }}>SWINGSOCIAL</span>
       </Box>
     );
   }
@@ -594,26 +545,12 @@ export default function MobileSweaping() {
 
   return (
     <>
+      <Header />
       <ToastContainer position="top-right" autoClose={3000} />
-      
-      <div style={{ display: 'none' }}>
-        {preloadProfiles.map((profile, index) =>
-          profile?.Avatar ? (
-            <img
-              key={`preload-${index}`}
-              src={profile.Avatar}
-              alt="preload"
-              onLoad={() => {
-                setPreloadedImages(prev => {
-                  const updated = new Set(prev);
-                  updated.add(profile.Avatar);
-                  return updated;
-                });
-              }}
-            />
-          ) : null
-        )}
+      <div style={{ display: "none" }}>
+        {profilesToRender.preload.map((p, i) => p?.Avatar ? <img key={i} src={p.Avatar} alt="preload" /> : null)}
       </div>
+
       <Box
         display="flex"
         justifyContent="center"
@@ -621,15 +558,8 @@ export default function MobileSweaping() {
         height="100vh"
         position="relative"
         overflow="hidden"
-        sx={{
-          width: { lg: 514, md: 514 },
-          background: { lg: "#0a0a0a", md: "#0a0a0a" },
-          marginLeft: "auto",
-          marginRight: "auto",
-        }}
-        {...swipeHandlers}
+        sx={{ width: { lg: 514, md: 514 }, background: "#0a0a0a", mx: "auto" }}
       >
-        <Header />
 
         {/** Like Button */}
         <Box
@@ -805,13 +735,13 @@ export default function MobileSweaping() {
                 {selectedUserProfile?.Username || "Unknown"} ,{" "}
                 {selectedUserProfile?.DateOfBirth
                   ? new Date().getFullYear() -
-                    new Date(selectedUserProfile.DateOfBirth).getFullYear()
+                  new Date(selectedUserProfile.DateOfBirth).getFullYear()
                   : ""}
                 {selectedUserProfile?.Gender === "Male"
                   ? "M"
                   : selectedUserProfile?.Gender === "Female"
-                  ? "F"
-                  : ""}
+                    ? "F"
+                    : ""}
                 {selectedUserProfile?.PartnerDateOfBirth && (
                   <>
                     {" | "}
@@ -822,8 +752,8 @@ export default function MobileSweaping() {
                     {selectedUserProfile?.PartnerGender === "Male"
                       ? "M"
                       : selectedUserProfile?.PartnerGender === "Female"
-                      ? "F"
-                      : ""}
+                        ? "F"
+                        : ""}
                   </>
                 )}
               </Typography>
@@ -833,171 +763,166 @@ export default function MobileSweaping() {
               <AboutSection aboutText={selectedUserProfile?.About} />
             </CardContent>
           </Card>
-        ) : (
-          visibleProfiles.map((profile: any, index: number) => (
+        ) : profilesToRender.visible.length > 0 ? (
+          profilesToRender?.visible.map((profile: any, index: number) => (
             <Card
-              key={index}
+              key={profile.Id}
+              ref={index === 0 ? currentCardRef : null}
               elevation={0}
+              onMouseDown={index === 0 ? handleSwipeStart : undefined}
+              onTouchStart={index === 0 ? handleSwipeStart : undefined}
+              onMouseMove={index === 0 ? handleSwipeMove : undefined}
+              onTouchMove={index === 0 ? handleSwipeMove : undefined}
+              onMouseUp={index === 0 ? handleSwipeEnd : undefined}
+              onMouseLeave={index === 0 ? handleSwipeEnd : undefined}
+              onTouchEnd={index === 0 ? handleSwipeEnd : undefined}
+              sx={{
+                border: "none",
+                marginLeft: "5px",
+                marginRight: "5px",
+                width: { xs: 395, sm: 405, md: 300 },
+                height: "calc(100vh - 180px)",
+                marginTop: { sm: "30px" },
+                boxShadow: "none",
+                position: "absolute",
+                // Apply cardStyles based on index
+                ...(index === 0 ? cardStyles.active : {
+                  ...cardStyles.next,
+                  zIndex: 1, // Ensure the next card is behind the active one
+                }),
+                // For the "next" card, ensure it's not translated initially
+                transform: index === 1 ? cardStyles.next.transform : cardStyles.active.transform,
+                zIndex: index === 0 ? 2 : 1, // Active card on top
+                backgroundColor: "black",
+                color: "white",
+                overflow: "auto",
+              }}
+            >
+              <Box
+                position="relative"
+                width="100%"
                 sx={{
-                  border: "none",
-                  marginLeft: "5px",
-                  marginRight: "5px",
-                  width: { xs: 395, sm: 405, md: 300 },
-                  // height: { md: 450, lg: 450, sm: 580, xs: 580 },
-                  height: "calc(100vh - 20px)",
-                  marginTop: { sm: "30px" },
-                  boxShadow: "none",
-                  position: "absolute",
-                  transform:
-                    index === 0
-                      ? swipeDirection === "down"
-                        ? `translateY(${swipeOffset}px)`
-                        : `translateX(${swipeOffset}px)`
-                      : "translate(0px, 0px)",
-                  zIndex: index === 0 ? 2 : 1,
-                  backgroundColor: "black",
-                  color: "white",
+                  height: {
+                    lg: 450,
+                    md: 380,
+                    sm: 380,
+                    xs: "calc(100vh - 210px)",
+                    mb: 15,
+                  },
                 }}
-              >
-                <Box
-                  position="relative"
-                  width="100%"
+              >              {index === 0 && cardStyles.active && <SwipeIndicator type={cardStyles.active.swipeType} opacity={cardStyles.active.swipeOpacity} />}
+
+                <Avatar
+                  alt={profile?.Username || "Unknown"}
+                  src={profile?.Avatar || ""}
                   sx={{
-                    height: {
-                      lg: 450,
-                      md: 380,
-                      sm: 380,
-                      xs: "calc(100vh - 210px)",
-                      mb: 15,
-                    },
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: 0,
+                  }}
+                  imgProps={{
+                    loading: 'eager', // Cargar la imagen con alta prioridad
+                    style: { objectFit: 'cover' }
+                  }}
+                />
+
+                {/* Overlaying ProfileInfo.png */}
+                <Box
+                  position="absolute"
+                  top="70px"
+                  right="5px"
+                  sx={{
+                    transform: "translate(-50%, -50%)",
+                    width: "40px", // Adjust the size as needed
+                    height: "auto",
+                    zIndex: 2,
+                  }}
+                  onClick={() => {
+                    setShowDetail(true);
+                    setSelectedUserId(userProfiles[currentIndex]?.Id);
                   }}
                 >
-                  <Avatar
-                    alt={profile?.Username || "Unknown"}
-                    src={profile?.Avatar || ""}
-                    sx={{
+                  <img
+                    src="/ProfileInfo.png"
+                    alt="Profile Info"
+                    style={{
                       width: "100%",
                       height: "100%",
-                      borderRadius: 0,
-                    }}
-                    imgProps={{
-                      loading: 'eager', // Cargar la imagen con alta prioridad
-                      style: { objectFit: 'cover' }
                     }}
                   />
-
-                  {/* Overlaying ProfileInfo.png */}
-                  <Box
-                    position="absolute"
-                    top="120px"
-                    right="-15px"
-                    sx={{
-                      transform: "translate(-50%, -50%)",
-                      width: "40px", // Adjust the size as needed
-                      height: "auto",
-                      zIndex: 2,
-                    }}
-                    onClick={() => {
-                      setShowDetail(true);
-                      setSelectedUserId(userProfiles[currentIndex]?.Id);
-                    }}
-                  >
-                    <img
-                      src="/ProfileInfo.png"
-                      alt="Profile Info"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                      }}
-                    />
-                  </Box>
-
-                  {currentSwipeImage && index === 0 && (
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        top: "50%",
-                        left: dynamicPosition,
-                        transform: "translate(-50%, -50%)",
-                        zIndex: 2,
-                        borderRadius: 1,
-                        padding: 2,
-                      }}
-                    >
-                      <img
-                        src={`/${currentSwipeImage}`}
-                        alt={currentSwipeImage}
-                        style={{ width: "150px", height: "150px" }}
-                      />
-                    </Box>
-                  )}
-
-                  <Box
-                    position="absolute"
-                    bottom={8}
-                    bgcolor="rgba(0,0,0,0.6)"
-                    color="white"
-                    p={1}
-                    borderRadius={1}
-                    fontSize={12}
-                    sx={{
-                      cursor: "pointer",
-                      right: { sm: 20, xs: 20, lg: 8, md: 8 },
-                    }}
-                    onClick={handleReportModalToggle}
-                  >
-                    <Flag sx={{ color: "#9c27b0" }} />
-                  </Box>
                 </Box>
-                <CardContent>
-                  <Typography variant="h6" component="div" gutterBottom>
-                    {profile?.Username || "Unknown"} ,{" "}
-                    {profile?.DateOfBirth
-                      ? new Date().getFullYear() -
-                        new Date(profile.DateOfBirth).getFullYear()
-                      : ""}
-                    {profile?.Gender === "Male"
-                      ? "M"
-                      : profile?.Gender === "Female"
+
+                <Box
+                  position="absolute"
+                  bottom={8}
+                  bgcolor="rgba(0,0,0,0.6)"
+                  color="white"
+                  p={1}
+                  borderRadius={1}
+                  fontSize={12}
+                  sx={{
+                    cursor: "pointer",
+                    right: { sm: 30, xs: 30, lg: 8, md: 8 },
+                  }}
+                  onClick={handleReportModalToggle}
+                >
+                  <Flag sx={{ color: "#9c27b0" }} />
+                </Box>
+              </Box>
+              <CardContent>
+                <Typography variant="h6" component="div" gutterBottom style={{ paddingLeft: "10px" }}>
+                  {profile?.Username || "Unknown"} ,{" "}
+                  {profile?.DateOfBirth
+                    ? new Date().getFullYear() -
+                    new Date(profile.DateOfBirth).getFullYear()
+                    : ""}
+                  {profile?.Gender === "Male"
+                    ? "M"
+                    : profile?.Gender === "Female"
                       ? "F"
                       : ""}
-                    {profile?.PartnerDateOfBirth && (
-                      <>
-                        {" | "}
-                        {new Date().getFullYear() -
-                          new Date(
-                            profile.PartnerDateOfBirth
-                          ).getFullYear()}{" "}
-                        {profile?.PartnerGender === "Male"
-                          ? "M"
-                          : profile?.PartnerGender === "Female"
+                  {profile?.PartnerDateOfBirth && (
+                    <>
+                      {" | "}
+                      {new Date().getFullYear() -
+                        new Date(
+                          profile.PartnerDateOfBirth
+                        ).getFullYear()}{" "}
+                      {profile?.PartnerGender === "Male"
+                        ? "M"
+                        : profile?.PartnerGender === "Female"
                           ? "F"
                           : ""}
-                      </>
-                    )}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="#C2185B"
-                    style={{ fontSize: "1.0rem", fontWeight: "bold" }}
-                  >
-                    {profile?.Location?.replace(", USA", "") || ""}
-                  </Typography>
-                  <AboutSection aboutText={profile?.About} />
-                </CardContent>
-              </Card>
-            ))
+                    </>
+                  )}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="#C2185B"
+                  style={{ fontSize: "1.0rem", fontWeight: "bold", paddingLeft: "10px" }}
+                >
+                  {profile?.Location?.replace(", USA", "") || ""}
+                </Typography>
+                <AboutSection aboutText={profile?.About} />
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <Box display="flex" justifyContent="center" alignItems="center" height="100%" width="100%">
+            <Typography variant="h6" color="white">Please wait...</Typography>
+          </Box>
         )}
       </Box>
+
       {memberalarm && parseInt(memberalarm) > 2 ? null : <InstructionModal />}
-      <UserProfileModal
+      {selectedUserId && <UserProfileModal
         handleGrantAccess={handleGrantAccess}
         handleClose={handleClose}
         open={showDetail}
         userid={selectedUserId}
-      />
+      />}
 
-      <Modal open={isReportModalOpen} onClose={handleReportModalToggle}>
+      {isReportModalOpen && <Modal open={isReportModalOpen} onClose={handleReportModalToggle}>
         <Box
           sx={{
             position: "absolute",
@@ -1063,10 +988,10 @@ export default function MobileSweaping() {
             </Button>
           </Box>
         </Box>
-      </Modal>
+      </Modal>}
 
       {/* Popup #1: Daily Limit */}
-      <Dialog
+      {showLimitPopup && <Dialog
         open={showLimitPopup}
         onClose={() => setShowLimitPopup(false)}
         PaperProps={{
@@ -1109,10 +1034,10 @@ export default function MobileSweaping() {
             Close
           </Button>
         </DialogContent>
-      </Dialog>
+      </Dialog>}
 
       {/* Popup #2: Match Found */}
-      <Dialog
+      {showMatchPopup && <Dialog
         open={showMatchPopup}
         onClose={() => setShowMatchPopup(false)}
         PaperProps={{
@@ -1187,10 +1112,10 @@ export default function MobileSweaping() {
             </Box>
           )}
         </DialogContent>
-      </Dialog>
+      </Dialog>}
 
       {/* Popup #3: End of Records */}
-      <Dialog
+      {showEndPopup && <Dialog
         open={showEndPopup}
         onClose={() => setShowEndPopup(false)}
         PaperProps={{
@@ -1222,7 +1147,7 @@ export default function MobileSweaping() {
             Update Preferences
           </Button>
         </DialogContent>
-      </Dialog>
+      </Dialog>}
 
       <Footer />
     </>

@@ -1,71 +1,49 @@
 import { NextResponse } from 'next/server';
-import https from 'https';
-import nodeFetch from 'node-fetch';
+import { Client } from 'basic-ftp';
+import { Readable } from 'stream';
 
-// Define the type for the response
-type UploadResponse = {
-  url: string;
-  blob: string;
-};
-
-// Type guard to check if the response matches the expected structure
-function isUploadResponse(obj: any): obj is UploadResponse {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    typeof obj.url === 'string' &&
-    typeof obj.blob === 'string'
-  );
+function toReadable(buffer: Buffer) {
+  return new Readable({
+    read() {
+      this.push(buffer);
+      this.push(null);
+    },
+  });
 }
 
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
-    const imageFile = formData.get('image');
+    const file = formData.get('image');
 
-    if (!imageFile || !(imageFile instanceof Blob)) {
-      return NextResponse.json(
-        { message: 'Invalid image file' },
-        { status: 400 }
-      );
+    if (!file || !(file instanceof Blob)) {
+      return NextResponse.json({ message: 'Invalid file' }, { status: 400 });
     }
 
-    const newFormData = new FormData();
-    newFormData.append('image', imageFile);
+    const buffer = Buffer.from(await (file as Blob).arrayBuffer());
+    const filename = `${Date.now()}.jpg`;
 
-    const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+    const client = new Client();
+    client.ftp.verbose = true;
 
-    // External API URL
-    const uploadResponse = await nodeFetch('https://andystutor.com/upload.php', {
-      method: 'POST',
-      body: newFormData,
-      agent: httpsAgent,
+    await client.access({
+      host: '198.12.235.186',
+      user: 'clarktrue@truecontractingsolutions.app',
+      password: 'Bmw635csi#Bmw635csi#',
+      port: 21,
+      secure: false
     });
 
-    // Parse the JSON response
-    const json = await uploadResponse.json();
+    const remoteDir = '/';
+    await client.ensureDir(remoteDir);
+    await client.uploadFrom(toReadable(buffer), `/${filename}`);
+    client.close();
 
-    // Validate the response
-    if (!uploadResponse.ok || !isUploadResponse(json)) {
-      console.error("Unexpected upload response:", json);
-      return NextResponse.json(
-        { message: 'Invalid or failed response from upload server' },
-        { status: 500 }
-      );
-    }
+    const imageUrl = `https://truecontractingsolutions.app/images/${filename}`;
 
-    // Return the success response with both URL and blob
-    return NextResponse.json({
-      message: 'Image uploaded successfully',
-      imageUrl: json.url,
-      blobUrl: json.blob
-    });
-
+    return NextResponse.json({ imageUrl, blobUrl: imageUrl, message: 'Upload success' });
   } catch (error) {
-    console.error('Upload failed:', error);
-    return NextResponse.json(
-      { message: 'Image upload failed', error },
-      { status: 500 }
-    );
+    console.error('FTP Upload error:', error);
+    return NextResponse.json({ message: 'Image upload via FTP failed', error }, { status: 500 });
   }
 }

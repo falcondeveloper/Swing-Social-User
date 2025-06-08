@@ -131,7 +131,7 @@ export async function POST(req: Request) {
     // Convert images to a valid PostgreSQL array format
     const imagesArray = images.map((url: string) => url).join(",");
 
-    console.log(imagesArray,"=======================imagesArray");
+    console.log(imagesArray, "=======================imagesArray");
     // const formattedImagesArray = imagesArray; // PostgreSQL array format
 
     const formattedImagesArray = `{${imagesArray}}`;
@@ -212,11 +212,25 @@ export async function GET(req: Request) {
       const attendees = attendeesResult.rows;
       const tickets = ticketsResult.rows;
 
+      const attendeeCountByType = attendees.reduce((acc, attendee) => {
+        const type = attendee.TicketType;
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {});
+
+      const ticketsWithRemainingQty = tickets.map(ticket => {
+        const attendeeCount = attendeeCountByType[ticket.Name] || 0;
+        return {
+          ...ticket,
+          Quantity: ticket.Quantity - attendeeCount
+        };
+      });
+
       return NextResponse.json({
         event,
         rsvp,
         attendees,
-        tickets,
+        tickets: ticketsWithRemainingQty,
       });
     } else {
       let query = `SELECT * FROM get_all_events()`;

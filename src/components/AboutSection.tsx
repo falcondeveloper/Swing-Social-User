@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import { Typography, Button, Box } from "@mui/material";
 
 interface AboutSectionProps {
 	aboutText: string;
-	charLimit?: number; // Optional character limit
+	charLimit?: number;
 }
 
 const AboutSection: React.FC<AboutSectionProps> = ({
@@ -18,36 +17,65 @@ const AboutSection: React.FC<AboutSectionProps> = ({
 
 	const truncateText = (text: string): string => {
 		if (showFullText || text.length <= charLimit) {
-			return text; // Show full text if toggled or within limit
+			return text;
 		}
-		return text.slice(0, charLimit) + "..."; // Truncate and add ellipsis
+		return text.slice(0, charLimit) + "...";
 	};
 
 	const getFirstParagraph = (): string => {
 		const parser = new DOMParser();
 		const parsedHtml = parser.parseFromString(aboutText, "text/html");
 		const firstParagraph = parsedHtml.body.querySelector("p");
-		return firstParagraph ? firstParagraph.textContent || "" : ""; // Return plain text of the first paragraph
+		return firstParagraph ? firstParagraph.textContent || "" : "";
 	};
 
 	const truncatedText = truncateText(getFirstParagraph());
 
 	return (
-		<Box style={{ textAlign: "center" }}>
-			{/* Render Truncated Text */}
-			<Typography variant="body2" color="secondary">
-				{truncatedText}
-			</Typography>
+		<>
+			<style>
+				{`
+          .about-container {
+            text-align: center;
+			padding: 10px 16px;
+          }
 
-			{/* Read More / Show Less Button */}
-			{aboutText?.length > charLimit && (
-				<Button
-					size="small"
-					sx={{ textTransform: "none", marginTop: 1 }}
-					onClick={toggleText}
-				></Button>
-			)}
-		</Box>
+          .about-text {
+           font-size: 14px;
+  		   color: #757575;
+           margin: 0;
+           word-wrap: break-word;
+           white-space: pre-wrap;
+           line-height: 1.4;
+		   text-align: left;
+          }
+
+          .about-button {
+            margin-top: 8px;
+            font-size: 14px;
+            background: none;
+            border: none;
+            color: #1976d2;
+            cursor: pointer;
+            text-transform: none;
+            padding: 0;
+          }
+
+          .about-button:hover {
+            text-decoration: underline;
+          }
+        `}
+			</style>
+
+			<div className="about-container">
+				<p className="about-text">{truncatedText}</p>
+				{aboutText?.length > charLimit && (
+					<button className="about-button" onClick={toggleText}>
+						{showFullText ? "Show Less" : "Read More"}
+					</button>
+				)}
+			</div>
+		</>
 	);
 };
 

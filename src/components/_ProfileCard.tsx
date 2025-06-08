@@ -136,23 +136,23 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                         {profileImages.length > 0 ? (
                             <Grid container spacing={2}>
                                 {profileImages.map((image: any, index: number) => {
-    const uniqueKey = image?.Url ? `${image.Url}-${index}-${Math.random().toString(36).substr(2, 9)}` : `profile-image-${index}-${Math.random().toString(36).substr(2, 9)}`;
-    return (
-        <Grid item xs={6} sm={4} md={3} key={uniqueKey}>
-            <CardMedia
-                component="img"
-                image={image?.Url && image.Url.trim() !== '' ? image.Url : '/noavatar.png'}
-                alt={`Profile Image ${index + 1}`}
-                sx={{
-                    borderRadius: '8px',
-                    height: 266,
-                    objectFit: 'cover',
-                    boxShadow: 3,
-                }}
-            />
-        </Grid>
-    );
-})}
+                                    const uniqueKey = image?.Url ? `${image.Url}-${index}-${Math.random().toString(36).substr(2, 9)}` : `profile-image-${index}-${Math.random().toString(36).substr(2, 9)}`;
+                                    return (
+                                        <Grid item xs={6} sm={4} md={3} key={uniqueKey}>
+                                            <CardMedia
+                                                component="img"
+                                                image={image?.Url && image.Url.trim() !== '' ? image.Url : '/noavatar.png'}
+                                                alt={`Profile Image ${index + 1}`}
+                                                sx={{
+                                                    borderRadius: '8px',
+                                                    height: 266,
+                                                    objectFit: 'cover',
+                                                    boxShadow: 3,
+                                                }}
+                                            />
+                                        </Grid>
+                                    );
+                                })}
                             </Grid>
                         ) : (
                             <Typography variant="body2" color="white">

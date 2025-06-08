@@ -5,22 +5,16 @@ import {
     Typography,
     Avatar,
     Card,
-    CardContent,
     Grid,
     Paper,
     Chip,
     Stack,
     ImageList,
     ImageListItem,
-    Button
 } from '@mui/material';
 import {
-    Man,
-    Woman,
     LocationOn,
     Cake,
-    CardMembership,
-    CalendarMonth,
     CameraAlt,
     VolunteerActivism,
     Interests,
@@ -63,8 +57,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                 try {
                     const response = await fetch(`/api/user/sweeping/images/profile?id=${profile.Id}`);
                     const data = await response.json();
-                    console.log(profile.Id);
-                    console.log(data);
                     setProfileImages(data?.images || []);
                 } catch (error) {
                     console.error('Error fetching profile images:', error);
@@ -176,18 +168,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                             }}>
                         </Typography>
                         <Stack direction="row" spacing={2}>
-                            {/* <Chip
-                                icon={<CardMembership sx={{ color: '#ff80ab' }} />}
-                                label={profile.AccountType}
-                                size="medium"
-                                sx={{ bgcolor: 'rgba(0,0,0,0.2)', color: 'white' }}
-                            /> */}
-                            {/* <Chip
-                                icon={<CalendarMonth />}
-                                label={`${new Date(profile.DateOfBirth).getMonth() + 1}/${new Date(profile.DateOfBirth).getDate()}/${new Date(profile.DateOfBirth).getFullYear()}`}
-                                size="medium"
-                                sx={{ bgcolor: 'rgba(0,0,0,0.2)', color: 'white' }}
-                            /> */}
                             <Chip
                                 icon={<Cake />}
                                 label={`Age: ${new Date().getFullYear() - new Date(profile.DateOfBirth).getFullYear()} years`}
@@ -204,8 +184,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                                 icon={<Message sx={{ fontSize: 24 }} />}
                                 label={`Chat with ${profile?.Username}`}
                                 // size="large"
-                                sx={{ 
-                                    bgcolor: '#453a3ade', 
+                                sx={{
+                                    bgcolor: '#453a3ade',
                                     color: 'white',
                                     '& .MuiChip-label': {
                                         fontSize: '1.1rem'
@@ -218,66 +198,26 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                     </Box>
                 </Box>
 
-                {/* <Box sx={{ px: 3}}>
-                    <Button
-						variant="contained"
-                        onClick={() => router.push(`/messaging/${profile?.Id}`)}
-                        sx={{
-                            flex: 2, // Make the last box wider
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            backgroundColor: "#333",
-                            color: "white",
-                            borderRadius: 1,
-                            padding: 0.5, // Reduce padding inside
-                            minWidth: "80px", // Further reduce box size for the button container
-                        }}
-                    >
-                        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
-                            Chat with {profile?.Username}
-                        </span>
-                    </Button>		
-                </Box> */}
+
 
                 <Box sx={{ px: 3, paddingBottom: "120px" }}>
                     <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
-                        {/* <Chip
-                            icon={<Cake />}
-                            label={`Age: ${new Date().getFullYear() - new Date(profile.DateOfBirth).getFullYear()} years`}
-                            size="medium"
-                            sx={{ bgcolor: 'rgba(0,0,0,0.2)', color: 'white' }}
-                        /> */}
-                        {/* <Chip
-                            icon={<Cake />}
-                            label={`Partner Age: ${new Date().getFullYear() - new Date(profile.PartnerDateOfBirth).getFullYear()} years`}
-                            size="medium"
-                            sx={{ bgcolor: 'rgba(0,0,0,0.2)', color: 'white' }}
-                        /> */}
-                        
-                        {/* <Chip
-                            icon={profile.Gender === "Male" ? < Man /> : <Woman />}
-                            label={profile.Gender}
-                            size="medium"
-                            sx={{ bgcolor: 'rgba(0,0,0,0.2)', color: 'white' }}
-                        /> */}
                     </Stack>
                     <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
                         <Typography
                             variant="subtitle1"
                             dangerouslySetInnerHTML={{ __html: profile?.About }}
                             sx={{
-                            color: 'white',
-                            mb: 2,
-                            fontWeight: 'bold',
-                            maxWidth: '100%',
-                            whiteSpace: 'normal',
-                            overflow: 'hidden',
-                            display: '-webkit-box', // Use flexbox-like behavior for text layout
-                            WebkitBoxOrient: 'vertical', // Required for line clamping
-                            WebkitLineClamp: 3, // Limits text to 3 lines
-                            textOverflow: 'ellipsis',
+                                color: 'white',
+                                mb: 2,
+                                fontWeight: 'bold',
+                                maxWidth: '100%',
+                                whiteSpace: 'normal',
+                                overflow: 'hidden',
+                                display: '-webkit-box', // Use flexbox-like behavior for text layout
+                                WebkitBoxOrient: 'vertical', // Required for line clamping
+                                WebkitLineClamp: 3, // Limits text to 3 lines
+                                textOverflow: 'ellipsis',
                             }}
                         />
                     </Stack>
@@ -292,26 +232,26 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                                 </Typography>
                                 <ImageList cols={3} gap={16} sx={{ mb: 0 }}>
                                     {profileImages.length > 0 ? (
-    profileImages.map((image, index) => {
-        
-        const uniqueKey = image?.Url ? `${image.Url}-${index}-${Math.random().toString(36).substr(2, 9)}` : `profile-image-${index}-${Math.random().toString(36).substr(2, 9)}`;
-        return (
-            <ImageListItem key={uniqueKey}>
-                <img
-                    src={image.Url && image.Url.trim() !== '' ? image.Url : '/noavatar.png'}
-                    alt={`Gallery ${index + 1}`}
-                    style={{
-                        borderRadius: '8px',
-                        width: '100%',
-                        height: '100%',
-                        aspectRatio: '1',
-                        objectFit: 'cover'
-                    }}
-                />
-            </ImageListItem>
-        );
-    })
-) : (
+                                        profileImages.map((image, index) => {
+
+                                            const uniqueKey = image?.Url ? `${image.Url}-${index}-${Math.random().toString(36).substr(2, 9)}` : `profile-image-${index}-${Math.random().toString(36).substr(2, 9)}`;
+                                            return (
+                                                <ImageListItem key={uniqueKey}>
+                                                    <img
+                                                        src={image.Url && image.Url.trim() !== '' ? image.Url : '/noavatar.png'}
+                                                        alt={`Gallery ${index + 1}`}
+                                                        style={{
+                                                            borderRadius: '8px',
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            aspectRatio: '1',
+                                                            objectFit: 'cover'
+                                                        }}
+                                                    />
+                                                </ImageListItem>
+                                            );
+                                        })
+                                    ) : (
                                         <Typography variant="body2" color="white">
                                             No Photos Provided
                                         </Typography>
@@ -374,27 +314,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                                             />
                                         ))}
                                     </Box>
-
-                                    {/* <Typography variant="subtitle2" sx={{ color: '#ff80ab', mb: 1 }}>
-                                        Kink Tags
-                                    </Typography>
-                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                        {profile.KinkTags && profile.KinkTags.length > 0 ?
-                                            profile.KinkTags.map((tag) => (
-                                                <Chip
-                                                    key={tag}
-                                                    label={tag}
-                                                    size="small"
-                                                    sx={{
-                                                        bgcolor: 'rgba(255,128,171,0.1)',
-                                                        color: '#ff80ab'
-                                                    }}
-                                                />
-                                            )) : (
-                                                <Typography variant="body2" color="white">No tags data</Typography>
-                                            )
-                                        }
-                                    </Box> */}
                                 </Paper>
                             </Stack>
                         </Grid>

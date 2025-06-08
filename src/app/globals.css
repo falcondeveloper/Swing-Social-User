@@ -214,7 +214,7 @@ label {
   font-size: 1rem !important;
   display: flex !important;
 }
-.MuiListItem-gutters img{
+.MuiListItem-gutters img {
   max-width: 100%;
 }
 .tox .tox-tbtn svg {
