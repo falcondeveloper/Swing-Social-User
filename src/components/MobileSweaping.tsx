@@ -116,6 +116,7 @@ export default function MobileSweaping() {
   const lastSwipeTimeRef = useRef<number>(0);
   const SWIPE_THROTTLE_MS = 500;
   const currentCardRef = useRef<HTMLDivElement | null>(null);
+  const cardContainerRef = useRef<HTMLDivElement | null>(null);
   const isSwiping = useRef(false);
   const startPoint = useRef({ x: 0, y: 0 });
   const router = useRouter();
@@ -409,6 +410,10 @@ export default function MobileSweaping() {
     const rotate = deltaX * 0.1;
     const isVertical = Math.abs(deltaY) > Math.abs(deltaX);
 
+    if (isVertical) {
+      e.preventDefault();
+    }
+
     let swipeType = null;
     let swipeOpacity = 0;
     if (isVertical) {
@@ -481,6 +486,63 @@ export default function MobileSweaping() {
     processSwipe(action, targetProfile);
   }, [profilesToRender.current, isProcessingSwipe, processSwipe]);
 
+  useEffect(() => {
+    const cardElement = currentCardRef.current;
+    if (!cardElement) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      // You might still want React's synthetic event onTouchStart to initialize state
+      // but for preventing default, the native event listener is more reliable.
+      handleSwipeStart(e); // Call your existing handler
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isSwiping.current) return;
+      // Crucial: Prevent default *before* any other logic
+      // This specifically targets the browser's scroll/refresh
+      if (e.cancelable) { // Check if the event is cancelable
+        e.preventDefault();
+      }
+
+      handleSwipeMove(e); // Call your existing handler (which now won't trigger default scroll)
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      handleSwipeEnd(); // Call your existing handler
+    };
+
+    // Add passive: false to touchmove listener
+    cardElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+    cardElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+    cardElement.addEventListener('touchend', handleTouchEnd, { passive: false });
+    cardElement.addEventListener('touchcancel', handleTouchEnd, { passive: false }); // Important for interrupted gestures
+
+    return () => {
+      cardElement.removeEventListener('touchstart', handleTouchStart);
+      cardElement.removeEventListener('touchmove', handleTouchMove);
+      cardElement.removeEventListener('touchend', handleTouchEnd);
+      cardElement.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [currentIndex, isProcessingSwipe, handleSwipeStart, handleSwipeMove, handleSwipeEnd]);
+
+
+  // ...existing code...
+
+  useEffect(() => {
+    // Prevent pull-to-refresh on mobile browsers
+    const handleTouchMove = (e: TouchEvent) => {
+      // Only block if at the top of the page and swiping down
+      if (window.scrollY === 0 && e.touches && e.touches.length === 1 && e.touches[0].clientY > 0) {
+        if (e.cancelable) e.preventDefault();
+      }
+    };
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    return () => {
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
+  // ...existing code...
 
   useEffect(() => {
     setCardStyles({
@@ -769,13 +831,6 @@ export default function MobileSweaping() {
               key={profile.Id}
               ref={index === 0 ? currentCardRef : null}
               elevation={0}
-              onMouseDown={index === 0 ? handleSwipeStart : undefined}
-              onTouchStart={index === 0 ? handleSwipeStart : undefined}
-              onMouseMove={index === 0 ? handleSwipeMove : undefined}
-              onTouchMove={index === 0 ? handleSwipeMove : undefined}
-              onMouseUp={index === 0 ? handleSwipeEnd : undefined}
-              onMouseLeave={index === 0 ? handleSwipeEnd : undefined}
-              onTouchEnd={index === 0 ? handleSwipeEnd : undefined}
               sx={{
                 border: "none",
                 marginLeft: "5px",
