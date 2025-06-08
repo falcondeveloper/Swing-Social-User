@@ -45,4 +45,4 @@ test
 -- deploy may 29 for Christian
 -- deploy may 29 for Christian
 -- deploy may29 again for Christian
--- deploy may 6 for vansh
+-- deploy June 6 for vansh
