@@ -526,12 +526,8 @@ export default function MobileSweaping() {
   }, [currentIndex, isProcessingSwipe, handleSwipeStart, handleSwipeMove, handleSwipeEnd]);
 
 
-  // ...existing code...
-
   useEffect(() => {
-    // Prevent pull-to-refresh on mobile browsers
     const handleTouchMove = (e: TouchEvent) => {
-      // Only block if at the top of the page and swiping down
       if (window.scrollY === 0 && e.touches && e.touches.length === 1 && e.touches[0].clientY > 0) {
         if (e.cancelable) e.preventDefault();
       }
@@ -541,8 +537,6 @@ export default function MobileSweaping() {
       window.removeEventListener('touchmove', handleTouchMove);
     };
   }, []);
-
-  // ...existing code...
 
   useEffect(() => {
     setCardStyles({
