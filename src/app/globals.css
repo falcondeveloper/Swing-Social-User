@@ -256,7 +256,7 @@ label {
 .mobile-sweeping-container .profile-info {
   position: absolute;
   top: 10px;
-  right: 10px;
+  right: -5px;
   z-index: 2;
   width: 70px;
   height: 70px;
@@ -266,7 +266,7 @@ label {
 .mobile-sweeping-container .report-flag {
   position: absolute;
   bottom: 18px;
-  right: 30px;
+  right: 15px;
   background-color: rgba(0, 0, 0, 0.6);
   color: white;
   padding: 8px;

@@ -882,7 +882,7 @@ export default function MobileSweaping() {
                   <Flag sx={{ color: "#9c27b0" }} />
                 </div>
               </div>
-              <CardContent sx={{ padding: "5px 16px", pb: 0 }}>
+              <CardContent sx={{ padding: "5px 0", pb: 0 }}>
                 <Typography
                   variant="h6"
                   component="div"
