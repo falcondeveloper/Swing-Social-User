@@ -47,277 +47,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { jwtDecode } from "jwt-decode";
 import { SnackbarCloseReason } from "@mui/material/Snackbar";
 
-// interface EventRepeatsProps {
-//     value: {
-//         type: 'none' | 'daily' | 'weekly' | 'monthly';
-//         interval: number;
-//         stopCondition: 'never' | 'date' | 'times';
-//         untilDate: moment.Moment | null;
-//         times: number;
-//         weekDays: boolean[];
-//         monthDay: number;
-//     };
-//     onChange: (value: any) => void;
-// }
 
-// const EventRepeats = ({ value, onChange }: EventRepeatsProps) => {
-//     const handleTypeChange = (_: React.MouseEvent<HTMLElement>, newType: 'none' | 'daily' | 'weekly' | 'monthly') => {
-//         if (newType !== null) {
-//             onChange({ ...value, type: newType });
-//         }
-//     };
-
-//     const handleIntervalChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-//         const newInterval = parseInt(event.target.value) || 1;
-//         onChange({ ...value, interval: newInterval });
-//     };
-
-//     const handleStopConditionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-//         onChange({ ...value, stopCondition: event.target.value });
-//     };
-
-//     const handleWeekDayToggle = (index: number) => {
-//         const newWeekDays = [...value.weekDays];
-//         newWeekDays[index] = !newWeekDays[index];
-//         onChange({ ...value, weekDays: newWeekDays });
-//     };
-
-//     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-//     return (
-//         <Paper sx={{ p: 3, bgcolor: '#1a1a1a', color: 'white', border: '1px solid #333' }}>
-//             <Typography variant="h6" sx={{ mb: 2 }}>
-//                 Repeats
-//             </Typography>
-
-//             <ToggleButtonGroup
-//                 value={value.type}
-//                 exclusive
-//                 onChange={handleTypeChange}
-//                 aria-label="repeat frequency"
-//                 sx={{
-//                     mb: 3,
-//                     '& .MuiToggleButton-root': {
-//                         color: 'white',
-//                         borderColor: '#333',
-//                         '&.Mui-selected': {
-//                             backgroundColor: '#333',
-//                             color: 'white',
-//                             '&:hover': {
-//                                 backgroundColor: '#444',
-//                             },
-//                         },
-//                         '&:hover': {
-//                             backgroundColor: 'rgba(255, 255, 255, 0.08)',
-//                         },
-//                     },
-//                 }}
-//             >
-//                 <ToggleButton value="none">None</ToggleButton>
-//                 <ToggleButton value="daily">Daily</ToggleButton>
-//                 <ToggleButton value="weekly">Weekly</ToggleButton>
-//                 <ToggleButton value="monthly">Monthly</ToggleButton>
-//             </ToggleButtonGroup>
-
-//             {value.type !== 'none' && (
-//                 <Box sx={{ mb: 3 }}>
-//                     <Stack direction="row" spacing={2} alignItems="center">
-//                         <Typography>Repeat every</Typography>
-//                         <TextField
-//                             type="number"
-//                             value={value.interval}
-//                             onChange={handleIntervalChange}
-//                             inputProps={{ min: 1 }}
-//                             sx={{
-//                                 width: '80px',
-//                                 '& .MuiInputBase-input': {
-//                                     color: 'white',
-//                                 },
-//                                 '& .MuiOutlinedInput-notchedOutline': {
-//                                     borderColor: '#333',
-//                                 },
-//                             }}
-//                         />
-//                         <Typography>
-//                             {value.type === 'daily' && 'days'}
-//                             {value.type === 'weekly' && 'weeks'}
-//                             {value.type === 'monthly' && 'months on day'}
-//                         </Typography>
-//                         {value.type === 'monthly' && (
-//                             <Select
-//                                 value={value.monthDay}
-//                                 onChange={(e) => onChange({ ...value, monthDay: e.target.value })}
-//                                 sx={{
-//                                     width: '80px',
-//                                     color: 'white',
-//                                     '& .MuiOutlinedInput-notchedOutline': {
-//                                         borderColor: '#333',
-//                                     },
-//                                 }}
-//                             >
-//                                 {[...Array(31)].map((_, i) => (
-//                                     <MenuItem key={i + 1} value={i + 1}>{i + 1}</MenuItem>
-//                                 ))}
-//                             </Select>
-//                         )}
-//                     </Stack>
-
-//                     {value.type === 'weekly' && (
-//                         <Box sx={{ mt: 2 }}>
-//                             <Typography sx={{ mb: 1 }}>Repeat on</Typography>
-//                             <Stack direction="row" spacing={1}>
-//                                 {weekDays.map((day, index) => (
-//                                     <Checkbox
-//                                         key={day}
-//                                         checked={value.weekDays[index]}
-//                                         onChange={() => handleWeekDayToggle(index)}
-//                                         sx={{
-//                                             color: 'white',
-//                                             '&.Mui-checked': {
-//                                                 color: '#f50057',
-//                                             },
-//                                         }}
-//                                     />
-//                                 ))}
-//                             </Stack>
-//                             <Stack direction="row" spacing={1}>
-//                                 {weekDays.map((day) => (
-//                                     <Typography
-//                                         key={day}
-//                                         sx={{
-//                                             width: 42,
-//                                             textAlign: 'center',
-//                                             fontSize: '0.875rem',
-//                                         }}
-//                                     >
-//                                         {day}
-//                                     </Typography>
-//                                 ))}
-//                             </Stack>
-//                         </Box>
-//                     )}
-//                 </Box>
-//             )}
-
-//             {value.type !== 'none' && (
-//                 <Box>
-//                     <Typography variant="h6" sx={{ mb: 2 }}>
-//                         Stop Condition
-//                     </Typography>
-//                     <RadioGroup
-//                         value={value.stopCondition}
-//                         onChange={handleStopConditionChange}
-//                     >
-//                         <FormControlLabel
-//                             value="never"
-//                             control={
-//                                 <Radio
-//                                     sx={{
-//                                         color: 'white',
-//                                         '&.Mui-checked': {
-//                                             color: '#f50057',
-//                                         },
-//                                     }}
-//                                 />
-//                             }
-//                             label={
-//                                 <Box>
-//                                     <Typography>Never Stop</Typography>
-//                                     <Typography variant="body2" sx={{ color: 'gray' }}>
-//                                         The event will repeat for the next year
-//                                     </Typography>
-//                                 </Box>
-//                             }
-//                         />
-//                         <FormControlLabel
-//                             value="date"
-//                             control={
-//                                 <Radio
-//                                     sx={{
-//                                         color: 'white',
-//                                         '&.Mui-checked': {
-//                                             color: '#f50057',
-//                                         },
-//                                     }}
-//                                 />
-//                             }
-//                             label={
-//                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-//                                     <Box>
-//                                         <Typography>Run until a specific date</Typography>
-//                                         <Typography variant="body2" sx={{ color: 'gray' }}>
-//                                             The event will repeat until the date you specify
-//                                         </Typography>
-//                                     </Box>
-//                                     {value.stopCondition === 'date' && (
-//                                         <LocalizationProvider dateAdapter={AdapterMoment}>
-//                                             <DatePicker
-//                                                 value={value.untilDate}
-//                                                 onChange={(newDate) => onChange({ ...value, untilDate: newDate })}
-//                                                 slotProps={{
-//                                                     textField: {
-//                                                         sx: {
-//                                                             '& .MuiInputBase-input': {
-//                                                                 color: 'white',
-//                                                             },
-//                                                             '& .MuiOutlinedInput-notchedOutline': {
-//                                                                 borderColor: '#333',
-//                                                             },
-//                                                         }
-//                                                     }
-//                                                 }}
-//                                             />
-//                                         </LocalizationProvider>
-//                                     )}
-//                                 </Box>
-//                             }
-//                         />
-//                         <FormControlLabel
-//                             value="times"
-//                             control={
-//                                 <Radio
-//                                     sx={{
-//                                         color: 'white',
-//                                         '&.Mui-checked': {
-//                                             color: '#f50057',
-//                                         },
-//                                     }}
-//                                 />
-//                             }
-//                             label={
-//                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-//                                     <Box>
-//                                         <Typography>Run until a specific number of times</Typography>
-//                                         <Typography variant="body2" sx={{ color: 'gray' }}>
-//                                             The event will repeat the number of times you specify
-//                                         </Typography>
-//                                     </Box>
-//                                     {value.stopCondition === 'times' && (
-//                                         <TextField
-//                                             type="number"
-//                                             value={value.times}
-//                                             onChange={(e) => onChange({ ...value, times: parseInt(e.target.value) || 1 })}
-//                                             inputProps={{ min: 1 }}
-//                                             sx={{
-//                                                 width: '80px',
-//                                                 '& .MuiInputBase-input': {
-//                                                     color: 'white',
-//                                                 },
-//                                                 '& .MuiOutlinedInput-notchedOutline': {
-//                                                     borderColor: '#333',
-//                                                 },
-//                                             }}
-//                                         />
-//                                     )}
-//                                 </Box>
-//                             }
-//                         />
-//                     </RadioGroup>
-//                 </Box>
-//             )}
-//         </Paper>
-//     );
-// };
 
 interface ImageUploadProps {
 	isCoverPhoto?: boolean;
@@ -2114,11 +1844,11 @@ const EventForm: React.FC = () => {
 																		},
 																	},
 																	"& .MuiInputAdornment-root .MuiSvgIcon-root":
-																		{
-																			color: "white", // Calendar icon color
-																			fontSize: "1.5rem", // Adjust size of the calendar icon
-																			transition: "all 0.3s ease", // Add smooth transitions for hover effects
-																		},
+																	{
+																		color: "white", // Calendar icon color
+																		fontSize: "1.5rem", // Adjust size of the calendar icon
+																		transition: "all 0.3s ease", // Add smooth transitions for hover effects
+																	},
 																},
 															},
 														}}
@@ -2145,11 +1875,11 @@ const EventForm: React.FC = () => {
 																		},
 																	},
 																	"& .MuiInputAdornment-root .MuiSvgIcon-root":
-																		{
-																			color: "white", // Calendar icon color
-																			fontSize: "1.5rem", // Adjust size of the calendar icon
-																			transition: "all 0.3s ease", // Add smooth transitions for hover effects
-																		},
+																	{
+																		color: "white", // Calendar icon color
+																		fontSize: "1.5rem", // Adjust size of the calendar icon
+																		transition: "all 0.3s ease", // Add smooth transitions for hover effects
+																	},
 																},
 															},
 														}}
@@ -2356,8 +2086,8 @@ const EventForm: React.FC = () => {
 				</Alert>
 			</Snackbar>
 			<Backdrop
-				sx={{ 
-					color: '#fff', 
+				sx={{
+					color: '#fff',
 					zIndex: (theme) => theme.zIndex.drawer + 1,
 					display: 'flex',
 					flexDirection: 'column',
