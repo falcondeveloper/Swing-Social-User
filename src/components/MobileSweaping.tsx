@@ -32,6 +32,7 @@ import { ToastContainer } from "react-toastify";
 import Footer from "./Footer";
 import { jwtDecode } from "jwt-decode";
 import profileInfoImage from "../../public/ProfileInfo.png";
+import MobileAboutSection from "./MobileAboutSection";
 export interface DetailViewHandle {
   open: (id: string) => void;
 }
@@ -710,9 +711,9 @@ export default function MobileSweaping() {
               border: "none",
               marginLeft: "5px",
               marginRight: "5px",
-              width: { xs: 395, sm: 405, md: 300 },
+              // width: { xs: 395, sm: 405, md: 300 },
               // height: { md: 450, lg: 450, sm: 580, xs: 580 },
-              height: "calc(100vh - 20px)",
+              height: "calc(100vh - 180px)",
               marginTop: { sm: "20px" },
               boxShadow: "none",
               position: "absolute",
@@ -831,9 +832,7 @@ export default function MobileSweaping() {
               elevation={0}
               sx={{
                 border: "none",
-                marginLeft: "5px",
-                marginRight: "5px",
-                width: { xs: 395, sm: 405, md: 300 },
+                // width: { xs: 395, sm: 405, md: 300 },
                 height: "calc(100vh - 180px)",
                 marginTop: { sm: "30px" },
                 boxShadow: "none",
@@ -883,11 +882,11 @@ export default function MobileSweaping() {
                   <Flag sx={{ color: "#9c27b0" }} />
                 </div>
               </div>
-              <CardContent>
+              <CardContent sx={{ padding: "5px 16px", pb: 0 }}>
                 <Typography
                   variant="h6"
                   component="div"
-                  gutterBottom
+
                   style={{ paddingLeft: "10px" }}
                 >
                   {profile?.Username || "Unknown"} ,{" "}
@@ -924,7 +923,7 @@ export default function MobileSweaping() {
                 >
                   {profile?.Location?.replace(", USA", "") || ""}
                 </Typography>
-                <AboutSection aboutText={profile?.About} />
+                <MobileAboutSection aboutText={profile?.About} />
               </CardContent>
             </Card>
           ))
