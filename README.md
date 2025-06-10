@@ -46,3 +46,4 @@ test
 -- deploy may 29 for Christian
 -- deploy may29 again for Christian
 -- deploy June 6 for vansh
+-- deploy ejUn 10 vansh. swiping not displaying name
