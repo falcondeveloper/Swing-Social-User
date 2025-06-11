@@ -9,6 +9,8 @@ import {
 	DialogTitle,
 	DialogContent,
 	DialogActions,
+	IconButton,
+	Badge,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -16,6 +18,18 @@ import Swal from "sweetalert2";
 import { io } from "socket.io-client";
 import { jwtDecode } from "jwt-decode"; // Import jwt-decode properly
 import NotificationModalPrompt from '@/components/NotificationModalPrompt';
+import { 
+	Home, 
+	Users, 
+	Apple, 
+	MessageCircle, 
+	Heart, 
+	User,
+	Menu,
+	Search,
+	Bell,
+	Settings
+} from "lucide-react";
 
 const socket = io("https://api.nomolive.com/");
 
@@ -32,7 +46,7 @@ const Header = () => {
 
 	const router = useRouter();
 	const theme = useTheme();
-	const isMobile = useMediaQuery("(max-width: 480px)");
+	const isMobile = useMediaQuery("(max-width: 768px)");
 
 	useEffect(() => {
 		const token = localStorage.getItem("loginInfo");
@@ -231,82 +245,200 @@ const Header = () => {
 							</Button>
 						</DialogActions>
 					</Dialog> */}
-					<Toolbar>
+					<Toolbar sx={{ minHeight: "70px !important", px: 3 }}>
+						{/* Logo Section */}
 						<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-							<img src="/logo.png" alt="Logo" style={{ height: 32 }} />
+							<img src="/logo.png" alt="Logo" style={{ height: 40 }} />
 						</Box>
-						<Box sx={{ flexGrow: 1 }} />
-						<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-							<Button
-								variant="text"
-								sx={{ color: "#FF1B6B", fontWeight: "bold" }}
-								onClick={() => router.push("/home")}
+						
+						{/* Center Navigation */}
+						<Box sx={{ flexGrow: 1, display: "flex", justifyContent: "center" }}>
+							<Box 
+								sx={{ 
+									display: "flex", 
+									gap: 1, 
+									alignItems: "center",
+									background: "rgba(255, 27, 107, 0.1)",
+									borderRadius: "50px",
+									padding: "8px 16px",
+									backdropFilter: "blur(10px)",
+									border: "1px solid rgba(255, 27, 107, 0.2)"
+								}}
 							>
-								Home
-							</Button>
-							<Button
-								variant="text"
-								sx={{ color: "#FF1B6B", fontWeight: "bold" }}
-								onClick={() => router.push("/members")}
-							>
-								Members
-							</Button>
-							<Button
-								variant="text"
-								sx={{ color: "#FF1B6B", fontWeight: "bold" }}
-								onClick={() => router.push("/pineapple")}
-							>
-								PineApple
-							</Button>
-							<Box sx={{ position: "relative", display: "inline-block" }}>
 								<Button
+									startIcon={<Home size={18} />}
 									variant="text"
-									sx={{ color: "#FF1B6B", fontWeight: "bold" }}
-									onClick={() => {
-										router.push("/messaging");
-										resetNewMessage();
+									sx={{ 
+										color: "#FF1B6B", 
+										fontWeight: "600",
+										borderRadius: "25px",
+										px: 2,
+										py: 1,
+										minWidth: "auto",
+										textTransform: "none",
+										fontSize: "14px",
+										"&:hover": {
+											backgroundColor: "rgba(255, 27, 107, 0.1)",
+											transform: "translateY(-1px)"
+										},
+										transition: "all 0.2s ease"
+									}}
+									onClick={() => router.push("/home")}
+								>
+									Home
+								</Button>
+								<Button
+									startIcon={<Users size={18} />}
+									variant="text"
+									sx={{ 
+										color: "#FF1B6B", 
+										fontWeight: "600",
+										borderRadius: "25px",
+										px: 2,
+										py: 1,
+										minWidth: "auto",
+										textTransform: "none",
+										fontSize: "14px",
+										"&:hover": {
+											backgroundColor: "rgba(255, 27, 107, 0.1)",
+											transform: "translateY(-1px)"
+										},
+										transition: "all 0.2s ease"
+									}}
+									onClick={() => router.push("/members")}
+								>
+									Members
+								</Button>
+								<Button
+									startIcon={<Apple size={18} />}
+									variant="text"
+									sx={{ 
+										color: "#FF1B6B", 
+										fontWeight: "600",
+										borderRadius: "25px",
+										px: 2,
+										py: 1,
+										minWidth: "auto",
+										textTransform: "none",
+										fontSize: "14px",
+										"&:hover": {
+											backgroundColor: "rgba(255, 27, 107, 0.1)",
+											transform: "translateY(-1px)"
+										},
+										transition: "all 0.2s ease"
+									}}
+									onClick={() => router.push("/pineapple")}
+								>
+									PineApple
+								</Button>
+								<Badge 
+									variant="dot" 
+									color="secondary"
+									invisible={!isNewMessage}
+									sx={{
+										"& .MuiBadge-badge": {
+											backgroundColor: "#a445ea",
+											animation: isNewMessage ? "pulse 2s infinite" : "none",
+											"@keyframes pulse": {
+												"0%": { transform: "scale(1)", opacity: 1 },
+												"50%": { transform: "scale(1.2)", opacity: 0.7 },
+												"100%": { transform: "scale(1)", opacity: 1 }
+											}
+										}
 									}}
 								>
-									Messaging
-								</Button>
-
-								{/* New Message Indicator */}
-								{isNewMessage && (
-									<Box
-										sx={{
-											position: "absolute",
-											top: 0,
-											right: 0,
-											width: 10,
-											height: 10,
-											bgcolor: "#a445ea",
-											borderRadius: "50%",
-											animation: "blink 1.5s infinite",
-											"@keyframes blink": {
-												"0%": { opacity: 1 },
-												"50%": { opacity: 0.3 },
-												"100%": { opacity: 1 },
+									<Button
+										startIcon={<MessageCircle size={18} />}
+										variant="text"
+										sx={{ 
+											color: "#FF1B6B", 
+											fontWeight: "600",
+											borderRadius: "25px",
+											px: 2,
+											py: 1,
+											minWidth: "auto",
+											textTransform: "none",
+											fontSize: "14px",
+											"&:hover": {
+												backgroundColor: "rgba(255, 27, 107, 0.1)",
+												transform: "translateY(-1px)"
 											},
+											transition: "all 0.2s ease"
 										}}
-									/>
-								)}
+										onClick={() => {
+											router.push("/messaging");
+											resetNewMessage();
+										}}
+									>
+										Messaging
+									</Button>
+								</Badge>
+								<Button
+									startIcon={<Heart size={18} />}
+									variant="text"
+									sx={{ 
+										color: "#FF1B6B", 
+										fontWeight: "600",
+										borderRadius: "25px",
+										px: 2,
+										py: 1,
+										minWidth: "auto",
+										textTransform: "none",
+										fontSize: "14px",
+										"&:hover": {
+											backgroundColor: "rgba(255, 27, 107, 0.1)",
+											transform: "translateY(-1px)"
+										},
+										transition: "all 0.2s ease"
+									}}
+									onClick={() => router.push("/matches")}
+								>
+									Matches
+								</Button>
 							</Box>
-							<Button
-								variant="text"
-								sx={{ color: "#FF1B6B", fontWeight: "bold" }}
-								onClick={() => router.push("/matches")}
+						</Box>
+						
+						{/* Right Section - User Actions */}
+						<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+							<IconButton
+								sx={{ 
+									color: "#FF1B6B",
+									"&:hover": {
+										backgroundColor: "rgba(255, 27, 107, 0.1)",
+										transform: "translateY(-1px)"
+									},
+									transition: "all 0.2s ease"
+								}}
 							>
-								Matches
-							</Button>
+								<Search size={20} />
+							</IconButton>
+							<IconButton
+								sx={{ 
+									color: "#FF1B6B",
+									"&:hover": {
+										backgroundColor: "rgba(255, 27, 107, 0.1)",
+										transform: "translateY(-1px)"
+									},
+									transition: "all 0.2s ease"
+								}}
+							>
+								<Bell size={20} />
+							</IconButton>
 							<Box
 								sx={{
-									width: 35,
-									height: 35,
+									width: 40,
+									height: 40,
 									borderRadius: "50%",
 									border: "2px solid",
 									borderColor: "#FF1B6B",
 									overflow: "hidden",
 									cursor: "pointer",
+									transition: "all 0.2s ease",
+									"&:hover": {
+										transform: "scale(1.05)",
+										borderColor: "#c2185b",
+										boxShadow: "0 4px 15px rgba(255, 27, 107, 0.3)"
+									}
 								}}
 								onClick={() => router.push("/profile/")}
 							>

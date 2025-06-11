@@ -310,6 +310,7 @@ export default function Payment(props: { params: Params }) {
 	};
 
 	const [open, setOpen] = useState(false);
+	const [isProcessing, setIsProcessing] = useState(false);
 	const onClose = () => {
 		setOpen(false);
 	};
@@ -459,6 +460,12 @@ export default function Payment(props: { params: Params }) {
 	};
 
 	const handleConfirm = async () => {
+		// Prevent multiple submissions
+		if (isProcessing) {
+			console.log("Payment already in progress, ignoring duplicate request");
+			return;
+		}
+
 		if (!cardNumber || !expiry || !cvc) {
 			setPErrors({
 				cardNumber: cardNumber ? "" : "Card number is required.",
@@ -469,7 +476,8 @@ export default function Payment(props: { params: Params }) {
 		}
 
 		if (!errors.cardNumber && !errors.expiry && !errors.cvc) {
-			// Process payment
+			// Set processing state to prevent duplicate submissions
+			setIsProcessing(true);
 
 			try {
 				console.log("price");
@@ -630,8 +638,17 @@ export default function Payment(props: { params: Params }) {
 				}
 			} catch (error) {
 				console.error("Error submitting form:", error);
+				setOpen(false);
+				Swal.fire({
+					title: "Error",
+					text: "An unexpected error occurred. Please try again.",
+					icon: "error",
+					confirmButtonText: "OK",
+				});
+			} finally {
+				// Always reset processing state
+				setIsProcessing(false);
 			}
-			// setOpen(false);
 		}
 	};
 
@@ -1038,6 +1055,7 @@ export default function Payment(props: { params: Params }) {
 						onClick={handleConfirm}
 						variant="contained"
 						color="primary"
+						disabled={isProcessing}
 						sx={{
 							textTransform: "none",
 							py: 1.5,
@@ -1045,9 +1063,10 @@ export default function Payment(props: { params: Params }) {
 							fontWeight: "bold",
 							color: "#fff",
 							"&:hover": { backgroundColor: "#61dafb" },
+							"&:disabled": { backgroundColor: "#666", color: "#ccc" },
 						}}
 					>
-						Confirm Payment
+						{isProcessing ? "Processing..." : "Confirm Payment"}
 					</Button>
 				</DialogActions>
 			</Dialog>

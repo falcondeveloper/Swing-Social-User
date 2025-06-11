@@ -10,7 +10,7 @@ export default function ScreenName(props: { params: Params }) {
   const router: any = useRouter();
   const [errors, setErrors] = useState<any>({}); // State for error messages
   const [id, setId] = useState<string>(''); // State for error messages
-  const [username, setUsername] = useState<any>(null); // State for error messages
+  const [username, setUsername] = useState<string>(""); // State for error messages
     const [email, setEmail] = useState<any>('');
 
   useEffect(() => {
