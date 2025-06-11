@@ -522,6 +522,8 @@ const Home = () => {
 				>
 					{/* App Bar */}
 					<Header />
+					{/* Remove header spacing for home page desktop view */}
+					<Box sx={{ marginTop: "-80px" }} />
 
 					{/* Hero Section */}
 					<Box
