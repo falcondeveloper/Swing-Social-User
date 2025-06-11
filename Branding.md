@@ -292,3 +292,6 @@ SwingSocial's design system creates a cohesive, modern dating and social applica
 7. **Brand Recognition**: Consistent pink accent color and logo placement
 
 This design system ensures SwingSocial maintains a premium, modern aesthetic while providing excellent usability across all devices and user interactions.
+
+
+// test account: nopowo3984@adrewire.com
