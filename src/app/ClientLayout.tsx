@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import useFcmToken from "@/hooks/useFCMToken";
 import { jwtDecode } from "jwt-decode";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function TokenManager() {
   const { token } = useFcmToken();
@@ -53,6 +55,32 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     <>
       <TokenManager />
       {children}
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+        toastStyle={{
+          backgroundColor: "#1e1e1e",
+          color: "#ffffff",
+          borderRadius: "12px",
+          border: "1px solid rgba(255, 27, 107, 0.2)",
+          backdropFilter: "blur(10px)",
+        }}
+        progressStyle={{
+          backgroundColor: "#FF1B6B",
+        }}
+        style={{
+          // Mobile responsive positioning
+          top: typeof window !== 'undefined' && window.innerWidth <= 768 ? "70px" : "85px",
+        }}
+      />
     </>
   );
 }
