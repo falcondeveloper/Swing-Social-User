@@ -191,7 +191,7 @@ const Header = () => {
 	];
 
 	return (
-		<Box>
+		<>
 			{/* <NotificationModalPrompt /> */}
 			{/* Modern Mobile Header */}
 			{isMobile ? (
@@ -437,6 +437,7 @@ const Header = () => {
 				// Header for Desktop
 				<AppBar
 					position="fixed"
+                                        
 					elevation={0}
 					sx={{
 						bgcolor: "transparent",
@@ -699,7 +700,10 @@ const Header = () => {
 					</Toolbar>
 				</AppBar>
 			)}
-		</Box>
+
+			{/* Spacer to push content below fixed header */}
+			<Box sx={{ height: isMobile ? "64px" : "80px" }} />
+		</>
 	);
 };
 

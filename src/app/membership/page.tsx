@@ -42,6 +42,7 @@ import {
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
+import jwt from "jsonwebtoken";
 
 const theme = createTheme({
 	palette: {
@@ -634,6 +635,29 @@ const BillingUpgrade: React.FC = () => {
 				body: JSON.stringify({ profileId: userid, price: pprice }),
 			});
 			localStorage.setItem('memberShip', "1");
+			
+			// Update JWT token with new membership status
+			const currentToken = localStorage.getItem("loginInfo");
+			if (currentToken) {
+				try {
+					const decodedToken = jwtDecode<any>(currentToken);
+					const updatedToken = jwt.sign(
+						{
+							profileId: decodedToken.profileId,
+							profileName: decodedToken.profileName,
+							avatar: decodedToken.avatar,
+							membership: 1, // Set to premium
+						},
+						"SwingSocialLesile", // JWT_SECRET from login API
+						{ expiresIn: "24h" }
+					);
+					localStorage.setItem("loginInfo", updatedToken);
+					setMembership(1); // Update local state immediately
+					console.log("✅ JWT token updated with premium membership status");
+				} catch (tokenError) {
+					console.error("Error updating JWT token:", tokenError);
+				}
+			}
 		} catch (error) {
 			console.error("Error updating membership:", error);
 		}

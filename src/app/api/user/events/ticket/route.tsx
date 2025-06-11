@@ -41,18 +41,19 @@ export async function POST(req: Request) {
     if (Array.isArray(storedEventDetails) && storedEventDetails.length > 0) {
       const results = []; // Store results from the DB insertions
 
-      // Use a for...of loop to handle async operations properly
-      for (const [index, event] of storedEventDetails.entries()) {
-        const { name, type, price, quantity, id: eventId, profileId } = event;
+      // Use transaction to ensure atomicity
+      const client = await pool.connect();
+      
+      try {
+        await client.query('BEGIN');
+        
+        // Use a for...of loop to handle async operations properly
+        for (const [index, event] of storedEventDetails.entries()) {
+          const { name, type, price, quantity, id: eventId, profileId } = event;
 
-        try {
-          // Execute the query for each event to insert the ticket
-          const result = await pool.query(insertQuery, [name, type, price, quantity, eventId]);
-          console.log(`Event ${index} inserted successfully:`, result);
-          
-          // Update the ticket quantity in the event using the stored procedure event_ticket_updateqty
-          // Parameters: qprofileid (UUID), qticketpackageid (UUID), qty (integer)
-          
+          console.log(`Processing ticket purchase ${index}:`, { name, type, price, quantity, eventId, profileId });
+
+          // Validate input parameters
           if (!profileId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profileId)) {
             throw new Error(`Invalid profileId: ${profileId}`);
           }
@@ -64,30 +65,36 @@ export async function POST(req: Request) {
           if (!Number.isInteger(quantity) || quantity <= 0) {
             throw new Error(`Invalid quantity: ${quantity}`);
           }
+
+          // Execute the query for each event to insert the ticket
+          const result = await client.query(insertQuery, [name, type, price, quantity, eventId]);
+          console.log(`Ticket ${index} inserted successfully:`, result.rows[0]);
           
+          // Update the ticket quantity in the event using the stored procedure event_ticket_updateqty
+          // Parameters: qprofileid (UUID), qticketpackageid (UUID), qty (integer)
+          const updateResult = await client.query(updateQtyQuery, [profileId, type, quantity]);
+          console.log(`Ticket ${index} quantity updated successfully:`, updateResult.rows);
           
-          try {
-            const updateResult = await pool.query(updateQtyQuery, [profileId, type, quantity]);
-            console.log(`Event ${index} quantity updated successfully:`, updateResult.rows);
-            
-            if (updateResult.rows && updateResult.rows.length > 0) {
-              console.log(`Update result: ${JSON.stringify(updateResult.rows[0])}`);
-            } else {
-              console.warn(`No rows returned from event_ticket_updateqty for event ${index}`);
-            }
-          } catch (updateError) {
-            console.error(`Error updating ticket quantity for event ${index}:`, updateError);
+          if (!updateResult.rows || updateResult.rows.length === 0) {
+            throw new Error(`Failed to update ticket quantity for event ${index} - no rows returned`);
           }
 
           // Store the result in the results array
-          results.push(result.rows[0]);
-        } catch (error) {
-          console.error(`Error processing event ${index}:`, error);
-          return NextResponse.json(
-            { error: `Failed to process event ${index}`, details: error },
-            { status: 500 }
-          );
+          results.push({
+            ticket: result.rows[0],
+            quantityUpdate: updateResult.rows[0]
+          });
         }
+
+        await client.query('COMMIT');
+        console.log("All ticket purchases processed successfully:", results);
+        
+      } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Transaction failed, rolling back:', error);
+        throw error;
+      } finally {
+        client.release();
       }
 
       // Return a success response with all inserted tickets

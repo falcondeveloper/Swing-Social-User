@@ -1140,7 +1140,7 @@ const ProfileDetail: React.FC = () => {
 								
 								<ActionChip 
 									icon={<Settings size={16} />}
-									label="Settings"
+									label="Membership"
 									onClick={() => router.push("/membership")}
 								/>
 								
