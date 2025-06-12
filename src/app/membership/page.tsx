@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
 	Container,
 	Typography,
@@ -11,26 +11,159 @@ import {
 	Box,
 	ThemeProvider,
 	createTheme,
-	Autocomplete,
+	Alert,
+	CircularProgress,
+	InputAdornment,
+	Fade,
+	Card,
+	CardContent,
+	Stepper,
+	Step,
+	StepLabel,
+	Collapse,
+	IconButton,
+	Chip,
+	useMediaQuery,
 } from "@mui/material";
+import { 
+	CreditCard, 
+	Calendar, 
+	Lock, 
+	ArrowLeft, 
+	ArrowRight,
+	User,
+	MapPin,
+	Phone,
+	Tag,
+	CheckCircle,
+	Star,
+	Sparkles
+} from "lucide-react";
 import Swal from "sweetalert2";
-import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
+import jwt from "jsonwebtoken";
 
 const theme = createTheme({
 	palette: {
+		mode: 'dark',
 		primary: {
-			main: "#E91E63", // Setting the main color to #E91E63
+			main: "#FF1B6B",
+			dark: "#c2185b",
+		},
+		background: {
+			default: "#121212",
+			paper: "#1e1e1e",
+		},
+		text: {
+			primary: "#ffffff",
+			secondary: "#aaaaaa",
+		},
+	},
+	components: {
+		MuiTextField: {
+			styleOverrides: {
+				root: {
+					'& .MuiOutlinedInput-root': {
+						backgroundColor: 'rgba(30, 30, 30, 0.8)',
+						borderRadius: '12px',
+						transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+						'& fieldset': {
+							borderColor: 'rgba(255, 255, 255, 0.12)',
+							borderWidth: '1px',
+						},
+						'&:hover': {
+							backgroundColor: 'rgba(30, 30, 30, 1)',
+							'& fieldset': {
+								borderColor: 'rgba(255, 27, 107, 0.5)',
+							}
+						},
+						'&.Mui-focused': {
+							backgroundColor: 'rgba(30, 30, 30, 1)',
+							transform: 'translateY(-1px)',
+							boxShadow: '0 4px 20px rgba(255, 27, 107, 0.15)',
+							'& fieldset': {
+								borderColor: '#FF1B6B',
+								borderWidth: '2px',
+							}
+						},
+						'&.Mui-error fieldset': {
+							borderColor: '#f44336',
+						},
+					},
+					'& .MuiInputLabel-root': {
+						color: '#aaaaaa',
+						fontSize: '14px',
+						'&.Mui-focused': {
+							color: '#FF1B6B',
+							transform: 'translate(14px, -9px) scale(0.75)',
+						},
+						'&.Mui-error': {
+							color: '#f44336',
+						},
+					},
+					'& .MuiOutlinedInput-input': {
+						color: '#ffffff',
+						fontSize: '15px',
+					},
+				},
+			},
+		},
+		MuiButton: {
+			styleOverrides: {
+				root: {
+					borderRadius: '12px',
+					textTransform: 'none',
+					fontWeight: 600,
+					fontSize: '15px',
+					padding: '12px 24px',
+					transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+				},
+				contained: {
+					background: 'linear-gradient(135deg, #FF1B6B 0%, #c2185b 100%)',
+					boxShadow: '0 4px 15px rgba(255, 27, 107, 0.25)',
+					'&:hover': {
+						background: 'linear-gradient(135deg, #c2185b 0%, #d81160 100%)',
+						transform: 'translateY(-2px)',
+						boxShadow: '0 8px 25px rgba(255, 27, 107, 0.35)',
+					},
+					'&:active': {
+						transform: 'translateY(0)',
+					},
+					'&:disabled': {
+						background: 'rgba(255, 255, 255, 0.12)',
+						color: 'rgba(255, 255, 255, 0.3)',
+						boxShadow: 'none',
+					},
+				},
+				outlined: {
+					borderColor: 'rgba(255, 27, 107, 0.5)',
+					color: '#FF1B6B',
+					'&:hover': {
+						borderColor: '#c2185b',
+						backgroundColor: 'rgba(255, 27, 107, 0.08)',
+						transform: 'translateY(-1px)',
+					},
+				},
+			},
+		},
+		MuiCard: {
+			styleOverrides: {
+				root: {
+					background: 'rgba(30, 30, 30, 0.8)',
+					backdropFilter: 'blur(20px)',
+					borderRadius: '16px',
+					border: '1px solid rgba(255, 255, 255, 0.08)',
+					transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+				},
+			},
 		},
 	},
 });
 
-// Define the form's data structure using a TypeScript interface
 interface FormData {
 	firstName: string;
 	lastName: string;
-	screenName: string;
 	streetAddress: string;
 	country: string;
 	city: string;
@@ -42,16 +175,54 @@ interface FormData {
 	cvv: string;
 	promoCode: string;
 }
-interface UserProfile {
-	Id: any;
-	Username: any;
-}
+
+const steps = ['Plan', 'Details', 'Payment'];
+
+const membershipPlans = [
+	{
+		id: 'Monthly - $17.95',
+		name: 'Monthly',
+		price: '$17.95',
+		period: '/month',
+		savings: null,
+		popular: false,
+		features: ['Unlimited swipes', 'Premium filters', 'Message priority']
+	},
+	{
+		id: 'Quarterly - $39.95',
+		name: 'Quarterly',
+		price: '$39.95',
+		period: '/3 months',
+		savings: '25%',
+		popular: false,
+		features: ['Everything in Monthly', '3 months commitment', 'Save $14']
+	},
+	{
+		id: 'BiAnnually - $69.95',
+		name: 'Bi-Annual',
+		price: '$69.95',
+		period: '/6 months',
+		savings: '35%',
+		popular: true,
+		features: ['Everything in Quarterly', '6 months commitment', 'Save $38']
+	},
+	{
+		id: 'Annually - $129.95',
+		name: 'Annual',
+		price: '$129.95',
+		period: '/year',
+		savings: '40%',
+		popular: false,
+		features: ['Everything in Bi-Annual', '12 months commitment', 'Save $86']
+	}
+];
 
 const BillingUpgrade: React.FC = () => {
+	const [mounted, setMounted] = useState(false);
+	const [activeStep, setActiveStep] = useState(0);
 	const [formData, setFormData] = useState<FormData>({
 		firstName: "",
 		lastName: "",
-		screenName: "",
 		streetAddress: "",
 		country: "",
 		city: "",
@@ -64,1159 +235,956 @@ const BillingUpgrade: React.FC = () => {
 		promoCode: "",
 	});
 
-	const [profileId, setProfileId] = useState<any>(null);
+	const [profileId, setProfileId] = useState<string>("");
 	const [errors, setErrors] = useState<Partial<FormData>>({});
-	const [promoCode, setPromoCode] = useState<any>("");
-	const [promoCodeMessage, setPromocodeMessage] = useState<any>(null);
-	const [promoCodeList, setPromoCodeList] = useState<any>([]);
-	const [userName, setUsername] = useState<any>("");
-	const [password, setPassword] = useState<any>("");
+	const [promoCode, setPromoCode] = useState<string>("");
+	const [promoCodeMessage, setPromocodeMessage] = useState<string>("");
+	const [promoCodeList, setPromoCodeList] = useState<any[]>([]);
+	const [userName, setUsername] = useState<string>("");
 	const [membership, setMembership] = useState(0);
-	const [showAlert, setShowAlert] = useState(false);
 	const [advertiser, setAdvertiser] = useState<any>({});
-	const [state, setState] = useState<any>("");
+	const [state, setState] = useState<string>("");
 	const [firstMonthFree, setFirstMonthFree] = useState(false);
+	const [isValidPromoCode, setIsValidPromoCode] = useState(true);
+	const [loading, setLoading] = useState(false);
+	const [formError, setFormError] = useState<string>("");
 
 	const router = useRouter();
-	var existingUser = true;
+	const isMobile = useMediaQuery('(max-width: 768px)');
 
-	// useEffect(() => {
-	//     if (typeof window !== 'undefined') {
-	//         setProfileId(localStorage.getItem('logged_in_profile'));
-	//     }
-	// }, []);
+	// Handle mounting to prevent hydration issues
+	useEffect(() => {
+		setMounted(true);
+	}, []);
 
-	const [isValidPromoCode, setIsValidPromoCode] = useState<any>(true);
+	// Format card number with spaces
+	const formatCardNumber = useCallback((value: string) => {
+		const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+		const matches = v.match(/\d{4,16}/g);
+		const match = matches && matches[0] || '';
+		const parts = [];
+		for (let i = 0, len = match.length; i < len; i += 4) {
+			parts.push(match.substring(i, i + 4));
+		}
+		return parts.length ? parts.join(' ') : v;
+	}, []);
+
+	// Format expiry date MM/YY
+	const formatExpiryDate = useCallback((value: string) => {
+		const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+		if (v.length >= 2) {
+			return v.substring(0, 2) + '/' + v.substring(2, 4);
+		}
+		return v;
+	}, []);
+
+	// Validate card using Luhn algorithm
+	const validateCardNumber = useCallback((cardNumber: string) => {
+		const num = cardNumber.replace(/\s/g, '');
+		if (!/^\d+$/.test(num)) return false;
+		if (num.length < 13 || num.length > 19) return false;
+
+		let sum = 0;
+		let isEven = false;
+		for (let i = num.length - 1; i >= 0; i--) {
+			let digit = parseInt(num.charAt(i));
+			if (isEven) {
+				digit *= 2;
+				if (digit > 9) digit -= 9;
+			}
+			sum += digit;
+			isEven = !isEven;
+		}
+		return sum % 10 === 0;
+	}, []);
+
 	const handleGetAllPromoCodes = async () => {
 		try {
-			const apiUrl = `/api/user/promocode/check`;
-			// Fetch event data from your API
-			const response = await fetch(apiUrl);
-			if (!response.ok) {
-				throw new Error("Failed to fetch event data");
-			}
-
+			const response = await fetch('/api/user/promocode/check');
+			if (!response.ok) throw new Error("Failed to fetch promo codes");
+			
 			const result = await response.json();
-
-			if (result.error) {
-				throw new Error(result.error);
-			}
-
-			// Set the fetched data
-			setPromoCodeList(result.promocodes);
-		} catch (error) {}
+			if (result.error) throw new Error(result.error);
+			
+			setPromoCodeList(result.promocodes || []);
+		} catch (error) {
+			console.error("Error fetching promo codes:", error);
+		}
 	};
+
 	useEffect(() => {
+		if (!mounted) return;
+		
 		handleGetAllPromoCodes();
-	}, []);
-	useEffect(() => {
+		
 		const userid = localStorage.getItem("logged_in_profile");
-		setProfileId(userid);
-		const getState = async () => {
-			const response = await fetch(`/api/user/state?userid=${userid}`);
-			if (!response.ok) {
-				console.log("Error : please check it out");
-			}
-			const { user: advertiserData } = await response.json();
-			console.log(advertiserData);
-			const [city, state] = advertiserData.Location.split(", ");
-			setState(state);
-			const result = await fetch("/api/user/promostate", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					state: state,
-				}),
-			});
-			const data = await result.json();
-			if (data.result == 1) {
-				setFirstMonthFree(true);
-				console.log("Free Month");
-			} else {
-				console.log("Premium Month");
-				setFirstMonthFree(false);
-			}
-		};
-		getState();
-	}, []);
-	useEffect(() => {
-		setUsername(localStorage.getItem("profileUsername"));
-		setPassword(localStorage.getItem("password"));
+		if (userid) {
+			setProfileId(userid);
+			
+			const getState = async () => {
+				try {
+					const response = await fetch(`/api/user/state?userid=${userid}`);
+					if (!response.ok) return;
+					
+					const { user: advertiserData } = await response.json();
+					const [city, state] = advertiserData.Location.split(", ");
+					setState(state);
+					
+					const result = await fetch("/api/user/promostate", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ state: state }),
+					});
+					const data = await result.json();
+					setFirstMonthFree(data.result === 1);
+				} catch (error) {
+					console.error("Error fetching state data:", error);
+				}
+			};
+			
+			getState();
+		}
+		
 		const token = localStorage.getItem("loginInfo");
 		if (token) {
-			const decodeToken = jwtDecode<any>(token);
-			setMembership(decodeToken?.membership);
-		}
-		const id = localStorage.getItem("logged_in_profile");
-		const getData = async () => {
-			const response = await fetch(`/api/user/sweeping/user?id=${id}`);
-			if (!response.ok) {
-				console.error("Failed to fetch advertiser data:", response.statusText);
-				throw new Error(`HTTP error! status: ${response.status}`);
+			try {
+				const decodeToken = jwtDecode<any>(token);
+				setMembership(decodeToken?.membership || 0);
+			} catch (error) {
+				console.error("Invalid token:", error);
 			}
-
-			const { user: advertiserData } = await response.json();
-			setAdvertiser(advertiserData);
-
-			console.log("here is the data: ", advertiserData);
+		}
+		
+		setUsername(localStorage.getItem("profileUsername") || "");
+		
+		const getData = async () => {
+			try {
+				const response = await fetch(`/api/user/sweeping/user?id=${userid}`);
+				if (!response.ok) return;
+				
+				const { user: advertiserData } = await response.json();
+				setAdvertiser(advertiserData);
+			} catch (error) {
+				console.error("Error fetching user data:", error);
+			}
 		};
-		getData();
-
-		handleGetAllPromoCodes();
-	}, []);
+		
+		if (userid) getData();
+	}, [mounted]);
 
 	const handleChangePromoCode = (promoCodeText: string) => {
-		console.log(promoCodeText, "======promoCodeText");
-		// handleGetAllPromoCodes();
 		setPromoCode(promoCodeText);
+		setFormData(prev => ({ ...prev, promoCode: promoCodeText }));
+		
 		if (promoCodeText) {
-			let filter = promoCodeList.filter(
-				(val: any) => val?.PromoCodeText === promoCodeText
-			);
-			if (filter?.length > 0) {
-				console.log(filter[0].DisplayMessage, "=====filter");
-				setPromocodeMessage(filter[0]?.DisplayMessage);
+			const filter = promoCodeList.find(val => val?.PromoCodeText === promoCodeText);
+			if (filter) {
+				setPromocodeMessage(filter.DisplayMessage);
 				setIsValidPromoCode(true);
 			} else {
-				setPromocodeMessage("Promo Code is Invalid");
+				setPromocodeMessage("Invalid promo code");
 				setIsValidPromoCode(false);
 			}
 		} else {
-			setPromocodeMessage(null);
+			setPromocodeMessage("");
 			setIsValidPromoCode(true);
 		}
 	};
-	const handleSubmitPromoCode = async () => {
-		try {
-			const response = await fetch("/api/user/promocode", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ pid: profileId, promocode: promoCode }),
-			});
 
-			console.log(response);
-		} catch (error) {
-			console.error("Error submitting form:", error);
-		}
-	};
-
-	// Handle changes for form fields
-	const handleChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-	) => {
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		const { name, value } = e.target;
-		setFormData({
-			...formData,
-			[name]: value,
-		});
+		
+		let processedValue = value;
 
-		// Clear the error for the field once the user starts typing
-		if (errors[name as keyof FormData]) {
-			setErrors({
-				...errors,
-				[name]: "",
-			});
+		if (name === 'cardNumber') {
+			processedValue = formatCardNumber(value);
+		} else if (name === 'expDate') {
+			processedValue = formatExpiryDate(value);
+		} else if (name === 'cvv') {
+			processedValue = value.replace(/[^0-9]/g, '').substring(0, 4);
+		} else if (name === 'phoneNumber') {
+			processedValue = value.replace(/[^0-9+\-\s()]/g, '');
 		}
+
+		setFormData(prev => ({ ...prev, [name]: processedValue }));
+
+		if (errors[name as keyof FormData]) {
+			setErrors(prev => ({ ...prev, [name]: "" }));
+		}
+
+		if (formError) setFormError("");
 	};
 
-	// Validate the form fields
-	const validate = () => {
-		let tempErrors: Partial<FormData> = {};
-		if (!formData.firstName) tempErrors.firstName = "First Name is required.";
-		if (!formData.lastName) tempErrors.lastName = "Last Name is required.";
-		// if (profileUsername === "") tempErrors.screenName = "Profile Name is required.";
-		if (!formData.streetAddress)
-			tempErrors.streetAddress = "Street Address is required.";
-		if (!formData.country) tempErrors.country = "Country is required.";
-		if (!formData.city) tempErrors.city = "City is required.";
-		// if (!formData.state) tempErrors.state = "State is required.";
-		if (!formData.zipCode) tempErrors.zipCode = "Zip Code is required.";
-		if (!formData.phoneNumber)
-			tempErrors.phoneNumber = "Phone Number is required.";
-		if (!formData.membershipOption)
-			tempErrors.membershipOption = "Membership Option is required.";
-		if (!formData.cardNumber)
-			tempErrors.cardNumber = "Card Number is required.";
-		if (!formData.expDate) tempErrors.expDate = "Expiry Date is required.";
-		if (!formData.cvv) tempErrors.cvv = "CVV is required.";
+	const validateStep = (step: number) => {
+		const tempErrors: Partial<FormData> = {};
+		
+		if (step === 0) {
+			if (!formData.membershipOption) {
+				setFormError("Please select a membership plan");
+				return false;
+			}
+		} else if (step === 1) {
+			if (!formData.firstName.trim()) tempErrors.firstName = "Required";
+			if (!formData.lastName.trim()) tempErrors.lastName = "Required";
+			if (!formData.streetAddress.trim()) tempErrors.streetAddress = "Required";
+			if (!formData.country.trim()) tempErrors.country = "Required";
+			if (!formData.city.trim()) tempErrors.city = "Required";
+			if (!formData.zipCode.trim()) tempErrors.zipCode = "Required";
+			if (!formData.phoneNumber.trim()) tempErrors.phoneNumber = "Required";
+		} else if (step === 2) {
+			if (!formData.cardNumber.trim()) {
+				tempErrors.cardNumber = "Required";
+			} else if (!validateCardNumber(formData.cardNumber)) {
+				tempErrors.cardNumber = "Invalid card number";
+			}
+			
+			if (!formData.expDate.trim()) {
+				tempErrors.expDate = "Required";
+			} else if (!/^\d{2}\/\d{2}$/.test(formData.expDate)) {
+				tempErrors.expDate = "Use MM/YY format";
+			} else {
+				const [month, year] = formData.expDate.split('/').map(num => parseInt(num));
+				const now = new Date();
+				const currentYear = now.getFullYear() % 100;
+				const currentMonth = now.getMonth() + 1;
+				
+				if (year < currentYear || (year === currentYear && month < currentMonth)) {
+					tempErrors.expDate = "Card expired";
+				}
+			}
+			
+			if (!formData.cvv.trim()) {
+				tempErrors.cvv = "Required";
+			} else if (!/^\d{3,4}$/.test(formData.cvv)) {
+				tempErrors.cvv = "3-4 digits";
+			}
+		}
 
 		setErrors(tempErrors);
-
-		// Return true if no errors exist
 		return Object.keys(tempErrors).length === 0;
 	};
 
-	// const handleGetProfileId = async () => {
-	//     try {
-	//         // Check if the username exists
-	//         const checkResponse = await fetch('/api/user/profile/search', {
-	//             method: 'POST',
-	//             headers: {
-	//                 'Content-Type': 'application/json',
-	//             },
-	//             body: JSON.stringify({ search: id }), // Pass the username to check
-	//         });
+	const handleNext = () => {
+		if (validateStep(activeStep)) {
+			setActiveStep(prev => prev + 1);
+			setFormError("");
+		}
+	};
 
-	//         const checkData = await checkResponse.json();
-	//         console.log(checkData);
-	//         console.log(profileId);
-	//         if (!checkData.detail) {
-	//             existingUser = false;
-	//         } else {
-	//             existingUser = true;
-	//             setProfileId(checkData?.detail?.Id);
-	//             setUsername(checkData?.detail?.Username);
-	//         }
-	//         console.log(profileId);
-	//     } catch (error) {
-	//         console.log(error);
-	//     }
-	// }
+	const handleBack = () => {
+		setActiveStep(prev => prev - 1);
+		setFormError("");
+	};
 
-	// Handle form submission
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (validate()) {
-			console.log("Form submitted successfully:", formData);
-			// Add your submission logic here
-			try {
-				//get price and unit from  from option
-				// await handleGetProfileId();
-				const match = formData?.membershipOption.match(
-					/^([\w\s]+) - \$([\d.]+)$/
-				);
-				console.log(formData?.membershipOption, "======matchh");
-				var unit = match?.[1]; // "Monthly"
-				var length = "1";
-				var planName = "";
-				var pprice = "17.95";
-				console.log(unit);
-				if (unit == "Monthly") {
+	const handleSubmit = async () => {
+		if (!validateStep(2)) return;
+		if (!isValidPromoCode && promoCode) {
+			setFormError("Please enter a valid promo code or leave it empty.");
+			return;
+		}
+
+		setLoading(true);
+		console.log("🚀 Starting payment submission...");
+
+		try {
+			const match = formData.membershipOption.match(/^([\w\s-]+) - \$([\d.]+)$/);
+			let unit = match?.[1];
+			let length = "1";
+			let planName = "";
+			let pprice = "17.95";
+
+			console.log("📦 Membership option selected:", formData.membershipOption);
+			console.log("🔧 Parsed unit:", unit);
+
+			switch (unit) {
+				case "Monthly":
 					length = "1";
 					planName = "Premium Monthly";
 					pprice = "17.95";
-				} else if (unit == "Quarterly") {
+					break;
+				case "Quarterly":
 					length = "3";
 					planName = "Premium Quarterly";
 					pprice = "39.95";
-				} else if (unit == "BiAnnually") {
+					break;
+				case "BiAnnually":
+				case "Bi-Annual":
 					length = "6";
 					planName = "BiAnnually";
 					pprice = "69.95";
-				} else if (unit == "Annually") {
+					break;
+				case "Annual":
+				case "Annually":
 					length = "12";
 					planName = "Annually";
 					pprice = "129.95";
-				}
-
-				console.log("Unit:", unit);
-
-				if (existingUser == false) {
-					Swal.fire({
-						title: `Error`,
-						text: `Sorry, we can not find you. Please sign up to the website.`,
-						icon: "error",
-						showCancelButton: true,
-						confirmButtonText: "Ok",
-					}).then(() => {
-						console.log("Your Promo Code is Invalid");
-					});
-				} else {
-					console.log(isValidPromoCode);
-					console.log(length);
-					if (isValidPromoCode) {
-						if (promoCode !== "") {
-							pprice = "1";
-						}
-						// console.log(price);
-						const response = await fetch("/api/user/payment", {
-							method: "POST",
-							headers: {
-								"Content-Type": "application/json",
-							},
-							body: JSON.stringify({
-								price: pprice,
-								pprice: pprice,
-								length: length,
-								cardNumber: formData.cardNumber,
-								expiry: formData?.expDate,
-								cvc: formData?.cvv,
-								firstName: formData.firstName,
-								lastName: formData.lastName,
-								plan: planName,
-								isPromoCode: isValidPromoCode,
-								country: formData?.country,
-								// screenName: profileUsername,
-								city: formData?.city,
-								state: state,
-								streetAddress: formData?.streetAddress,
-								phone: formData?.phoneNumber,
-								zipCode: formData?.zipCode,
-								promocode: promoCode,
-								email: advertiser.Email,
-								username: advertiser.Username,
-								firstMonthFree: firstMonthFree,
-								userid: profileId,
-							}),
-						});
-						console.log(response);
-						if (response.ok) {
-							const data = await response.json();
-							const respondCode = data.respondCode;
-							console.log("////////");
-							console.log(data);
-							console.log(respondCode);
-
-							if (respondCode === "1") {
-								if (promoCode === "") {
-									Swal.fire({
-										title: `Thank you=`,
-										text: "Your membership has been upgraded successfully!",
-										icon: "success",
-										confirmButtonText: "OK",
-									}).then(async () => {
-										await handleUpdateMembershipStatus(profileId, pprice);
-
-										router.push("/members");
-										setShowAlert(true);
-
-										// Automatically hide the alert after 3 seconds
-										setTimeout(() => {
-											setShowAlert(false);
-										}, 3000);
-									});
-								} else {
-									Swal.fire({
-										title: `Thank you=`,
-										text: "Your membership has been upgraded successfully!",
-										icon: "success",
-										confirmButtonText: "OK",
-									}).then(async () => {
-										await handleSubmitPromoCode();
-										await handleUpdateMembershipStatus(profileId, pprice);
-										router.push("/members");
-										setShowAlert(true);
-
-										// Automatically hide the alert after 3 seconds
-										setTimeout(() => {
-											setShowAlert(false);
-										}, 3000);
-									});
-								}
-							} else {
-								console.log(
-									"----------------------Promocodemessage",
-									promoCodeMessage,
-									promoCode
-								);
-								Swal.fire({
-									title: `Error`,
-									text: `Sorry, we are unable to process.`,
-									icon: "error",
-									showCancelButton: true,
-									confirmButtonText: "Edit the card",
-									cancelButtonText: "Go to the homepage",
-								}).then((result) => {
-									if (result.dismiss === Swal.DismissReason.cancel) {
-										window.location.href = "https://app.swingsocial.co/";
-									}
-								});
-							}
-						}
-					} else {
-						Swal.fire({
-							title: `Your Promo Code is Invalid`,
-							text: `Sorry, promo code is not valid. Please check and try again.`,
-							icon: "error",
-							showCancelButton: true,
-							confirmButtonText: "Ok",
-						}).then(() => {
-							console.log("error");
-						});
-					}
-				}
-			} catch (error) {
-				console.error("Error submitting form:", error);
+					break;
 			}
-		} else {
-			console.log("Validation failed:", errors);
-		}
-	};
 
-	const handleUpdateMembershipStatus = async (userid: string, pprice: any) => {
-		try {
-			const response = await fetch("/api/user/membership", {
-				method: "POST", // Specify the HTTP method
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ profileId: userid, price: pprice }), // Pass profileId and selected upgrade option
+			if (promoCode !== "") {
+				pprice = "1";
+				console.log("🎟️ Promo code applied, price set to $1");
+			}
+
+			console.log("💰 Final pricing:", { planName, pprice, length });
+
+			const paymentPayload = {
+				price: pprice,
+				pprice: pprice,
+				length: length,
+				cardNumber: formData.cardNumber,
+				expiry: formData.expDate,
+				cvc: formData.cvv,
+				firstName: formData.firstName,
+				lastName: formData.lastName,
+				plan: planName,
+				isPromoCode: isValidPromoCode,
+				country: formData.country,
+				city: formData.city,
+				state: state,
+				streetAddress: formData.streetAddress,
+				phone: formData.phoneNumber,
+				zipCode: formData.zipCode,
+				promocode: promoCode,
+				email: advertiser.Email,
+				username: advertiser.Username,
+				firstMonthFree: firstMonthFree,
+				userid: profileId,
+			};
+
+			console.log("📤 Sending payment request with payload:", {
+				...paymentPayload,
+				cardNumber: "****-****-****-" + paymentPayload.cardNumber.slice(-4),
+				cvc: "***"
 			});
 
-			const checkData = await response.json();
-			localStorage.setItem('memberShip', "1");
-		} catch (error) {
-			console.error("Error:", error);
-		}
-	};
+			const response = await fetch("/api/user/payment", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(paymentPayload),
+			});
 
-	// const [profileUsername, setProfileUsername] = useState<any>("");
-	const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
-	const [loading, setLoading] = useState<boolean>(false);
-	const [page, setPage] = useState<number>(1);
-	const [searchQuery, setSearchQuery] = useState<string>("");
-	const [hasMore, setHasMore] = useState<boolean>(true);
+			const data = await response.json();
+			
+			console.log("📨 Payment API Response:", {
+				success: data.success,
+				message: data.message,
+				respondCode: data.respondCode,
+				status: response.status
+			});
 
-	useEffect(() => {
-		const fetchUserProfiles = async () => {
-			if (loading || !hasMore || searchQuery.length < 2) return; // Require at least 2 characters
-
-			try {
-				setLoading(true);
-				const response = await fetch(
-					`/api/user/sweeping?page=${page}&size=50&search=${encodeURIComponent(
-						searchQuery
-					)}`
-				);
-				const data = await response.json();
-
-				if (data?.profiles?.length > 0) {
-					setUserProfiles((prevProfiles) =>
-						page === 1 ? data.profiles : [...prevProfiles, ...data.profiles]
-					);
-				} else {
-					setHasMore(false); // No more results
-				}
-
-				setLoading(false);
-			} catch (error) {
-				console.error("Error fetching user profiles:", error);
-				setLoading(false);
+			if (data.oneTimePaymentResponse) {
+				console.log("💳 Authorize.net One-Time Payment Response:", data.oneTimePaymentResponse);
 			}
-		};
 
-		fetchUserProfiles();
-	}, [page, searchQuery]);
+			if (data.subscriptionResponse) {
+				console.log("🔄 Authorize.net Subscription Response:", data.subscriptionResponse);
+			}
 
-	const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
-		const target = event.target as HTMLDivElement;
-		if (
-			target.scrollHeight - target.scrollTop === target.clientHeight &&
-			!loading &&
-			hasMore
-		) {
-			setPage((prevPage) => prevPage + 1);
+			if (data.success) {
+				console.log("✅ Payment successful!");
+				
+				if (promoCode !== "") {
+					await handleSubmitPromoCode();
+				}
+				await handleUpdateMembershipStatus(profileId, pprice);
+
+				Swal.fire({
+					title: "Payment Successful! 🎉",
+					text: data.message,
+					icon: "success",
+					confirmButtonText: "Continue to Members",
+					confirmButtonColor: "#FF1B6B",
+					background: "#1e1e1e",
+					color: "#ffffff",
+					showClass: {
+						popup: 'animate__animated animate__fadeInUp'
+					}
+				}).then(() => {
+					router.push("/members");
+				});
+			} else {
+				console.log("❌ Payment failed:", data.message);
+				setFormError(data.message || "Payment failed. Please try again.");
+			}
+		} catch (error) {
+			console.error("🚨 Payment submission error:", error);
+			setFormError("We're experiencing technical difficulties. Please try again.");
+		} finally {
+			setLoading(false);
 		}
 	};
 
-	const debounce = (func: Function, delay: number) => {
-		let timer: NodeJS.Timeout;
-		return (...args: any[]) => {
-			clearTimeout(timer);
-			timer = setTimeout(() => func(...args), delay);
-		};
+	const handleSubmitPromoCode = async () => {
+		try {
+			await fetch("/api/user/promocode", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ pid: profileId, promocode: promoCode }),
+			});
+		} catch (error) {
+			console.error("Error submitting promo code:", error);
+		}
 	};
 
-	const handleSearchChange = debounce((value: string) => {
-		setPage(1); // Reset to first page for new search
-		setHasMore(true); // Reset pagination
-		setSearchQuery(value);
-	}, 300);
+	const handleUpdateMembershipStatus = async (userid: string, pprice: string) => {
+		try {
+			await fetch("/api/user/membership", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ profileId: userid, price: pprice }),
+			});
+			localStorage.setItem('memberShip', "1");
+			
+			// Update JWT token with new membership status
+			const currentToken = localStorage.getItem("loginInfo");
+			if (currentToken) {
+				try {
+					const decodedToken = jwtDecode<any>(currentToken);
+					const updatedToken = jwt.sign(
+						{
+							profileId: decodedToken.profileId,
+							profileName: decodedToken.profileName,
+							avatar: decodedToken.avatar,
+							membership: 1, // Set to premium
+						},
+						"SwingSocialLesile", // JWT_SECRET from login API
+						{ expiresIn: "24h" }
+					);
+					localStorage.setItem("loginInfo", updatedToken);
+					setMembership(1); // Update local state immediately
+					console.log("✅ JWT token updated with premium membership status");
+				} catch (tokenError) {
+					console.error("Error updating JWT token:", tokenError);
+				}
+			}
+		} catch (error) {
+			console.error("Error updating membership:", error);
+		}
+	};
+
+	// Don't render until mounted to prevent hydration issues
+	if (!mounted) {
+		return (
+			<Box sx={{ 
+				display: 'flex', 
+				justifyContent: 'center', 
+				alignItems: 'center', 
+				height: '100vh',
+				bgcolor: '#121212'
+			}}>
+				<CircularProgress sx={{ color: '#FF1B6B' }} />
+			</Box>
+		);
+	}
+
+	if (membership === 1) {
+		return (
+			<ThemeProvider theme={theme}>
+				<Box sx={{ 
+					bgcolor: '#121212', 
+					minHeight: '100vh',
+					display: 'flex',
+					alignItems: 'center',
+					py: 2
+				}}>
+					<Container maxWidth="sm">
+						<Button
+							onClick={() => router.back()}
+							startIcon={<ArrowLeft />}
+							sx={{
+								mb: 3,
+								color: "rgba(255, 255, 255, 0.7)",
+								"&:hover": { color: "#fff" },
+							}}
+						>
+							Back
+						</Button>
+
+						<Card sx={{ textAlign: 'center', p: 4 }}>
+							<Box sx={{ mb: 3 }}>
+								<CheckCircle size={64} color="#4caf50" />
+							</Box>
+							<Typography variant="h4" gutterBottom sx={{ color: "#FF1B6B", fontWeight: "bold" }}>
+								Premium Active
+							</Typography>
+							<Typography variant="body1" sx={{ mb: 3, color: "#aaaaaa" }}>
+								You're already a Premium member! To make changes to your subscription, please contact our support team.
+							</Typography>
+							<Button
+								component="a"
+								href="mailto:info@swingsocial.co"
+								variant="contained"
+								size="large"
+							>
+								Contact Support
+							</Button>
+						</Card>
+					</Container>
+				</Box>
+			</ThemeProvider>
+		);
+	}
 
 	return (
 		<ThemeProvider theme={theme}>
-			{showAlert && (
-				<div
-					style={{
-						position: "fixed",
-						top: "1rem",
-						right: "1rem",
-						backgroundColor: "green",
-						color: "white",
-						padding: "1rem 2rem",
-						borderRadius: "5px",
-						boxShadow: "0 0 10px rgba(0, 0, 0, 0.2)",
-						zIndex: 1000,
-					}}
-				>
-					Congratulation! You qualify for one month premium membership only $1
-					and $17.95 thereafter!
-				</div>
-			)}
-			{membership === 1 ? (
-				<Container
-					maxWidth="md"
-					sx={{
-						mt: 2.5,
-						mb: 2.5,
-						color: "white",
-						minHeight: "100vh", // Ensures the container takes the full height of the viewport
-						display: "flex",
-						flexDirection: "column", // Arrange children in a column
-						justifyContent: "center", // Center the Box vertically
-					}}
-				>
-					{/* Back button positioned at the top */}
+			<Box sx={{ 
+				bgcolor: '#121212', 
+				minHeight: '100vh',
+				py: isMobile ? 2 : 4
+			}}>
+				<Container maxWidth="sm">
 					<Button
 						onClick={() => router.back()}
 						startIcon={<ArrowLeft />}
 						sx={{
-							textTransform: "none",
+							mb: 3,
 							color: "rgba(255, 255, 255, 0.7)",
-							textAlign: "center",
-							minWidth: "auto",
-							fontSize: "16px",
-							fontWeight: "medium",
-							position: "absolute", // Position it at the top
-							top: "20px", // Adjust the distance from the top
-							left: "20px", // Adjust the distance from the left
-							"&:hover": {
-								color: "#fff",
-								backgroundColor: "rgba(255, 255, 255, 0.08)",
-							},
+							"&:hover": { color: "#fff", backgroundColor: "rgba(255, 255, 255, 0.05)" },
 						}}
 					>
 						Back
 					</Button>
 
-					{/* Centered Box */}
-					<Box
-						sx={{
-							p: 3,
-							borderRadius: 2,
-							backgroundColor: "rgba(255, 255, 255, 0.08)",
-							boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.3)",
-							textAlign: "center",
-							color: "white",
-						}}
-					>
-						<Typography
-							variant="h6"
-							gutterBottom
+					{/* Header */}
+					<Box sx={{ textAlign: 'center', mb: 4 }}>
+						<Typography variant="h4" gutterBottom sx={{ 
+							background: 'linear-gradient(135deg, #FF1B6B, #FF758C)',
+							WebkitBackgroundClip: 'text',
+							WebkitTextFillColor: 'transparent',
+							fontWeight: 'bold'
+						}}>
+							Upgrade to Premium
+						</Typography>
+						<Typography variant="body1" sx={{ color: "#aaaaaa", mb: 3 }}>
+							Welcome back, {userName}! Choose your perfect plan.
+						</Typography>
+						
+						{/* Progress Stepper */}
+						<Stepper 
+							activeStep={activeStep} 
+							alternativeLabel={!isMobile}
+							orientation={isMobile ? 'vertical' : 'horizontal'}
 							sx={{
-								fontWeight: "bold",
-								fontSize: "18px",
-								color: "#fff",
+								'& .MuiStepLabel-root .Mui-completed': { color: '#FF1B6B' },
+								'& .MuiStepLabel-root .Mui-active': { color: '#FF1B6B' },
+								'& .MuiStepLabel-label': { color: '#aaaaaa', fontSize: '12px' },
+								mb: 3
 							}}
 						>
-							Premium Membership
-						</Typography>
-						<Typography
-							variant="body1"
-							gutterBottom
-							sx={{
-								fontSize: "16px",
-								color: "rgba(255, 255, 255, 0.7)",
-							}}
-						>
-							You are a Premium member. If you wish to downgrade to free or
-							cancel, please email:
-						</Typography>
-						<Typography
-							component="a"
-							href="mailto:info@swingsocial.co"
-							sx={{
-								fontSize: "16px",
-								fontWeight: "bold",
-								color: "#E91E63",
-								textDecoration: "none",
-								"&:hover": {
-									textDecoration: "underline",
-									color: "#FF4081",
-								},
-							}}
-						>
-							info@swingsocial.co
-						</Typography>
+							{steps.map((label) => (
+								<Step key={label}>
+									<StepLabel>{label}</StepLabel>
+								</Step>
+							))}
+						</Stepper>
 					</Box>
-				</Container>
-			) : (
-				<Container maxWidth="md" sx={{ mt: 2.5, mb: 2.5, color: "white" }}>
-					<Button
-						onClick={() => router.back()}
-						startIcon={<ArrowLeft />}
-						sx={{
-							textTransform: "none",
-							color: "rgba(255, 255, 255, 0.7)",
-							textAlign: "center",
-							minWidth: "auto",
-							fontSize: "16px",
-							fontWeight: "medium",
-							"&:hover": {
-								color: "#fff",
-								backgroundColor: "rgba(255, 255, 255, 0.08)",
-							},
-						}}
-					>
-						Back
-					</Button>
-					<Typography variant="h4" gutterBottom>
-						{userName} - Upgrade Your Membership
-					</Typography>
-					<Typography variant="body1" gutterBottom>
-						We’re excited to have you take advantage of the premium features of
-						Swing Social! While we’re hard at work getting ready to roll out our
-						apps, we are also upgrading our membership system. That said, if you
-						run into any difficulties upgrading your membership after sign up,
-						please fill out the form below and we will upgrade you. You’ll
-						receive an email after your account is upgraded.
-					</Typography>
-					<Typography variant="body2" color="error" gutterBottom>
-						Note that we do not accept American Express at this time.
-					</Typography>
 
-					<Box component="form" onSubmit={handleSubmit} noValidate>
-						<Grid container spacing={3}>
-							{/* First Name and Last Name */}
-							<Grid item xs={12} sm={6}>
-								<TextField
-									required
-									fullWidth
-									label="First Name"
-									name="firstName"
-									value={formData.firstName}
-									onChange={handleChange}
-									error={Boolean(errors.firstName)}
-									helperText={errors.firstName}
-									sx={{
-										input: {
-											color: "white",
-										},
-										"& .MuiOutlinedInput-root": {
-											"& fieldset": {
-												borderColor: "white", // Default border color
-											},
-											"&:hover fieldset": {
-												borderColor: "#E91E63", // Hover border color
-											},
-											"&.Mui-focused fieldset": {
-												borderColor: "#E91E63", // Focus border color
-											},
-											"&.Mui-error fieldset": {
-												borderColor: "#E91E63", // Error border color
-											},
-										},
-									}}
-								/>
-							</Grid>
-							<Grid item xs={12} sm={6}>
-								<TextField
-									required
-									fullWidth
-									label="Last Name"
-									name="lastName"
-									value={formData.lastName}
-									onChange={handleChange}
-									error={Boolean(errors.lastName)}
-									helperText={errors.lastName}
-									sx={{
-										input: {
-											color: "white",
-										},
-										"& .MuiOutlinedInput-root": {
-											"& fieldset": {
-												borderColor: "white", // Default border color
-											},
-											"&:hover fieldset": {
-												borderColor: "#E91E63", // Hover border color
-											},
-											"&.Mui-focused fieldset": {
-												borderColor: "#E91E63", // Focus border color
-											},
-											"&.Mui-error fieldset": {
-												borderColor: "#E91E63", // Error border color
-											},
-										},
-									}}
-								/>
-							</Grid>
+					{/* Error Alert */}
+					<Collapse in={Boolean(formError)}>
+						<Alert 
+							severity="error" 
+							sx={{ 
+								mb: 3,
+								bgcolor: 'rgba(244, 67, 54, 0.1)',
+								border: '1px solid rgba(244, 67, 54, 0.2)',
+								color: '#f44336'
+							}}
+							onClose={() => setFormError("")}
+						>
+							{formError}
+						</Alert>
+					</Collapse>
 
-							{/* Screen Name */}
-							{/* <Grid item xs={12}>
-                                <Autocomplete
-                                    value={userProfiles.find((user) => user.Id === profileId) || null}
-                                    onChange={(event, newValue) => {
-                                        if (newValue) {
-                                            existingUser = true;
-                                            setProfileId(newValue.Id);
-                                            setProfileUsername(newValue?.Username);
-                                        } else {
-                                            existingUser = false;
-                                            setProfileId("");
-                                            setProfileUsername("");
-                                        }
-                                    }}
-                                    options={searchQuery.length >= 2 ? userProfiles : []} // Show options only if 2+ characters are typed
-                                    getOptionLabel={(option) => option.Username || ""}
-                                    isOptionEqualToValue={(option, value) => option.Id === value.Id}
-                                    loading={loading}
-                                    onScroll={handleScroll}
-                                    filterOptions={(options, { inputValue }) => {
-                                        if (inputValue.length < 2) return []; // Prevent showing results
-                                        const normalizedInput = inputValue.toLowerCase();
-                                        return options.sort((a, b) => {
-                                            const aStartsWith = a.Username.toLowerCase().startsWith(normalizedInput);
-                                            const bStartsWith = b.Username.toLowerCase().startsWith(normalizedInput);
-                                            if (aStartsWith && !bStartsWith) return -1;
-                                            if (!aStartsWith && bStartsWith) return 1;
-                                            return a.Username.toLowerCase().localeCompare(b.Username.toLowerCase());
-                                        });
-                                    }}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            required
-                                            {...params}
-                                            label="Profile Name"
-                                            name="screenName"
-                                            variant="outlined"
-                                            error={Boolean(errors.screenName)}
-                                            helperText={errors.screenName}
-                                            fullWidth
-                                            InputProps={{
-                                                ...params.InputProps,
-                                                style: { color: "white" },
-                                            }}
-                                            style={{
-                                                backgroundColor: "#333",
-                                            }}
-                                            onChange={(e) => {
-                                                handleSearchChange(e.target.value);
-                                                if (e.target.value.length < 2) setUserProfiles([]); // Clear list for less than 2 characters
-                                            }}
-                                        />
-                                    )}
-                                    renderOption={(props, option) => (
-                                        <li {...props} key={option.Id} style={{ color: "white", backgroundColor: "#333" }}>
-                                            {option.Username}
-                                        </li>
-                                    )}
-                                    noOptionsText={searchQuery.length < 2 ? "Please search profile names" : "No users found"}
-                                    style={{
-                                        backgroundColor: "#333",
-                                        width: "100%",
-                                    }}
-                                />
-    
-                                {/* <TextField
-                                    required
-                                    fullWidth
-                                    label="Swing Social Screen Name"
-                                    name="screenName"
-                                    value={formData.screenName}
-                                    onChange={handleChange}
-                                    error={Boolean(errors.screenName)}
-                                    helperText={errors.screenName}
-                                    sx={{
-                                        input: {
-                                            color: "white"
-                                        },
-                                        "& .MuiOutlinedInput-root": {
-                                            "& fieldset": {
-                                                borderColor: "white", // Default border color
-                                            },
-                                            "&:hover fieldset": {
-                                                borderColor: "#E91E63", // Hover border color
-                                            },
-                                            "&.Mui-focused fieldset": {
-                                                borderColor: "#E91E63", // Focus border color
-                                            },
-                                            "&.Mui-error fieldset": {
-                                                borderColor: "#E91E63", // Error border color
-                                            },
-                                        },
-                                    }}
-                                /> 
-                            </Grid> */}
-
-							<Grid item xs={12} sm={6}>
-								<TextField
-									required
-									fullWidth
-									label="Country"
-									name="country"
-									value={formData.country}
-									onChange={handleChange}
-									error={Boolean(errors.country)}
-									helperText={errors.country}
-									sx={{
-										input: {
-											color: "white",
-										},
-										"& .MuiOutlinedInput-root": {
-											"& fieldset": {
-												borderColor: "white", // Default border color
-											},
-											"&:hover fieldset": {
-												borderColor: "#E91E63", // Hover border color
-											},
-											"&.Mui-focused fieldset": {
-												borderColor: "#E91E63", // Focus border color
-											},
-											"&.Mui-error fieldset": {
-												borderColor: "#E91E63", // Error border color
-											},
-										},
-									}}
-								/>
-							</Grid>
-							<Grid item xs={12} sm={3}>
-								<TextField
-									required
-									fullWidth
-									label="City"
-									name="city"
-									value={formData.city}
-									onChange={handleChange}
-									error={Boolean(errors.city)}
-									helperText={errors.city}
-									sx={{
-										input: {
-											color: "white",
-										},
-										"& .MuiOutlinedInput-root": {
-											"& fieldset": {
-												borderColor: "white", // Default border color
-											},
-											"&:hover fieldset": {
-												borderColor: "#E91E63", // Hover border color
-											},
-											"&.Mui-focused fieldset": {
-												borderColor: "#E91E63", // Focus border color
-											},
-											"&.Mui-error fieldset": {
-												borderColor: "#E91E63", // Error border color
-											},
-										},
-									}}
-								/>
-							</Grid>
-							{/* <Grid item xs={12} sm={3}>
-                                <TextField
-                                    required
-                                    fullWidth
-                                    label="State"
-                                    name="state"
-                                    value={formData.state}
-                                    onChange={handleChange}
-                                    error={Boolean(errors.state)}
-                                    helperText={errors.state}
-                                    sx={{
-                                        input: {
-                                            color: "white"
-                                        },
-                                        "& .MuiOutlinedInput-root": {
-                                            "& fieldset": {
-                                                borderColor: "white", // Default border color
-                                            },
-                                            "&:hover fieldset": {
-                                                borderColor: "#E91E63", // Hover border color
-                                            },
-                                            "&.Mui-focused fieldset": {
-                                                borderColor: "#E91E63", // Focus border color
-                                            },
-                                            "&.Mui-error fieldset": {
-                                                borderColor: "#E91E63", // Error border color
-                                            },
-                                        },
-                                    }}
-                                />
-                            </Grid> */}
-							<Grid item xs={12} sm={3}>
-								<TextField
-									required
-									fullWidth
-									label="Zip Code"
-									name="zipCode"
-									value={formData.zipCode}
-									onChange={handleChange}
-									error={Boolean(errors.zipCode)}
-									helperText={errors.zipCode}
-									sx={{
-										input: {
-											color: "white",
-										},
-										"& .MuiOutlinedInput-root": {
-											"& fieldset": {
-												borderColor: "white", // Default border color
-											},
-											"&:hover fieldset": {
-												borderColor: "#E91E63", // Hover border color
-											},
-											"&.Mui-focused fieldset": {
-												borderColor: "#E91E63", // Focus border color
-											},
-											"&.Mui-error fieldset": {
-												borderColor: "#E91E63", // Error border color
-											},
-										},
-									}}
-								/>
-							</Grid>
-							{/* Billing Address */}
-							<Grid item xs={12}>
-								<TextField
-									required
-									fullWidth
-									label="Street Address"
-									name="streetAddress"
-									value={formData.streetAddress}
-									onChange={handleChange}
-									error={Boolean(errors.streetAddress)}
-									helperText={errors.streetAddress}
-									sx={{
-										input: {
-											color: "white",
-										},
-										"& .MuiOutlinedInput-root": {
-											"& fieldset": {
-												borderColor: "white", // Default border color
-											},
-											"&:hover fieldset": {
-												borderColor: "#E91E63", // Hover border color
-											},
-											"&.Mui-focused fieldset": {
-												borderColor: "#E91E63", // Focus border color
-											},
-											"&.Mui-error fieldset": {
-												borderColor: "#E91E63", // Error border color
-											},
-										},
-									}}
-								/>
-							</Grid>
-
-							{/* Phone Number */}
-							<Grid item xs={12}>
-								<TextField
-									required
-									fullWidth
-									label="Phone Number"
-									name="phoneNumber"
-									value={formData.phoneNumber}
-									onChange={handleChange}
-									error={Boolean(errors.phoneNumber)}
-									helperText={errors.phoneNumber}
-									sx={{
-										input: {
-											color: "white",
-										},
-										"& .MuiOutlinedInput-root": {
-											"& fieldset": {
-												borderColor: "white", // Default border color
-											},
-											"&:hover fieldset": {
-												borderColor: "#E91E63", // Hover border color
-											},
-											"&.Mui-focused fieldset": {
-												borderColor: "#E91E63", // Focus border color
-											},
-											"&.Mui-error fieldset": {
-												borderColor: "#E91E63", // Error border color
-											},
-										},
-									}}
-								/>
-							</Grid>
-
-							{/* Membership Option */}
-							<Grid item xs={12}>
-								<TextField
-									select
-									required
-									fullWidth
-									label="Membership Option"
-									name="membershipOption"
-									value={formData.membershipOption}
-									onChange={handleChange}
-									error={Boolean(errors.membershipOption)}
-									helperText={errors.membershipOption}
-									sx={{
-										"& .MuiOutlinedInput-root": {
-											"& fieldset": {
-												borderColor: "white", // Default border color
-											},
-											"&:hover fieldset": {
-												borderColor: "#E91E63", // Hover border color
-											},
-											"&.Mui-focused fieldset": {
-												borderColor: "#E91E63", // Focus border color
-											},
-											"&.Mui-error fieldset": {
-												borderColor: "#E91E63", // Error border color
-											},
-										},
-										"& .MuiSelect-select": {
-											color: "white", // Selected text color
-										},
-										"& .MuiSvgIcon-root": {
-											color: "white", // Dropdown arrow color
-										},
-									}}
-								>
-									<MenuItem value="Monthly - $17.95">Monthly - $17.95</MenuItem>
-									<MenuItem value="Quarterly - $39.95">
-										Quarterly - $39.95
-									</MenuItem>
-									<MenuItem value="BiAnnually - $69.95">
-										Bi-Annually - $69.95
-									</MenuItem>
-									<MenuItem value="Annually - $129.95">
-										Annually - $129.95
-									</MenuItem>
-								</TextField>
-							</Grid>
-
-							{/* Payment Details */}
-							<Grid item xs={12}>
-								<TextField
-									required
-									fullWidth
-									label="Card Number"
-									name="cardNumber"
-									value={formData.cardNumber}
-									onChange={handleChange}
-									error={Boolean(errors.cardNumber)}
-									helperText={errors.cardNumber}
-									sx={{
-										input: {
-											color: "white",
-										},
-										"& .MuiOutlinedInput-root": {
-											"& fieldset": {
-												borderColor: "white", // Default border color
-											},
-											"&:hover fieldset": {
-												borderColor: "#E91E63", // Hover border color
-											},
-											"&.Mui-focused fieldset": {
-												borderColor: "#E91E63", // Focus border color
-											},
-											"&.Mui-error fieldset": {
-												borderColor: "#E91E63", // Error border color
-											},
-										},
-									}}
-								/>
-							</Grid>
-							<Grid item xs={12} sm={6}>
-								<TextField
-									required
-									fullWidth
-									label="Expiry Date (MM/YY)"
-									name="expDate"
-									value={formData.expDate}
-									onChange={handleChange}
-									error={Boolean(errors.expDate)}
-									helperText={errors.expDate}
-									sx={{
-										input: {
-											color: "white",
-										},
-										"& .MuiOutlinedInput-root": {
-											"& fieldset": {
-												borderColor: "white", // Default border color
-											},
-											"&:hover fieldset": {
-												borderColor: "#E91E63", // Hover border color
-											},
-											"&.Mui-focused fieldset": {
-												borderColor: "#E91E63", // Focus border color
-											},
-											"&.Mui-error fieldset": {
-												borderColor: "#E91E63", // Error border color
-											},
-										},
-									}}
-								/>
-							</Grid>
-							<Grid item xs={12} sm={6}>
-								<TextField
-									required
-									fullWidth
-									label="CVV"
-									name="cvv"
-									value={formData.cvv}
-									onChange={handleChange}
-									error={Boolean(errors.cvv)}
-									helperText={errors.cvv}
-									style={{ color: "white" }}
-									sx={{
-										input: {
-											color: "white",
-										},
-										"& .MuiOutlinedInput-root": {
-											"& fieldset": {
-												borderColor: "white", // Default border color
-											},
-											"&:hover fieldset": {
-												borderColor: "#E91E63", // Hover border color
-											},
-											"&.Mui-focused fieldset": {
-												borderColor: "#E91E63", // Focus border color
-											},
-											"&.Mui-error fieldset": {
-												borderColor: "#E91E63", // Error border color
-											},
-										},
-									}}
-								/>
-							</Grid>
-							{/* Billing Address */}
-							<Grid item xs={12}>
-								<TextField
-									required
-									fullWidth
-									label="Promo Code"
-									name="promoCode"
-									value={promoCode}
-									onChange={(e: any) => handleChangePromoCode(e.target.value)}
-									error={Boolean(errors.promoCode)}
-									helperText={errors.promoCode}
-									sx={{
-										input: {
-											color: "white",
-										},
-										"& .MuiOutlinedInput-root": {
-											"& fieldset": {
-												borderColor: "white", // Default border color
-											},
-											"&:hover fieldset": {
-												borderColor: "#E91E63", // Hover border color
-											},
-											"&.Mui-focused fieldset": {
-												borderColor: "#E91E63", // Focus border color
-											},
-											"&.Mui-error fieldset": {
-												borderColor: "#E91E63", // Error border color
-											},
-										},
-									}}
-								/>
-							</Grid>
-							{promoCodeMessage && (
-								<Grid item xs={12}>
-									<Typography>{promoCodeMessage}</Typography>
-								</Grid>
+					<Card>
+						<CardContent sx={{ p: isMobile ? 3 : 4 }}>
+							{/* Step 0: Plan Selection */}
+							{activeStep === 0 && (
+								<Fade in={activeStep === 0}>
+									<Box>
+										<Typography variant="h6" sx={{ mb: 3, color: '#fff', textAlign: 'center' }}>
+											Choose Your Plan
+										</Typography>
+										
+										<Grid container spacing={2}>
+											{membershipPlans.map((plan) => (
+												<Grid item xs={12} sm={6} key={plan.id}>
+													<Card
+														onClick={() => setFormData(prev => ({ ...prev, membershipOption: plan.id }))}
+														sx={{
+															cursor: 'pointer',
+															position: 'relative',
+															border: formData.membershipOption === plan.id 
+																? '2px solid #FF1B6B' 
+																: '2px solid transparent',
+															transform: formData.membershipOption === plan.id ? 'scale(1.02)' : 'scale(1)',
+															transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+															'&:hover': {
+																transform: 'scale(1.02)',
+																boxShadow: '0 8px 25px rgba(255, 27, 107, 0.15)'
+															}
+														}}
+													>
+														{plan.popular && (
+															<Chip 
+																label="Most Popular" 
+																size="small"
+																sx={{
+																	position: 'absolute',
+																	top: -8,
+																	left: '50%',
+																	transform: 'translateX(-50%)',
+																	bgcolor: '#FF1B6B',
+																	color: 'white',
+																	fontWeight: 'bold'
+																}}
+															/>
+														)}
+														
+														<CardContent sx={{ textAlign: 'center', p: 3 }}>
+															<Typography variant="h6" sx={{ color: '#FF1B6B', fontWeight: 'bold' }}>
+																{plan.name}
+															</Typography>
+															<Box sx={{ my: 2 }}>
+																<Typography variant="h4" component="span" sx={{ color: '#fff', fontWeight: 'bold' }}>
+																	{plan.price}
+																</Typography>
+																<Typography variant="body2" component="span" sx={{ color: '#aaaaaa' }}>
+																	{plan.period}
+																</Typography>
+															</Box>
+															{plan.savings && (
+																<Chip 
+																	label={`Save ${plan.savings}`}
+																	size="small"
+																	sx={{ bgcolor: 'rgba(76, 175, 80, 0.2)', color: '#4caf50', mb: 2 }}
+																/>
+															)}
+															<Box sx={{ textAlign: 'left' }}>
+																{plan.features.map((feature, index) => (
+																	<Typography 
+																		key={index}
+																		variant="body2" 
+																		sx={{ color: '#aaaaaa', mb: 0.5, display: 'flex', alignItems: 'center' }}
+																	>
+																		<CheckCircle size={14} style={{ marginRight: 8, color: '#4caf50' }} />
+																		{feature}
+																	</Typography>
+																))}
+															</Box>
+														</CardContent>
+													</Card>
+												</Grid>
+											))}
+										</Grid>
+									</Box>
+								</Fade>
 							)}
-							{/* Submit Button */}
-							<Grid item xs={12}>
+
+							{/* Step 1: Personal Details */}
+							{activeStep === 1 && (
+								<Fade in={activeStep === 1}>
+									<Box>
+										<Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+											<User size={20} color="#FF1B6B" style={{ marginRight: 8 }} />
+											<Typography variant="h6" sx={{ color: '#fff' }}>
+												Personal & Billing Information
+											</Typography>
+										</Box>
+										
+										<Grid container spacing={3}>
+											<Grid item xs={12} sm={6}>
+												<TextField
+													required
+													fullWidth
+													label="First Name"
+													name="firstName"
+													value={formData.firstName}
+													onChange={handleChange}
+													error={Boolean(errors.firstName)}
+													helperText={errors.firstName}
+												/>
+											</Grid>
+											<Grid item xs={12} sm={6}>
+												<TextField
+													required
+													fullWidth
+													label="Last Name"
+													name="lastName"
+													value={formData.lastName}
+													onChange={handleChange}
+													error={Boolean(errors.lastName)}
+													helperText={errors.lastName}
+												/>
+											</Grid>
+											<Grid item xs={12}>
+												<TextField
+													required
+													fullWidth
+													label="Street Address"
+													name="streetAddress"
+													value={formData.streetAddress}
+													onChange={handleChange}
+													error={Boolean(errors.streetAddress)}
+													helperText={errors.streetAddress}
+													InputProps={{
+														startAdornment: (
+															<InputAdornment position="start">
+																<MapPin size={18} color="#aaaaaa" />
+															</InputAdornment>
+														),
+													}}
+												/>
+											</Grid>
+											<Grid item xs={12} sm={4}>
+												<TextField
+													required
+													fullWidth
+													label="Country"
+													name="country"
+													value={formData.country}
+													onChange={handleChange}
+													error={Boolean(errors.country)}
+													helperText={errors.country}
+												/>
+											</Grid>
+											<Grid item xs={12} sm={4}>
+												<TextField
+													required
+													fullWidth
+													label="City"
+													name="city"
+													value={formData.city}
+													onChange={handleChange}
+													error={Boolean(errors.city)}
+													helperText={errors.city}
+												/>
+											</Grid>
+											<Grid item xs={12} sm={4}>
+												<TextField
+													required
+													fullWidth
+													label="Zip Code"
+													name="zipCode"
+													value={formData.zipCode}
+													onChange={handleChange}
+													error={Boolean(errors.zipCode)}
+													helperText={errors.zipCode}
+												/>
+											</Grid>
+											<Grid item xs={12}>
+												<TextField
+													required
+													fullWidth
+													label="Phone Number"
+													name="phoneNumber"
+													value={formData.phoneNumber}
+													onChange={handleChange}
+													error={Boolean(errors.phoneNumber)}
+													helperText={errors.phoneNumber}
+													placeholder="+1 (555) 123-4567"
+													InputProps={{
+														startAdornment: (
+															<InputAdornment position="start">
+																<Phone size={18} color="#aaaaaa" />
+															</InputAdornment>
+														),
+													}}
+												/>
+											</Grid>
+										</Grid>
+									</Box>
+								</Fade>
+							)}
+
+							{/* Step 2: Payment */}
+							{activeStep === 2 && (
+								<Fade in={activeStep === 2}>
+									<Box>
+										<Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+											<CreditCard size={20} color="#FF1B6B" style={{ marginRight: 8 }} />
+											<Typography variant="h6" sx={{ color: '#fff' }}>
+												Payment Information
+											</Typography>
+										</Box>
+										
+										<Grid container spacing={3}>
+											<Grid item xs={12}>
+												<TextField
+													required
+													fullWidth
+													label="Card Number"
+													name="cardNumber"
+													value={formData.cardNumber}
+													onChange={handleChange}
+													error={Boolean(errors.cardNumber)}
+													helperText={errors.cardNumber}
+													placeholder="1234 5678 9012 3456"
+													InputProps={{
+														startAdornment: (
+															<InputAdornment position="start">
+																<CreditCard size={18} color="#aaaaaa" />
+															</InputAdornment>
+														),
+													}}
+													inputProps={{ maxLength: 23 }}
+												/>
+											</Grid>
+											<Grid item xs={12} sm={6}>
+												<TextField
+													required
+													fullWidth
+													label="Expiry Date"
+													name="expDate"
+													value={formData.expDate}
+													onChange={handleChange}
+													error={Boolean(errors.expDate)}
+													helperText={errors.expDate}
+													placeholder="MM/YY"
+													InputProps={{
+														startAdornment: (
+															<InputAdornment position="start">
+																<Calendar size={18} color="#aaaaaa" />
+															</InputAdornment>
+														),
+													}}
+													inputProps={{ maxLength: 5 }}
+												/>
+											</Grid>
+											<Grid item xs={12} sm={6}>
+												<TextField
+													required
+													fullWidth
+													label="CVV"
+													name="cvv"
+													value={formData.cvv}
+													onChange={handleChange}
+													error={Boolean(errors.cvv)}
+													helperText={errors.cvv}
+													placeholder="123"
+													InputProps={{
+														startAdornment: (
+															<InputAdornment position="start">
+																<Lock size={18} color="#aaaaaa" />
+															</InputAdornment>
+														),
+													}}
+													inputProps={{ maxLength: 4 }}
+												/>
+											</Grid>
+											<Grid item xs={12}>
+												<TextField
+													fullWidth
+													label="Promo Code (Optional)"
+													name="promoCode"
+													value={promoCode}
+													onChange={(e) => handleChangePromoCode(e.target.value)}
+													placeholder="Enter promo code"
+													InputProps={{
+														startAdornment: (
+															<InputAdornment position="start">
+																<Tag size={18} color="#aaaaaa" />
+															</InputAdornment>
+														),
+													}}
+												/>
+											</Grid>
+											{promoCodeMessage && (
+												<Grid item xs={12}>
+													<Alert 
+														severity={isValidPromoCode ? "success" : "error"}
+														sx={{
+															bgcolor: isValidPromoCode 
+																? 'rgba(76, 175, 80, 0.1)' 
+																: 'rgba(244, 67, 54, 0.1)',
+															border: `1px solid ${isValidPromoCode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(244, 67, 54, 0.2)'}`,
+															color: isValidPromoCode ? '#4caf50' : '#f44336'
+														}}
+													>
+														{promoCodeMessage}
+													</Alert>
+												</Grid>
+											)}
+										</Grid>
+									</Box>
+								</Fade>
+							)}
+
+							{/* Navigation Buttons */}
+							<Box sx={{ 
+								display: 'flex', 
+								justifyContent: 'space-between', 
+								mt: 4,
+								flexDirection: isMobile ? 'column' : 'row',
+								gap: 2
+							}}>
 								<Button
-									type="submit"
-									variant="contained"
-									color="primary"
-									fullWidth
+									disabled={activeStep === 0}
+									onClick={handleBack}
+									startIcon={<ArrowLeft />}
+									variant="outlined"
+									sx={{ order: isMobile ? 2 : 1 }}
 								>
-									Upgrade Membership
+									Back
 								</Button>
-							</Grid>
-						</Grid>
-					</Box>
+								
+								{activeStep === steps.length - 1 ? (
+									<Button
+										onClick={handleSubmit}
+										disabled={loading}
+										variant="contained"
+										size="large"
+										sx={{ 
+											minWidth: 160,
+											order: isMobile ? 1 : 2,
+											position: 'relative'
+										}}
+									>
+										{loading ? (
+											<>
+												<CircularProgress size={20} sx={{ mr: 1 }} />
+												Processing...
+											</>
+										) : (
+											<>
+												<Sparkles size={18} style={{ marginRight: 8 }} />
+												Upgrade Now
+											</>
+										)}
+									</Button>
+								) : (
+									<Button
+										onClick={handleNext}
+										endIcon={<ArrowRight />}
+										variant="contained"
+										size="large"
+										sx={{ 
+											minWidth: 160,
+											order: isMobile ? 1 : 2
+										}}
+									>
+										Continue
+									</Button>
+								)}
+							</Box>
+						</CardContent>
+					</Card>
+
+					{/* Security Notice */}
+					<Alert 
+						severity="info" 
+						sx={{ 
+							mt: 3,
+							bgcolor: 'rgba(33, 150, 243, 0.1)',
+							border: '1px solid rgba(33, 150, 243, 0.2)',
+							color: '#2196f3',
+							'& .MuiAlert-icon': { color: '#2196f3' }
+						}}
+					>
+						American Express is not currently accepted.
+					</Alert>
 				</Container>
-			)}
+			</Box>
 		</ThemeProvider>
 	);
 };

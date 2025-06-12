@@ -91,8 +91,17 @@ export default function ProfileDetail() {
     },
   });
 
-  const ParticleField = () => {
-    const particles = [...Array(50)].map((_, i) => ({
+  const [particles, setParticles] = useState<Array<{
+    id: number;
+    size: number;
+    x: number;
+    y: number;
+    duration: number;
+    delay: number;
+  }>>([]);
+
+  useEffect(() => {
+    const generatedParticles = [...Array(50)].map((_, i) => ({
       id: i,
       size: Math.random() * 6 + 2,
       x: Math.random() * 100,
@@ -100,7 +109,10 @@ export default function ProfileDetail() {
       duration: Math.random() * 20 + 10,
       delay: -Math.random() * 20,
     }));
+    setParticles(generatedParticles);
+  }, []);
 
+  const ParticleField = () => {
     return (
       <Box
         sx={{

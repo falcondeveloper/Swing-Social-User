@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState, Suspense } from "react";
+import { notify, handleGeolocationError } from "@/lib/notifications";
 import {
   Box,
   Card,
@@ -637,24 +638,35 @@ export default function Home() {
   }, [profileId]);
 
   const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
+    if (!navigator.geolocation) {
+      notify.location.notSupported();
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
           const { latitude, longitude } = position.coords;
 
-          // Reverse geocoding to get the location name (you may need a third-party service here)
+          // Reverse geocoding to get the location name
           const locationName = await getLocationName(latitude, longitude);
 
           // Send the location to your API
           await sendLocationToAPI(locationName, latitude, longitude);
-        },
-        (error) => {
-          console.error("Geolocation error:", error);
+        } catch (error) {
+          console.error("Error processing location:", error);
+          notify.error("Failed to process your location. Please try again.");
         }
-      );
-    } else {
-      console.error("Geolocation is not supported by this browser.");
-    }
+      },
+      (error) => {
+        handleGeolocationError(error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000
+      }
+    );
   };
 
   const getLocationName = async (latitude: number, longitude: number) => {

@@ -217,7 +217,7 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, onDelete, onQuantityChang
                         type="number"
                         onChange={(e) => {
                             const newValue = parseInt(e.target.value, 10);
-                            if (!isNaN(newValue)) {
+                            if (!isNaN(newValue) && newValue >= 0) {
                                 onQuantityChange(ticket.name, newValue);
                             }
                         }}
@@ -262,7 +262,7 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, onDelete, onQuantityChang
                         <IconButton
                             size="small"
                             sx={{ color: 'white', p: 0 }}
-                            onClick={() => onQuantityChange(ticket.name, Math.max(0, ticket.quantity - 1))}
+                            onClick={() => onQuantityChange(ticket.name, ticket.quantity > 0 ? ticket.quantity - 1 : 0)}
                         >
                             <Box
                                 component="span"

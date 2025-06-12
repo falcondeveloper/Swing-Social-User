@@ -212,17 +212,30 @@ export async function GET(req: Request) {
       const attendees = attendeesResult.rows;
       const tickets = ticketsResult.rows;
 
+      // Group attendees by ticket type/name - ensure field names match
       const attendeeCountByType = attendees.reduce((acc, attendee) => {
-        const type = attendee.TicketType;
-        acc[type] = (acc[type] || 0) + 1;
+        // Use the correct field name that matches the ticket.Name field
+        const type = attendee.TicketType || attendee.Name || attendee.ticketName;
+        if (type) {
+          acc[type] = (acc[type] || 0) + 1;
+        }
         return acc;
       }, {});
 
+      console.log('Attendee counts by type:', attendeeCountByType);
+      console.log('Available ticket types:', tickets.map(t => t.Name));
+
       const ticketsWithRemainingQty = tickets.map(ticket => {
         const attendeeCount = attendeeCountByType[ticket.Name] || 0;
+        const remainingQuantity = Math.max(0, ticket.Quantity - attendeeCount);
+        
+        console.log(`Ticket "${ticket.Name}": Original=${ticket.Quantity}, Sold=${attendeeCount}, Remaining=${remainingQuantity}`);
+        
         return {
           ...ticket,
-          Quantity: ticket.Quantity - attendeeCount
+          Quantity: remainingQuantity,
+          OriginalQuantity: ticket.Quantity,
+          SoldCount: attendeeCount
         };
       });
 
