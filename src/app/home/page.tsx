@@ -409,7 +409,7 @@ const Home = () => {
 							},
 							backgroundRepeat: { sm: "no-repeat", xs: "no-repeat" },
 							backgroundPosition: "center",
-							marginTop: { lg: "98px", md: "90px", sm: "90px", xs: "90px" },
+							marginTop: { lg: "98px", md: "90px", sm: "70px", xs: "65px" },
 						}}
 					></Box>
 

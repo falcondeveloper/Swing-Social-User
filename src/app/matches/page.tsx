@@ -615,7 +615,7 @@ export default function MatchesPage() {
 			<Header />
 
 			{isMobile === true ? (
-				<Grid container sx={{ marginTop: 10 }}>
+				<Grid container sx={{ marginTop: 0 }}>
 					{searchResults?.length > 0 && (
 						<Box sx={{ marginTop: 5, marginBottom: 5 }}>
 							<Button
