@@ -709,14 +709,17 @@ export default function MobileSweaping() {
             elevation={0}
             sx={{
               border: "none",
-              marginLeft: "5px",
-              marginRight: "5px",
-              // width: { xs: 395, sm: 405, md: 300 },
-              // height: { md: 450, lg: 450, sm: 580, xs: 580 },
+              width: "100%",
+              maxWidth: "100vw",
+              minWidth: "100%",
+              marginLeft: 0,
+              marginRight: 0,
               height: "calc(100vh - 180px)",
               marginTop: { sm: "20px" },
               boxShadow: "none",
               position: "absolute",
+              left: 0,
+              right: 0,
               zIndex: 2,
               backgroundColor: "#121212",
               color: "white",
@@ -832,11 +835,15 @@ export default function MobileSweaping() {
               elevation={0}
               sx={{
                 border: "none",
-                // width: { xs: 395, sm: 405, md: 300 },
+                width: "100%",
+                maxWidth: "100vw",
+                minWidth: "100%",
                 height: "calc(100vh - 180px)",
                 marginTop: { sm: "30px" },
                 boxShadow: "none",
                 position: "absolute",
+                left: 0,
+                right: 0,
                 // Apply cardStyles based on index
                 ...(index === 0
                   ? cardStyles.active
