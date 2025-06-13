@@ -655,7 +655,7 @@ export default function Home() {
           await sendLocationToAPI(locationName, latitude, longitude);
         } catch (error) {
           console.error("Error processing location:", error);
-          notify.error("Failed to process your location. Please try again.");
+      //    notify.error("Failed to process your location. Please try again.");
         }
       },
       (error) => {

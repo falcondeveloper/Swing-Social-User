@@ -702,7 +702,13 @@ const Header = () => {
 			)}
 
 			{/* Spacer to push content below fixed header */}
-			<Box sx={{ height: isMobile ? "64px" : "80px" }} />
+			{(() => {
+				const pathsWithoutSpacer = ['/members', '/pineapple', '/messaging'];
+				const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+				return !pathsWithoutSpacer.includes(currentPath) && (
+					<Box sx={{ height: isMobile ? "64px" : "80px" }} />
+				);
+			})()}
 		</>
 	);
 };

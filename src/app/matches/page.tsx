@@ -519,7 +519,7 @@ export default function MatchesPage() {
 					// notify.location.success(locationName);
 				} catch (error) {
 					console.error("Error processing location:", error);
-					notify.error("Failed to process your location. Please try again.");
+				//	notify.error("Failed to process your location. Please try again.");
 				}
 			},
 			(error) => {
