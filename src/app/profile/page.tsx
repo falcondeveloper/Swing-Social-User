@@ -278,9 +278,26 @@ const ActionChip = styled(Chip)(({ theme }) => ({
 	color: 'white',
 	backdropFilter: 'blur(10px)',
 	border: '1px solid rgba(255, 255, 255, 0.1)',
+	fontSize: '0.75rem',
+	height: 'auto',
+	padding: '4px 8px',
+	minWidth: 'fit-content',
+	'& .MuiChip-label': {
+		padding: '2px 4px',
+		fontSize: 'inherit',
+	},
+	'& .MuiChip-icon': {
+		margin: '0 2px 0 0',
+	},
 	'&:hover': {
 		backgroundColor: 'rgba(255, 27, 107, 0.2)',
 		borderColor: 'rgba(255, 27, 107, 0.3)',
+	},
+	[theme.breakpoints.down('sm')]: {
+		fontSize: '0.7rem',
+		'& .MuiChip-label': {
+			padding: '1px 2px',
+		},
 	},
 }));
 
@@ -1090,13 +1107,14 @@ const ProfileDetail: React.FC = () => {
 			<Box sx={{ bgcolor: '#121212', minHeight: '100vh' }}>
 				<Header />
 				
-				<Container maxWidth="lg" sx={{ py: 4 }}>
+				<Container maxWidth="lg" sx={{ py: { xs: 1, sm: 2, md: 4 } }}>
 					{/* Back Button */}
 					<Button
 						onClick={() => router.back()}
 						startIcon={<ArrowLeft />}
 						sx={{
-							mb: 3,
+							mb: { xs: 1, sm: 2, md: 3 },
+							mt: { xs: 0.5, sm: 0 },
 							color: "rgba(255, 255, 255, 0.7)",
 							"&:hover": { color: "#fff", backgroundColor: "rgba(255, 255, 255, 0.05)" },
 						}}
@@ -1125,10 +1143,20 @@ const ProfileDetail: React.FC = () => {
 							/>
 							
 							{/* Header Actions */}
-							<Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1, zIndex: 3 }}>
+							<Box sx={{ 
+								position: 'absolute', 
+								top: 16, 
+								right: 16, 
+								display: 'flex', 
+								flexWrap: 'wrap',
+								gap: 1, 
+								zIndex: 3,
+								maxWidth: { xs: '280px', sm: '400px', md: 'none' },
+								justifyContent: 'flex-end'
+							}}>
 								{(membership === "1" || membership1 === 1) && (
 									<ActionChip
-										icon={<Crown size={16} />}
+										icon={<Crown size={14} />}
 										label="Premium"
 										sx={{
 											bgcolor: 'rgba(255, 215, 0, 0.2)',
@@ -1139,7 +1167,7 @@ const ProfileDetail: React.FC = () => {
 								)}
 								
 								<ActionChip 
-									icon={<Settings size={16} />}
+									icon={<Settings size={14} />}
 									label="Membership"
 									onClick={() => router.push("/membership")}
 								/>
@@ -1147,7 +1175,7 @@ const ProfileDetail: React.FC = () => {
 								{isEditing ? (
 									<>
 										<ActionChip 
-											icon={isSubmitting ? <CircularProgress size={16} /> : <Save size={16} />}
+											icon={isSubmitting ? <CircularProgress size={14} /> : <Save size={14} />}
 											label="Save"
 											onClick={async () => {
 												setIsSubmitting(true);
@@ -1159,7 +1187,7 @@ const ProfileDetail: React.FC = () => {
 											disabled={isSubmitting}
 										/>
 										<ActionChip 
-											icon={<X size={16} />}
+											icon={<X size={14} />}
 											label="Cancel"
 											onClick={() => {
 												setIsEditing(false);
@@ -1170,14 +1198,14 @@ const ProfileDetail: React.FC = () => {
 									</>
 								) : (
 									<ActionChip 
-										icon={<Edit size={16} />}
+										icon={<Edit size={14} />}
 										label="Edit"
 										onClick={() => setIsEditing(true)}
 									/>
 								)}
 								
 								<ActionChip 
-									icon={<LogOut size={16} />}
+									icon={<LogOut size={14} />}
 									label="Logout"
 									onClick={handleLogout}
 								/>

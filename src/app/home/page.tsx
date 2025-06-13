@@ -389,29 +389,50 @@ const Home = () => {
 		<>
 			<FcmTokenComp />
 			{isMobile ? (
-				// Render "helloworld" if `isMobile` is true
-				<Box sx={{ color: "white", padding: "10px" }}>
+				// Mobile optimized layout
+				<Box sx={{ color: "white", padding: "16px", paddingBottom: "80px" }}>
 					<Header />
 					{/* Full-Width Heading with Background Image */}
 					<Box
 						sx={{
 							width: "100%",
-							height: { lg: 200, md: 200, sm: 90, xs: 90 },
+							height: { lg: 200, md: 200, sm: 120, xs: 120 },
 							display: "flex",
 							alignItems: "center",
 							justifyContent: "center",
 							backgroundImage: 'url("/images/home-hero-bg.png")',
-							backgroundSize: {
-								lg: "cover",
-								md: "cover",
-								sm: "cover",
-								xs: "cover",
-							},
-							backgroundRepeat: { sm: "no-repeat", xs: "no-repeat" },
+							backgroundSize: "cover",
+							backgroundRepeat: "no-repeat",
 							backgroundPosition: "center",
 							marginTop: { lg: "98px", md: "90px", sm: "70px", xs: "0px" },
+							borderRadius: { xs: "0 0 20px 20px" },
+							position: "relative",
+							"&::before": {
+								content: '""',
+								position: "absolute",
+								top: 0,
+								left: 0,
+								right: 0,
+								bottom: 0,
+								backgroundColor: "rgba(0,0,0,0.3)",
+								borderRadius: "inherit",
+							},
 						}}
-					></Box>
+					>
+						<Typography
+							variant="h5"
+							sx={{
+								color: "white",
+								fontWeight: "bold",
+								textAlign: "center",
+								zIndex: 1,
+								textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+								px: 2,
+							}}
+						>
+							Welcome back, {currentName}! 👋
+						</Typography>
+					</Box>
 
 					{/* Slide Section */}
 					{/* <Box sx={{ marginTop: "10px" }}>
@@ -450,15 +471,15 @@ const Home = () => {
 					<Box
 						sx={{
 							padding: {
-								xs: 0, // Small padding for mobile screens
-								sm: 0, // Slightly larger padding for tablets
-								md: 0, // Medium padding for laptops
+								xs: "8px",
+								sm: "16px",
+								md: 0,
 								lg: 0,
 							},
-							marginTop: "10px",
+							marginTop: "20px",
 						}}
 					>
-						<Grid container spacing={1} sx={{ padding: "0px" }}>
+						<Grid container spacing={2} sx={{ justifyContent: "center" }}>
 							{categories.map((category, index) => (
 								<Grid
 									item
@@ -469,6 +490,8 @@ const Home = () => {
 									key={index}
 									style={{
 										cursor: "pointer",
+										display: "flex",
+										justifyContent: "center",
 									}}
 								>
 									<Card
@@ -479,30 +502,90 @@ const Home = () => {
 											position: "relative",
 											overflow: "hidden",
 											width: "100%",
-											height: { sm: 150, xs: 150, lg: 570, md: 570 },
-											aspectRatio: "1", // Square shape
+											maxWidth: "180px",
+											height: { sm: 180, xs: 180, lg: 570, md: 570 },
+											borderRadius: "16px",
+											boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+											transition: "all 0.3s ease",
+											"&:hover": {
+												transform: "translateY(-4px)",
+												boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
+											},
+											"&:active": {
+												transform: "translateY(-2px)",
+											},
 										}}
 									>
 										<CardContent
 											sx={{
 												display: "flex",
-												alignItems: "center",
+												alignItems: "flex-end",
 												justifyContent: "center",
 												height: "100%",
 												position: "relative",
+												padding: "12px",
 											}}
 										>
+											{/* Background Image */}
 											<Box
 												sx={{
 													backgroundImage: `url(${category.img})`,
 													backgroundSize: "cover",
 													backgroundPosition: "center",
-													filter: "brightness(0.6)",
 													width: "100%",
 													height: "100%",
 													position: "absolute",
+													top: 0,
+													left: 0,
+													borderRadius: "inherit",
 												}}
-											></Box>
+											/>
+											{/* Overlay */}
+											<Box
+												sx={{
+													position: "absolute",
+													top: 0,
+													left: 0,
+													right: 0,
+													bottom: 0,
+													background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%)",
+													borderRadius: "inherit",
+												}}
+											/>
+											{/* Title */}
+											<Box
+												sx={{
+													position: "relative",
+													zIndex: 2,
+													textAlign: "center",
+													width: "100%",
+												}}
+											>
+												<Typography
+													variant="body1"
+													sx={{
+														color: "white",
+														fontWeight: "bold",
+														textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+														fontSize: "14px",
+													}}
+												>
+													{category.title}
+												</Typography>
+												{category.isComingSoon && (
+													<Typography
+														variant="caption"
+														sx={{
+															color: "#FF1B6B",
+															fontWeight: "bold",
+															marginTop: "4px",
+															fontSize: "10px",
+														}}
+													>
+														Coming Soon
+													</Typography>
+												)}
+											</Box>
 										</CardContent>
 									</Card>
 								</Grid>
@@ -510,6 +593,12 @@ const Home = () => {
 						</Grid>
 					</Box>
 					{/* Bottom Navigation Bar */}
+					<UserBottomNavigation 
+						value={value}
+						setValue={setValue}
+						isNewMessage={isNewMessage}
+						resetNewMessage={resetNewMessage}
+					/>
 				</Box>
 			) : (
 				// Render the website for non-mobile users
@@ -930,77 +1019,6 @@ const Home = () => {
 								</Card>
 							))}
 						</Box>
-						{isMobile && (
-							<BottomNavigation
-								value={value}
-								onChange={(event, newValue) => {
-									setValue(newValue);
-								}}
-								sx={{
-									position: "fixed",
-									bottom: 0,
-									zIndex: 10,
-									left: 0,
-									right: 0,
-									bgcolor: alpha("#121212", 0.9),
-									backdropFilter: "blur(20px)",
-									borderTop: "1px solid",
-									borderColor: "rgba(255,255,255,0.1)",
-									"& .MuiBottomNavigationAction-root": {
-										color: "rgba(255,255,255,0.5)",
-										"&.Mui-selected": {
-											color: "#FF1B6B",
-										},
-									},
-								}}
-							>
-								<BottomNavigationAction
-									icon={
-										<img
-											src="/icons/home.png"
-											alt="Home"
-											style={{ width: 50, height: 40 }}
-										/>
-									}
-								/>
-								<BottomNavigationAction
-									icon={
-										<img
-											src="/icons/members.png"
-											alt="Members"
-											style={{ width: 50, height: 40 }}
-										/>
-									}
-								/>
-								<BottomNavigationAction
-									icon={
-										<img
-											src="/icons/pineapple.png"
-											alt="Pineapples"
-											style={{ width: 50, height: 40 }}
-										/>
-									}
-								/>
-								<BottomNavigationAction
-									icon={
-										<img
-											src="/icons/messaging.png"
-											alt="Messaging"
-											style={{ width: 50, height: 40 }}
-										/>
-									}
-								/>
-								<BottomNavigationAction
-									icon={
-										<img
-											src="/icons/matches.png"
-											alt="Matches"
-											style={{ width: 50, height: 40 }}
-										/>
-									}
-								/>
-							</BottomNavigation>
-						)}
 					</Container>
 				</Box>
 			)}

@@ -784,7 +784,11 @@ export default function Home() {
           <Box
             flex={1}
             display="flex"
-            sx={{ pb: 3, paddingTop: "64px", backgroundColor: "#121212" }}
+            sx={{ 
+              pb: { xs: 1, sm: 2, md: 3 }, 
+              paddingTop: { xs: "56px", sm: "64px" }, 
+              backgroundColor: "#121212" 
+            }}
           >
             <ProfileCard profile={selectedUserProfile} />
           </Box>
@@ -804,12 +808,6 @@ export default function Home() {
               height="100%"
               sx={{ overflow: "hidden", position: "relative" }}
             >
-              <UserProfileModal
-                handleGrantAccess={handleGrantAccess}
-                handleClose={handleClose}
-                open={showDetail}
-                userid={selectedUserId}
-              />
               {idParam && isMobile === false
                 ?
                 selectedUserProfile && (
@@ -1258,6 +1256,12 @@ export default function Home() {
           </Box>
         </Box>
       )}
+      <UserProfileModal
+        handleGrantAccess={handleGrantAccess}
+        handleClose={handleClose}
+        open={showDetail}
+        userid={selectedUserId}
+      />
       <Footer />
       <Modal open={isReportModalOpen} onClose={handleReportModalToggle}>
         <Box
