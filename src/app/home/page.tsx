@@ -405,7 +405,7 @@ const Home = () => {
 							backgroundRepeat: "no-repeat",
 							backgroundPosition: "center",
 							marginTop: { lg: "98px", md: "90px", sm: "70px", xs: "0px" },
-							borderRadius: { xs: "0 0 20px 20px" },
+							borderRadius: { xs: "20px" },
 							position: "relative",
 							"&::before": {
 								content: '""',
@@ -414,7 +414,7 @@ const Home = () => {
 								left: 0,
 								right: 0,
 								bottom: 0,
-								backgroundColor: "rgba(0,0,0,0.3)",
+								backgroundColor: "rgba(0,0,0,0.65)",
 								borderRadius: "inherit",
 							},
 						}}
@@ -425,9 +425,11 @@ const Home = () => {
 								color: "white",
 								fontWeight: "bold",
 								textAlign: "center",
-								zIndex: 1,
-								textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+								zIndex: 2,
+								position: "relative",
+								textShadow: "3px 3px 6px rgba(0,0,0,0.9)",
 								px: 2,
+								fontSize: { xs: "1.2rem", sm: "1.5rem" },
 							}}
 						>
 							Welcome back, {currentName}! 👋
@@ -471,27 +473,39 @@ const Home = () => {
 					<Box
 						sx={{
 							padding: {
-								xs: "8px",
+								xs: "12px",
 								sm: "16px",
 								md: 0,
 								lg: 0,
 							},
-							marginTop: "20px",
+							marginTop: "24px",
+							maxWidth: "100%",
 						}}
 					>
-						<Grid container spacing={2} sx={{ justifyContent: "center" }}>
+						<Grid 
+							container 
+							spacing={{ xs: 1.5, sm: 2 }} 
+							sx={{ 
+								justifyContent: "center",
+								alignItems: "stretch",
+								width: "100%",
+								margin: 0,
+							}}
+						>
 							{categories.map((category, index) => (
 								<Grid
 									item
 									xs={6}
-									sm={6}
+									sm={4}
 									md={6}
 									lg={6}
 									key={index}
-									style={{
+									sx={{
 										cursor: "pointer",
 										display: "flex",
 										justifyContent: "center",
+										alignItems: "center",
+										padding: "0 !important",
 									}}
 								>
 									<Card
@@ -502,17 +516,18 @@ const Home = () => {
 											position: "relative",
 											overflow: "hidden",
 											width: "100%",
-											maxWidth: "180px",
-											height: { sm: 180, xs: 180, lg: 570, md: 570 },
-											borderRadius: "16px",
-											boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-											transition: "all 0.3s ease",
+											maxWidth: { xs: "160px", sm: "180px" },
+											height: { xs: "160px", sm: "180px", lg: 570, md: 570 },
+											aspectRatio: "1",
+											borderRadius: "20px",
+											boxShadow: "0 6px 16px rgba(0,0,0,0.4)",
+											transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
 											"&:hover": {
-												transform: "translateY(-4px)",
-												boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
+												transform: "translateY(-6px) scale(1.02)",
+												boxShadow: "0 12px 24px rgba(0,0,0,0.5)",
 											},
 											"&:active": {
-												transform: "translateY(-2px)",
+												transform: "translateY(-3px) scale(0.98)",
 											},
 										}}
 									>
@@ -523,7 +538,10 @@ const Home = () => {
 												justifyContent: "center",
 												height: "100%",
 												position: "relative",
-												padding: "12px",
+												padding: { xs: "10px", sm: "12px" },
+												"&:last-child": {
+													paddingBottom: { xs: "10px", sm: "12px" },
+												},
 											}}
 										>
 											{/* Background Image */}
@@ -566,8 +584,9 @@ const Home = () => {
 													sx={{
 														color: "white",
 														fontWeight: "bold",
-														textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
-														fontSize: "14px",
+														textShadow: "3px 3px 6px rgba(0,0,0,0.9)",
+														fontSize: { xs: "12px", sm: "14px" },
+														lineHeight: 1.2,
 													}}
 												>
 													{category.title}
@@ -578,8 +597,9 @@ const Home = () => {
 														sx={{
 															color: "#FF1B6B",
 															fontWeight: "bold",
-															marginTop: "4px",
-															fontSize: "10px",
+															marginTop: "2px",
+															fontSize: { xs: "9px", sm: "10px" },
+															textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
 														}}
 													>
 														Coming Soon
