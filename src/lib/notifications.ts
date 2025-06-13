@@ -180,7 +180,8 @@ export const notify = {
 
 // Geolocation error handler
 export const handleGeolocationError = (error: GeolocationPositionError) => {
-  console.warn("Geolocation error:", error);
+        /// removed
+  /* console.warn("Geolocation error:", error);
   
   switch (error.code) {
     case error.PERMISSION_DENIED:
@@ -195,7 +196,7 @@ export const handleGeolocationError = (error: GeolocationPositionError) => {
     default:
       notify.error("An error occurred while getting your location.");
       break;
-  }
+  } */
 };
 
 // Check geolocation support

@@ -40,7 +40,8 @@ import {
 	Bell,
 	Settings,
 	X,
-	LogOut
+	LogOut,
+	Calendar
 } from "lucide-react";
 
 const socket = io("https://api.nomolive.com/");
@@ -186,8 +187,7 @@ const Header = () => {
 		{ icon: Apple, label: "PineApple", path: "/pineapple" },
 		{ icon: MessageCircle, label: "Messaging", path: "/messaging", badge: isNewMessage },
 		{ icon: Heart, label: "Matches", path: "/matches" },
-		{ icon: Search, label: "Search", path: "/search" },
-		{ icon: Settings, label: "Settings", path: "/settings" },
+		{ icon: Calendar, label: "Events", path: "/events" },
 	];
 
 	return (
@@ -200,10 +200,10 @@ const Header = () => {
 						position="fixed"
 						elevation={0}
 						sx={{
-							bgcolor: "rgba(10, 10, 10, 0.95)",
 							backdropFilter: "blur(20px)",
 							borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
 							zIndex: 1200,
+							bgcolor: "transparent",
 						}}
 					>
 						<Toolbar sx={{ justifyContent: "space-between", px: 2, py: 1 }}>
@@ -702,7 +702,13 @@ const Header = () => {
 			)}
 
 			{/* Spacer to push content below fixed header */}
-			<Box sx={{ height: isMobile ? "64px" : "80px" }} />
+			{(() => {
+				const pathsWithoutSpacer = ['/members', '/pineapple', '/messaging'];
+				const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+				return !pathsWithoutSpacer.includes(currentPath) && (
+					<Box sx={{ height: isMobile ? "64px" : "80px" }} />
+				);
+			})()}
 		</>
 	);
 };

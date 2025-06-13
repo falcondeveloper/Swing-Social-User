@@ -4,6 +4,7 @@ import {
   JSX,
   useEffect,
   useImperativeHandle,
+  useRef,
   useState,
 } from "react";
 
@@ -219,6 +220,12 @@ export default function UserProfileModal(props: any) {
   const [privateImages, setPrivateImages] = useState<any>([]);
   const [profileImages, setProfileImages] = useState<any>([]);
   const router = useRouter();
+  
+  // Custom scroll handling
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [scrollTop, setScrollTop] = useState(0);
   const handleGetPrivateImages = async () => {
     try {
       // Check if t
@@ -445,6 +452,42 @@ export default function UserProfileModal(props: any) {
     setPrivateOpen(false);
   };
 
+  // Mouse and touch scroll handling
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setStartY(e.pageY - (scrollContainerRef.current?.offsetTop || 0));
+    setScrollTop(scrollContainerRef.current?.scrollTop || 0);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const y = e.pageY - (scrollContainerRef.current.offsetTop || 0);
+    const walk = (y - startY) * 2;
+    scrollContainerRef.current.scrollTop = scrollTop - walk;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Touch handling
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    setStartY(e.touches[0].pageY - (scrollContainerRef.current?.offsetTop || 0));
+    setScrollTop(scrollContainerRef.current?.scrollTop || 0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    const y = e.touches[0].pageY - (scrollContainerRef.current.offsetTop || 0);
+    const walk = (y - startY) * 2;
+    scrollContainerRef.current.scrollTop = scrollTop - walk;
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
 
   return (
     <>
@@ -480,7 +523,23 @@ export default function UserProfileModal(props: any) {
             <Close />
           </IconButton>
         </DialogTitle>
-        <Box sx={{ position: "relative", background: "#121212" }}>
+        <Box 
+          ref={scrollContainerRef}
+          sx={{ 
+            position: "relative", 
+            background: "#121212",
+            maxHeight: "80vh",
+            overflowY: "auto",
+            cursor: isDragging ? "grabbing" : "grab",
+          }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           {/* Banner Section */}
           <Box
             sx={{

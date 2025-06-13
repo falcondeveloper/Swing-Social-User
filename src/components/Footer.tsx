@@ -259,35 +259,40 @@ const Footer = () => {
             {/* Bottom Navigation for Mobile */}
             {
                 isMobile && (
-                    <BottomNavigation
-                        value={value}
-                        onChange={(event, newValue) => {
-                            setValue(newValue);
-                        }}
-                        sx={{
-                            position: 'fixed',
-                            bottom: 0,
-                            zIndex: 10,
-                            left: 0,
-                            right: 0,
-                            bgcolor: alpha('#121212', 0.9),
-                            backdropFilter: 'blur(20px)',
-                            borderTop: '1px solid',
-                            borderColor: 'rgba(255,255,255,0.1)',
-                            '& .MuiBottomNavigationAction-root': {
-                                color: 'rgba(255,255,255,0.5)',
-                                '&.Mui-selected': {
-                                    color: '#FF1B6B'
+                    <>
+                        <BottomNavigation
+                            value={value}
+                            onChange={(event, newValue) => {
+                                setValue(newValue);
+                            }}
+                            sx={{
+                                position: 'fixed',
+                                bottom: 0,
+                                zIndex: 10,
+                                left: 0,
+                                right: 0,
+                                bgcolor: alpha('#121212', 0.9),
+                                backdropFilter: 'blur(20px)',
+                                borderTop: '1px solid',
+                                borderColor: 'rgba(255,255,255,0.1)',
+                                '& .MuiBottomNavigationAction-root': {
+                                    color: 'rgba(255,255,255,0.5)',
+                                    '&.Mui-selected': {
+                                        color: '#FF1B6B'
+                                    }
                                 }
-                            }
-                        }}
-                    >
-                        <BottomNavigationAction onClick={() => router.push('/home')} icon={<img src="/icons/home.png" alt="Home" style={{ width: 50, height: 40 }} />} />
-                        <BottomNavigationAction onClick={() => router.push('/members')} icon={<img src="/icons/members.png" alt="Members" style={{ width: 50, height: 40 }} />} />
-                        <BottomNavigationAction onClick={() => router.push('/pineapple')} icon={<img src="/icons/pineapple.png" alt="Pineapples" style={{ width: 50, height: 40 }} />} />
-                        <BottomNavigationAction onClick={() => router.push('/messaging')} icon={<img src="/icons/messaging.png" alt="Messaging" style={{ width: 50, height: 40 }} />} />
-                        <BottomNavigationAction onClick={() => router.push('/matches')} icon={<img src="/icons/matches.png" alt="Matches" style={{ width: 50, height: 40 }} />} />
-                    </BottomNavigation>
+                            }}
+                        >
+                            <BottomNavigationAction onClick={() => router.push('/home')} icon={<img src="/icons/home.png" alt="Home" style={{ width: 50, height: 40 }} />} />
+                            <BottomNavigationAction onClick={() => router.push('/members')} icon={<img src="/icons/members.png" alt="Members" style={{ width: 50, height: 40 }} />} />
+                            <BottomNavigationAction onClick={() => router.push('/pineapple')} icon={<img src="/icons/pineapple.png" alt="Pineapples" style={{ width: 50, height: 40 }} />} />
+                            <BottomNavigationAction onClick={() => router.push('/messaging')} icon={<img src="/icons/messaging.png" alt="Messaging" style={{ width: 50, height: 40 }} />} />
+                            <BottomNavigationAction onClick={() => router.push('/matches')} icon={<img src="/icons/matches.png" alt="Matches" style={{ width: 50, height: 40 }} />} />
+                        </BottomNavigation>
+                        
+                        {/* Spacer to push content above fixed bottom navigation */}
+                        <Box sx={{ height: "80px" }} />
+                    </>
                 )
             }
         </Box>
