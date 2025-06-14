@@ -1159,6 +1159,12 @@ const ProfileDetail: React.FC = () => {
                                                                         onClick={() => router.push("/membership")}
                                                                 />
 
+                                                                <ActionChip
+                                                                        icon={<Settings size={14} />}
+                                                                        label="Preferences"
+                                                                        onClick={() => router.push("/preferences")}
+                                                                />
+
                                                                 {isEditing ? (
                                                                         <>
                                                                                 <ActionChip
