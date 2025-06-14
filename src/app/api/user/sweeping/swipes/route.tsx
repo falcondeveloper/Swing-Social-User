@@ -12,26 +12,26 @@ import { Pool } from 'pg';
 export const dynamic = 'force-dynamic';
 
 const pool = new Pool({
-  user: 'clark',
-  host: '199.244.49.83',
-  database: 'swingsocialdb',
-  password: 'Bmw635csi#',
-  port: 5432,
+        user: 'clark',
+        host: '199.244.49.83',
+        database: 'swingsocialdb',
+        password: 'Bmw635csi#',
+        port: 5432,
 });
 
 
 export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('id'); // User ID to fetch a single record
-    let query = `SELECT * FROM public.get_swipescreenhome($1)`;
-    const swipeResults = await pool.query(query, [userId]);
-    return NextResponse.json({
-      swipes: swipeResults.rows,
-    });
-  } catch (error) {
-    console.error('Database query failed:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
+        try {
+                const { searchParams } = new URL(req.url);
+                const userId = searchParams.get('id'); // User ID to fetch a single record
+                let query = `SELECT * FROM public.get_swipescreenhome($1)`;
+                const swipeResults = await pool.query(query, [userId]);
+                return NextResponse.json({
+                        swipes: swipeResults.rows,
+                });
+        } catch (error) {
+                console.error('Database query failed:', error);
+                return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        }
 }
 

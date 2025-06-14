@@ -19,6 +19,7 @@ interface Ticket {
   Quantity: number;
   EventName: string;
   Description: string;
+  EmailDescription?: string;
 }
 
 interface TicketQuantities {
@@ -39,6 +40,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
   const [selectedTicketName, setSelectedTicketName] = useState<string>('');
   const [selectedEventName, setSelectedEventName] = useState<string>('');
   const [selectedEventDescription, setSelectedEventDescription] = useState<string>('');
+  const [selectedEventEmailDescription, setSelectedEventEmailDescription] = useState<string>('');
   const [selectedTicketType, setSelectedTicketType] = useState<string>('');
   const [selectedTicket, setSelectedTicket] = useState<{ name?: string; type?: string }>({});
 
@@ -67,6 +69,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
       let ticketType = '';
       let eventName = '';
       let eventDescription = '';
+      let eventEmailDescription = '';
 
       // Calculate totals from all tickets
       Object.entries(ticketQuantities).forEach(([ticketId, ticketQuantity]) => {
@@ -80,6 +83,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
             ticketType = ticket.Type;
             eventName = ticket.EventName;
             eventDescription = ticket.Description;
+            eventEmailDescription = ticket.EmailDescription || '';
           }
         }
       });
@@ -90,6 +94,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
       setSelectedTicketType(ticketType);
       setSelectedEventName(eventName);
       setSelectedEventDescription(eventDescription);
+      setSelectedEventEmailDescription(eventEmailDescription);
 
       // Call parent component's callback with updated summary
       onTicketsChange(quantity, price, ticketName, ticketType, eventName );
@@ -103,6 +108,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
       // Store overall ticket information
       localStorage.setItem('event_name', selectedEventName || '');
       localStorage.setItem('event_description', selectedEventDescription || '');
+      localStorage.setItem('eventEmailDescription', selectedEventEmailDescription || '');
       localStorage.setItem('ticketPrice', totalPrice.toString());
       localStorage.setItem('ticketQuantity', totalQuantity.toString());
       localStorage.setItem('eventId', tickets[0]?.TicketPackageId || '');

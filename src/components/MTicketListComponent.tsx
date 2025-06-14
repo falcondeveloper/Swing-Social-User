@@ -19,6 +19,7 @@ type Ticket = {
   Price: number;
   Quantity: number;
   EventId: string;
+  EmailDescription?: string;
 };
 
 type TicketListProps = {
@@ -49,6 +50,7 @@ const TicketListComponent: React.FC<TicketListProps> = ({
   const [totalQuantity, setTotalQuantity] = useState<number>(0);
   const [selectedTicketName, setSelectedTicketName] = useState<string>("");
 	const [selectedTicketEventDescription, setSelectedTicketEventDescription] = useState<string>("");
+  const [selectedTicketEmailDescription, setSelectedTicketEmailDescription] = useState<string>("");
   const [selectedTicketType, setSelectedTicketType] = useState<string>("");
 
   const toggleBox = () => {
@@ -77,12 +79,14 @@ const TicketListComponent: React.FC<TicketListProps> = ({
       let ticketName = "";
       let ticketType = "";
 			let ticketDescription = "";
+      let ticketEmailDescription = "";
 
       Object.entries(ticketQuantities).forEach(([ticketId, ticketQuantity]) => {
         const ticket = tickets.find((t) => t.TicketPackageId === ticketId);
         if (ticket && ticketQuantity > 0) {
           price += ticket.Price * ticketQuantity;
 					ticketDescription = ticket.Description;
+          ticketEmailDescription = ticket.EmailDescription || "";
           quantity += ticketQuantity;
           if (!ticketName) {
             ticketName = ticket.Name;
@@ -94,7 +98,8 @@ const TicketListComponent: React.FC<TicketListProps> = ({
       setTotalPrice(price);
       setTotalQuantity(quantity);
       setSelectedTicketName(ticketName);
-			setSelectedTicketEventDescription(ticketDescription)
+			setSelectedTicketEventDescription(ticketDescription);
+      setSelectedTicketEmailDescription(ticketEmailDescription);
       setSelectedTicketType(ticketType);
 
       onTicketsChange(quantity, price, ticketName, ticketType);
@@ -110,6 +115,7 @@ const TicketListComponent: React.FC<TicketListProps> = ({
       localStorage.setItem("eventId", tickets[0]?.TicketPackageId || "");
       localStorage.setItem("ticketName", selectedTicketName || "");
       localStorage.setItem("ticketEventDescription", selectedTicketEventDescription || "");
+      localStorage.setItem("eventEmailDescription", selectedTicketEmailDescription || "");
       localStorage.setItem("ticketType", selectedTicketType || "");
 
       const ticketDetails = tickets

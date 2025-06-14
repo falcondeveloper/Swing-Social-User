@@ -172,6 +172,9 @@ export default function UserProfileModal(props: any) {
   const filteredEvents = selectedTab === "RSVP" ? [] : events;
   useEffect(() => {
     setOpen(props.open);
+  }, [props.open]);
+
+  useEffect(() => {
     if (props.userid) {
       fetchData(props.userid);
       handleGetProfileImages();
@@ -215,7 +218,7 @@ export default function UserProfileModal(props: any) {
       };
       handleGetRSVP();
     }
-  }, [props]);
+  }, [props.userid]);
 
   const [privateImages, setPrivateImages] = useState<any>([]);
   const [profileImages, setProfileImages] = useState<any>([]);

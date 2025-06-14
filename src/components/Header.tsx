@@ -51,13 +51,8 @@ const Header = () => {
         const [userName, setUserName] = useState<string>("");
         const [isNotificationModalOpen, setNotificationModalOpen] = useState(false);
         const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-        const [isNewMessage, setNewMessage] = useState<boolean>(() => {
-                // Initialize state with localStorage value if available
-                if (typeof window !== "undefined") {
-                        return localStorage.getItem("isNewMessage") === "true";
-                }
-                return false;
-        });
+        const [isNewMessage, setNewMessage] = useState<boolean>(false);
+        const [currentPath, setCurrentPath] = useState('');
 
         const router = useRouter();
         const theme = useTheme();
@@ -65,6 +60,14 @@ const Header = () => {
 
         useEffect(() => {
                 const token = localStorage.getItem("loginInfo");
+                const savedMessageState = localStorage.getItem("isNewMessage");
+                
+                if (savedMessageState === "true") {
+                        setNewMessage(true);
+                }
+                
+                setCurrentPath(window.location.pathname);
+                
                 if (token) {
                         try {
                                 const decodeToken = jwtDecode<any>(token);
@@ -120,9 +123,7 @@ const Header = () => {
         // Reset the "new message" indicator
         const resetNewMessage = () => {
                 setNewMessage(false);
-                if (typeof window !== "undefined") {
-                        localStorage.setItem("isNewMessage", "false");
-                }
+                localStorage.setItem("isNewMessage", "false");
         };
 
         const checkNotificationPermission = () => {
@@ -335,7 +336,7 @@ const Header = () => {
                                                                 <List sx={{ px: 2 }}>
                                                                         {mobileNavItems.map((item, index) => {
                                                                                 const Icon = item.icon;
-                                                                                const isActive = typeof window !== 'undefined' && window.location.pathname === item.path;
+                                                                                const isActive = currentPath === item.path;
 
                                                                                 return (
                                                                                         <ListItem
@@ -515,7 +516,7 @@ const Header = () => {
                                                                         { icon: Heart, label: "Matches", path: "/matches" }
                                                                 ].map((item, index) => {
                                                                         const Icon = item.icon;
-                                                                        const isActive = typeof window !== 'undefined' && window.location.pathname === item.path;
+                                                                        const isActive = currentPath === item.path;
 
                                                                         return (
                                                                                 <Box key={item.label} sx={{ position: "relative" }}>
@@ -704,7 +705,6 @@ const Header = () => {
                         {/* Spacer to push content below fixed header */}
                         {(() => {
                                 const pathsWithoutSpacer = ['/members', '/pineapple', '/messaging'];
-                                const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
                                 return !pathsWithoutSpacer.includes(currentPath) && (
                                         <Box sx={{ height: isMobile ? "64px" : "80px" }} />
                                 );

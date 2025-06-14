@@ -273,7 +273,7 @@ const BillingUpgrade: any = () => {
     const storedTicketPrice = localStorage.getItem("ticketPrice");
     const storedTicketName = localStorage.getItem("ticketName");
     const storedEventEmailDescription =
-      localStorage.getItem("event_description");
+      localStorage.getItem("eventEmailDescription");
     const storedTicketType = localStorage.getItem("ticketType");
     const ticketQuantity = localStorage.getItem("ticketQuantity");
     const storedEventId = localStorage.getItem("eventId");

@@ -35,7 +35,7 @@ import {
   useMediaQuery,
   Alert,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import DTicketListComponent from "@/components/DTicketListComponent";
 import MTicketListComponent from "@/components/MTicketListComponent";
 import RSVPListComponent from "@/components/RSVPListComponent";
@@ -134,7 +134,7 @@ export default function EventDetail(props: { params: Params }) {
   //const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
 
-  const handleTicketsChange = (
+  const handleTicketsChange = useCallback((
     quantity: any = 0,
     price: any = 0,
     name: any,
@@ -148,7 +148,7 @@ export default function EventDetail(props: { params: Params }) {
         ticketType: type,
       });
     }
-  };
+  }, [isMobile]);
 
   const handleGetEventDetail = async (eventId: any) => {
     try {
@@ -161,9 +161,12 @@ export default function EventDetail(props: { params: Params }) {
 
       const eventData = await checkResponse.json();
       const eventDescription = eventData?.event?.Description;
+      const eventEmailDescription = eventData?.event?.EmailDescription;
+      
       //Populate the tickets with the description of the event BUG
       eventData?.tickets.forEach((ticket: any) => {
         ticket.Description = eventDescription;
+        ticket.EmailDescription = eventEmailDescription; // Add email description for emails
       });
 
       setEventDetail(eventData?.event);
