@@ -35,7 +35,7 @@ import {
   useMediaQuery,
   Alert,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DTicketListComponent from "@/components/DTicketListComponent";
 import MTicketListComponent from "@/components/MTicketListComponent";
 import RSVPListComponent from "@/components/RSVPListComponent";
@@ -73,7 +73,43 @@ export default function EventDetail(props: { params: Params }) {
   const [showContent, setShowContent] = useState(false);
   const [membership, setMembership] = useState(0);
   const [loginProfileId, setLoginProfileId] = useState<any>("");
-
+  const [posts, setPosts] = useState<any>([]);
+  const [comment, setComment] = useState<any>(null);
+  const [eventDetail, setEventDetail] = useState<any>(null);
+  const [rsvp, setRsvp] = useState<any>([]);
+  const [attendees, setAttendees] = useState<any>([]);
+  const [tickets, setTicket] = useState<any>([]);
+  const [summary, setSummary] = useState<any>({
+    totalQuantity: 0,
+    totalPrice: 0,
+    ticketName: "",
+    ticketType: "",
+  });
+  const [showDetail, setShowDetail] = useState<any>(false);
+  const [selectedUserId, setSelectedUserId] = useState<any>(null);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [errors, setError] = useState<any>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
+  const [profileId, setProfileId] = useState<any>();
+  const [profileUsername, setProfileUsername] = useState<any>();
+  const [targetId, setTargetId] = useState<any>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportOptions, setReportOptions] = useState({
+    reportUser: false,
+    blockUser: false,
+  });
+  const [formState, setFormState] = useState({
+    emailDescription: eventDetail?.Description,
+    emailSubject: eventDetail?.Name,
+    rsvpChecked: false,
+    attendeeChecked: false,
+  });
+  const [openSaveRsvp, setOpenSaveRsvp] = useState(false);
+  const [openDownloadModal, setOpenDownloadModal] = useState(false); // Modal visibility state
+  const [downloadAttendee, setDownloadAttendee] = useState(false); // Checkbox for Attendees
+  const [downloadRsvp, setDownloadRsvp] = useState(false); // Checkbox for RSVP
   const [openModalUser, setOpenModalUser] = useState<{
     state: boolean;
     id: null | string;
@@ -100,7 +136,6 @@ export default function EventDetail(props: { params: Params }) {
       const pid: any = params.id;
       console.log(pid);
       setId(pid);
-      console.log(pid, "===========id");
     };
     getIdFromParam();
   }, [props]);
@@ -115,40 +150,19 @@ export default function EventDetail(props: { params: Params }) {
     setShowContent(true);
   }, []);
 
-  const [posts, setPosts] = useState<any>([]);
-  const [comment, setComment] = useState<any>(null);
-  const [eventDetail, setEventDetail] = useState<any>(null);
-  const [rsvp, setRsvp] = useState<any>([]);
-  const [attendees, setAttendees] = useState<any>([]);
-  const [tickets, setTicket] = useState<any>([]);
-  const [summary, setSummary] = useState<any>({
-    totalQuantity: 0,
-    totalPrice: 0,
-    ticketName: "",
-    ticketType: "",
-  });
-  const [showDetail, setShowDetail] = useState<any>(false);
-  const [selectedUserId, setSelectedUserId] = useState<any>(null);
-
-  const theme = useTheme();
-  //const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
-
-  const handleTicketsChange = (
-    quantity: any = 0,
-    price: any = 0,
-    name: any,
-    type: any
-  ) => {
-    if (isMobile) {
-      setSummary({
-        totalQuantity: quantity,
-        totalPrice: price,
-        ticketName: name,
-        ticketType: type,
-      });
-    }
-  };
+  const handleTicketsChange = useCallback(
+    (quantity: any = 0, price: any = 0, name: any, type: any) => {
+      if (isMobile) {
+        setSummary({
+          totalQuantity: quantity,
+          totalPrice: price,
+          ticketName: name,
+          ticketType: type,
+        });
+      }
+    },
+    [isMobile]
+  );
 
   const handleGetEventDetail = async (eventId: any) => {
     try {
@@ -175,8 +189,6 @@ export default function EventDetail(props: { params: Params }) {
     }
   };
 
-  const [profileId, setProfileId] = useState<any>(); // Animation direction
-  const [profileUsername, setProfileUsername] = useState<any>(); // Animation direction
   useEffect(() => {
     if (typeof window !== "undefined") {
       setProfileId(localStorage.getItem("logged_in_profile"));
@@ -184,17 +196,10 @@ export default function EventDetail(props: { params: Params }) {
     }
   }, []);
 
-  const [targetId, setTargetId] = useState<any>(null);
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const handleReportModalToggle = (pid: string) => {
     setTargetId(pid);
     setIsReportModalOpen((prev) => !prev);
   };
-
-  const [reportOptions, setReportOptions] = useState({
-    reportUser: false,
-    blockUser: false,
-  });
 
   const handleCheckboxChange = (event: any) => {
     const { name, checked } = event.target;
@@ -203,6 +208,7 @@ export default function EventDetail(props: { params: Params }) {
       [name]: checked,
     }));
   };
+
   const handleEmailCheckboxChange = (field: any) => {
     setFormState((prev: any) => ({ ...prev, [field]: !prev[field] }));
   };
@@ -224,17 +230,13 @@ export default function EventDetail(props: { params: Params }) {
       console.error("Error:", error);
     }
   };
+
   const handleReportSubmit = () => {
     console.log("Report Options:", reportOptions);
     setIsReportModalOpen(false);
     handleReportUser();
     // Add logic to handle report or block user action
   };
-
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [errors, setError] = useState<any>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const handleSendEmail = async (): Promise<void> => {
     setLoading(true);
@@ -293,13 +295,6 @@ export default function EventDetail(props: { params: Params }) {
     }
   };
 
-  const [formState, setFormState] = useState({
-    emailDescription: eventDetail?.Description,
-    emailSubject: eventDetail?.Name,
-    rsvpChecked: false,
-    attendeeChecked: false,
-  });
-
   const handleEditorChange = (field: any, value: any) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
@@ -315,8 +310,6 @@ export default function EventDetail(props: { params: Params }) {
     setOpen(true);
   };
   const handleCloseHere = () => setOpen(false);
-
-  const [openSaveRsvp, setOpenSaveRsvp] = useState(false);
 
   const handleSaveRsvp = async (eventId: any) => {
     if (membership == 0) {
@@ -374,43 +367,20 @@ export default function EventDetail(props: { params: Params }) {
     }
   };
 
-  // const handleTicketCheckout = () => {
-  //     if (summary?.totalQuantity > 0) {
-  //         localStorage.setItem('event_name', eventDetail?.Name);
-  //         localStorage.setItem('event_edscription', eventDetail?.EmailDescription);
-  //         localStorage.setItem('ticketPrice', summary?.totalPrice);
-  //         localStorage.setItem('ticketName', summary?.ticketName);
-  //         localStorage.setItem('ticketType', summary?.ticketType);
-  //         localStorage.setItem('ticketQuantity', summary?.totalQuantity);
-  //         localStorage.setItem('eventId', id);
-  //         localStorage.setItem('ticketDetails', JSON.stringify(eventDetail));
-  //         router.push('/events/ticket');
-  //     }
-  // }
-
-  const [openDownloadModal, setOpenDownloadModal] = useState(false); // Modal visibility state
-  const [downloadAttendee, setDownloadAttendee] = useState(false); // Checkbox for Attendees
-  const [downloadRsvp, setDownloadRsvp] = useState(false); // Checkbox for RSVP
-
-  // Function to handle opening the download modal
-  const handleOpenDownloadModal = () => setOpenDownloadModal(true);
-
-  // Function to handle closing the download modal
   const handleCloseDownloadModal = () => setOpenDownloadModal(false);
 
-  // Handle the change of checkboxes
   const handleDownloadAttendeeChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setDownloadAttendee(event.target.checked);
   };
+
   const handleDownloadRsvpChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setDownloadRsvp(event.target.checked);
   };
 
-  // Updated handleDownloadList function
   const handleDownloadList = () => {
     if (!downloadAttendee && !downloadRsvp) {
       alert("Please select at least one option to download.");
@@ -434,8 +404,6 @@ export default function EventDetail(props: { params: Params }) {
     handleCloseDownloadModal(); // Close the modal after the download action
   };
 
-  // Updated handleExportCSV function
-  // Updated handleExportCSV function with batch user data retrieval
   const handleExportCSV = async (type: any, data: any) => {
     if (!data || data.length === 0) {
       alert(`Not data available to export ${type}.`);
@@ -553,7 +521,15 @@ export default function EventDetail(props: { params: Params }) {
   };
 
   return (
-    <Box sx={{ color: "white", padding: "10px" }}>
+    <Box
+      sx={{
+        bgcolor: "#0A0A0A",
+        minHeight: "100vh",
+        color: "white",
+        pb: 8,
+        background: "linear-gradient(to bottom, #0A0A0A, #1A1A1A)",
+      }}
+    >
       <Header />
       <Grid container spacing={2} sx={{ marginTop: 10 }}>
         {isMobile ? (
@@ -933,33 +909,7 @@ export default function EventDetail(props: { params: Params }) {
                   onTicketsChange={handleTicketsChange}
                   summary={summary}
                 />
-                {/* <Box
-                                    sx={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: 2,
-                                        border: "1px solid white",
-                                        padding: 1,
-                                        borderRadius: "10px",
-                                        backgroundColor: "transparent",
-                                        textAlign: "center", // Center align the text inside the box
-                                    }}
-                                >
-                                    <Button
-                                        variant="contained"
-                                        onClick={handleTicketCheckout}
-                                        sx={{
-                                            backgroundColor: "transparent",
-                                            width: { lg: "20%", md: "20%", sm: "100%", xs: "100%" },
-                                            marginLeft: "auto",
-                                            marginRight: "auto",
-                                            borderRadius: "10px", // Rounded corners
-                                            padding: "10px 20px", // Adjust padding to make it look better
-                                        }}
-                                    >
-                                        Checkout
-                                    </Button>
-                                </Box> */}
+
                 <Box sx={{ marginTop: 4 }}>
                   <Box
                     sx={{
@@ -1829,6 +1779,7 @@ export default function EventDetail(props: { params: Params }) {
           </Button>
         </DialogActions>
       </Dialog>
+
       <Modal open={isReportModalOpen} onClose={handleReportModalToggle}>
         <Box
           sx={{
@@ -1904,6 +1855,7 @@ export default function EventDetail(props: { params: Params }) {
           </Box>
         </Box>
       </Modal>
+
       {/* MUI Dialog */}
       <Dialog open={open} onClose={handleCloseHere} maxWidth="sm" fullWidth>
         <DialogContent

@@ -456,14 +456,21 @@ export default function MobileSweaping() {
     const deltaX = point.clientX - startPoint.current.x;
     const deltaY = point.clientY - startPoint.current.y;
     const rotate = deltaX * 0.1;
+
     const isVertical = Math.abs(deltaY) > Math.abs(deltaX);
 
-    if (isVertical) {
+    // ❌ Block upward swipe (deltaY < 0)
+    if (isVertical && deltaY < 0) {
+      return; // Stop processing swipe
+    }
+
+    if (e.cancelable) {
       e.preventDefault();
     }
 
     let swipeType = null;
     let swipeOpacity = 0;
+
     if (isVertical) {
       if (deltaY > 50) swipeType = "maybe";
       swipeOpacity = Math.min(Math.abs(deltaY) / 100, 1);
@@ -477,7 +484,9 @@ export default function MobileSweaping() {
 
     setCardStyles({
       active: {
-        transform: `translateX(${deltaX}px) translateY(${deltaY}px) rotate(${rotate}deg)`,
+        transform: `translateX(${deltaX}px) translateY(${
+          isVertical ? deltaY : 0
+        }px) rotate(${rotate}deg)`,
         swipeType,
         swipeOpacity,
       },
@@ -799,13 +808,13 @@ export default function MobileSweaping() {
                 {selectedUserProfile?.Username || "Unknown"} ,{" "}
                 {selectedUserProfile?.DateOfBirth
                   ? new Date().getFullYear() -
-                  new Date(selectedUserProfile.DateOfBirth).getFullYear()
+                    new Date(selectedUserProfile.DateOfBirth).getFullYear()
                   : ""}
                 {selectedUserProfile?.Gender === "Male"
                   ? "M"
                   : selectedUserProfile?.Gender === "Female"
-                    ? "F"
-                    : ""}
+                  ? "F"
+                  : ""}
                 {selectedUserProfile?.PartnerDateOfBirth && (
                   <>
                     {" | "}
@@ -816,8 +825,8 @@ export default function MobileSweaping() {
                     {selectedUserProfile?.PartnerGender === "Male"
                       ? "M"
                       : selectedUserProfile?.PartnerGender === "Female"
-                        ? "F"
-                        : ""}
+                      ? "F"
+                      : ""}
                   </>
                 )}
               </Typography>
@@ -848,9 +857,9 @@ export default function MobileSweaping() {
                 ...(index === 0
                   ? cardStyles.active
                   : {
-                    ...cardStyles.next,
-                    zIndex: 1, // Ensure the next card is behind the active one
-                  }),
+                      ...cardStyles.next,
+                      zIndex: 1, // Ensure the next card is behind the active one
+                    }),
                 // For the "next" card, ensure it's not translated initially
                 transform:
                   index === 1
@@ -875,7 +884,6 @@ export default function MobileSweaping() {
                   className="profile-img"
                 />
 
-
                 <img
                   src="/ProfileInfo.png"
                   alt="Profile Info"
@@ -893,19 +901,18 @@ export default function MobileSweaping() {
                 <Typography
                   variant="h6"
                   component="div"
-
                   style={{ paddingLeft: "10px" }}
                 >
                   {profile?.Username || "Unknown"} ,{" "}
                   {profile?.DateOfBirth
                     ? new Date().getFullYear() -
-                    new Date(profile.DateOfBirth).getFullYear()
+                      new Date(profile.DateOfBirth).getFullYear()
                     : ""}
                   {profile?.Gender === "Male"
                     ? "M"
                     : profile?.Gender === "Female"
-                      ? "F"
-                      : ""}
+                    ? "F"
+                    : ""}
                   {profile?.PartnerDateOfBirth && (
                     <>
                       {" | "}
@@ -914,8 +921,8 @@ export default function MobileSweaping() {
                       {profile?.PartnerGender === "Male"
                         ? "M"
                         : profile?.PartnerGender === "Female"
-                          ? "F"
-                          : ""}
+                        ? "F"
+                        : ""}
                     </>
                   )}
                 </Typography>

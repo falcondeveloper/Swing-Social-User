@@ -48,7 +48,8 @@ const TicketListComponent: React.FC<TicketListProps> = ({
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [totalQuantity, setTotalQuantity] = useState<number>(0);
   const [selectedTicketName, setSelectedTicketName] = useState<string>("");
-	const [selectedTicketEventDescription, setSelectedTicketEventDescription] = useState<string>("");
+  const [selectedTicketEventDescription, setSelectedTicketEventDescription] =
+    useState<string>("");
   const [selectedTicketType, setSelectedTicketType] = useState<string>("");
 
   const toggleBox = () => {
@@ -69,20 +70,20 @@ const TicketListComponent: React.FC<TicketListProps> = ({
     }));
   };
 
-	console.log("Ticket event description", selectedTicketEventDescription);
+  console.log("Ticket event description", selectedTicketEventDescription);
   useEffect(() => {
     const calculateTotals = () => {
       let price = 0;
       let quantity = 0;
       let ticketName = "";
       let ticketType = "";
-			let ticketDescription = "";
+      let ticketDescription = "";
 
       Object.entries(ticketQuantities).forEach(([ticketId, ticketQuantity]) => {
         const ticket = tickets.find((t) => t.TicketPackageId === ticketId);
         if (ticket && ticketQuantity > 0) {
           price += ticket.Price * ticketQuantity;
-					ticketDescription = ticket.Description;
+          ticketDescription = ticket.Description;
           quantity += ticketQuantity;
           if (!ticketName) {
             ticketName = ticket.Name;
@@ -94,7 +95,7 @@ const TicketListComponent: React.FC<TicketListProps> = ({
       setTotalPrice(price);
       setTotalQuantity(quantity);
       setSelectedTicketName(ticketName);
-			setSelectedTicketEventDescription(ticketDescription)
+      setSelectedTicketEventDescription(ticketDescription);
       setSelectedTicketType(ticketType);
 
       onTicketsChange(quantity, price, ticketName, ticketType);
@@ -109,14 +110,17 @@ const TicketListComponent: React.FC<TicketListProps> = ({
       localStorage.setItem("ticketQuantity", totalQuantity.toString());
       localStorage.setItem("eventId", tickets[0]?.TicketPackageId || "");
       localStorage.setItem("ticketName", selectedTicketName || "");
-      localStorage.setItem("ticketEventDescription", selectedTicketEventDescription || "");
+      localStorage.setItem(
+        "ticketEventDescription",
+        selectedTicketEventDescription || ""
+      );
       localStorage.setItem("ticketType", selectedTicketType || "");
 
       const ticketDetails = tickets
         .map((ticket) => ({
           id: ticket.TicketPackageId,
           name: ticket.Name,
-					description: ticket.Description,
+          description: ticket.Description,
           type: ticket.Type,
           price: ticket.Price,
           quantity: ticketQuantities[ticket.TicketPackageId] || 0,
@@ -146,7 +150,7 @@ const TicketListComponent: React.FC<TicketListProps> = ({
       >
         <Box>
           <Typography variant="h6" fontWeight="bold" color="white">
-            Tickets 
+            Tickets
           </Typography>
           <Typography variant="body2" color="grey.400" sx={{ mt: 0.5 }}>
             Select your tickets - Total: ${totalPrice}

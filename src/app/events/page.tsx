@@ -299,7 +299,6 @@ export default function CalendarView() {
     };
 
     fetchData();
-
   }, [cityInput, openCity]);
 
   ///////////////////////////////////////////////////////////
@@ -521,7 +520,7 @@ export default function CalendarView() {
         },
       });
       const eventsData = await response.json();
-			console.log("eventsData",eventsData);
+      console.log("eventsData", eventsData);
       setEvents(eventsData?.events || []);
       setLoading(false);
     } catch (error) {
@@ -608,8 +607,6 @@ export default function CalendarView() {
     );
   };
 
-  console.log("sortedEvents", sortedEvents);
-
   const currentMonthEvents = searchStatus
     ? sortedEvents
     : events.filter(
@@ -617,8 +614,6 @@ export default function CalendarView() {
           event?.StartTime &&
           isSameMonth(new Date(event.StartTime), currentDate)
       );
-
-  console.log("Current month events:", currentMonthEvents);
 
   useEffect(() => {
     if (profileId) {
