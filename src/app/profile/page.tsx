@@ -64,6 +64,7 @@ import {
         Globe,
         Check,
         AlertCircle,
+		Settings2,
 } from "lucide-react";
 
 // Enhanced theme with your brand guidelines
@@ -1154,6 +1155,12 @@ const ProfileDetail: React.FC = () => {
                                                                 )}
 
                                                                 <ActionChip
+                                                                        icon={<Settings2  size={14} />}
+                                                                        label="Preferences"
+                                                                        onClick={() => router.push("/prefrences")}
+                                                                />
+
+																<ActionChip
                                                                         icon={<Settings size={14} />}
                                                                         label="Membership"
                                                                         onClick={() => router.push("/membership")}
