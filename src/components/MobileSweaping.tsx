@@ -459,7 +459,6 @@ export default function MobileSweaping() {
 
     const isVertical = Math.abs(deltaY) > Math.abs(deltaX);
 
-    // ❌ Block upward swipe (deltaY < 0)
     if (isVertical && deltaY < 0) {
       return; // Stop processing swipe
     }

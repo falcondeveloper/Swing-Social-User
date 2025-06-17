@@ -220,7 +220,7 @@ export default function UserProfileModal(props: any) {
   const [privateImages, setPrivateImages] = useState<any>([]);
   const [profileImages, setProfileImages] = useState<any>([]);
   const router = useRouter();
-  
+
   // Custom scroll handling
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -474,7 +474,9 @@ export default function UserProfileModal(props: any) {
   // Touch handling
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsDragging(true);
-    setStartY(e.touches[0].pageY - (scrollContainerRef.current?.offsetTop || 0));
+    setStartY(
+      e.touches[0].pageY - (scrollContainerRef.current?.offsetTop || 0)
+    );
     setScrollTop(scrollContainerRef.current?.scrollTop || 0);
   };
 
@@ -523,10 +525,10 @@ export default function UserProfileModal(props: any) {
             <Close />
           </IconButton>
         </DialogTitle>
-        <Box 
+        <Box
           ref={scrollContainerRef}
-          sx={{ 
-            position: "relative", 
+          sx={{
+            position: "relative",
             background: "#121212",
             maxHeight: "80vh",
             overflowY: "auto",
@@ -588,36 +590,42 @@ export default function UserProfileModal(props: any) {
                 {advertiser.Username},
                 {advertiser?.DateOfBirth
                   ? new Date().getFullYear() -
-                  new Date(advertiser.DateOfBirth).getFullYear()
+                    new Date(advertiser.DateOfBirth).getFullYear()
                   : ""}
                 {advertiser?.Gender === "Male"
                   ? "M"
                   : advertiser?.Gender === "Female"
-                    ? "F"
-                    : ""}
+                  ? "F"
+                  : ""}
                 {advertiser?.PartnerDateOfBirth && advertiser?.PartnerGender
-                  ? `| ${new Date().getFullYear() -
-                  new Date(advertiser.PartnerDateOfBirth).getFullYear()
-                  }${advertiser.PartnerGender === "Male"
-                    ? "M"
-                    : advertiser.PartnerGender === "Female"
-                      ? "F"
-                      : ""
-                  }`
+                  ? `| ${
+                      new Date().getFullYear() -
+                      new Date(advertiser.PartnerDateOfBirth).getFullYear()
+                    }${
+                      advertiser.PartnerGender === "Male"
+                        ? "M"
+                        : advertiser.PartnerGender === "Female"
+                        ? "F"
+                        : ""
+                    }`
                   : ""}
               </span>
             </Typography>
             <Typography
               variant="subtitle1"
-              color="white"
+              dangerouslySetInnerHTML={{ __html: advertiser?.Tagline }}
               sx={{
-                background: "#272525",
-                padding: "15px",
-                borderRadius: "10px",
+                color: "#d81160",
+                marginLeft: "15px",
+                fontWeight: "bold",
+                maxWidth: "100%",
+                whiteSpace: "normal",
+                wordWrap: "break-word",
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
               }}
-            >
-              {advertiser?.Tagline}
-            </Typography>
+            ></Typography>
             <Typography
               variant="subtitle1"
               sx={{ color: "#9c27b0", marginLeft: "15px", marginTop: "5px" }}
@@ -1248,9 +1256,11 @@ export default function UserProfileModal(props: any) {
                         sx={{ marginTop: 2 }}
                         dangerouslySetInnerHTML={{
                           __html:
-                            event.Description && typeof event.Description === 'string' && event.Description.length > 300
+                            event.Description &&
+                            typeof event.Description === "string" &&
+                            event.Description.length > 300
                               ? `${event.Description.slice(0, 300)}...`
-                              : (event.Description || ''),
+                              : event.Description || "",
                         }}
                       />
                       <Typography variant="body2" color="text.secondary" mt={1}>

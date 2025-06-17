@@ -381,6 +381,8 @@ export default function EventDetail(props: { params: Params }) {
     setDownloadRsvp(event.target.checked);
   };
 
+  console.log("attendees", attendees);
+
   const handleDownloadList = () => {
     if (!downloadAttendee && !downloadRsvp) {
       alert("Please select at least one option to download.");
@@ -518,6 +520,61 @@ export default function EventDetail(props: { params: Params }) {
   const handleClose = () => {
     setShowDetail(false);
     setSelectedUserId(null);
+  };
+
+  const handleEmailRequest = async () => {
+    if (!attendees || attendees.length === 0) {
+      Swal.fire({
+        title: "No Attendees",
+        text: "There are no attendees to send.",
+        icon: "warning",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    const usernames = attendees.map((attendee: any) => attendee.Username);
+
+    const payload = {
+      usernames,
+    };
+
+    try {
+      const response = await fetch("/api/user/sendAttendeesList", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        Swal.fire({
+          title: "Email Sent",
+          text: "The attendees list was successfully emailed to the organizer.",
+          icon: "success",
+          confirmButtonText: "OK",
+        });
+      } else {
+        const errorData = await response.json();
+        Swal.fire({
+          title: "Failed to Send Email",
+          text:
+            errorData.message ||
+            "An error occurred while sending the attendees list.",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+      }
+    } catch (error) {
+      console.error("Email error:", error);
+      Swal.fire({
+        title: "Error",
+        text: "Something went wrong while sending the email.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    }
   };
 
   return (
@@ -1661,43 +1718,40 @@ export default function EventDetail(props: { params: Params }) {
                 {/* Download List Card */}
                 {loginProfileId !== eventDetail?.OrganizerId ? (
                   <Alert variant="filled" severity="info">
-                    Only the organzier can download attendees list.
+                    Only the organizer has access to the attendees list. You can
+                    email the organizer to request it.
                   </Alert>
-                ) : (
-                  <></>
-                )}
-                <Card
-                  sx={{
-                    mb: 4,
-                    bgcolor: "#1a1a1a",
-                    borderRadius: 2,
-                    border: "0.0625rem solid rgb(55, 58, 64)",
-                  }}
-                >
-                  <CardContent sx={{ textAlign: "center", py: 3 }}>
-                    <DownloadIcon
-                      sx={{ fontSize: 40, color: "#880E4F", mb: 2 }}
-                    />
-                    <Typography variant="h6" color="white" sx={{ mb: 2 }}>
-                      Download Attendees List
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      onClick={() => setOpenDownloadModal(true)}
-                      disabled={
-                        loginProfileId === eventDetail?.OrganizerId
-                          ? false
-                          : true
-                      }
-                      sx={{
-                        bgcolor: "#880E4F",
-                        "&:hover": { bgcolor: "#560027" },
-                      }}
-                    >
-                      Download
-                    </Button>
-                  </CardContent>
-                </Card>
+                ) : null}
+
+                {loginProfileId !== eventDetail?.OrganizerId ? (
+                  <Card
+                    sx={{
+                      mb: 4,
+                      bgcolor: "#1a1a1a",
+                      borderRadius: 2,
+                      border: "0.0625rem solid rgb(55, 58, 64)",
+                    }}
+                  >
+                    <CardContent sx={{ textAlign: "center", py: 3 }}>
+                      <DownloadIcon
+                        sx={{ fontSize: 40, color: "#880E4F", mb: 2 }}
+                      />
+                      <Typography variant="h6" color="white" sx={{ mb: 2 }}>
+                        Email Organizer for Attendees List
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        onClick={handleEmailRequest}
+                        sx={{
+                          bgcolor: "#880E4F",
+                          "&:hover": { bgcolor: "#560027" },
+                        }}
+                      >
+                        Email
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : null}
               </Grid>
             </Grid>
           </Container>
