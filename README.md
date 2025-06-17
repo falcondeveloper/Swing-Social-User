@@ -49,3 +49,4 @@ test
 -- deploy ejUn 10 vansh. swiping not displaying name
 -- deploy jUne 10 vnash - events create
 -- deploy june 16 vansh
+-- deploy june 16 vansh - fix bug in view rsvp and remove up-swipe
