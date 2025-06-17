@@ -1323,7 +1323,72 @@ const ProfileDetail: React.FC = () => {
                 onChange={(e) => handleImageUpload(e, "cover")}
               />
 
-              {/* Header Actions */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 10,
+                  right: 16,
+                  zIndex: 10,
+                  display: "flex",
+                  flexDirection: {
+                    xs: "column",
+                    sm: "row",
+                  },
+                  gap: 1,
+                  alignItems: {
+                    xs: "flex-end",
+                    sm: "center",
+                  },
+                }}
+              >
+                {/* Premium Badge */}
+                {(membership === "1" || membership1 === 1) && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      px: 1.9,
+                      py: 1,
+                      borderRadius: "999px",
+                      background: "rgba(0, 0, 0, 0.65)",
+                      color: "#FFD700",
+                      fontWeight: 600,
+                      fontSize: "13px",
+                      gap: 0.5,
+                      lineHeight: 1,
+                      backdropFilter: "blur(12px)",
+                    }}
+                  >
+                    <Crown size={16} />
+                    Premium
+                  </Box>
+                )}
+
+                {/* Preferences Button */}
+                <Button
+                  variant="outlined"
+                  onClick={() => router.push("/prefrences")}
+                  startIcon={<Settings2 size={16} />}
+                  sx={{
+                    borderRadius: "999px",
+                    fontSize: "13px",
+                    textTransform: "none",
+                    px: 1.5,
+                    py: 0.5,
+                    color: "#fff",
+                    borderColor: "rgba(255,255,255,0.3)",
+                    background: "rgba(0, 0, 0, 0.65)",
+                    backdropFilter: "blur(45px)",
+                    "&:hover": {
+                      background: "rgba(255,255,255,0.1)",
+                      borderColor: "rgba(255,255,255,0.5)",
+                    },
+                    width: { xs: "auto", sm: "auto" },
+                  }}
+                >
+                  Preferences
+                </Button>
+              </Box>
 
               {/* Edit overlay for cover */}
               {isEditing && (
@@ -1462,40 +1527,6 @@ const ProfileDetail: React.FC = () => {
                       justifyContent: { xs: "flex-start", md: "flex-end" },
                     }}
                   >
-                    {(membership === "1" || membership1 === 1) && (
-                      <Box
-                        sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          px: 1.2,
-                          py: 0.4,
-                          bgcolor: "rgba(255, 215, 0, 0.15)",
-                          border: "1px solid rgba(255, 215, 0, 0.4)",
-                          borderRadius: "12px",
-                          color: "#FFD700",
-                          fontSize: "12px",
-                          fontWeight: 600,
-                          gap: 0.5,
-                          pointerEvents: "none",
-                          userSelect: "none",
-                        }}
-                      >
-                        <Crown size={14} />
-                        <Typography
-                          variant="body2"
-                          sx={{ fontSize: "12px", fontWeight: 600 }}
-                        >
-                          Premium
-                        </Typography>
-                      </Box>
-                    )}
-
-                    <ActionChip
-                      icon={<Settings2 size={14} />}
-                      label="Preferences"
-                      onClick={() => router.push("/prefrences")}
-                    />
-
                     <ActionChip
                       icon={<Settings size={14} />}
                       label="Membership"
