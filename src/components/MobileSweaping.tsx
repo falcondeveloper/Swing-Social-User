@@ -867,7 +867,6 @@ export default function MobileSweaping() {
                 zIndex: index === 0 ? 2 : 1, // Active card on top
                 backgroundColor: "black",
                 color: "white",
-                overflow: "auto",
               }}
             >
               <div className="profile-main-box">
