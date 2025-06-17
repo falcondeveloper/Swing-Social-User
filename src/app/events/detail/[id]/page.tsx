@@ -110,6 +110,7 @@ export default function EventDetail(props: { params: Params }) {
   const [openDownloadModal, setOpenDownloadModal] = useState(false); // Modal visibility state
   const [downloadAttendee, setDownloadAttendee] = useState(false); // Checkbox for Attendees
   const [downloadRsvp, setDownloadRsvp] = useState(false); // Checkbox for RSVP
+  const [loadingEmail, setLoadingEmail] = useState(false);
   const [openModalUser, setOpenModalUser] = useState<{
     state: boolean;
     id: null | string;
@@ -539,6 +540,8 @@ export default function EventDetail(props: { params: Params }) {
       usernames,
     };
 
+    setLoadingEmail(true);
+
     try {
       const response = await fetch("/api/user/sendAttendeesList", {
         method: "POST",
@@ -574,6 +577,8 @@ export default function EventDetail(props: { params: Params }) {
         icon: "error",
         confirmButtonText: "OK",
       });
+    } finally {
+      setLoadingEmail(false);
     }
   };
 
@@ -1027,13 +1032,13 @@ export default function EventDetail(props: { params: Params }) {
                       variant="h5"
                       sx={{ fontWeight: "bold" }}
                     >
-                      Download Attendees & RSVP list
+                      Email Organizer for Attendees List
                     </Typography>
 
                     {/* RSVP Button */}
                     <Button
                       variant="contained"
-                      onClick={() => setOpenDownloadModal(true)}
+                      onClick={handleEmailRequest}
                       sx={{
                         background: "#aa1f72",
                         width: { lg: "30%", md: "30%", sm: "100%", xs: "100%" },
@@ -1044,7 +1049,7 @@ export default function EventDetail(props: { params: Params }) {
                         padding: "10px 20px", // Adjust padding to make it look better
                       }}
                     >
-                      Download Attendees List
+                      Email
                     </Button>
                   </Box>
                 </Box>
@@ -1742,12 +1747,13 @@ export default function EventDetail(props: { params: Params }) {
                       <Button
                         variant="contained"
                         onClick={handleEmailRequest}
+                        disabled={loadingEmail}
                         sx={{
                           bgcolor: "#880E4F",
                           "&:hover": { bgcolor: "#560027" },
                         }}
                       >
-                        Email
+                        {loadingEmail ? "Sending..." : "Email"}
                       </Button>
                     </CardContent>
                   </Card>
