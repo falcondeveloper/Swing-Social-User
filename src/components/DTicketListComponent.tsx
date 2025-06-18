@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+"use client";
+
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -7,9 +9,11 @@ import {
   TextField,
   Collapse,
   Fade,
-  Divider
-} from '@mui/material';
-import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
+  Divider,
+  Chip,
+} from "@mui/material";
+import { Add as AddIcon, Remove as RemoveIcon } from "@mui/icons-material";
+import { useRouter } from "next/navigation";
 
 interface Ticket {
   TicketPackageId: string;
@@ -28,33 +32,49 @@ interface TicketQuantities {
 interface TicketListProps {
   tickets: Ticket[];
   eventDescription?: string;
-  onTicketsChange: (quantity: number, price: number, name?: string, type?: string, eventName?: string) => void;
+  onTicketsChange: (
+    quantity: number,
+    price: number,
+    name?: string,
+    type?: string,
+    eventName?: string
+  ) => void;
 }
 
-const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => {
+const TicketList: React.FC<TicketListProps> = ({
+  tickets,
+  onTicketsChange,
+}) => {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState<boolean>(true);
-  const [ticketQuantities, setTicketQuantities] = useState<TicketQuantities>({});
+  const [ticketQuantities, setTicketQuantities] = useState<TicketQuantities>(
+    {}
+  );
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [totalQuantity, setTotalQuantity] = useState<number>(0);
-  const [selectedTicketName, setSelectedTicketName] = useState<string>('');
-  const [selectedEventName, setSelectedEventName] = useState<string>('');
-  const [selectedEventDescription, setSelectedEventDescription] = useState<string>('');
-  const [selectedTicketType, setSelectedTicketType] = useState<string>('');
-  const [selectedTicket, setSelectedTicket] = useState<{ name?: string; type?: string }>({});
+  const [selectedTicketName, setSelectedTicketName] = useState<string>("");
+  const [selectedEventName, setSelectedEventName] = useState<string>("");
+  const [selectedEventDescription, setSelectedEventDescription] =
+    useState<string>("");
+  const [selectedTicketType, setSelectedTicketType] = useState<string>("");
 
   const toggleBox = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleQuantityChange = (ticketId: string, value: string, ticket: Ticket): void => {
+  const handleQuantityChange = (
+    ticketId: string,
+    value: string,
+    ticket: Ticket
+  ): void => {
     // Convert value to number and handle invalid inputs
     const quantity = parseInt(value) || 0;
     if (quantity < 0 || quantity > ticket.Quantity) return;
 
     // Update quantities for this ticket
-    setTicketQuantities(prev => ({
+    setTicketQuantities((prev) => ({
       ...prev,
-      [ticketId]: quantity
+      [ticketId]: quantity,
     }));
   };
 
@@ -63,14 +83,14 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
     const calculateTotals = () => {
       let price = 0;
       let quantity = 0;
-      let ticketName = '';
-      let ticketType = '';
-      let eventName = '';
-      let eventDescription = '';
+      let ticketName = "";
+      let ticketType = "";
+      let eventName = "";
+      let eventDescription = "";
 
       // Calculate totals from all tickets
       Object.entries(ticketQuantities).forEach(([ticketId, ticketQuantity]) => {
-        const ticket = tickets.find(t => t.TicketPackageId === ticketId);
+        const ticket = tickets.find((t) => t.TicketPackageId === ticketId);
         if (ticket && ticketQuantity > 0) {
           price += ticket.Price * ticketQuantity;
           quantity += ticketQuantity;
@@ -92,7 +112,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
       setSelectedEventDescription(eventDescription);
 
       // Call parent component's callback with updated summary
-      onTicketsChange(quantity, price, ticketName, ticketType, eventName );
+      onTicketsChange(quantity, price, ticketName, ticketType, eventName);
     };
 
     calculateTotals();
@@ -101,114 +121,111 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
   const handleTicketCheckout = (): void => {
     if (totalQuantity > 0) {
       // Store overall ticket information
-      localStorage.setItem('event_name', selectedEventName || '');
-      localStorage.setItem('event_description', selectedEventDescription || '');
-      localStorage.setItem('ticketPrice', totalPrice.toString());
-      localStorage.setItem('ticketQuantity', totalQuantity.toString());
-      localStorage.setItem('eventId', tickets[0]?.TicketPackageId || '');
-      localStorage.setItem('ticketName', selectedTicketName || '');
-      localStorage.setItem('ticketType', selectedTicketType || '');
+      localStorage.setItem("event_name", selectedEventName || "");
+      localStorage.setItem("event_description", selectedEventDescription || "");
+      localStorage.setItem("ticketPrice", totalPrice.toString());
+      localStorage.setItem("ticketQuantity", totalQuantity.toString());
+      localStorage.setItem("eventId", tickets[0]?.TicketPackageId || "");
+      localStorage.setItem("ticketName", selectedTicketName || "");
+      localStorage.setItem("ticketType", selectedTicketType || "");
 
       // Store individual ticket quantities
-      const ticketDetails = tickets.map(ticket => ({
-        id: ticket.TicketPackageId,
-        name: ticket.Name,
-        description: ticket.Description,
-        type: ticket.Type,
-        price: ticket.Price,
-        quantity: ticketQuantities[ticket.TicketPackageId] || 0,
-        eventName: ticket.EventName
-      })).filter(ticket => ticket.quantity > 0);
+      const ticketDetails = tickets
+        .map((ticket) => ({
+          id: ticket.TicketPackageId,
+          name: ticket.Name,
+          description: ticket.Description,
+          type: ticket.Type,
+          price: ticket.Price,
+          quantity: ticketQuantities[ticket.TicketPackageId] || 0,
+          eventName: ticket.EventName,
+        }))
+        .filter((ticket) => ticket.quantity > 0);
 
-      localStorage.setItem('ticketDetails', JSON.stringify(ticketDetails));
-
-      // Navigate to ticket page
-      window.location.href = '/events/ticket';
+      localStorage.setItem("ticketDetails", JSON.stringify(ticketDetails));
+      router.push("/events/ticket");
     }
   };
 
   return (
     <Box sx={{ mt: 4 }}>
-      {/* Title with Toggle Icon */}
+      {/* Header Section */}
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          bgcolor: 'rgba(136, 14, 79, 0.1)',
-          p: 2,
-          borderRadius: '10px',
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            bgcolor: 'rgba(136, 14, 79, 0.2)',
-          }
+          bgcolor: "linear-gradient(to right, #6a1b9a, #880e4f)",
+          p: 3,
+          borderRadius: "12px",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+          transition: "all 0.3s ease",
         }}
       >
         <Box>
-          <Typography variant="h6" fontWeight="bold" color="white">
-            Tickets
+          <Typography variant="h5" fontWeight="bold" color="white">
+            🎟️ Tickets
           </Typography>
-          <Typography variant="body2" color="grey.400" sx={{ mt: 0.5 }}>
-            Select your tickets - Total: ${totalPrice}
+          <Typography variant="body1" color="grey.300" sx={{ mt: 0.5 }}>
+            Select your tickets — <strong>Total:</strong> ${totalPrice}
           </Typography>
         </Box>
         <IconButton
           onClick={toggleBox}
           sx={{
             color: "white",
-            bgcolor: '#880E4F',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              bgcolor: '#560027',
-              transform: 'scale(1.1)',
-            }
+            bgcolor: "#560027",
+            transition: "transform 0.2s ease",
+            "&:hover": {
+              transform: "scale(1.15)",
+              bgcolor: "#3c001f",
+            },
+            border: "2px solid white",
           }}
         >
           {isOpen ? <RemoveIcon /> : <AddIcon />}
         </IconButton>
       </Box>
 
-      {/* Scrollable Ticket List */}
+      {/* Ticket List */}
       <Collapse in={isOpen}>
         <Box
           sx={{
-            maxHeight: "400px",
+            mt: 3,
+            maxHeight: 420,
             overflowY: "auto",
-            mt: 2,
             pr: 1,
-            '&::-webkit-scrollbar': {
-              width: '8px',
-            },
-            '&::-webkit-scrollbar-track': {
-              bgcolor: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '4px',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              bgcolor: '#880E4F',
-              borderRadius: '4px',
+            "&::-webkit-scrollbar": { width: "6px" },
+            "&::-webkit-scrollbar-thumb": {
+              bgcolor: "#880E4F",
+              borderRadius: 3,
             },
           }}
         >
           {tickets.map((ticket, index) => (
-            <Fade key={ticket.TicketPackageId} in={true} timeout={500} style={{ transitionDelay: `${index * 100}ms` }}>
+            <Fade
+              key={ticket.TicketPackageId}
+              in={true}
+              timeout={500}
+              style={{ transitionDelay: `${index * 100}ms` }}
+            >
               <Box
                 sx={{
                   display: "flex",
                   flexDirection: "column",
                   gap: 2,
-                  border: "0.0625rem solid rgb(55, 58, 64)",
                   p: 3,
-                  bgcolor: 'rgba(0, 0, 0, 0.3)',
+                  borderRadius: 2,
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  background: "linear-gradient(145deg, #2e2e2e, #3c3c3c)",
                   mb: 2,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    border: "0.0625rem solid rgb(55, 58, 64)",
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 12px rgba(136, 14, 79, 0.2)'
-                  }
+                  transition: "0.3s",
+                  "&:hover": {
+                    transform: "scale(1.01)",
+                    boxShadow: "0 4px 20px rgba(136, 14, 79, 0.4)",
+                  },
                 }}
               >
-                {/* Ticket Header */}
                 <Box
                   sx={{
                     display: "flex",
@@ -216,87 +233,74 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
                     alignItems: "center",
                   }}
                 >
-                  <Button
-                    variant="contained"
+                  <Chip
+                    label={ticket.Type.toUpperCase()}
+                    sx={{ bgcolor: "#420b8f", color: "white" }}
+                  />
+                  <Box
                     sx={{
-                      bgcolor: "#420b8f",
-                      '&:hover': {
-                        bgcolor: "#35077a"
-                      }
-                    }}
-                  >
-                    {ticket.Type.toUpperCase()}
-                  </Button>
-                  <Button
-                    variant="contained"
-                    sx={{
-                      bgcolor: "#880E4F",
-                      '&:hover': {
-                        bgcolor: "#560027"
-                      }
+                      display: "inline-block",
+                      px: 2,
+                      py: 0.5,
+                      bgcolor: "#ffebee",
+                      color: "#c62828",
+                      fontWeight: "bold",
+                      fontSize: "0.9rem",
+                      borderRadius: "999px",
+                      boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+                      minWidth: "60px",
+                      textAlign: "center",
                     }}
                   >
                     ${ticket.Price}
-                  </Button>
+                  </Box>
                 </Box>
 
-                {/* Quantity Input */}
-                <Box
+                <TextField
+                  size="small"
+                  placeholder="Enter quantity"
+                  type="number"
+                  value={ticketQuantities[ticket.TicketPackageId] || ""}
+                  onChange={(e) =>
+                    handleQuantityChange(
+                      ticket.TicketPackageId,
+                      e.target.value,
+                      ticket
+                    )
+                  }
+                  disabled={ticket.Quantity <= 0}
                   sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    my: 2,
+                    mt: 2,
+                    input: {
+                      textAlign: "center",
+                      bgcolor: "white",
+                      borderRadius: 1,
+                    },
                   }}
-                >
-                  <TextField
-                    size="small"
-                    placeholder="Enter quantity"
-                    type="number"
-                    value={ticketQuantities[ticket.TicketPackageId] || ''}
-                    onChange={(e) => handleQuantityChange(ticket.TicketPackageId, e.target.value, ticket)}
-                    sx={{
-                      width: { lg: "250px", md: "120px", sm: "150px", xs: "150px" },
-                      "& .MuiInputBase-input": {
-                        color: "#000",
-                        textAlign: "center",
-                        bgcolor: "white",
-                        borderRadius: 1
-                      },
-                      "& .MuiOutlinedInput-root": {
-                        "& fieldset": {
-                          borderColor: "#880E4F",
-                        },
-                        "&:hover fieldset": {
-                          borderColor: "#560027",
-                        },
-                        "&.Mui-focused fieldset": {
-                          borderColor: "#880E4F",
-                        },
-                      },
-                    }}
-                  />
-                </Box>
+                />
 
-                {/* Ticket Info */}
-                <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h6" color="white" sx={{ mb: 1 }}>
+                <Box sx={{ textAlign: "center", mt: 1 }}>
+                  <Typography variant="subtitle1" color="white">
                     {ticket.Name}
                   </Typography>
                   <Typography
                     variant="body2"
                     sx={{
-                      color: ticket.Quantity > 0 ? '#4caf50' : '#f44336',
-                      fontWeight: 'bold'
+                      color: ticket.Quantity > 0 ? "#4caf50" : "#f44336",
+                      fontWeight: "bold",
+                      fontSize: "1rem",
+                      textTransform: "uppercase",
                     }}
                   >
                     {ticket.Quantity > 0
                       ? `${ticket.Quantity} Available`
-                      : 'Sold Out'}
+                      : "Sold Out"}
                   </Typography>
+
                   {ticketQuantities[ticket.TicketPackageId] > 0 && (
-                    <Typography color="primary" sx={{ mt: 1 }}>
-                      Subtotal: ${ticket.Price * ticketQuantities[ticket.TicketPackageId]}
+                    <Typography color="primary" mt={1}>
+                      Subtotal: $
+                      {ticket.Price * ticketQuantities[ticket.TicketPackageId]}
                     </Typography>
                   )}
                 </Box>
@@ -305,32 +309,29 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
           ))}
         </Box>
 
-        {/* Total Summary and Checkout */}
         {totalQuantity > 0 && (
-          <Box sx={{
-            mt: 2,
-            p: 3,
-            borderRadius: '10px',
-            bgcolor: 'rgba(136, 14, 79, 0.1)',
-            border: '1px solid rgba(136, 14, 79, 0.3)'
-          }}>
-            {/* Selected Tickets Summary */}
-            <Typography variant="h6" color="white" sx={{ mb: 2 }}>
-              Selected Tickets
+          <Box
+            sx={{
+              mt: 3,
+              p: 3,
+              borderRadius: "12px",
+              bgcolor: "rgba(136, 14, 79, 0.15)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+            }}
+          >
+            <Typography variant="h6" color="white" mb={2}>
+              🎫 Selected Tickets
             </Typography>
-            {tickets.map(ticket => {
+            {tickets.map((ticket) => {
               const quantity = ticketQuantities[ticket.TicketPackageId] || 0;
               if (quantity > 0) {
                 return (
                   <Box
                     key={ticket.TicketPackageId}
                     sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
+                      display: "flex",
+                      justifyContent: "space-between",
                       mb: 1,
-                      p: 1,
-                      borderRadius: '4px',
-                      bgcolor: 'rgba(255, 255, 255, 0.05)'
                     }}
                   >
                     <Box>
@@ -341,7 +342,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
                         ${ticket.Price} × {quantity}
                       </Typography>
                     </Box>
-                    <Typography color="white" sx={{ alignSelf: 'center' }}>
+                    <Typography color="white" alignSelf="center">
                       ${ticket.Price * quantity}
                     </Typography>
                   </Box>
@@ -350,43 +351,31 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, onTicketsChange }) => 
               return null;
             })}
 
-            <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+            <Divider sx={{ my: 2, borderColor: "rgba(255,255,255,0.1)" }} />
 
-            {/* Total Summary */}
-            <Box sx={{
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              textAlign: 'center'
-            }}>
-              <Box>
-                <Typography color="white" sx={{ mb: 3 }}>
-                  Total Summary
-                </Typography>
-                <Typography color="grey.300">
-                  Total Tickets: {totalQuantity}
-                </Typography>
-                <Typography color="grey.300">
-                  Total Price: ${totalPrice}
-                </Typography>
-              </Box>
+            <Box textAlign="center">
+              <Typography color="white">
+                Total Tickets: {totalQuantity}
+              </Typography>
+              <Typography color="white">Total Price: ${totalPrice}</Typography>
               <Button
                 variant="contained"
                 onClick={handleTicketCheckout}
                 sx={{
-                  bgcolor: '#880E4F',
-                  mt: 2,
-                  px: 4,
+                  mt: 3,
+                  bgcolor: "#880E4F",
+                  px: 5,
                   py: 1.5,
-                  fontSize: '0.8rem',
-                  '&:hover': {
-                    bgcolor: '#560027',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 12px rgba(136, 14, 79, 0.4)'
+                  borderRadius: 2,
+                  fontWeight: "bold",
+                  transition: "0.3s",
+                  "&:hover": {
+                    bgcolor: "#560027",
+                    boxShadow: "0 4px 20px rgba(136, 14, 79, 0.4)",
                   },
-                  transition: 'all 0.3s ease'
                 }}
               >
-                Proceed to Checkout 
+                🚀 Proceed to Checkout
               </Button>
             </Box>
           </Box>

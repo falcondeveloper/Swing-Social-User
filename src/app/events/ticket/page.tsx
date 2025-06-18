@@ -6,12 +6,10 @@ import {
   Typography,
   TextField,
   Grid,
-  MenuItem,
   Button,
   Box,
   ThemeProvider,
   createTheme,
-  Autocomplete,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -76,6 +74,30 @@ const BillingUpgrade: any = () => {
   const [eventDescription, setEventDescription] = useState<string>("");
   const [userProfile, setUserProfile] = useState<any>({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errors, setErrors] = useState<any>({});
+  const [phone, setPhone] = useState("");
+  const [profileId, setProfileId] = useState<any>(null);
+  const [promoCode, setPromoCode] = useState<any>("");
+  const [promoCodeMessage, setPromocodeMessage] = useState<any>(null);
+  const [promoCodeList, setPromoCodeList] = useState<any>([]);
+  const [userName, setUsername] = useState<any>("");
+  const [password, setPassword] = useState<any>("");
+  const [isValidPromoCode, setIsValidPromoCode] = useState<any>(true);
+  const [profileUsername, setProfileUsername] = useState<any>("");
+  const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [page, setPage] = useState<number>(1);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [open, setOpen] = useState(false);
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvc, setCvc] = useState("");
+  const [perrors, setPErrors] = useState<any>({
+    cardNumber: "",
+    expiry: "",
+    cvc: "",
+  });
 
   const handleTicketEmail = async (x: any) => {
     const template = `
@@ -188,7 +210,6 @@ const BillingUpgrade: any = () => {
 
   const fetchData = async (userId: string) => {
     if (userId) {
-      console.log(userId, "======userId in view");
       setLoading(true);
       try {
         const response = await fetch(`/api/user/sweeping/user?id=${userId}`);
@@ -204,7 +225,6 @@ const BillingUpgrade: any = () => {
         if (!userData) {
           console.error("Advertiser not found");
         } else {
-          console.log(userData, "=========advertiser data");
           setUserProfile(userData);
         }
       } catch (error: any) {
@@ -215,12 +235,9 @@ const BillingUpgrade: any = () => {
     }
   };
 
-  const [errors, setErrors] = useState<any>({});
-  const [phone, setPhone] = useState("");
-
   const handlePhoneChange = (event: any) => {
-    let value = event.target.value.replace(/\D/g, ""); // Remove all non-numeric characters
-    if (value.length > 10) value = value.substring(0, 10); // Limit to 10 digits
+    let value = event.target.value.replace(/\D/g, "");
+    if (value.length > 10) value = value.substring(0, 10);
 
     if (value.length > 6) {
       value = `(${value.substring(0, 3)}) ${value.substring(
@@ -239,34 +256,22 @@ const BillingUpgrade: any = () => {
   const handleInputChange = (e: any) => {
     const { name, value } = e.target;
     if (name == "phone") {
-      console.log("sd");
       handlePhoneChange(e);
     }
     setFormData({ ...formData, [name]: value });
   };
-
-  const [profileId, setProfileId] = useState<any>(null);
 
   useEffect(() => {
     if (profileId) {
       fetchData(profileId);
     }
   }, [profileId]);
-  const [promoCode, setPromoCode] = useState<any>("");
-  const [promoCodeMessage, setPromocodeMessage] = useState<any>(null);
-  const [promoCodeList, setPromoCodeList] = useState<any>([]);
-  const [userName, setUsername] = useState<any>("");
-  const [password, setPassword] = useState<any>("");
-
-  var existingUser = true;
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setProfileId(localStorage.getItem("logged_in_profile"));
     }
   }, []);
-
-  const [isValidPromoCode, setIsValidPromoCode] = useState<any>(true);
 
   useEffect(() => {
     const storedEventName = localStorage.getItem("event_name");
@@ -302,13 +307,6 @@ const BillingUpgrade: any = () => {
       setEventDetails(JSON.parse(storedEventDetails));
     }
   }, []);
-
-  const [profileUsername, setProfileUsername] = useState<any>("");
-  const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [page, setPage] = useState<number>(1);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [hasMore, setHasMore] = useState<boolean>(true);
 
   const debounce = (func: Function, delay: number) => {
     let timer: NodeJS.Timeout;
@@ -353,7 +351,6 @@ const BillingUpgrade: any = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const [open, setOpen] = useState(false);
   const onClose = () => {
     setOpen(false);
   };
@@ -366,15 +363,6 @@ const BillingUpgrade: any = () => {
       setOpen(true);
     }
   };
-
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvc, setCvc] = useState("");
-  const [perrors, setPErrors] = useState<any>({
-    cardNumber: "",
-    expiry: "",
-    cvc: "",
-  });
 
   const handleCardNumberChange = (e: any) => {
     const input = e.target.value.replace(/\D/g, ""); // Remove all non-digit characters
@@ -438,20 +426,12 @@ const BillingUpgrade: any = () => {
 
     if (!errors.cardNumber && !errors.expiry && !errors.cvc) {
       try {
-        setIsProcessing(true); // Set loading state
-        console.log("price");
-
-        console.log("storedEventDetails", storedEventDetails);
+        setIsProcessing(true);
 
         var ticketDetailsArray = storedEventDetails;
-        console.log("ticketDetailsArray", ticketDetailsArray);
         if (typeof storedEventDetails === "string") {
           ticketDetailsArray = JSON.parse(storedEventDetails);
-          console.log("ticketDetailsArray1", ticketDetailsArray);
         }
-        console.log("ticketDetailsArray2", ticketDetailsArray);
-        console.log(isValidPromoCode);
-        console.log(promoCode);
         const addAttendeeStatusResponse = await fetch(
           "/api/user/events/ticket/status",
           {
@@ -466,7 +446,6 @@ const BillingUpgrade: any = () => {
           }
         );
         const status = await addAttendeeStatusResponse.json();
-        console.log(status);
         if (status.message === "0") {
           const response = await fetch("/api/user/payment/ticket", {
             method: "POST",
@@ -492,26 +471,9 @@ const BillingUpgrade: any = () => {
           if (response.ok) {
             const data = await response.json();
             const respondCode = data.respondCode;
-            console.log("*********");
-            console.log(data);
-            console.log(respondCode);
             if (respondCode === "1") {
               setOpen(false);
-
-              console.log(
-                "before createTicket",
-                typeof ticketDetailsArray,
-                ticketDetailsArray
-              );
-
               createTicket(ticketDetailsArray);
-
-              console.log(
-                "After createTicket",
-                typeof ticketDetailsArray,
-                ticketDetailsArray
-              );
-
               const addAttendeeResponse = await fetch(
                 "/api/user/events/attendee",
                 {
@@ -527,12 +489,35 @@ const BillingUpgrade: any = () => {
               );
 
               if (addAttendeeResponse.ok) {
-                console.log("Add attendee succesfully!");
                 Swal.fire({
                   title: `Thank you ${userName}!`,
                   text: "You have purchased ticket successfully!",
                   icon: "success",
                   confirmButtonText: "OK",
+                });
+                await fetch("/api/user/events/ticket/send-ticket-email", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    title: "🎟️ Ticket Confirmation",
+                    eventName: eventName || "N/A",
+                    eventDescription: eventDescription || "",
+                    email: userProfile?.Email,
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    phone: formData.phone,
+                    userName: userName || "",
+                    ticketName: ticketName || "N/A",
+                    ticketType: ticketType || "N/A",
+                    ticketPrice: ticketPrice,
+                    ticketQuantity: ticketQuantity,
+                    country: formData.qcountry || "",
+                    city: formData?.qcity || "",
+                    streetAddress: formData?.qstreetAddress || "",
+                    zipCode: formData?.qzipCode || "",
+                  }),
                 });
               } else {
                 throw new Error("Add attendees is failed");
@@ -551,7 +536,6 @@ const BillingUpgrade: any = () => {
               });
             }
           } else {
-            console.log("2222222222222222222222222222222222");
             await handleTicketEmail("2");
             setOpen(false);
             Swal.fire({
@@ -562,7 +546,6 @@ const BillingUpgrade: any = () => {
             });
           }
         } else {
-          console.log("1111111111111111111");
           setOpen(false);
           Swal.fire({
             title: `Failed`,
@@ -573,11 +556,12 @@ const BillingUpgrade: any = () => {
       } catch (error) {
         console.error("Error submitting form:", error);
       } finally {
-        setIsProcessing(false); // Reset loading state
+        setIsProcessing(false);
       }
-      // setOpen(false);
     }
   };
+
+  console.log("userProfile---", userProfile);
 
   const createTicket = async (storedEventDetails: any) => {
     try {
@@ -587,14 +571,14 @@ const BillingUpgrade: any = () => {
       if (typeof storedEventDetails === "string") {
         ticketDetailsArray = JSON.parse(storedEventDetails);
       }
-      
+
       ticketDetailsArray = ticketDetailsArray.map((ticket: any) => ({
         ...ticket,
-        profileId: profileId
+        profileId: profileId,
       }));
-      
+
       console.log("Sending tickets with profileId:", ticketDetailsArray);
-      
+
       // Send POST request to the backend
       const response = await fetch("/api/user/events/ticket", {
         method: "POST",
@@ -645,12 +629,15 @@ const BillingUpgrade: any = () => {
         >
           Back
         </Button>
+
         <Typography variant="h4" gutterBottom>
           Payment Details
         </Typography>
+
         <Typography variant="body1" gutterBottom>
           Payment for Event: {eventName}
         </Typography>
+
         <Grid item xs={12} sm={12} sx={{ textAlign: "center" }}>
           <Typography
             variant="h4"
@@ -821,6 +808,7 @@ const BillingUpgrade: any = () => {
             />
           </Grid>
         </Grid>
+
         {/* Pay Button */}
         <Grid item xs={12} sm={12}>
           <Button

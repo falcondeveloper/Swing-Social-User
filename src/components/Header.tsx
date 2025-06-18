@@ -3,30 +3,21 @@ import {
   AppBar,
   Toolbar,
   useTheme,
-  useMediaQuery,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   IconButton,
-  Badge,
   Drawer,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  Divider,
   Avatar,
   Typography,
   Fade,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import Swal from "sweetalert2";
 import { io } from "socket.io-client";
 import { jwtDecode } from "jwt-decode"; // Import jwt-decode properly
-import NotificationModalPrompt from "@/components/NotificationModalPrompt";
 import { useIsMobile } from "@/hooks/useResponsive";
 import {
   Home,
@@ -38,7 +29,6 @@ import {
   Menu,
   Search,
   Bell,
-  Settings,
   X,
   LogOut,
   Calendar,
@@ -48,6 +38,7 @@ const socket = io("https://api.nomolive.com/");
 
 const Header = () => {
   const [avatar, setAvatar] = useState<string>("");
+  const [isScrolled, setIsScrolled] = React.useState(false);
   const [userName, setUserName] = useState<string>("");
   const [isNotificationModalOpen, setNotificationModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -62,6 +53,15 @@ const Header = () => {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("loginInfo");
@@ -489,10 +489,10 @@ const Header = () => {
           position="fixed"
           elevation={0}
           sx={{
-            bgcolor: "transparent",
-            backdropFilter: "none",
-            borderBottom: "none",
-            boxShadow: "none",
+            bgcolor: isScrolled ? "rgba(18, 18, 18, 0.9)" : "transparent",
+            backdropFilter: isScrolled ? "blur(10px)" : "none",
+            boxShadow: isScrolled ? "0 2px 8px rgba(0,0,0,0.1)" : "none",
+            transition: "all 0.3s ease-in-out",
           }}
         >
           <Toolbar sx={{ minHeight: "80px !important", px: 4, py: 2 }}>
