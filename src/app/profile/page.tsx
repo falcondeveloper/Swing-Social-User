@@ -1330,15 +1330,9 @@ const ProfileDetail: React.FC = () => {
                   right: 16,
                   zIndex: 10,
                   display: "flex",
-                  flexDirection: {
-                    xs: "column",
-                    sm: "row",
-                  },
+                  flexDirection: "row",
                   gap: 1,
-                  alignItems: {
-                    xs: "flex-end",
-                    sm: "center",
-                  },
+                  alignItems: "center",
                 }}
               >
                 {/* Premium Badge */}
