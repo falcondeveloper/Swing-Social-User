@@ -32,6 +32,15 @@ import {
   X,
   LogOut,
   Calendar,
+  Package,
+  FolderKanban,
+  Candy,
+  LayoutGrid,
+  Boxes,
+  Grape,
+  ChefHat,
+  Sparkles,
+  Palette,
 } from "lucide-react";
 
 const socket = io("https://api.nomolive.com/");
@@ -529,14 +538,18 @@ const Header = () => {
                   display: "flex",
                   gap: 2,
                   alignItems: "center",
-                  padding: "12px 0",
+                  padding: "5px 0",
                 }}
               >
                 {/* Navigation Items */}
                 {[
                   { icon: Home, label: "Home", path: "/home" },
                   { icon: Users, label: "Members", path: "/members" },
-                  { icon: Apple, label: "PineApple", path: "/pineapple" },
+                  {
+                    icon: "/661764-removebg-preview.png",
+                    label: "PineApple",
+                    path: "/pineapple",
+                  },
                   {
                     icon: MessageCircle,
                     label: "Messaging",
@@ -573,7 +586,21 @@ const Header = () => {
                         />
                       )}
                       <Button
-                        startIcon={<Icon size={20} />}
+                        startIcon={
+                          typeof Icon === "string" ? (
+                            <img
+                              src={Icon}
+                              alt={item.label}
+                              style={{
+                                width: 22,
+                                height: 22,
+                                objectFit: "contain",
+                              }}
+                            />
+                          ) : (
+                            <Icon size={18} />
+                          )
+                        }
                         variant="text"
                         sx={{
                           color: isActive
@@ -585,7 +612,7 @@ const Header = () => {
                           py: 1.5,
                           minWidth: "auto",
                           textTransform: "none",
-                          fontSize: "15px",
+                          fontSize: "14px",
                           position: "relative",
                           background: isActive
                             ? "rgba(255, 27, 107, 0.1)"
