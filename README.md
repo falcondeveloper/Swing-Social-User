@@ -50,3 +50,4 @@ test
 -- deploy jUne 10 vnash - events create
 -- deploy june 16 vansh
 -- deploy june 16 vansh - fix bug in view rsvp and remove up-swipe
+-- deploy june 17  - sqr images
