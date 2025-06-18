@@ -193,7 +193,11 @@ const Header = () => {
   const mobileNavItems = [
     { icon: Home, label: "Home", path: "/home" },
     { icon: Users, label: "Members", path: "/members" },
-    { icon: Apple, label: "PineApple", path: "/pineapple" },
+    {
+      icon: "/661764-removebg-preview.png",
+      label: "PineApple",
+      path: "/pineapple",
+    },
     {
       icon: MessageCircle,
       label: "Messaging",
@@ -375,6 +379,7 @@ const Header = () => {
               <Box sx={{ flex: 1, py: 2 }}>
                 <List sx={{ px: 2 }}>
                   {mobileNavItems.map((item, index) => {
+                    const isImage = typeof item.icon === "string";
                     const Icon = item.icon;
                     const isActive =
                       typeof window !== "undefined" &&
@@ -409,14 +414,31 @@ const Header = () => {
                       >
                         <ListItemIcon sx={{ minWidth: 40 }}>
                           <Box sx={{ position: "relative" }}>
-                            <Icon
-                              size={20}
-                              color={
-                                isActive
-                                  ? "#FF1B6B"
-                                  : "rgba(255, 255, 255, 0.7)"
-                              }
-                            />
+                            <ListItemIcon sx={{ minWidth: 40 }}>
+                              {typeof item.icon === "string" ? (
+                                <img
+                                  src={item.icon}
+                                  alt={item.label}
+                                  width={20}
+                                  height={20}
+                                  style={{
+                                    filter: isActive
+                                      ? "none"
+                                      : "brightness(0.8)",
+                                  }}
+                                />
+                              ) : (
+                                <item.icon
+                                  size={20}
+                                  color={
+                                    isActive
+                                      ? "#FF1B6B"
+                                      : "rgba(255, 255, 255, 0.7)"
+                                  }
+                                />
+                              )}
+                            </ListItemIcon>
+
                             {item.badge && (
                               <Box
                                 sx={{
