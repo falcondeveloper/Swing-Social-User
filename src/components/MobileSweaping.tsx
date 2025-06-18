@@ -442,7 +442,9 @@ export default function MobileSweaping() {
       userProfiles.length,
       idParam,
       membership,
+      hasReachedSwipeLimit,
       handleUpdateLikeMatch,
+      isUserPremium,
       handleUpdateCategoryRelation,
     ]
   );
@@ -470,7 +472,7 @@ export default function MobileSweaping() {
     const isVertical = Math.abs(deltaY) > Math.abs(deltaX);
 
     if (isVertical && deltaY < 0) {
-      return; // Stop processing swipe
+      return;
     }
 
     if (e.cancelable) {
@@ -479,6 +481,11 @@ export default function MobileSweaping() {
 
     let swipeType = null;
     let swipeOpacity = 0;
+
+    if (hasReachedSwipeLimit() && !isUserPremium()) {
+      setShowLimitPopup(true);
+      return;
+    }
 
     if (isVertical) {
       if (deltaY > 50) swipeType = "maybe";
@@ -527,7 +534,6 @@ export default function MobileSweaping() {
     if (action) {
       handleSwipeAction(action);
     } else {
-      // Snap back
       setCardStyles({
         active: {
           transform: "scale(1)",
@@ -545,6 +551,11 @@ export default function MobileSweaping() {
     (action: string) => {
       const targetProfile = profilesToRender.current;
       if (!targetProfile || isProcessingSwipe) return;
+
+      if (hasReachedSwipeLimit() && !isUserPremium()) {
+        setShowLimitPopup(true);
+        return;
+      }
 
       let finalStyle: any = {
         transition: "transform 0.3s ease-out, opacity 0.3s ease-out",
