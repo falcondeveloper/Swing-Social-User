@@ -251,28 +251,6 @@ export default function MobileSweaping() {
     [preloadedImages]
   );
 
-  const handleUpdateCategoryRelation = useCallback(
-    async (category: any, targetProfile: any) => {
-      try {
-        setIdparam(null);
-        const response = await fetch("/api/user/sweeping/relation", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            pid: profileId,
-            targetid: targetProfile?.Id,
-            newcategory: category,
-          }),
-        });
-        return await response.json();
-      } catch (error) {
-        console.error("Error:", error);
-        return null;
-      }
-    },
-    [profileId]
-  );
-
   const sendNotification = useCallback(
     async (message: any, targetProfile: any) => {
       const response = await fetch("/api/user/notification", {
@@ -367,10 +345,33 @@ export default function MobileSweaping() {
     }
   }, [profileId, profilesToRender?.current]);
 
+  const handleUpdateCategoryRelation = useCallback(
+    async (category: any, targetProfile: any) => {
+      try {
+        setIdparam(null);
+        const response = await fetch("/api/user/sweeping/relation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pid: profileId,
+            targetid: targetProfile?.Id,
+            newcategory: category,
+          }),
+        });
+        return await response.json();
+      } catch (error) {
+        console.error("Error:", error);
+        return null;
+      }
+    },
+    [profileId]
+  );
+
   const [swipeOffset, setSwipeOffset] = useState(0);
 
   const isUserPremium = () => membership === 1;
   const hasReachedSwipeLimit = () => swipeCount >= DAILY_LIMIT;
+  const [newCategory, setNewCategory] = useState<string | null>(null);
 
   const processSwipe = useCallback(
     async (action: string, targetProfile: any) => {
@@ -406,11 +407,14 @@ export default function MobileSweaping() {
         return;
       }
 
-      if (action === "delete") await handleUpdateLikeMatch(targetProfile);
-      else if (action === "like")
-        await handleUpdateCategoryRelation(1, targetProfile);
-      else if (action === "maybe")
-        await handleUpdateCategoryRelation(2, targetProfile);
+      if (action === "delete") {
+        await handleUpdateCategoryRelation("Denied", targetProfile);
+      } else if (action === "like") {
+        await handleUpdateCategoryRelation("Liked", targetProfile);
+        await handleUpdateLikeMatch(targetProfile);
+      } else if (action === "maybe") {
+        await handleUpdateCategoryRelation("Maybe", targetProfile);
+      }
 
       if (membership !== 1) {
         setSwipeCount((p) => p + 1);
@@ -423,6 +427,12 @@ export default function MobileSweaping() {
         }
         return nextIndex;
       });
+
+      if (!isUserPremium() && hasReachedSwipeLimit()) {
+        setShowLimitPopup(true);
+      } else if (!isUserPremium()) {
+        setSwipeCount((prev) => prev + 1);
+      }
 
       setIsProcessingSwipe(false);
     },
