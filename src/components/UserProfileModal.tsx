@@ -1,12 +1,5 @@
 "use client";
-import {
-  forwardRef,
-  JSX,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Avatar,
@@ -23,35 +16,22 @@ import {
   FormControlLabel,
   Grid,
   IconButton,
-  Paper,
   Radio,
   RadioGroup,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
-  TableHead,
   TableRow,
   Typography,
-  useMediaQuery,
 } from "@mui/material";
-import {
-  Bedtime,
-  Block,
-  Close,
-  FavoriteBorderOutlined,
-  LocalBar,
-  Minimize,
-  MinimizeOutlined,
-  MinimizeRounded,
-} from "@mui/icons-material";
+import { Block, Close } from "@mui/icons-material";
 import DialogActions from "@mui/material/DialogActions";
 import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
 
 export interface DetailViewHandle {
   open: (id: string) => void;
 }
-
 interface CompanyType {
   company_name: string;
   company_address: string;
@@ -150,6 +130,7 @@ const ImageWithFallback = ({
 };
 
 export default function UserProfileModal(props: any) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [advertiser, setAdvertiser] = useState<any>({});
@@ -161,14 +142,22 @@ export default function UserProfileModal(props: any) {
   const [selectedTab, setSelectedTab] = useState("All Events");
   const [grantOpen, setGrantOpen] = useState(false);
   const [privateOpen, setPrivateOpen] = useState(false);
-  const [profileId, setProfileId] = useState<any>(); // Animation direction
+  const [profileId, setProfileId] = useState<any>();
+  const [privateImages, setPrivateImages] = useState<any>([]);
+  const [profileImages, setProfileImages] = useState<any>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [openImageModal, setOpenImageModal] = useState<boolean>(false);
+  const [modalImageSrc, setModalImageSrc] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setProfileId(localStorage.getItem("logged_in_profile"));
     }
   }, []);
-  // Filtered events based on the tab
+
   const filteredEvents = selectedTab === "RSVP" ? [] : events;
   useEffect(() => {
     setOpen(props.open);
@@ -217,19 +206,10 @@ export default function UserProfileModal(props: any) {
     }
   }, [props]);
 
-  const [privateImages, setPrivateImages] = useState<any>([]);
-  const [profileImages, setProfileImages] = useState<any>([]);
-  const router = useRouter();
-
   // Custom scroll handling
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startY, setStartY] = useState(0);
-  const [scrollTop, setScrollTop] = useState(0);
+
   const handleGetPrivateImages = async () => {
     try {
-      // Check if t
-      // he username exists
       const checkResponse = await fetch(
         "/api/user/sweeping/images?id=" + props?.userid,
         {
@@ -246,6 +226,7 @@ export default function UserProfileModal(props: any) {
       console.error("Error:", error);
     }
   };
+
   const handleAddFriend = async () => {
     try {
       // // Check if the username exists
@@ -491,6 +472,17 @@ export default function UserProfileModal(props: any) {
     setIsDragging(false);
   };
 
+  const handleOpenImage = (src: string | null | undefined) => {
+    if (!src) return;
+    setModalImageSrc(src);
+    setOpenImageModal(true);
+  };
+
+  const handleCloseImageModal = () => {
+    setOpenImageModal(false);
+    setModalImageSrc(null);
+  };
+
   return (
     <>
       <Dialog
@@ -500,6 +492,9 @@ export default function UserProfileModal(props: any) {
         maxWidth="md"
         fullWidth
         aria-labelledby="user-profile-dialog"
+        sx={{
+          filter: openImageModal ? "blur(6px)" : "none",
+        }}
       >
         <DialogTitle
           sx={{
@@ -544,6 +539,7 @@ export default function UserProfileModal(props: any) {
         >
           {/* Banner Section */}
           <Box
+            onClick={() => handleOpenImage(advertiser?.ProfileBanner)}
             sx={{
               height: { lg: 450, sm: 200, xs: 200 },
               backgroundImage: `url(${advertiser?.ProfileBanner})`,
@@ -564,6 +560,9 @@ export default function UserProfileModal(props: any) {
                   border: "4px solid white",
                   boxShadow: 2,
                 }}
+                onClick={() =>
+                  handleOpenImage(advertiser.Avatar ?? "/noavatar.png")
+                }
               />
               <Box>
                 <Chip
@@ -1392,6 +1391,63 @@ export default function UserProfileModal(props: any) {
               Cancel
             </Button>
           </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={openImageModal}
+          onClose={handleCloseImageModal}
+          maxWidth="lg"
+          fullWidth
+          disableScrollLock={false}
+          PaperProps={{
+            sx: {
+              backgroundColor: "#000",
+              boxShadow: "none",
+              borderRadius: 1,
+              overflow: "hidden",
+            },
+          }}
+        >
+          <DialogContent
+            sx={{
+              p: 0,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: "#000",
+              height: "80vh",
+            }}
+          >
+            <IconButton
+              onClick={handleCloseImageModal}
+              sx={{
+                position: "absolute",
+                top: 5,
+                right: 8,
+                color: "white",
+                backgroundColor: "rgba(0,0,0,0.4)",
+                "&:hover": {
+                  backgroundColor: "rgba(255,255,255,0.1)",
+                },
+                zIndex: 2,
+              }}
+            >
+              <X size={20} />
+            </IconButton>
+            {modalImageSrc && (
+              <img
+                src={modalImageSrc}
+                alt="Full View"
+                style={{
+                  height: "500px",
+                  maxHeight: "100%",
+                  maxWidth: "100%",
+                  objectFit: "contain",
+                  borderRadius: "10px",
+                }}
+              />
+            )}
+          </DialogContent>
         </Dialog>
       </Dialog>
     </>

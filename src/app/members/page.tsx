@@ -728,20 +728,6 @@ export default function Home() {
     }
   };
 
-  // if (loading) {
-  //   return (
-  //     <Box
-  //       display="flex"
-  //       justifyContent="center" // Centers horizontally
-  //       alignItems="center" // Centers vertically
-  //       height="100vh" // Full viewport height
-  //       bgcolor="#121212" // Background color
-  //     >
-  //       <LoadingScreen logoSrc="/loading.png"></LoadingScreen>
-  //     </Box>
-  //   );
-  // }
-
   if (userProfiles.length === 0) {
     return (
       <Box
@@ -775,6 +761,7 @@ export default function Home() {
               height="100vh"
               position="relative"
               overflow="hidden"
+              marginTop="30px"
             >
               {memberalarm && parseInt(memberalarm) > 2 ? null : (
                 <InstructionModal />
