@@ -1336,7 +1336,10 @@ const ProfileDetail: React.FC = () => {
                 }}
               >
                 {/* Premium Badge */}
-                {(membership === "1" || membership1 === 1) && (
+                {(membership === "1" ||
+                  membership1 === 1 ||
+                  membership === "0" ||
+                  membership1 === 0) && (
                   <Box
                     sx={{
                       display: "flex",
@@ -1345,7 +1348,7 @@ const ProfileDetail: React.FC = () => {
                       py: 1,
                       borderRadius: "999px",
                       background: "rgba(0, 0, 0, 0.65)",
-                      color: "#FFD700",
+                      color: membership1 === 1 ? "#FFD700" : "#ccc",
                       fontWeight: 600,
                       fontSize: "13px",
                       gap: 0.5,
@@ -1353,8 +1356,12 @@ const ProfileDetail: React.FC = () => {
                       backdropFilter: "blur(12px)",
                     }}
                   >
-                    <Crown size={16} />
-                    Premium
+                    {membership1 === 1 ? (
+                      <Crown size={16} />
+                    ) : (
+                      <User size={16} />
+                    )}
+                    {membership1 === 1 ? "Premium" : "Free"}
                   </Box>
                 )}
 
