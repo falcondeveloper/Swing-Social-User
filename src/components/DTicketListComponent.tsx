@@ -23,6 +23,7 @@ interface Ticket {
   Quantity: number;
   EventName: string;
   Description: string;
+  OriginalQuantity: number;
 }
 
 interface TicketQuantities {
@@ -69,7 +70,7 @@ const TicketList: React.FC<TicketListProps> = ({
   ): void => {
     // Convert value to number and handle invalid inputs
     const quantity = parseInt(value) || 0;
-    if (quantity < 0 || quantity > ticket.Quantity) return;
+    if (quantity < 0 || quantity > ticket.OriginalQuantity) return;
 
     // Update quantities for this ticket
     setTicketQuantities((prev) => ({
@@ -268,7 +269,7 @@ const TicketList: React.FC<TicketListProps> = ({
                       ticket
                     )
                   }
-                  disabled={ticket.Quantity <= 0}
+                  disabled={ticket.OriginalQuantity <= 0}
                   sx={{
                     mt: 2,
                     input: {
@@ -286,14 +287,15 @@ const TicketList: React.FC<TicketListProps> = ({
                   <Typography
                     variant="body2"
                     sx={{
-                      color: ticket.Quantity > 0 ? "#4caf50" : "#f44336",
+                      color:
+                        ticket.OriginalQuantity > 0 ? "#4caf50" : "#f44336",
                       fontWeight: "bold",
                       fontSize: "1rem",
                       textTransform: "uppercase",
                     }}
                   >
-                    {ticket.Quantity > 0
-                      ? `${ticket.Quantity} Available`
+                    {ticket.OriginalQuantity > 0
+                      ? `${ticket.OriginalQuantity} Available`
                       : "Sold Out"}
                   </Typography>
 

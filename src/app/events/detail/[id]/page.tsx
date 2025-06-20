@@ -175,6 +175,7 @@ export default function EventDetail(props: { params: Params }) {
       });
 
       const eventData = await checkResponse.json();
+      console.log("eventData---", eventData);
       const eventDescription = eventData?.event?.Description;
       //Populate the tickets with the description of the event BUG
       eventData?.tickets.forEach((ticket: any) => {

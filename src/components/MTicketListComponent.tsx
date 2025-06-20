@@ -23,6 +23,7 @@ type Ticket = {
   Price: number;
   Quantity: number;
   EventId: string;
+  OriginalQuantity: number;
 };
 
 type TicketListProps = {
@@ -67,7 +68,7 @@ const TicketListComponent: React.FC<TicketListProps> = ({
     ticket: Ticket
   ): void => {
     const quantity = parseInt(value) || 0;
-    if (quantity < 0 || quantity > ticket.Quantity) return;
+    if (quantity < 0 || quantity > ticket.OriginalQuantity) return;
 
     setTicketQuantities((prev) => ({
       ...prev,
@@ -259,7 +260,7 @@ const TicketListComponent: React.FC<TicketListProps> = ({
                       ticket
                     )
                   }
-                  disabled={ticket.Quantity <= 0}
+                  disabled={ticket.OriginalQuantity <= 0}
                   sx={{
                     mt: 2,
                     input: {
@@ -277,14 +278,15 @@ const TicketListComponent: React.FC<TicketListProps> = ({
                   <Typography
                     variant="body2"
                     sx={{
-                      color: ticket.Quantity > 0 ? "#4caf50" : "#f44336",
+                      color:
+                        ticket.OriginalQuantity > 0 ? "#4caf50" : "#f44336",
                       fontWeight: "bold",
                       fontSize: "1rem",
                       textTransform: "uppercase",
                     }}
                   >
-                    {ticket.Quantity > 0
-                      ? `${ticket.Quantity} Available`
+                    {ticket.OriginalQuantity > 0
+                      ? `${ticket.OriginalQuantity} Available`
                       : "Sold Out"}
                   </Typography>
 
