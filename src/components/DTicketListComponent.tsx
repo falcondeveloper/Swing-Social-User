@@ -57,8 +57,6 @@ const TicketList: React.FC<TicketListProps> = ({
   const [selectedEventDescription, setSelectedEventDescription] =
     useState<string>("");
   const [selectedTicketType, setSelectedTicketType] = useState<string>("");
-  const [processingFee, setProcessingFee] = useState<number>(0);
-  const [finalPrice, setFinalPrice] = useState<number>(0);
 
   const toggleBox = () => {
     setIsOpen(!isOpen);
@@ -113,12 +111,7 @@ const TicketList: React.FC<TicketListProps> = ({
       setSelectedEventName(eventName);
       setSelectedEventDescription(eventDescription);
 
-      const fee = parseFloat((price * 0.035).toFixed(2));
-      const final = parseFloat((price + fee).toFixed(2));
-
-      setProcessingFee(fee);
-      setFinalPrice(final);
-
+      // Call parent component's callback with updated summary
       onTicketsChange(quantity, price, ticketName, ticketType, eventName);
     };
 
@@ -127,19 +120,16 @@ const TicketList: React.FC<TicketListProps> = ({
 
   const handleTicketCheckout = (): void => {
     if (totalQuantity > 0) {
-      const fee = parseFloat((totalPrice * 0.035).toFixed(2));
-      const final = parseFloat((totalPrice + fee).toFixed(2));
-
+      // Store overall ticket information
       localStorage.setItem("event_name", selectedEventName || "");
       localStorage.setItem("event_description", selectedEventDescription || "");
       localStorage.setItem("ticketPrice", totalPrice.toString());
-      localStorage.setItem("processingFee", fee.toString());
-      localStorage.setItem("finalPrice", final.toString());
       localStorage.setItem("ticketQuantity", totalQuantity.toString());
       localStorage.setItem("eventId", tickets[0]?.TicketPackageId || "");
       localStorage.setItem("ticketName", selectedTicketName || "");
       localStorage.setItem("ticketType", selectedTicketType || "");
 
+      // Store individual ticket quantities
       const ticketDetails = tickets
         .map((ticket) => ({
           id: ticket.TicketPackageId,
@@ -367,15 +357,7 @@ const TicketList: React.FC<TicketListProps> = ({
               <Typography color="white">
                 Total Tickets: {totalQuantity}
               </Typography>
-              <Typography color="white">
-                Subtotal: ${totalPrice.toFixed(2)}
-              </Typography>
-              <Typography color="white">
-                Processing Fee (3.5%): ${processingFee.toFixed(2)}
-              </Typography>
-              <Typography color="white" fontWeight="bold">
-                Final Total: ${finalPrice.toFixed(2)}
-              </Typography>
+              <Typography color="white">Total Price: ${totalPrice}</Typography>
               <Button
                 variant="contained"
                 onClick={handleTicketCheckout}

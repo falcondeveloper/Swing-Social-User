@@ -98,8 +98,6 @@ const BillingUpgrade: any = () => {
     expiry: "",
     cvc: "",
   });
-  const [processingFee, setProcessingFee] = useState<string>("");
-  const [finalPrice, setFinalPrice] = useState<string>("");
 
   const handleTicketEmail = async (x: any) => {
     const template = `
@@ -159,7 +157,7 @@ const BillingUpgrade: any = () => {
                             ticketType || "N/A"
                           }</td>
                           <td style="border: 1px solid #ddd; padding: 8px;">${
-                            finalPrice || "N/A"
+                            ticketPrice || "N/A"
                           }</td>
                           <td style="border: 1px solid #ddd; padding: 8px;">${
                             ticketQuantity || "N/A"
@@ -191,7 +189,7 @@ const BillingUpgrade: any = () => {
         userPartnerName: userProfile.PartnerName,
         ticketName: ticketName,
         ticketType: ticketType,
-        ticketPrice: finalPrice,
+        ticketPrice: ticketPrice,
         ticketQuantity: ticketQuantity,
         country: formData.qcountry,
         city: formData?.qcity,
@@ -278,8 +276,6 @@ const BillingUpgrade: any = () => {
   useEffect(() => {
     const storedEventName = localStorage.getItem("event_name");
     const storedTicketPrice = localStorage.getItem("ticketPrice");
-    const storedProcessingFee = localStorage.getItem("processingFee"); // New
-    const storedFinalPrice = localStorage.getItem("finalPrice"); // New
     const storedTicketName = localStorage.getItem("ticketName");
     const storedEventEmailDescription =
       localStorage.getItem("event_description");
@@ -300,15 +296,12 @@ const BillingUpgrade: any = () => {
     if (storedEventName) setEventName(storedEventName);
     if (ticketQuantity) setTicketQuantity(ticketQuantity);
     if (storedTicketPrice) setTicketPrice(storedTicketPrice);
-    if (storedProcessingFee) setProcessingFee(storedProcessingFee); // New
-    if (storedFinalPrice) setFinalPrice(storedFinalPrice); // New
     if (storedTicketName) setTicketName(storedTicketName);
     if (storedTicketType) setTicketType(storedTicketType);
     if (storedEventId) setEventId(storedEventId);
     if (storedEventDetails) setStoredEventDetails(storedEventDetails);
     if (storedEventEmailDescription)
       setEventDescription(storedEventEmailDescription);
-
     if (storedEventDetails && typeof storedEventDetails === "string") {
       console.log(JSON.parse(storedEventDetails));
       setEventDetails(JSON.parse(storedEventDetails));
@@ -363,7 +356,10 @@ const BillingUpgrade: any = () => {
   };
 
   const handlePaymentProcess = () => {
+    console.log(eventDetails);
     if (validateForm()) {
+      // Proceed with payment processing
+      console.log("Payment data:", formData);
       setOpen(true);
     }
   };
@@ -457,7 +453,7 @@ const BillingUpgrade: any = () => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              pprice: parseFloat(finalPrice),
+              pprice: parseFloat(ticketPrice),
               cardNumber: cardNumber,
               expiry: expiry,
               cvc: cvc,
@@ -515,7 +511,7 @@ const BillingUpgrade: any = () => {
                     userName: userName || "",
                     ticketName: ticketName || "N/A",
                     ticketType: ticketType || "N/A",
-                    ticketPrice: finalPrice,
+                    ticketPrice: ticketPrice,
                     ticketQuantity: ticketQuantity,
                     country: formData.qcountry || "",
                     city: formData?.qcity || "",
@@ -564,6 +560,8 @@ const BillingUpgrade: any = () => {
       }
     }
   };
+
+  console.log("userProfile---", userProfile);
 
   const createTicket = async (storedEventDetails: any) => {
     try {
@@ -646,7 +644,7 @@ const BillingUpgrade: any = () => {
             gutterBottom
             sx={{ fontWeight: "bolder", color: "#aa1f72" }}
           >
-            $ {finalPrice} usd
+            $ {ticketPrice} usd
           </Typography>
         </Grid>
 
