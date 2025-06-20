@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Box,
   BottomNavigation,
@@ -113,27 +115,40 @@ const Footer = () => {
                   Quick Links
                 </Typography>
                 {[
-                  { name: "Members", url: "/members" },
-                  { name: "Events", url: "/events" },
-                  { name: "Blog", url: "https://swingsocial.co/blog/" },
-                  { name: "Travel", url: "https://swingsocial.co/travel/" },
+                  { name: "Members", url: "/members", internal: true },
+                  { name: "Events", url: "/events", internal: true },
+                  {
+                    name: "Blog",
+                    url: "https://swingsocial.co/blog/",
+                    internal: false,
+                  },
+                  {
+                    name: "Travel",
+                    url: "https://swingsocial.co/travel/",
+                    internal: false,
+                  },
                   {
                     name: "Contact",
                     url: "https://swingsocial.co/contact-us/",
+                    internal: false,
                   },
                 ].map((item) => (
                   <Typography
                     key={item.name}
                     variant="body2"
-                    component="a"
-                    href={item.url}
-                    target={item.url.startsWith("http") ? "_blank" : "_self"}
+                    component="span"
+                    onClick={() =>
+                      item.internal
+                        ? router.push(item.url)
+                        : window.open(item.url, "_blank")
+                    }
                     sx={{
                       display: "block",
                       color: "rgba(255,255,255,0.7)",
                       mb: 1.5,
                       textDecoration: "none",
                       transition: "all 0.3s ease",
+                      cursor: "pointer",
                       "&:hover": {
                         color: "#FF1B6B",
                         transform: "translateX(5px)",
@@ -152,13 +167,22 @@ const Footer = () => {
                 </Typography>
                 <Typography
                   variant="body2"
+                  component="a"
+                  href="mailto:info@swingsocial.co"
                   sx={{
                     color: "rgba(255,255,255,0.7)",
                     mb: 1.5,
+                    textDecoration: "none",
+                    cursor: "pointer",
+                    "&:hover": {
+                      color: "#FF1B6B",
+                      textDecoration: "underline",
+                    },
                   }}
                 >
                   Email: info@swingsocial.co
                 </Typography>
+
                 <Typography
                   variant="body2"
                   sx={{
