@@ -33,6 +33,7 @@ import Footer from "./Footer";
 import { jwtDecode } from "jwt-decode";
 import profileInfoImage from "../../public/ProfileInfo.png";
 import MobileAboutSection from "./MobileAboutSection";
+
 export interface DetailViewHandle {
   open: (id: string) => void;
 }
@@ -43,7 +44,7 @@ const SwipeIndicator = ({ type, opacity }: any) => {
   if (!type) return null;
   const style = {
     position: "absolute",
-    top: "40px",
+    top: "40%",
     borderRadius: "12px",
     fontSize: "2rem",
     fontWeight: "bold",
@@ -52,19 +53,19 @@ const SwipeIndicator = ({ type, opacity }: any) => {
     opacity: opacity,
     transition: "opacity 0.2s ease-in-out",
     zIndex: 10,
+    userSelect: "none", // Prevent text selection during swipe
+    pointerEvents: "none", // Ensure it doesn't interfere with touch events
   };
   const typeStyles: any = {
     delete: {
-      left: "65%",
-      top: "40%",
+      right: "5%", // Adjusted for better visibility
       transform: "rotate(-25deg)",
-      color: `#4CAF50`,
+      color: `#F44336`, // Tinder uses red for reject
     },
     like: {
-      right: "65%",
-      top: "40%",
+      left: "5%", // Adjusted for better visibility
       transform: "rotate(25deg)",
-      color: `#F44336`,
+      color: `#4CAF50`, // Tinder uses green for like
     },
     maybe: {
       left: "50%",
@@ -105,7 +106,6 @@ export default function MobileSweaping() {
     new Set()
   );
   const [loading, setLoading] = useState(true);
-  const [swipeDirection, setSwipeDirection] = useState<any>(null);
   const [showMatchPopup, setShowMatchPopup] = useState(false);
   const [showLimitPopup, setShowLimitPopup] = useState(false);
   const [showEndPopup, setShowEndPopup] = useState(false);
@@ -122,14 +122,14 @@ export default function MobileSweaping() {
   const [memberalarm, setMemberAlarm] = useState("0");
 
   const [isProcessingSwipe, setIsProcessingSwipe] = useState(false);
-  const [pendingSwipeDirection, setPendingSwipeDirection] = useState<
-    string | null
-  >(null);
   const [cardStyles, setCardStyles] = useState<any>({ active: {}, next: {} });
+  const [isExiting, setIsExiting] = useState(false); // New state for exit animation
+  const [pendingSwipeAction, setPendingSwipeAction] = useState<string | null>(
+    null
+  ); // Store action during exit anim
   const lastSwipeTimeRef = useRef<number>(0);
   const SWIPE_THROTTLE_MS = 500;
   const currentCardRef = useRef<HTMLDivElement | null>(null);
-  const cardContainerRef = useRef<HTMLDivElement | null>(null);
   const isSwiping = useRef(false);
   const startPoint = useRef({ x: 0, y: 0 });
   const router = useRouter();
@@ -139,14 +139,17 @@ export default function MobileSweaping() {
     setSelectedUserId(null);
   };
 
-  const profilesToRender = useMemo(
-    () => ({
-      visible: userProfiles.slice(currentIndex, currentIndex + 2),
-      preload: userProfiles.slice(currentIndex + 2, currentIndex + 7),
-      current: userProfiles[currentIndex] ?? null,
-    }),
-    [userProfiles, currentIndex]
-  );
+  const visibleProfiles = useMemo(() => {
+    return userProfiles.slice(currentIndex, currentIndex + 2);
+  }, [userProfiles, currentIndex]);
+
+  const preloadProfiles = useMemo(() => {
+    return userProfiles.slice(currentIndex + 2, currentIndex + 7);
+  }, [userProfiles, currentIndex]);
+
+  const currentProfile = useMemo(() => {
+    return userProfiles[currentIndex];
+  }, [userProfiles, currentIndex]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -180,6 +183,8 @@ export default function MobileSweaping() {
       }
     }
   }, []);
+
+  const [isBlockingRefresh, setIsBlockingRefresh] = useState(false);
 
   const fetchCurrentProfileInfo = useCallback(async (currentProfileId: any) => {
     if (currentProfileId) {
@@ -235,17 +240,28 @@ export default function MobileSweaping() {
 
   const preloadProfileImages = useCallback(
     (profiles: any[]) => {
-      if (!Array.isArray(profiles) || profiles.length === 0) return;
-      const newUrls = new Set<string>();
-      for (const profile of profiles) {
-        const url = profile?.Avatar;
-        if (url && !preloadedImages.has(url)) newUrls.add(url);
-      }
-      if (newUrls.size === 0) return;
-      newUrls.forEach((url) => {
-        const img = new Image();
-        img.src = url;
-        img.onload = () => setPreloadedImages((prev) => new Set(prev).add(url));
+      if (!profiles || profiles.length === 0) return;
+
+      const imageUrls = new Set<string>();
+
+      profiles.forEach((profile) => {
+        if (profile?.Avatar) {
+          imageUrls.add(profile.Avatar);
+        }
+      });
+
+      imageUrls.forEach((url) => {
+        if (!preloadedImages.has(url)) {
+          const img = new Image();
+          img.src = url;
+          img.onload = () => {
+            setPreloadedImages((prev) => {
+              const updated = new Set(prev);
+              updated.add(url);
+              return updated;
+            });
+          };
+        }
       });
     },
     [preloadedImages]
@@ -267,6 +283,29 @@ export default function MobileSweaping() {
       });
 
       return await response.json();
+    },
+    [profileId]
+  );
+
+  const handleUpdateCategoryRelation = useCallback(
+    async (category: any, targetProfile: any) => {
+      try {
+        setIdparam(null);
+        const response = await fetch("/api/user/sweeping/relation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pid: profileId,
+            targetid: targetProfile?.Id,
+            newcategory: category,
+          }),
+        });
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error("Error:", error);
+        return null;
+      }
     },
     [profileId]
   );
@@ -334,7 +373,7 @@ export default function MobileSweaping() {
         },
         body: JSON.stringify({
           profileid: profileId,
-          targetid: profilesToRender?.current?.Id,
+          targetid: currentProfile?.Id,
         }),
       });
 
@@ -343,127 +382,93 @@ export default function MobileSweaping() {
       console.error("Error:", error);
       return null;
     }
-  }, [profileId, profilesToRender?.current]);
-
-  const handleUpdateCategoryRelation = useCallback(
-    async (category: any, targetProfile: any) => {
-      try {
-        setIdparam(null);
-        const response = await fetch("/api/user/sweeping/relation", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            pid: profileId,
-            targetid: targetProfile?.Id,
-            newcategory: category,
-          }),
-        });
-        return await response.json();
-      } catch (error) {
-        console.error("Error:", error);
-        return null;
-      }
-    },
-    [profileId]
-  );
-
-  const [swipeOffset, setSwipeOffset] = useState(0);
+  }, [profileId, currentProfile]);
 
   const isUserPremium = () => membership === 1;
   const hasReachedSwipeLimit = () => swipeCount >= DAILY_LIMIT;
-  const [newCategory, setNewCategory] = useState<string | null>(null);
 
+  // This function now performs the actual backend updates and index increment
   const processSwipe = useCallback(
-    async (action: string, targetProfile: any) => {
-      if (isProcessingSwipe) return;
-      setIsProcessingSwipe(true);
+    async (direction: string, targetProfile: any) => {
+      // Immediately update UI *before* API calls
+      setCurrentIndex((prevIndex) => prevIndex + 1);
 
-      const now = Date.now();
-      if (now - lastSwipeTimeRef.current < SWIPE_THROTTLE_MS) {
-        setIsProcessingSwipe(false);
-        return;
-      }
-      lastSwipeTimeRef.current = now;
-
-      if (idParam != null) {
-        router.push("/members");
-        setIsProcessingSwipe(false);
-        return;
-      }
-
-      if (membership !== 1) {
-        setCardStyles({
-          active: {
-            transform: "scale(1)",
-            transition: `transform 0.4s ${spring}`,
-          },
-          next: {
-            transform: "scale(0.95)",
-            transition: `transform 0.4s ${spring}`,
-          },
-        });
-        setShowLimitPopup(true);
-        setIsProcessingSwipe(false);
-        return;
-      }
-
-      if (action === "delete") {
-        await handleUpdateCategoryRelation("Denied", targetProfile);
-      } else if (action === "like") {
-        await handleUpdateCategoryRelation("Liked", targetProfile);
-        await handleUpdateLikeMatch(targetProfile);
-      } else if (action === "maybe") {
-        await handleUpdateCategoryRelation("Maybe", targetProfile);
-      }
-
-      if (membership !== 1) {
-        setSwipeCount((p) => p + 1);
-      }
-
-      setCurrentIndex((prev) => {
-        const nextIndex = prev + 1;
-        if (nextIndex >= userProfiles.length) {
-          setShowEndPopup(true);
-        }
-        return nextIndex;
+      // Reset styles for the *new* active card immediately
+      setCardStyles({
+        active: {
+          transform: "scale(1)",
+          transition: `transform 0.5s ${spring}`,
+        },
+        next: {
+          transform: "scale(0.95)",
+          transition: `transform 0.5s ${spring}`,
+        },
       });
 
-      if (!isUserPremium() && hasReachedSwipeLimit()) {
-        setShowLimitPopup(true);
-      } else if (!isUserPremium()) {
-        setSwipeCount((prev) => prev + 1);
-      }
+      try {
+        const promises: Promise<any>[] = [];
 
-      setIsProcessingSwipe(false);
+        if (direction === "left") {
+          promises.push(handleUpdateCategoryRelation("Denied", targetProfile));
+        } else if (direction === "right") {
+          promises.push(handleUpdateCategoryRelation("Liked", targetProfile));
+          promises.push(handleUpdateLikeMatch(targetProfile));
+        } else if (direction === "down") {
+          promises.push(handleUpdateCategoryRelation("Maybe", targetProfile));
+        }
+
+        await Promise.all(promises);
+
+        // Handle post-API logic (e.g., show match popup)
+        if (currentIndex + 1 >= userProfiles.length) {
+          setShowEndPopup(true);
+        }
+
+        if (!isUserPremium() && hasReachedSwipeLimit()) {
+          setShowLimitPopup(true);
+        } else if (!isUserPremium()) {
+          setSwipeCount((prev) => prev + 1);
+        }
+      } catch (error) {
+        console.error("Error processing swipe:", error);
+        // IMPORTANT: Revert UI changes if API fails
+        setCurrentIndex((prevIndex) => prevIndex - 1); // Go back to the failed card
+        // You might also want to show a toast/notification about the error
+      } finally {
+        setIsProcessingSwipe(false); // Reset processing flag
+        setIsExiting(false); // Reset exiting flag
+        setPendingSwipeAction(null); // Clear pending action
+      }
     },
     [
-      isProcessingSwipe,
       currentIndex,
       userProfiles.length,
-      idParam,
-      membership,
-      hasReachedSwipeLimit,
-      handleUpdateLikeMatch,
       isUserPremium,
+      hasReachedSwipeLimit,
       handleUpdateCategoryRelation,
+      handleUpdateLikeMatch,
+      setSwipeCount,
+      setShowLimitPopup,
+      setShowEndPopup,
+      setCurrentIndex,
     ]
   );
 
   const getEventPoint = (e: any) => (e.touches ? e.touches[0] : e);
 
   const handleSwipeStart = (e: any) => {
-    if (!profilesToRender.current || isProcessingSwipe) return;
+    if (!currentProfile || isProcessingSwipe || isExiting) return; // Prevent start if already processing or exiting
     isSwiping.current = true;
     const point = getEventPoint(e);
     startPoint.current = { x: point.clientX, y: point.clientY };
     setCardStyles((prev: any) => ({
       ...prev,
-      active: { ...prev.active, transition: "transform 0s" },
+      active: { ...prev.active, transition: "transform 0s" }, // Disable transition during drag
     }));
   };
 
   const handleSwipeMove = (e: any) => {
-    if (!isSwiping.current) return;
+    if (!isSwiping.current || isProcessingSwipe || isExiting) return;
     const point = getEventPoint(e);
     const deltaX = point.clientX - startPoint.current.x;
     const deltaY = point.clientY - startPoint.current.y;
@@ -471,6 +476,7 @@ export default function MobileSweaping() {
 
     const isVertical = Math.abs(deltaY) > Math.abs(deltaX);
 
+    // Prevent upward swipe
     if (isVertical && deltaY < 0) {
       return;
     }
@@ -483,61 +489,149 @@ export default function MobileSweaping() {
     let swipeOpacity = 0;
 
     if (hasReachedSwipeLimit() && !isUserPremium()) {
-      setShowLimitPopup(true);
-      return;
+      // If limit reached, just display popup, don't allow further movement
+      // Optionally, you could disable movement here completely.
+      // setShowLimitPopup(true); // Moved to handleSwipeEnd to not interrupt gesture
     }
 
-    if (isVertical) {
+    if (isVertical && deltaY > 0) {
       if (deltaY > 50) swipeType = "maybe";
-      swipeOpacity = Math.min(Math.abs(deltaY) / 100, 1);
+      swipeOpacity = Math.min(deltaY / 100, 1); // Opacity based on positive deltaY
     } else {
       if (deltaX > 50) swipeType = "like";
       if (deltaX < -50) swipeType = "delete";
-      swipeOpacity = Math.min(Math.abs(deltaX) / 100, 1);
+      swipeOpacity = Math.min(Math.abs(deltaX) / 100, 1); // Opacity based on deltaX
     }
 
-    const nextCardScale = 0.95 + Math.min(Math.abs(deltaX) / 2000, 0.05);
+    const nextCardScale = 0.95 + Math.min(Math.abs(deltaX) / 2000, 0.05); // Scale up next card slightly
 
     setCardStyles({
       active: {
         transform: `translateX(${deltaX}px) translateY(${
           isVertical ? deltaY : 0
         }px) rotate(${rotate}deg)`,
-        swipeType,
-        swipeOpacity,
+        swipeType, // Pass to component for indicator logic
+        swipeOpacity, // Pass to component for indicator logic
+        transition: "transform 0s", // Ensure no transition during move
       },
       next: {
         transform: `scale(${nextCardScale})`,
+        transition: `transform 0.2s ease-out`, // Smooth scaling for next card
       },
     });
   };
 
-  const handleSwipeEnd = () => {
-    if (!isSwiping.current) return;
+  const triggerExitAnimation = useCallback(
+    (action: string) => {
+      const now = Date.now();
+      if (now - lastSwipeTimeRef.current < SWIPE_THROTTLE_MS) {
+        return;
+      }
+      lastSwipeTimeRef.current = now;
+
+      if (isProcessingSwipe || isExiting) return;
+
+      const targetProfile = currentProfile;
+      if (!targetProfile) return;
+
+      if (idParam != null) {
+        router.push("/members");
+        return;
+      }
+
+      setIsExiting(true); // Start exit animation phase
+      setIsProcessingSwipe(true); // Prevent new gestures
+      setPendingSwipeAction(action); // Store action to process after animation
+
+      let exitTransform = "";
+      let finalRotate = 0;
+      if (action === "like") {
+        exitTransform = "translateX(200vw)";
+        finalRotate = 30; // Rotate when it flies off
+      } else if (action === "delete") {
+        exitTransform = "translateX(-200vw)";
+        finalRotate = -30;
+      } else if (action === "maybe") {
+        exitTransform = "translateY(200vh)";
+        finalRotate = 0; // No rotation for 'maybe'
+      }
+
+      setCardStyles((prev: any) => ({
+        ...prev,
+        active: {
+          transform: `${exitTransform} rotate(${finalRotate}deg)`,
+          transition: `transform 0.5s ${spring}`, // Fast, smooth exit
+          swipeType: action, // Keep indicator visible during exit
+          swipeOpacity: 1, // Full opacity during exit
+        },
+        next: {
+          transform: "scale(1)", // Animate next card to full size quickly
+          transition: `transform 0.3s ${spring}`,
+        },
+      }));
+    },
+    [
+      currentProfile,
+      idParam,
+      router,
+      isProcessingSwipe,
+      isExiting,
+      setCardStyles,
+      setPendingSwipeAction,
+      setIsExiting,
+      setIsProcessingSwipe,
+    ]
+  );
+
+  const handleSwipeEnd = useCallback(() => {
+    if (!isSwiping.current || isProcessingSwipe || isExiting) return;
     isSwiping.current = false;
 
-    const swipeThreshold = 120;
+    const swipeThreshold = 120; // Distance in pixels to confirm a swipe
     const { transform = "" } = cardStyles.active || {};
-    const deltaX = parseInt(
+    const deltaX = parseFloat(
       transform.match(/translateX\(([^p]+)px\)/)?.[1] || "0"
     );
-    const deltaY = parseInt(
+    const deltaY = parseFloat(
       transform.match(/translateY\(([^p]+)px\)/)?.[1] || "0"
     );
 
     let action = null;
+    // Determine action based on threshold
     if (deltaX > swipeThreshold) action = "like";
-    if (deltaX < -swipeThreshold) action = "delete";
-    if (deltaY > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX))
-      action = "maybe";
+    else if (deltaX < -swipeThreshold) action = "delete";
+    else if (deltaY > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX))
+      action = "maybe"; // Ensure vertical swipe is dominant for 'maybe'
 
     if (action) {
-      handleSwipeAction(action);
+      // Check limits before performing action
+      if (!isUserPremium() && hasReachedSwipeLimit()) {
+        setShowLimitPopup(true);
+        // Animate card back if limit reached and swipe action not taken
+        setCardStyles({
+          active: {
+            transform: "scale(1)",
+            transition: `transform 0.4s ${spring}`,
+            swipeType: null, // Clear indicator
+            swipeOpacity: 0,
+          },
+          next: {
+            transform: "scale(0.95)",
+            transition: `transform 0.4s ${spring}`,
+          },
+        });
+        return;
+      }
+      // If action is valid, trigger the exit animation
+      triggerExitAnimation(action);
     } else {
+      // If no action, reset card position
       setCardStyles({
         active: {
           transform: "scale(1)",
           transition: `transform 0.4s ${spring}`,
+          swipeType: null, // Clear indicator
+          swipeOpacity: 0,
         },
         next: {
           transform: "scale(0.95)",
@@ -545,39 +639,14 @@ export default function MobileSweaping() {
         },
       });
     }
-  };
-
-  const handleSwipeAction = useCallback(
-    (action: string) => {
-      const targetProfile = profilesToRender.current;
-      if (!targetProfile || isProcessingSwipe) return;
-
-      if (hasReachedSwipeLimit() && !isUserPremium()) {
-        setShowLimitPopup(true);
-        return;
-      }
-
-      let finalStyle: any = {
-        transition: "transform 0.3s ease-out, opacity 0.3s ease-out",
-        swipeType: action,
-        swipeOpacity: 0,
-      };
-
-      if (action === "delete")
-        finalStyle.transform = "translateX(-150%) rotate(-45deg)";
-      else if (action === "like")
-        finalStyle.transform = "translateX(150%) rotate(45deg)";
-      else if (action === "maybe") finalStyle.transform = "translateY(150%)";
-
-      setCardStyles({
-        active: finalStyle,
-        next: { transform: "scale(1)", transition: `transform 0.6s ${spring}` },
-      });
-
-      processSwipe(action, targetProfile);
-    },
-    [profilesToRender.current, isProcessingSwipe, processSwipe]
-  );
+  }, [
+    cardStyles,
+    isProcessingSwipe,
+    isExiting,
+    isUserPremium,
+    hasReachedSwipeLimit,
+    triggerExitAnimation, // Now a dependency
+  ]);
 
   useEffect(() => {
     const cardElement = currentCardRef.current;
@@ -592,15 +661,14 @@ export default function MobileSweaping() {
       if (e.cancelable) {
         e.preventDefault();
       }
-
-      handleSwipeMove(e); // Call your existing handler (which now won't trigger default scroll)
+      handleSwipeMove(e);
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      handleSwipeEnd(); // Call your existing handler
+      handleSwipeEnd();
     };
 
-    // Add passive: false to touchmove listener
+    // Add passive: false to touchmove listener to allow preventDefault
     cardElement.addEventListener("touchstart", handleTouchStart, {
       passive: false,
     });
@@ -621,12 +689,41 @@ export default function MobileSweaping() {
       cardElement.removeEventListener("touchcancel", handleTouchEnd);
     };
   }, [
-    currentIndex,
+    currentIndex, // Re-attach listeners when current card changes
     isProcessingSwipe,
+    isExiting,
     handleSwipeStart,
     handleSwipeMove,
     handleSwipeEnd,
   ]);
+
+  // Global touchmove listener to prevent scrolling *if* a swipe is active (for body scroll)
+  useEffect(() => {
+    const handleGlobalTouchMove = (e: TouchEvent) => {
+      if (isSwiping.current && e.cancelable) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("touchmove", handleGlobalTouchMove, {
+      passive: false,
+    });
+    return () => {
+      window.removeEventListener("touchmove", handleGlobalTouchMove);
+    };
+  }, []);
+
+  // Initial and subsequent card style resets for new active card
+  useEffect(() => {
+    // This effect runs when currentIndex changes, after a card has exited
+    // It resets the styles for the *new* active card (which was previously the 'next' card)
+    setCardStyles({
+      active: { transform: "scale(1)", transition: `transform 0.5s ${spring}` },
+      next: {
+        transform: "scale(0.95)",
+        transition: `transform 0.5s ${spring}`,
+      },
+    });
+  }, [currentIndex]); // Depend on currentIndex
 
   useEffect(() => {
     const handleTouchMove = (e: TouchEvent) => {
@@ -644,16 +741,6 @@ export default function MobileSweaping() {
       window.removeEventListener("touchmove", handleTouchMove);
     };
   }, []);
-
-  useEffect(() => {
-    setCardStyles({
-      active: { transform: "scale(1)", transition: `transform 0.5s ${spring}` },
-      next: {
-        transform: "scale(0.95)",
-        transition: `transform 0.5s ${spring}`,
-      },
-    });
-  }, [currentIndex]);
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportOptions, setReportOptions] = useState({
@@ -675,10 +762,10 @@ export default function MobileSweaping() {
 
   const handleReportSubmit = useCallback(() => {
     setIsReportModalOpen(false);
-    if (profilesToRender?.current) {
-      handleReportUser(profilesToRender?.current);
+    if (currentProfile) {
+      handleReportUser(currentProfile);
     }
-  }, [handleReportUser, profilesToRender?.current]);
+  }, [handleReportUser, currentProfile]);
 
   const handleChatAction = () => {
     router.push(`/messaging/${id}`);
@@ -727,8 +814,21 @@ export default function MobileSweaping() {
       <Header />
       <ToastContainer position="top-right" autoClose={3000} />
       <div style={{ display: "none" }}>
-        {profilesToRender.preload.map((p, i) =>
-          p?.Avatar ? <img key={i} src={p.Avatar} alt="preload" /> : null
+        {preloadProfiles.map((profile, index) =>
+          profile?.Avatar ? (
+            <img
+              key={`preload-${index}`}
+              src={profile.Avatar}
+              alt="preload"
+              onLoad={() => {
+                setPreloadedImages((prev) => {
+                  const updated = new Set(prev);
+                  updated.add(profile.Avatar);
+                  return updated;
+                });
+              }}
+            />
+          ) : null
         )}
       </div>
 
@@ -856,8 +956,8 @@ export default function MobileSweaping() {
               <AboutSection aboutText={selectedUserProfile?.About} />
             </CardContent>
           </Card>
-        ) : profilesToRender.visible.length > 0 ? (
-          profilesToRender?.visible.map((profile: any, index: number) => (
+        ) : (
+          visibleProfiles.map((profile: any, index: number) => (
             <Card
               key={profile.Id}
               ref={index === 0 ? currentCardRef : null}
@@ -873,21 +973,38 @@ export default function MobileSweaping() {
                 position: "absolute",
                 left: 0,
                 right: 0,
-                // Apply cardStyles based on index
-                ...(index === 0
-                  ? cardStyles.active
-                  : {
-                      ...cardStyles.next,
-                      zIndex: 1, // Ensure the next card is behind the active one
-                    }),
-                // For the "next" card, ensure it's not translated initially
-                transform:
-                  index === 1
-                    ? cardStyles.next.transform
-                    : cardStyles.active.transform,
-                zIndex: index === 0 ? 2 : 1, // Active card on top
-                backgroundColor: "black",
+                backgroundColor: "#121212",
                 color: "white",
+                // Apply cardStyles based on index
+                transform:
+                  index === 0
+                    ? cardStyles.active.transform
+                    : cardStyles.next.transform,
+                transition:
+                  index === 0
+                    ? cardStyles.active.transition
+                    : cardStyles.next.transition,
+                zIndex: index === 0 ? 2 : 1, // Active card on top
+              }}
+              // onTransitionEnd event for the active card
+              onTransitionEnd={(e) => {
+                if (
+                  index === 0 && // Only for the active card
+                  isExiting && // Only if an exit animation was triggered
+                  e.propertyName === "transform" && // Ensure it's the transform ending
+                  pendingSwipeAction // Ensure there's a pending action
+                ) {
+                  const actionMap: { [key: string]: string } = {
+                    delete: "left",
+                    like: "right",
+                    maybe: "down",
+                  };
+                  const direction = actionMap[pendingSwipeAction];
+                  // Perform the actual processing AFTER the card has animated out
+                  if (currentProfile) {
+                    processSwipe(direction, currentProfile);
+                  }
+                }
               }}
             >
               <div className="profile-main-box">
@@ -960,267 +1077,243 @@ export default function MobileSweaping() {
               </CardContent>
             </Card>
           ))
-        ) : (
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            height="100%"
-            width="100%"
-          >
-            <Typography variant="h6" color="white">
-              Please wait...
-            </Typography>
-          </Box>
         )}
       </div>
 
       {memberalarm && parseInt(memberalarm) > 2 ? null : <InstructionModal />}
-      {selectedUserId && (
-        <UserProfileModal
-          handleGrantAccess={handleGrantAccess}
-          handleClose={handleClose}
-          open={showDetail}
-          userid={selectedUserId}
-        />
-      )}
+      <UserProfileModal
+        handleGrantAccess={handleGrantAccess}
+        handleClose={handleClose}
+        open={showDetail}
+        userid={selectedUserId}
+      />
 
-      {isReportModalOpen && (
-        <Modal open={isReportModalOpen} onClose={handleReportModalToggle}>
-          <Box
+      <Modal open={isReportModalOpen} onClose={handleReportModalToggle}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 300,
+            bgcolor: "#1e1e1e", // Dark background
+            color: "white", // Default text color for dark background
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            Report or Block User
+          </Typography>
+          <FormControlLabel
             sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: 300,
-              bgcolor: "#1e1e1e", // Dark background
-              color: "white", // Default text color for dark background
-              boxShadow: 24,
-              p: 4,
-              borderRadius: 2,
+              color: "white", // Label color
+              "& .MuiCheckbox-root": {
+                color: "#9c27b0", // Checkbox color
+              },
+              "& .MuiCheckbox-root.Mui-checked": {
+                color: "#9c27b0", // Checked checkbox color
+              },
             }}
-          >
-            <Typography variant="h6" gutterBottom>
-              Report or Block User
-            </Typography>
-            <FormControlLabel
-              sx={{
-                color: "white", // Label color
-                "& .MuiCheckbox-root": {
-                  color: "#9c27b0", // Checkbox color
-                },
-                "& .MuiCheckbox-root.Mui-checked": {
-                  color: "#9c27b0", // Checked checkbox color
-                },
-              }}
-              control={
-                <Checkbox
-                  checked={reportOptions.reportUser}
-                  onChange={handleCheckboxChange}
-                  name="reportUser"
-                />
-              }
-              label="Report User"
-            />
-            <FormControlLabel
-              sx={{
-                color: "white", // Label color
-                "& .MuiCheckbox-root": {
-                  color: "#9c27b0", // Checkbox color
-                },
-                "& .MuiCheckbox-root.Mui-checked": {
-                  color: "#9c27b0", // Checked checkbox color
-                },
-              }}
-              control={
-                <Checkbox
-                  checked={reportOptions.blockUser}
-                  onChange={handleCheckboxChange}
-                  name="blockUser"
-                />
-              }
-              label="Block User"
-            />
-            <Box mt={2} display="flex" justifyContent="flex-end">
-              <Button
-                onClick={handleReportSubmit}
-                variant="contained"
-                color="secondary"
-              >
-                Submit
-              </Button>
-            </Box>
+            control={
+              <Checkbox
+                checked={reportOptions.reportUser}
+                onChange={handleCheckboxChange}
+                name="reportUser"
+              />
+            }
+            label="Report User"
+          />
+          <FormControlLabel
+            sx={{
+              color: "white", // Label color
+              "& .MuiCheckbox-root": {
+                color: "#9c27b0", // Checkbox color
+              },
+              "& .MuiCheckbox-root.Mui-checked": {
+                color: "#9c27b0", // Checked checkbox color
+              },
+            }}
+            control={
+              <Checkbox
+                checked={reportOptions.blockUser}
+                onChange={handleCheckboxChange}
+                name="blockUser"
+              />
+            }
+            label="Block User"
+          />
+          <Box mt={2} display="flex" justifyContent="flex-end">
+            <Button
+              onClick={handleReportSubmit}
+              variant="contained"
+              color="secondary"
+            >
+              Submit
+            </Button>
           </Box>
-        </Modal>
-      )}
+        </Box>
+      </Modal>
 
       {/* Popup #1: Daily Limit */}
-      {showLimitPopup && (
-        <Dialog
-          open={showLimitPopup}
-          onClose={() => setShowLimitPopup(false)}
-          PaperProps={{
-            sx: {
-              backgroundColor: "#121212", // Dark background
-              color: "#ffffff", // White text
-            },
-          }}
-        >
-          <DialogTitle sx={{ color: "#e91e63" }}>
-            Daily Limit Reached
-          </DialogTitle>
-          <DialogContent>
-            <Typography>
-              You've reached your daily limit of {DAILY_LIMIT} swipes. Upgrade
-              your membership to swipe more!
-            </Typography>
-            <Button
-              onClick={() => router.push(`/membership`)}
-              sx={{
-                mt: 2,
-                backgroundColor: "#e91e63", // Pink color
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "#d81b60", // Slightly darker pink on hover
-                },
-              }}
-            >
-              Upgrade
-            </Button>
-            <Button
-              onClick={() => setShowLimitPopup(false)}
-              sx={{
-                mt: 2,
-                marginLeft: 1,
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "#d81b60", // Slightly darker pink on hover
-                },
-              }}
-            >
-              Close
-            </Button>
-          </DialogContent>
-        </Dialog>
-      )}
+      <Dialog
+        open={showLimitPopup}
+        onClose={() => setShowLimitPopup(false)}
+        PaperProps={{
+          sx: {
+            backgroundColor: "#121212", // Dark background
+            color: "#ffffff", // White text
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: "#e91e63" }}>Daily Limit Reached</DialogTitle>
+        <DialogContent>
+          <Typography>
+            You've reached your daily limit of {DAILY_LIMIT} swipes. Upgrade
+            your membership to swipe more!
+          </Typography>
+          <Button
+            onClick={() => router.push(`/membership`)}
+            sx={{
+              mt: 2,
+              backgroundColor: "#e91e63", // Pink color
+              color: "white",
+              "&:hover": {
+                backgroundColor: "#d81b60", // Slightly darker pink on hover
+              },
+            }}
+          >
+            Upgrade
+          </Button>
+          <Button
+            onClick={() => setShowLimitPopup(false)}
+            sx={{
+              mt: 2,
+              marginLeft: 1,
+              color: "white",
+              "&:hover": {
+                backgroundColor: "#d81b60", // Slightly darker pink on hover
+              },
+            }}
+          >
+            Close
+          </Button>
+        </DialogContent>
+      </Dialog>
 
-      {/* Popup #2: Match Found */}
-      {showMatchPopup && (
-        <Dialog
-          open={showMatchPopup}
-          onClose={() => setShowMatchPopup(false)}
-          PaperProps={{
-            sx: {
-              backgroundColor: "#121212", // Dark background
-              color: "#ffffff", // White text
-            },
-          }}
-        >
-          <DialogTitle sx={{ color: "#03dac5" }}>It's a Match!</DialogTitle>
-          <DialogContent>
-            {matchedProfile && (
-              <Box textAlign="center">
-                <Avatar
-                  src={matchedProfile.Avatar}
-                  alt={matchedProfile.Username}
-                  sx={{
-                    width: 100,
-                    height: 100,
-                    margin: "auto",
-                    border: "2px solid #03dac5", // Border for visibility
+      {/* Popup #2: Match! */}
+      <Dialog
+        open={showMatchPopup}
+        onClose={() => setShowMatchPopup(false)}
+        PaperProps={{
+          sx: {
+            backgroundColor: "#121212", // Dark background
+            color: "#ffffff", // White text
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: "#03dac5" }}>It's a Match!</DialogTitle>
+        <DialogContent>
+          {matchedProfile && (
+            <Box textAlign="center">
+              <Avatar
+                src={matchedProfile.Avatar}
+                alt={matchedProfile.Username}
+                sx={{
+                  width: 100,
+                  height: 100,
+                  margin: "auto",
+                  border: "2px solid #03dac5", // Border for visibility
+                }}
+              />
+              <Typography
+                sx={{ mt: 2 }}
+              >{`You've matched with ${matchedProfile.Username}!`}</Typography>
+              <Box display="flex" justifyContent="center" gap={2} mt={2}>
+                <Button
+                  onClick={() => {
+                    setShowDetail(true);
+                    setSelectedUserId(matchedProfile?.Id);
                   }}
-                />
-                <Typography
-                  sx={{ mt: 2 }}
-                >{`You've matched with ${matchedProfile.Username}!`}</Typography>
-                <Box display="flex" justifyContent="center" gap={2} mt={2}>
-                  <Button
-                    onClick={() => {
-                      setShowDetail(true);
-                      setSelectedUserId(matchedProfile?.Id);
-                    }}
-                    variant="contained"
-                    sx={{
-                      backgroundColor: "#03dac5",
-                      color: "#121212",
-                      "&:hover": {
-                        backgroundColor: "#00c4a7",
-                      },
-                    }}
-                  >
-                    View Profile
-                  </Button>
-                  <Button
-                    onClick={handleChatAction}
-                    variant="contained"
-                    sx={{
-                      backgroundColor: "#03dac5",
-                      color: "#121212",
-                      "&:hover": {
-                        backgroundColor: "#00c4a7",
-                      },
-                    }}
-                  >
-                    Chat
-                  </Button>
-                  <Button
-                    onClick={() => setShowMatchPopup(false)}
-                    variant="outlined"
-                    sx={{
-                      color: "#03dac5",
-                      borderColor: "#03dac5",
-                      "&:hover": {
-                        borderColor: "#00c4a7",
-                        color: "#00c4a7",
-                      },
-                    }}
-                  >
-                    Continue Swiping
-                  </Button>
-                </Box>
+                  variant="contained"
+                  sx={{
+                    backgroundColor: "#03dac5",
+                    color: "#121212",
+                    "&:hover": {
+                      backgroundColor: "#00c4a7",
+                    },
+                  }}
+                >
+                  View Profile
+                </Button>
+                <Button
+                  onClick={handleChatAction}
+                  variant="contained"
+                  sx={{
+                    backgroundColor: "#03dac5",
+                    color: "#121212",
+                    "&:hover": {
+                      backgroundColor: "#00c4a7",
+                    },
+                  }}
+                >
+                  Chat
+                </Button>
+                <Button
+                  onClick={() => setShowMatchPopup(false)}
+                  variant="outlined"
+                  sx={{
+                    color: "#03dac5",
+                    borderColor: "#03dac5",
+                    "&:hover": {
+                      borderColor: "#00c4a7",
+                      color: "#00c4a7",
+                    },
+                  }}
+                >
+                  Continue Swiping
+                </Button>
               </Box>
-            )}
-          </DialogContent>
-        </Dialog>
-      )}
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
 
-      {/* Popup #3: End of Records */}
-      {showEndPopup && (
-        <Dialog
-          open={showEndPopup}
-          onClose={() => setShowEndPopup(false)}
-          PaperProps={{
-            sx: {
-              backgroundColor: "#121212", // Dark background
-              color: "#ffffff", // White text
-            },
-          }}
-        >
-          <DialogTitle sx={{ color: "white" }}>End of Records</DialogTitle>
-          <DialogContent>
-            <Typography>
-              You've run out of matches. Adjust your preferences to view more
-              members.
-            </Typography>
-            <Button
-              onClick={() => router.push("/prefrences")}
-              variant="outlined"
-              sx={{
-                mt: 2,
-                color: "white",
-                borderColor: "#e91e63",
-                "&:hover": {
-                  borderColor: "#e64a19",
-                  color: "#e64a19",
-                },
-              }}
-            >
-              Update Preferences
-            </Button>
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* Popup #3: No more profiles */}
+      <Dialog
+        open={showEndPopup}
+        onClose={() => setShowEndPopup(false)}
+        PaperProps={{
+          sx: {
+            backgroundColor: "#121212", // Dark background
+            color: "#ffffff", // White text
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: "white" }}>End of Records</DialogTitle>
+        <DialogContent>
+          <Typography>
+            You've run out of matches. Adjust your preferences to view more
+            members.
+          </Typography>
+          <Button
+            onClick={() => router.push("/prefrences")}
+            variant="outlined"
+            sx={{
+              mt: 2,
+              color: "white",
+              borderColor: "#e91e63",
+              "&:hover": {
+                borderColor: "#e64a19",
+                color: "#e64a19",
+              },
+            }}
+          >
+            Update Preferences
+          </Button>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </>
