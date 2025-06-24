@@ -69,7 +69,7 @@ const SwipeIndicator = ({ type, opacity }: any) => {
     },
     maybe: {
       left: "50%",
-      top: "70%",
+      top: "50%",
       transform: "translateX(-50%)",
       color: `#FFC107`,
     },
@@ -390,10 +390,7 @@ export default function MobileSweaping() {
   // This function now performs the actual backend updates and index increment
   const processSwipe = useCallback(
     async (direction: string, targetProfile: any) => {
-      // Immediately update UI *before* API calls
       setCurrentIndex((prevIndex) => prevIndex + 1);
-
-      // Reset styles for the *new* active card immediately
       setCardStyles({
         active: {
           transform: "scale(1)",
@@ -967,7 +964,7 @@ export default function MobileSweaping() {
                 width: "100%",
                 maxWidth: "100vw",
                 minWidth: "100%",
-                height: "calc(100vh - 180px)",
+                height: "calc(100vh - 120px)",
                 marginTop: { sm: "30px" },
                 boxShadow: "none",
                 position: "absolute",
@@ -1032,49 +1029,68 @@ export default function MobileSweaping() {
                 <div className="report-flag" onClick={handleReportModalToggle}>
                   <Flag sx={{ color: "#9c27b0" }} />
                 </div>
-              </div>
-              <CardContent sx={{ padding: "5px 0", pb: 0 }}>
-                <Typography
-                  variant="h6"
-                  component="div"
-                  style={{ paddingLeft: "10px" }}
-                >
-                  {profile?.Username || "Unknown"} ,{" "}
-                  {profile?.DateOfBirth
-                    ? new Date().getFullYear() -
-                      new Date(profile.DateOfBirth).getFullYear()
-                    : ""}
-                  {profile?.Gender === "Male"
-                    ? "M"
-                    : profile?.Gender === "Female"
-                    ? "F"
-                    : ""}
-                  {profile?.PartnerDateOfBirth && (
-                    <>
-                      {" | "}
-                      {new Date().getFullYear() -
-                        new Date(profile.PartnerDateOfBirth).getFullYear()}{" "}
-                      {profile?.PartnerGender === "Male"
-                        ? "M"
-                        : profile?.PartnerGender === "Female"
-                        ? "F"
-                        : ""}
-                    </>
-                  )}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="#C2185B"
+                <div
                   style={{
-                    fontSize: "1.0rem",
-                    fontWeight: "bold",
-                    paddingLeft: "10px",
+                    position: "absolute",
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    left: 0,
+                    width: "100%",
+                    background:
+                      "linear-gradient(to top, rgb(18, 18, 18) 3%, rgba(18, 18, 18, 0.25) 25%, rgba(18, 18, 18, 0) 40%)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "flex-end",
                   }}
                 >
-                  {profile?.Location?.replace(", USA", "") || ""}
-                </Typography>
+                  <Typography
+                    variant="h5"
+                    component="div"
+                    style={{ paddingLeft: "10px", fontWeight: 800 }}
+                  >
+                    {profile?.Username || "Unknown"} ,{" "}
+                    {profile?.DateOfBirth
+                      ? new Date().getFullYear() -
+                        new Date(profile.DateOfBirth).getFullYear()
+                      : ""}
+                    {profile?.Gender === "Male"
+                      ? "M"
+                      : profile?.Gender === "Female"
+                      ? "F"
+                      : ""}
+                    {profile?.PartnerDateOfBirth && (
+                      <>
+                        {" | "}
+                        {new Date().getFullYear() -
+                          new Date(
+                            profile.PartnerDateOfBirth
+                          ).getFullYear()}{" "}
+                        {profile?.PartnerGender === "Male"
+                          ? "M"
+                          : profile?.PartnerGender === "Female"
+                          ? "F"
+                          : ""}
+                      </>
+                    )}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="#C2185B"
+                    style={{
+                      fontSize: "1.0rem",
+                      fontWeight: "bold",
+                      paddingLeft: "10px",
+                    }}
+                  >
+                    {profile?.Location?.replace(", USA", "") || ""}
+                  </Typography>
+                </div>
+              </div>
+              {/* <CardContent sx={{ padding: "5px 0", pb: 0 }}>
+
                 <MobileAboutSection aboutText={profile?.About} />
-              </CardContent>
+              </CardContent> */}
             </Card>
           ))
         )}

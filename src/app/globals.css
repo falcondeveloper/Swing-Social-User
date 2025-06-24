@@ -249,7 +249,7 @@ label {
 .mobile-sweeping-container .profile-img {
   width: 100%;
   min-width: 100%;
-  height: 55vh;
+  height: 74vh;
   object-fit: cover;
   display: block;
   object-position: top;
@@ -267,7 +267,8 @@ label {
 
 .mobile-sweeping-container .report-flag {
   position: absolute;
-  bottom: 18px;
+  z-index: 99;
+  bottom: 75px;
   right: 15px;
   background-color: rgba(0, 0, 0, 0.6);
   color: white;

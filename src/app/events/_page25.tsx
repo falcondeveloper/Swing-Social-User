@@ -1,3 +1,11 @@
+
+
+
+
+
+
+
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -300,6 +308,8 @@ export default function CalendarView() {
 
     fetchData();
   }, [cityInput, openCity]);
+
+  ///////////////////////////////////////////////////////////
 
   const shimmerKeyframes = `
   @keyframes shimmer {
@@ -723,6 +733,7 @@ export default function CalendarView() {
         bgcolor: "#0A0A0A",
         minHeight: "100vh",
         color: "white",
+        pb: 8,
         background: "linear-gradient(to bottom, #0A0A0A, #1A1A1A)",
       }}
     >
@@ -730,53 +741,47 @@ export default function CalendarView() {
 
       <Container maxWidth="xl" sx={{ pt: 1, pb: 4 }}>
         {isMobile ? (
-          <>
-            <Grid spacing={2} sx={{ mt: { xs: 2, sm: 4, md: 8 } }}>
-              {/* Sidebar */}
-              <Grid
-                item
-                xs={12}
-                sm={3}
-                md={2}
+          <Grid container spacing={0} sx={{ marginTop: 10 }}>
+            {/* Left Column (col-2) */}
+            <Grid item xs={3} sm={3} md={2} lg={2}>
+              <SidebarList />
+            </Grid>
+
+            {/* Right Column (col-10) */}
+            <Grid
+              item
+              xs={9}
+              sm={9}
+              lg={10}
+              md={10}
+              sx={{
+                px: { xs: 0, sm: 0 }, // Remove horizontal padding for xs and sm breakpoints
+              }}
+            >
+              <Card
                 sx={{
-                  display: { xs: "block", sm: "block" },
-                  mb: { xs: 2, sm: 0 },
+                  borderRadius: "10px",
+                  backgroundColor: "#0a0a0a",
+                  padding: "0px",
+                  paddingLeft: "5px",
+                  mx: { xs: 0, sm: 0 },
                 }}
               >
-                <SidebarList />
-              </Grid>
-
-              {/* Main Content */}
-              <Grid item xs={12} sm={12} md={12}>
-                <Card
-                  sx={{
-                    borderRadius: 3,
-                    backgroundColor: "#0a0a0a",
-                    py: { xs: 2, sm: 3 },
-                  }}
-                >
-                  <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
-                    <Typography
-                      variant="h5"
-                      color="white"
-                      textAlign="center"
-                      mb={2}
-                    >
-                      Events
-                    </Typography>
-
-                    {/* Action Buttons */}
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={2}
-                      alignItems="stretch"
-                      mb={2}
-                    >
+                <CardContent sx={{ padding: "5px" }}>
+                  {" "}
+                  {/* Set padding to 5px */}
+                  <Typography variant="h5" color="white" textAlign={"center"}>
+                    Events
+                  </Typography>
+                  {/* Create New Post Button */}
+                  <Box>
+                    <Stack direction="row" spacing={2} mt={1}>
                       <Button
                         onClick={() => {
                           const token = localStorage.getItem("loginInfo");
                           if (token) {
                             const decodeToken = jwtDecode<any>(token);
+                            console.log("membership", decodeToken.membership);
                             if (decodeToken?.membership === 0) {
                               router.push("/membership");
                             } else {
@@ -807,6 +812,7 @@ export default function CalendarView() {
                       <Button
                         onClick={() => router.push("/events/calendar")}
                         variant="contained"
+                        color="primary"
                         endIcon={<CalendarMonth />}
                         sx={{
                           width: "100%",
@@ -823,8 +829,58 @@ export default function CalendarView() {
                         Calendar
                       </Button>
                     </Stack>
-
-                    {/* Filter by City */}
+                  </Box>
+                  <Box sx={{ marginTop: "10px", width: "100%" }}>
+                    {/* <Button
+                                            startIcon={<SortIcon />}
+                                            onClick={handleSortClick}
+                                            sx={{
+                                                color: "white",
+                                                bgcolor: "rgba(255, 255, 255, 0.05)",
+                                                "&:hover": {
+                                                    bgcolor: "rgba(255, 255, 255, 0.1)",
+                                                },
+                                                borderRadius: 2,
+                                                px: 3,
+                                                py: 1,
+                                                transition: "all 0.3s ease",
+                                                width: "100%",
+                                            }}
+                                        >
+                                            Sort
+                                        </Button>
+                                        <Menu
+                                            anchorEl={sortAnchorEl}
+                                            open={Boolean(sortAnchorEl)}
+                                            onClose={handleSortClose}
+                                            PaperProps={{
+                                                sx: {
+                                                    bgcolor: "#1A1A1A",
+                                                    color: "white",
+                                                    "& .MuiMenuItem-root": {
+                                                        "&:hover": {
+                                                            bgcolor: "rgba(245, 0, 87, 0.1)",
+                                                        },
+                                                    },
+                                                    width: "100%",
+                                                },
+                                            }}
+                                        >
+                                            <MenuItem
+                                                sx={{ width: "100%" }}
+                                                onClick={() => handleSortSelect("recent")}
+                                                selected={sortBy === "recent"}
+                                            >
+                                                Most Recent
+                                            </MenuItem>
+                                            <MenuItem
+                                                sx={{ width: "100%" }}
+                                                onClick={() => handleSortSelect("location")}
+                                                selected={sortBy === "location"}
+                                            >
+                                                By Location
+                                            </MenuItem>
+                                        </Menu> */}
                     <Autocomplete
                       id="location-autocomplete"
                       open={openCity}
@@ -837,7 +893,8 @@ export default function CalendarView() {
                       options={cityOption}
                       loading={cityLoading}
                       inputValue={cityInput}
-                      sx={{ mb: 2 }}
+                      // sx={{ width: 200 }}
+                      sx={{ marginTop: "10px" }}
                       noOptionsText={
                         <Typography sx={{ color: "white" }}>
                           No options
@@ -848,17 +905,22 @@ export default function CalendarView() {
                           setCityInput(newInputValue);
                       }}
                       onChange={(event, newValue) => {
+                        console.log("newValue", newValue);
                         if (newValue?.City) {
+                          // Filter events by city
                           const filtered = events.filter((event: any) =>
                             event.Venue?.toLowerCase().includes(
                               newValue.City.toLowerCase()
                             )
                           );
+
                           const groupedEvents = filtered.reduce(
                             (acc: { [key: string]: any[] }, event: any) => {
                               const eventDate = new Date();
                               const key = getProcessedDateKey(eventDate);
-                              if (!acc[key]) acc[key] = [];
+                              if (!acc[key]) {
+                                acc[key] = [];
+                              }
                               acc[key].push(event);
                               return acc;
                             },
@@ -867,21 +929,38 @@ export default function CalendarView() {
 
                           setSortedEvents(filtered);
                           setSearchStatus(true);
+
                           setProcessedEvents(groupedEvents);
+                          // Force mobile view when searching
                           setViewType("list");
+
+                          // Log the changed processedEvents
+                          console.log(
+                            "Filtered processedEvents:",
+                            groupedEvents
+                          );
                         } else {
                           setSortedEvents(events);
+
+                          // Reset to original grouping by event dates
                           const groupedAll = events.reduce(
                             (acc: { [key: string]: any[] }, event: any) => {
                               const date = new Date(event.StartTime);
                               const dateKey = getProcessedDateKey(date);
-                              if (!acc[dateKey]) acc[dateKey] = [];
+
+                              if (!acc[dateKey]) {
+                                acc[dateKey] = [];
+                              }
                               acc[dateKey].push(event);
                               return acc;
                             },
                             {}
                           );
+
                           setProcessedEvents(groupedAll);
+
+                          // Log the reset processedEvents
+                          console.log("Reset processedEvents:", groupedAll);
                         }
                       }}
                       ListboxProps={{
@@ -906,9 +985,9 @@ export default function CalendarView() {
                             ...params.InputProps,
                             endAdornment: (
                               <>
-                                {cityLoading && (
+                                {cityLoading ? (
                                   <CircularProgress color="inherit" size={15} />
-                                )}
+                                ) : null}
                                 {params.InputProps.endAdornment}
                               </>
                             ),
@@ -929,169 +1008,185 @@ export default function CalendarView() {
                         />
                       )}
                     />
+                  </Box>
+                  <Box
+                    className="events-container"
+                    sx={{
+                      maxHeight: "700px",
+                      overflowY: "auto",
+                      marginTop: "10px",
+                      scrollBehavior: "smooth",
+                      "&::-webkit-scrollbar": {
+                        width: "8px",
+                      },
+                      "&::-webkit-scrollbar-track": {
+                        background: "rgba(0, 0, 0, 0.1)",
+                        borderRadius: "4px",
+                      },
+                      "&::-webkit-scrollbar-thumb": {
+                        background: "rgba(194, 24, 91, 0.5)",
+                        borderRadius: "4px",
+                        "&:hover": {
+                          background: "rgba(194, 24, 91, 0.7)",
+                        },
+                      },
+                    }}
+                  >
+                    {sortedEvents.length !== 0 ? (
+                      sortedEvents.map((post: any, index: number) => {
+                        const eventDate = new Date(post.StartTime);
+                        const eventMonthYear = `${eventDate.toLocaleString(
+                          "default",
+                          { month: "long" }
+                        )} ${eventDate.getFullYear()}`;
+                        const isCurrentMonth =
+                          eventMonthYear ===
+                          new Date().toLocaleString("default", {
+                            month: "long",
+                          }) +
+                            " " +
+                            new Date().getFullYear();
 
-                    {/* Events List */}
-                    <Box
-                      className="events-container"
-                      sx={{
-                        maxHeight: { xs: "auto", md: "700px" },
-                        overflowY: { xs: "visible", md: "auto" },
-                        mt: 2,
-                        scrollBehavior: "smooth",
-                        "&::-webkit-scrollbar": {
-                          width: "8px",
-                        },
-                        "&::-webkit-scrollbar-thumb": {
-                          background: "rgba(194, 24, 91, 0.5)",
-                          borderRadius: "4px",
-                        },
-                      }}
-                    >
-                      {sortedEvents.length > 0 ? (
-                        sortedEvents.map((post: any, index: number) => {
-                          const eventDate = new Date(post.StartTime);
-                          const eventMonthYear = `${eventDate.toLocaleString(
-                            "default",
-                            {
-                              month: "long",
+                        return (
+                          <Card
+                            key={post.Id}
+                            data-event-id={post.Id}
+                            ref={isCurrentMonth ? currentMonthRef : null}
+                            onClick={() =>
+                              router.push("/events/detail/" + post?.Id)
                             }
-                          )} ${eventDate.getFullYear()}`;
-                          const isCurrentMonth =
-                            eventMonthYear ===
-                            `${new Date().toLocaleString("default", {
-                              month: "long",
-                            })} ${new Date().getFullYear()}`;
-
-                          return (
-                            <Card
-                              key={post.Id}
-                              data-event-id={post.Id}
-                              ref={isCurrentMonth ? currentMonthRef : null}
-                              onClick={() =>
-                                router.push("/events/detail/" + post?.Id)
-                              }
+                            sx={{
+                              borderRadius: "10px",
+                              marginBottom: "20px",
+                              marginTop: "20px",
+                              backgroundColor: "#f50057",
+                              border: isCurrentMonth
+                                ? `2px solid ${alpha("#f50057", 0.8)}`
+                                : "none",
+                              transition: "transform 0.2s ease-in-out",
+                              "&:hover": {
+                                transform: "scale(1.02)",
+                              },
+                            }}
+                          >
+                            <Box
                               sx={{
-                                borderRadius: 2,
-                                my: 2,
-                                backgroundColor: "#f50057",
-                                border: isCurrentMonth
-                                  ? `2px solid ${alpha("#f50057", 0.8)}`
-                                  : "none",
-                                transition: "transform 0.2s ease-in-out",
-                                "&:hover": {
-                                  transform: "scale(1.02)",
-                                },
+                                padding: 1,
+                                marginTop: "55px",
+                                backgroundColor: "#2d2d2d",
                               }}
                             >
-                              <Box
-                                sx={{
-                                  backgroundColor: "#2d2d2d",
-                                  p: 1,
+                              <img
+                                onClick={() =>
+                                  router.push(
+                                    "/whatshot/post/detail/" + post?.Id
+                                  )
+                                }
+                                src={post?.CoverImageUrl} // Placeholder image for the post
+                                alt="Post Image"
+                                style={{
+                                  width: "100%",
+                                  borderTopLeftRadius: "10px",
                                 }}
-                              >
-                                <img
-                                  onClick={() =>
-                                    router.push(
-                                      "/whatshot/post/detail/" + post?.Id
-                                    )
-                                  }
-                                  src={post?.CoverImageUrl}
-                                  alt="Post Image"
-                                  style={{
-                                    width: "100%",
-                                    borderRadius: "8px",
-                                  }}
-                                />
-                              </Box>
+                              />
+                            </Box>
 
-                              <CardContent
-                                sx={{
-                                  background: "#f50057",
-                                  color: "white",
-                                  textAlign: "center",
-                                  px: 2,
-                                  pb: 2,
-                                }}
+                            <CardContent
+                              sx={{
+                                background: "#f50057",
+                                color: "white",
+                                textAlign: "center",
+                                padding: "5px", // Ensure padding is also 5px here
+                              }}
+                            >
+                              <Typography variant="h6" component="div">
+                                {post.Name}
+                              </Typography>
+
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                mt={1}
+                                style={{ color: "white" }}
                               >
-                                <Typography variant="h6">
-                                  {post.Name}
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  sx={{ mt: 1, color: "white" }}
-                                >
-                                  <strong>Start at:</strong>{" "}
-                                  {new Intl.DateTimeFormat("en-US", {
-                                    month: "short",
-                                    day: "2-digit",
-                                    year: "2-digit",
-                                    hour: "2-digit",
-                                    hour12: true,
-                                  }).format(new Date(post.StartTime))}
-                                </Typography>
-                              </CardContent>
-                            </Card>
-                          );
-                        })
-                      ) : (
-                        <Paper
-                          elevation={24}
+                                <strong style={{ color: "white" }}>
+                                  Start at:
+                                </strong>{" "}
+                                {new Intl.DateTimeFormat("en-US", {
+                                  month: "short",
+                                  day: "2-digit",
+                                  year: "2-digit",
+                                  hour: "2-digit",
+                                  // minute: '2-digit',
+                                  hour12: true,
+                                }).format(new Date(post.StartTime))}
+                              </Typography>
+                            </CardContent>
+                          </Card>
+                        );
+                      })
+                    ) : (
+                      <Paper
+                        elevation={24}
+                        sx={{
+                          p: 6,
+                          bgcolor: "#121212",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Box
                           sx={{
-                            p: 6,
-                            bgcolor: "#121212",
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            mt: 4,
+                            bgcolor: alpha("#f50057", 0.1),
+                            p: 2,
+                            borderRadius: "50%",
+                            mb: 3,
                           }}
                         >
-                          <Box
+                          <CalendarToday
                             sx={{
-                              bgcolor: alpha("#f50057", 0.1),
-                              p: 2,
-                              borderRadius: "50%",
-                              mb: 3,
+                              width: 48,
+                              height: 48,
+                              color: "#f50057",
                             }}
-                          >
-                            <CalendarToday
-                              sx={{ width: 48, height: 48, color: "#f50057" }}
-                            />
-                          </Box>
-                          <Typography
-                            variant="h5"
-                            sx={{
-                              fontWeight: "bold",
-                              color: "white",
-                              mb: 1,
-                              textShadow: "0 2px 4px rgba(0,0,0,0.5)",
-                            }}
-                          >
-                            No Events
-                          </Typography>
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              color: alpha("#fff", 0.7),
-                              textAlign: "center",
-                              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-                            }}
-                          >
-                            There are no events scheduled for{" "}
-                            {currentDate.toLocaleString("default", {
-                              month: "long",
-                              year: "numeric",
-                            })}
-                            . Check back later or try a different month.
-                          </Typography>
-                        </Paper>
-                      )}
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
+                          />
+                        </Box>
+                        <Typography
+                          variant="h5"
+                          sx={{
+                            fontWeight: "bold",
+                            color: "white",
+                            mb: 1,
+                            textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+                          }}
+                        >
+                          No Events
+                        </Typography>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            color: alpha("#fff", 0.7),
+                            textAlign: "center",
+                            maxWidth: "md",
+                            textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                          }}
+                        >
+                          There are no events scheduled for{" "}
+                          {currentDate.toLocaleString("default", {
+                            month: "long",
+                            year: "numeric",
+                          })}
+                          . Check back later or try a different month.
+                        </Typography>
+                      </Paper>
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
             </Grid>
-          </>
+          </Grid>
         ) : (
           <>
             <Button
