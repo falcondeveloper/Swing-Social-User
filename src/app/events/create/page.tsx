@@ -969,127 +969,28 @@ const EventForm: React.FC = () => {
               }}
             />
 
-            <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
-              <Paper
-                elevation={2}
-                sx={{
-                  p: 4,
-                  border: "2px dashed",
-                  borderColor: (theme) =>
-                    touched.coverPhoto && errors.coverPhoto
-                      ? "#ff6b6b"
-                      : "white",
-                  borderRadius: 2,
-                  cursor: "pointer",
-                  backgroundColor: "#2a2a2a",
-                  transition: "all 0.3s ease",
-                  "&:hover": {
-                    backgroundColor: "#333333",
-                    borderColor: "white",
-                    transform: "translateY(-2px)",
-                    boxShadow: "0 4px 12px rgba(255,20,147,0.2)",
-                  },
+            <div style={{ marginTop: "10px" }}>
+              <ImageUpload
+                isCoverPhoto
+                value={formData.coverPhoto ? [formData.coverPhoto] : null}
+                onChange={(files) => {
+                  if (files && files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      setEventCoverImage(reader.result as string);
+                    };
+                    reader.readAsDataURL(files[0]);
+                    handleChange("coverPhoto", files[0]);
+                  } else {
+                    handleChange("coverPhoto", null);
+                    setEventCoverImage(null);
+                  }
                 }}
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload("coverPhoto")}
-                  onBlur={() => handleBlur("coverPhoto")}
-                  style={{ display: "none" }}
-                  id="cover-photo-upload"
-                />
-                <label
-                  htmlFor="cover-photo-upload"
-                  style={{ width: "100%", cursor: "pointer" }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 2,
-                    }}
-                  >
-                    <CloudUploadIcon
-                      sx={{
-                        fontSize: 48,
-                        color: "white",
-                        transition: "transform 0.3s ease",
-                        "&:hover": {
-                          transform: "scale(1.1)",
-                        },
-                      }}
-                    />
-                    <Box sx={{ textAlign: "center" }}>
-                      <Typography variant="h6" sx={{ color: "white", mb: 1 }}>
-                        Upload Cover Photo
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: "#999" }}>
-                        Drag and drop your image here, or click to select
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{ color: "#666", mt: 1, display: "block" }}
-                      >
-                        Supports: JPG, PNG, GIF (Max size: 5MB)
-                      </Typography>
-                      {formData.coverPhoto != null && (
-                        <Box
-                          sx={{
-                            mt: 2,
-                            p: 2,
-                            bgcolor: "rgb(144, 146, 150)",
-                            borderRadius: 1,
-                          }}
-                        >
-                          <Typography variant="body2">
-                            Cover photo is selected
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Box>
-                </label>
-              </Paper>
-              {touched.coverPhoto && errors.coverPhoto && (
-                <FormHelperText error sx={{ ml: 2, color: "#ff6b6b" }}>
-                  {errors.coverPhoto}
-                </FormHelperText>
-              )}
-            </Grid>
-
-            {formData.coverPhoto && (
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 2,
-                  bgcolor: "rgb(144, 146, 150)",
-                  borderRadius: 1,
-                }}
-              >
-                <h4>Selected Cover photo</h4>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    marginTop: "10px",
-                  }}
-                >
-                  <img
-                    src={URL.createObjectURL(formData.coverPhoto)}
-                    alt="Cover Preview"
-                    style={{
-                      width: "150px",
-                      height: "150px",
-                      objectFit: "cover",
-                      borderRadius: "8px",
-                    }}
-                  />
-                </div>
-              </Box>
-            )}
+                onBlur={() => handleBlur("coverPhoto")}
+                error={!formData.coverPhoto && errors.coverPhoto}
+                touched={touched.coverPhoto}
+              />
+            </div>
 
             <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
               <Paper
@@ -1608,189 +1509,6 @@ const EventForm: React.FC = () => {
                         )}
                       </Box>
 
-                      {/* <Box>
-                                                <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'white' }}>
-                                                    Email Description *
-                                                </Typography>
-                                                <Typography sx={{ mb: 1, fontSize: 'calc(0.75rem)', color: 'rgb(144, 146, 150)' }}>
-                                                    Enter the description of the email sent to the attendees
-                                                </Typography>
-                                                <Paper elevation={2} sx={{ p: 1, mb: 1, border: "0.0625rem solid rgb(55, 58, 64);" }}>
-                                                    <Editor
-                                                        apiKey={"l1j8914ctmajvo6bed8vxy873jf3a7w4hp7t3837ostucw87"}
-                                                        value={formData.emailDescription}
-                                                        onEditorChange={(content) => handleChange('emailDescription', content)}
-                                                        onBlur={() => handleBlur('emailDescription')}
-                                                        init={{
-                                                            height: 300,
-                                                            menubar: false,
-                                                            statusbar: false,
-                                                            plugins: ['lists', 'link', 'image', 'code'],
-                                                            toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link image',
-                                                            skin: 'oxide',
-                                                            content_style: "body { background-color: #666; color: white;}",
-                                                        }}
-                                                    />
-                                                </Paper>
-                                                {touched.emailDescription && errors.emailDescription && (
-                                                    <FormHelperText error sx={{ ml: 2 }}>{errors.emailDescription}</FormHelperText>
-                                                )}
-                                            </Box> */}
-
-                      {/* <Box>
-                                                <Typography variant="subtitle1" sx={{
-                                                    mb: 1,
-                                                    fontWeight: 500,
-                                                    color: 'white'
-                                                }}>
-                                                    Cover Photo *
-                                                </Typography>
-                                                <Paper
-                                                    elevation={2}
-                                                    sx={{
-                                                        p: 4,
-                                                        border: '2px dashed',
-                                                        borderColor: 'rgb(144, 146, 150)',
-                                                        borderRadius: 2,
-                                                        cursor: 'pointer',
-                                                        backgroundColor: '#2a2a2a',
-                                                        transition: 'all 0.3s ease',
-                                                        '&:hover': {
-                                                            backgroundColor: '#333333',
-                                                            borderColor: 'rgb(144, 146, 150)',
-                                                            transform: 'translateY(-2px)',
-                                                            boxShadow: '0 4px 12px white',
-                                                        }
-                                                    }}
-                                                >
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={handleImageUpload('coverPhoto')}
-                                                        onBlur={() => handleBlur('coverPhoto')}
-                                                        style={{ display: 'none' }}
-                                                        id="cover-photo-upload"
-                                                    />
-                                                    <label htmlFor="cover-photo-upload" style={{ width: '100%', cursor: 'pointer' }}>
-                                                        <Box sx={{
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            alignItems: 'center',
-                                                            gap: 2
-                                                        }}>
-                                                            <CloudUploadIcon sx={{
-                                                                fontSize: 48,
-                                                                color: 'white',
-                                                                transition: 'transform 0.3s ease',
-                                                                '&:hover': {
-                                                                    transform: 'scale(1.1)'
-                                                                }
-                                                            }} />
-                                                            <Box sx={{ textAlign: 'center' }}>
-                                                                <Typography variant="h6" sx={{ mb: 1 }}>
-                                                                    Upload Cover Photo
-                                                                </Typography>
-                                                                <Typography variant="body2" sx={{ color: '#999' }}>
-                                                                    Drag and drop your image here, or click to select
-                                                                </Typography>
-                                                                <Typography variant="caption" sx={{ color: '#666', mt: 1, display: 'block' }}>
-                                                                    Supports: JPG, PNG, GIF (Max size: 5MB)
-                                                                </Typography>
-                                                                {formData.coverPhoto != null && (
-                                                                    <Box sx={{ mt: 2, p: 2, bgcolor: 'rgb(144, 146, 150)', borderRadius: 1 }}>
-                                                                        <Typography variant="body2" >
-                                                                            Cover photo is selected
-                                                                        </Typography>
-                                                                    </Box>
-                                                                )}
-                                                            </Box>
-                                                        </Box>
-                                                    </label>
-                                                </Paper>
-                                                {touched.coverPhoto && errors.coverPhoto && (
-                                                    <FormHelperText error sx={{ ml: 2, color: '#ff6b6b' }}>
-                                                        {errors.coverPhoto}
-                                                    </FormHelperText>
-                                                )}
-                                            </Box>
-
-                                            <Box sx={{ mt: 4 }}>
-                                                <Typography variant="subtitle1" sx={{
-                                                    mb: 1,
-                                                    fontWeight: 500,
-                                                    color: 'white'
-                                                }}>
-                                                    Photos *
-                                                </Typography>
-                                                <Paper
-                                                    elevation={2}
-                                                    sx={{
-                                                        p: 4,
-                                                        border: '2px dashed',
-                                                        borderColor: 'rgb(144, 146, 150)',
-                                                        borderRadius: 2,
-                                                        cursor: 'pointer',
-                                                        backgroundColor: '#2a2a2a',
-                                                        transition: 'all 0.3s ease',
-                                                        '&:hover': {
-                                                            backgroundColor: '#333333',
-                                                            borderColor: 'rgb(144, 146, 150)',
-                                                            transform: 'translateY(-2px)',
-                                                            boxShadow: '0 4px 12px white',
-                                                        }
-                                                    }}
-                                                >
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        multiple
-                                                        onChange={handleImageUpload('photos')}
-                                                        onBlur={() => handleBlur('photos')}
-                                                        style={{ display: 'none' }}
-                                                        id="photos-upload"
-                                                    />
-                                                    <label htmlFor="photos-upload" style={{ width: '100%', cursor: 'pointer' }}>
-                                                        <Box sx={{
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            alignItems: 'center',
-                                                            gap: 2
-                                                        }}>
-                                                            <CollectionsIcon sx={{
-                                                                fontSize: 48,
-                                                                transition: 'transform 0.3s ease',
-                                                                '&:hover': {
-                                                                    transform: 'scale(1.1)'
-                                                                }
-                                                            }} />
-                                                            <Box sx={{ textAlign: 'center' }}>
-                                                                <Typography variant="h6" sx={{ mb: 1 }}>
-                                                                    Upload Event Photos
-                                                                </Typography>
-                                                                <Typography variant="body2" sx={{ color: '#999' }}>
-                                                                    Drag and drop multiple images here, or click to select
-                                                                </Typography>
-                                                                <Typography variant="caption" sx={{ color: '#666', mt: 1, display: 'block' }}>
-                                                                    Supports: JPG, PNG, GIF (Max 10 images, 5MB each)
-                                                                </Typography>
-                                                                {formData.photos.length > 0 && (
-                                                                    <Box sx={{ mt: 2, p: 2, bgcolor: 'rgb(144, 146, 150)', borderRadius: 1 }}>
-                                                                        <Typography variant="body2" >
-                                                                            {formData.photos.length} {formData.photos.length === 1 ? 'image' : 'images'} selected
-                                                                        </Typography>
-                                                                    </Box>
-                                                                )}
-                                                            </Box>
-                                                        </Box>
-                                                    </label>
-                                                </Paper>
-                                                {touched.photos && errors.photos && (
-                                                    <FormHelperText error sx={{ ml: 2, color: '#ff6b6b' }}>
-                                                        {errors.photos}
-                                                    </FormHelperText>
-                                                )}
-                                            </Box> */}
-
                       <ImageUpload
                         isCoverPhoto
                         value={
@@ -1810,7 +1528,7 @@ const EventForm: React.FC = () => {
                           }
                         }}
                         onBlur={() => handleBlur("coverPhoto")}
-                        error={errors.coverPhoto}
+                        error={!formData.coverPhoto && errors.coverPhoto}
                         touched={touched.coverPhoto}
                       />
 
@@ -1921,69 +1639,6 @@ const EventForm: React.FC = () => {
                         </Stack>
                       </LocalizationProvider>
 
-                      {/* <EventRepeats
-                                                value={formData.repeats}
-                                                onChange={(repeats) => handleChange('repeats', repeats)}
-                                            /> */}
-
-                      {/* <FormControlLabel
-                                                control={
-                                                    <Checkbox
-                                                        checked={formData.allowFreeUsers}
-                                                        onChange={(e) => handleChange('allowFreeUsers', e.target.checked === true ? 1 : 0)}
-                                                        sx={{
-                                                            color: 'white',
-                                                            '&.Mui-checked': {
-                                                                color: '#ff1493',
-                                                            },
-                                                            '& .MuiSvgIcon-root': {
-                                                                fontSize: 28,
-                                                                transition: 'all 0.2s ease',
-                                                            },
-                                                            '&:hover': {
-                                                                '& .MuiSvgIcon-root': {
-                                                                    transform: 'scale(1.1)',
-                                                                }
-                                                            },
-                                                            padding: '12px',
-                                                            borderRadius: '8px',
-                                                        }}
-                                                    />
-                                                }
-                                                label={
-                                                    <Box sx={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: 1
-                                                    }}>
-                                                        <Typography
-                                                            sx={{
-                                                                color: '#fff',
-                                                                fontWeight: 500,
-                                                                fontSize: '1rem',
-                                                                transition: 'color 0.2s ease',
-                                                            }}
-                                                        >
-                                                            Allow free users
-                                                        </Typography>
-                                                        <Tooltip title="Enable this to make the event accessible to free users" arrow>
-                                                            <InfoIcon
-                                                                sx={{
-                                                                    fontSize: 20,
-                                                                    opacity: 0.8,
-                                                                    '&:hover': {
-                                                                        opacity: 1
-                                                                    }
-                                                                }}
-                                                            />
-                                                        </Tooltip>
-                                                    </Box>
-                                                }
-                                                sx={{
-                                                    marginLeft: 0,
-                                                }}
-                                            /> */}
-
                       <FormControl
                         required
                         error={touched.category && Boolean(errors.category)}
@@ -2028,35 +1683,6 @@ const EventForm: React.FC = () => {
                           <FormHelperText>{errors.category}</FormHelperText>
                         )}
                       </FormControl>
-
-                      {/* <Autocomplete
-                                                multiple
-                                                options={[]}
-                                                freeSolo
-                                                value={formData.tags}
-                                                onChange={(_, value) => handleChange('tags', value)}
-                                                onBlur={() => handleBlur('tags')}
-                                                renderInput={(params) => (
-                                                    <TextField
-                                                        {...params}
-                                                        label="Tags"
-                                                        error={touched.tags && Boolean(errors.tags)}
-                                                        helperText={touched.tags && errors.tags}
-                                                    />
-                                                )}
-                                                sx={{
-                                                    '& .MuiAutocomplete-endAdornment': {
-                                                        '& .MuiSvgIcon-root': {
-                                                            color: 'white',
-                                                        },
-                                                    },
-                                                    '& .MuiSvgIcon-root-MuiSelect-icon': {
-                                                        color: 'white', // Calendar icon color
-                                                        fontSize: '1.5rem', // Adjust size of the calendar icon
-                                                        transition: 'all 0.3s ease', // Add smooth transitions for hover effects
-                                                    },
-                                                }}
-                                            /> */}
 
                       <Button
                         type="submit"
