@@ -203,112 +203,115 @@ const TicketList: React.FC<TicketListProps> = ({
             },
           }}
         >
-          {tickets.map((ticket, index) => (
-            <Fade
-              key={ticket.TicketPackageId}
-              in={true}
-              timeout={500}
-              style={{ transitionDelay: `${index * 100}ms` }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                  p: 3,
-                  borderRadius: 2,
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  background: "linear-gradient(145deg, #2e2e2e, #3c3c3c)",
-                  mb: 2,
-                  transition: "0.3s",
-                  "&:hover": {
-                    transform: "scale(1.01)",
-                    boxShadow: "0 4px 20px rgba(136, 14, 79, 0.4)",
-                  },
-                }}
+          {tickets
+            .filter((ticket) => ticket.OriginalQuantity > 0)
+            .map((ticket, index) => (
+              <Fade
+                key={ticket.TicketPackageId}
+                in={true}
+                timeout={500}
+                style={{ transitionDelay: `${index * 100}ms` }}
               >
                 <Box
                   sx={{
                     display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Chip
-                    label={ticket.Type.toUpperCase()}
-                    sx={{ bgcolor: "#420b8f", color: "white" }}
-                  />
-                  <Box
-                    sx={{
-                      display: "inline-block",
-                      px: 2,
-                      py: 0.5,
-                      bgcolor: "#ffebee",
-                      color: "#c62828",
-                      fontWeight: "bold",
-                      fontSize: "0.9rem",
-                      borderRadius: "999px",
-                      boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
-                      minWidth: "60px",
-                      textAlign: "center",
-                    }}
-                  >
-                    ${ticket.Price}
-                  </Box>
-                </Box>
-
-                <TextField
-                  size="small"
-                  placeholder="Enter quantity"
-                  type="number"
-                  value={ticketQuantities[ticket.TicketPackageId] || ""}
-                  onChange={(e) =>
-                    handleQuantityChange(
-                      ticket.TicketPackageId,
-                      e.target.value,
-                      ticket
-                    )
-                  }
-                  disabled={ticket.OriginalQuantity <= 0}
-                  sx={{
-                    mt: 2,
-                    input: {
-                      textAlign: "center",
-                      bgcolor: "white",
-                      borderRadius: 1,
+                    flexDirection: "column",
+                    gap: 2,
+                    p: 3,
+                    borderRadius: 2,
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    background: "linear-gradient(145deg, #2e2e2e, #3c3c3c)",
+                    mb: 2,
+                    transition: "0.3s",
+                    "&:hover": {
+                      transform: "scale(1.01)",
+                      boxShadow: "0 4px 20px rgba(136, 14, 79, 0.4)",
                     },
                   }}
-                />
-
-                <Box sx={{ textAlign: "center", mt: 1 }}>
-                  <Typography variant="subtitle1" color="white">
-                    {ticket.Name}
-                  </Typography>
-                  <Typography
-                    variant="body2"
+                >
+                  <Box
                     sx={{
-                      color:
-                        ticket.OriginalQuantity > 0 ? "#4caf50" : "#f44336",
-                      fontWeight: "bold",
-                      fontSize: "1rem",
-                      textTransform: "uppercase",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
                     }}
                   >
-                    {ticket.OriginalQuantity > 0
-                      ? `${ticket.OriginalQuantity} Available`
-                      : "Sold Out"}
-                  </Typography>
+                    <Chip
+                      label={ticket.Type.toUpperCase()}
+                      sx={{ bgcolor: "#420b8f", color: "white" }}
+                    />
+                    <Box
+                      sx={{
+                        display: "inline-block",
+                        px: 2,
+                        py: 0.5,
+                        bgcolor: "#ffebee",
+                        color: "#c62828",
+                        fontWeight: "bold",
+                        fontSize: "0.9rem",
+                        borderRadius: "999px",
+                        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+                        minWidth: "60px",
+                        textAlign: "center",
+                      }}
+                    >
+                      ${ticket.Price}
+                    </Box>
+                  </Box>
 
-                  {ticketQuantities[ticket.TicketPackageId] > 0 && (
-                    <Typography color="primary" mt={1}>
-                      Subtotal: $
-                      {ticket.Price * ticketQuantities[ticket.TicketPackageId]}
+                  <TextField
+                    size="small"
+                    placeholder="Enter quantity"
+                    type="number"
+                    value={ticketQuantities[ticket.TicketPackageId] || ""}
+                    onChange={(e) =>
+                      handleQuantityChange(
+                        ticket.TicketPackageId,
+                        e.target.value,
+                        ticket
+                      )
+                    }
+                    disabled={ticket.OriginalQuantity <= 0}
+                    sx={{
+                      mt: 2,
+                      input: {
+                        textAlign: "center",
+                        bgcolor: "white",
+                        borderRadius: 1,
+                      },
+                    }}
+                  />
+
+                  <Box sx={{ textAlign: "center", mt: 1 }}>
+                    <Typography variant="subtitle1" color="white">
+                      {ticket.Name}
                     </Typography>
-                  )}
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color:
+                          ticket.OriginalQuantity > 0 ? "#4caf50" : "#f44336",
+                        fontWeight: "bold",
+                        fontSize: "1rem",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {ticket.OriginalQuantity > 0
+                        ? `${ticket.OriginalQuantity} Available`
+                        : "Sold Out"}
+                    </Typography>
+
+                    {ticketQuantities[ticket.TicketPackageId] > 0 && (
+                      <Typography color="primary" mt={1}>
+                        Subtotal: $
+                        {ticket.Price *
+                          ticketQuantities[ticket.TicketPackageId]}
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
-              </Box>
-            </Fade>
-          ))}
+              </Fade>
+            ))}
         </Box>
 
         {totalQuantity > 0 && (

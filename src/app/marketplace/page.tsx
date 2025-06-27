@@ -2,36 +2,36 @@
 
 import React, { useState, useEffect } from "react";
 import {
-	Box,
-	Container,
-	Typography,
-	TextField,
-	Button,
-	Card,
-	CardContent,
-	CardMedia,
-	Chip,
-	Grid,
-	IconButton,
-	InputAdornment,
-	AppBar,
-	Toolbar,
-	useTheme,
-	useMediaQuery,
-	Fade,
-	Zoom,
-	Grow,
-	alpha,
-	styled,
+  Box,
+  Container,
+  Typography,
+  TextField,
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  Chip,
+  Grid,
+  IconButton,
+  InputAdornment,
+  AppBar,
+  Toolbar,
+  useTheme,
+  useMediaQuery,
+  Fade,
+  Zoom,
+  Grow,
+  alpha,
+  styled,
 } from "@mui/material";
 import {
-	Search as SearchIcon,
-	Favorite,
-	FavoriteBorder,
-	ShoppingCart,
-	FilterList,
-	LocalOffer,
-	AddCircleOutline,
+  Search as SearchIcon,
+  Favorite,
+  FavoriteBorder,
+  ShoppingCart,
+  FilterList,
+  LocalOffer,
+  AddCircleOutline,
 } from "@mui/icons-material";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -116,16 +116,16 @@ import { useRouter } from "next/navigation";
 
 // Types
 interface Product {
-	Id: string;
-	Active: boolean;
-	Category: string;
-	CoverImageUrl: string;
-	Description: string;
-	ExternalURL: string;
-	Rating: number;
-	Title: string;
-	Username: string;
-	Price: Number;
+  Id: string;
+  Active: boolean;
+  Category: string;
+  CoverImageUrl: string;
+  Description: string;
+  ExternalURL: string;
+  Rating: number;
+  Title: string;
+  Username: string;
+  Price: Number;
 }
 
 // const categories = [
@@ -139,362 +139,358 @@ interface Product {
 // ];
 
 const Marketplace: React.FC = () => {
-	const theme = useTheme();
-	const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-	const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
-	const [selectedCategory, setSelectedCategory] = useState("All");
-	const [searchQuery, setSearchQuery] = useState("");
-	const [favorites, setFavorites] = useState<string[]>([]);
-	const [showAnimation, setShowAnimation] = useState(false);
-	const [products, setProducts] = useState<Product[]>([]);
-	const [isClient, setIsClient] = useState(false);
-	const [profileId, setProfileId] = useState("");
-	const router = useRouter();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isClient, setIsClient] = useState(false);
+  const [profileId, setProfileId] = useState("");
+  const router = useRouter();
 
-	const getAllProducts = async () => {
-		try {
-			const response = await fetch("/api/marketplace", {
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-				},
-			});
-			const data = await response.json();
-			console.log(data.products);
-			setProducts(data.products);
-			setShowAnimation(true);
-		} catch (error) {
-			console.error("Error fetching marketplace data:", error);
-		}
-	};
+  const getAllProducts = async () => {
+    try {
+      const response = await fetch("/api/marketplace", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      console.log(data.products);
+      setProducts(data.products);
+      setShowAnimation(true);
+    } catch (error) {
+      console.error("Error fetching marketplace data:", error);
+    }
+  };
 
-	useEffect(() => {
-		setIsClient(true);
-		getAllProducts();
-	}, []);
+  useEffect(() => {
+    setIsClient(true);
+    getAllProducts();
+  }, []);
 
-	useEffect(() => {
-		const id = localStorage.getItem("logged_in_profile");
-		console.log(id);
-		const urlParams = new URLSearchParams(window.location.search);
-		const aff = urlParams.get("aff");
-		const refer = urlParams.get("refer");
+  useEffect(() => {
+    const id = localStorage.getItem("logged_in_profile");
+    const urlParams = new URLSearchParams(window.location.search);
+    const aff = urlParams.get("aff");
+    const refer = urlParams.get("refer");
 
-		// Detect OS
-		const getOS = () => {
-			const userAgent = window.navigator.userAgent;
-			if (userAgent.indexOf("Win") !== -1) return "Windows";
-			if (userAgent.indexOf("Mac") !== -1) return "MacOS";
-			if (userAgent.indexOf("Linux") !== -1) return "Linux";
-			if (userAgent.indexOf("Android") !== -1) return "Android";
-			if (userAgent.indexOf("iOS") !== -1) return "iOS";
-			return null;
-		};
+    // Detect OS
+    const getOS = () => {
+      const userAgent = window.navigator.userAgent;
+      if (userAgent.indexOf("Win") !== -1) return "Windows";
+      if (userAgent.indexOf("Mac") !== -1) return "MacOS";
+      if (userAgent.indexOf("Linux") !== -1) return "Linux";
+      if (userAgent.indexOf("Android") !== -1) return "Android";
+      if (userAgent.indexOf("iOS") !== -1) return "iOS";
+      return null;
+    };
 
-		// Get current URL and page info
-		const currentUrl = window.location.href;
-		const currentPage = "MarketPlace"; // Since this is login page
+    // Get current URL and page info
+    const currentUrl = window.location.href;
+    const currentPage = "MarketPlace"; // Since this is login page
 
-		if (id) {
-			setProfileId(id);
-			fetch("/api/user/tracking", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json"
-				},
-				body: JSON.stringify({
-					affiliate: aff,
-					referral: refer,
-					OS: getOS(),
-					page: currentPage,
-					url: currentUrl,
-					userid: id
-				})
-			});			
-		}
-		else{
-			fetch("/api/user/tracking", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json"
-				},
-				body: JSON.stringify({
-					affiliate: aff,
-					referral: refer,
-					OS: getOS(),
-					page: currentPage,
-					url: currentUrl,
-					userid: null
-				})
-			});		
-		}
-	}, []);
+    if (id) {
+      setProfileId(id);
+      fetch("/api/user/tracking", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          affiliate: aff,
+          referral: refer,
+          OS: getOS(),
+          page: currentPage,
+          url: currentUrl,
+          userid: id,
+        }),
+      });
+    } else {
+      fetch("/api/user/tracking", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          affiliate: aff,
+          referral: refer,
+          OS: getOS(),
+          page: currentPage,
+          url: currentUrl,
+          userid: null,
+        }),
+      });
+    }
+  }, []);
 
-	useEffect(() => {
-		if (searchQuery) {
-			console.log(searchQuery);
-			const searchProducts = async () => {
-				try {
-					const response = await fetch(
-						`/api/marketplace/search?query=${searchQuery}`,
-						{
-							method: "GET",
-							headers: {
-								"Content-Type": "application/json",
-							},
-						}
-					);
-					const data = await response.json();
-					console.log("-----------------searchproducts", data.products.rows);
-					setProducts(data.products.rows);
-				} catch (error) {
-					console.error("Error searching marketplace data:", error);
-				}
-			};
-			searchProducts();
-		} else {
-			getAllProducts();
-		}
-	}, [searchQuery]);
+  useEffect(() => {
+    if (searchQuery) {
+      console.log(searchQuery);
+      const searchProducts = async () => {
+        try {
+          const response = await fetch(
+            `/api/marketplace/search?query=${searchQuery}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          const data = await response.json();
+          console.log("-----------------searchproducts", data.products.rows);
+          setProducts(data.products.rows);
+        } catch (error) {
+          console.error("Error searching marketplace data:", error);
+        }
+      };
+      searchProducts();
+    } else {
+      getAllProducts();
+    }
+  }, [searchQuery]);
 
-	const handleNavigate = (category: any) => {
-		console.log(category);
-		router.push(`/marketplace/${category.Id}`);
-	};
+  const handleNavigate = (category: any) => {
+    console.log(category);
+    router.push(`/marketplace/${category.Id}`);
+  };
 
-	// const toggleFavorite = (productId: string) => {
-	//     setFavorites((prev) =>
-	//         prev.includes(productId)
-	//             ? prev.filter((id) => id !== productId)
-	//             : [...prev, productId]
-	//     );
-	// };
+  // const toggleFavorite = (productId: string) => {
+  //     setFavorites((prev) =>
+  //         prev.includes(productId)
+  //             ? prev.filter((id) => id !== productId)
+  //             : [...prev, productId]
+  //     );
+  // };
 
-	// const filteredProducts = products?.filter((product) => {
-	//     const matchesCategory =
-	//         selectedCategory === "All" || product.Category === selectedCategory;
-	//     const matchesSearch = product.Title.toLowerCase().includes(
-	//         searchQuery.toLowerCase()
-	//     );
-	//     return matchesCategory && matchesSearch;
-	// });
+  // const filteredProducts = products?.filter((product) => {
+  //     const matchesCategory =
+  //         selectedCategory === "All" || product.Category === selectedCategory;
+  //     const matchesSearch = product.Title.toLowerCase().includes(
+  //         searchQuery.toLowerCase()
+  //     );
+  //     return matchesCategory && matchesSearch;
+  // });
 
-	if (!isClient) {
-		return null; // Prevent SSR issues
-	}
+  if (!isClient) {
+    return null; // Prevent SSR issues
+  }
 
-	// const renderContent = () => (
-	//     <Box
-	//         sx={{
-	//             minHeight: "100vh",
-	//             background: isMobile
-	//                 ? `url(https://swingsocialphotos.blob.core.windows.net/images/1738171077933_marketplace.jpeg) no-repeat center center fixed`
-	//                 : "linear-gradient(145deg, #f8f9ff 0%, #f1f4f9 100%)",
-	//             backgroundSize: "cover",
-	//             pt: 8,
-	//         }}
-	//     >
-	//         {/* Existing Content */}
-	//         <Container maxWidth="lg" sx={{ mt: 4 }}>
-	//             {/* Your current marketplace content */}
-	//         </Container>
-	//     </Box>
-	// );
+  // const renderContent = () => (
+  //     <Box
+  //         sx={{
+  //             minHeight: "100vh",
+  //             background: isMobile
+  //                 ? `url(https://swingsocialphotos.blob.core.windows.net/images/1738171077933_marketplace.jpeg) no-repeat center center fixed`
+  //                 : "linear-gradient(145deg, #f8f9ff 0%, #f1f4f9 100%)",
+  //             backgroundSize: "cover",
+  //             pt: 8,
+  //         }}
+  //     >
+  //         {/* Existing Content */}
+  //         <Container maxWidth="lg" sx={{ mt: 4 }}>
+  //             {/* Your current marketplace content */}
+  //         </Container>
+  //     </Box>
+  // );
 
-	// const sliderSettings = {
-	//     dots: true,
-	//     infinite: true,
-	//     speed: 500,
-	//     slidesToShow: 1,
-	//     slidesToScroll: 1,
-	//     autoplay: true,
-	//     autoplaySpeed: 3000,
-	// };
+  // const sliderSettings = {
+  //     dots: true,
+  //     infinite: true,
+  //     speed: 500,
+  //     slidesToShow: 1,
+  //     slidesToScroll: 1,
+  //     autoplay: true,
+  //     autoplaySpeed: 3000,
+  // };
 
-	return (
-		<>
-			<Box sx={{ color: "white", padding: "10px" }}>
-				<Header />
+  return (
+    <>
+      <Box sx={{ color: "white", padding: "10px" }}>
+        <Header />
 
-				{/* Title */}
-				<Typography
-					variant="h6"
-					component="h6"
-					align="center"
-					gutterBottom
-					sx={{ marginTop: { xs: "100px", lg: "70px" } }}
-				>
-					Marketplace
-				</Typography>
+        {/* Title */}
+        <Typography
+          variant="h6"
+          component="h6"
+          align="center"
+          gutterBottom
+          sx={{ marginTop: { xs: "100px", lg: "70px" } }}
+        >
+          Marketplace
+        </Typography>
 
-				<Box sx={{ marginTop: 2, marginBottom: 2 }}>
-					<Grid
-						container
-						spacing={2}
-						justifyContent="center"
-						alignItems="center"
-					>
-						<Grid item>
-							<Button
-								variant="contained"
-								sx={{
-									fontSize: isMobile
-										? "0.7rem"
-										: isTablet
-										? "0.875rem"
-										: "1rem",
-									padding: isMobile
-										? "3px 6px"
-										: isTablet
-										? "8px 16px"
-										: "10px 20px",
-									backgroundColor: "#d219c4",
-								}}
-							>
-								Saved Items
-							</Button>
-						</Grid>
-						<Grid item>
-							<Button
-								variant="contained"
-								sx={{
-									fontSize: isMobile
-										? "0.7rem"
-										: isTablet
-										? "0.875rem"
-										: "1rem",
-									padding: isMobile
-										? "3px 16px"
-										: isTablet
-										? "8px 16px"
-										: "10px 20px",
-									backgroundColor: "#d219c4",
-								}}
-								onClick={() =>
-									router.push(`/marketplace/create/${profileId}`)
-								}
-							>
-								Sell
-							</Button>
-						</Grid>
-						<Grid item>
-							<TextField
-								size="small"
-								variant="outlined"
-								placeholder="Search"
-								value={searchQuery}
-								onChange={(e) => setSearchQuery(e.target.value)}
-								InputProps={{
-									startAdornment: (
-										<InputAdornment position="start">
-											<SearchIcon />
-										</InputAdornment>
-									),
-								}}
-								sx={{
-									fontSize: isMobile
-										? "0.6rem"
-										: isTablet
-										? "0.875rem"
-										: "1rem",
-									width: isMobile ? "100%" : isTablet ? "300px" : "500px",
-									backgroundColor: "lightgray",
-								}}
-							/>
-						</Grid>
-					</Grid>
-				</Box>
+        <Box sx={{ marginTop: 2, marginBottom: 2 }}>
+          <Grid
+            container
+            spacing={2}
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Grid item>
+              <Button
+                variant="contained"
+                sx={{
+                  fontSize: isMobile
+                    ? "0.7rem"
+                    : isTablet
+                    ? "0.875rem"
+                    : "1rem",
+                  padding: isMobile
+                    ? "3px 6px"
+                    : isTablet
+                    ? "8px 16px"
+                    : "10px 20px",
+                  backgroundColor: "#d219c4",
+                }}
+              >
+                Saved Items
+              </Button>
+            </Grid>
+            <Grid item>
+              <Button
+                variant="contained"
+                sx={{
+                  fontSize: isMobile
+                    ? "0.7rem"
+                    : isTablet
+                    ? "0.875rem"
+                    : "1rem",
+                  padding: isMobile
+                    ? "3px 16px"
+                    : isTablet
+                    ? "8px 16px"
+                    : "10px 20px",
+                  backgroundColor: "#d219c4",
+                }}
+                onClick={() => router.push(`/marketplace/create/${profileId}`)}
+              >
+                Sell
+              </Button>
+            </Grid>
+            <Grid item>
+              <TextField
+                size="small"
+                variant="outlined"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  fontSize: isMobile
+                    ? "0.6rem"
+                    : isTablet
+                    ? "0.875rem"
+                    : "1rem",
+                  width: isMobile ? "100%" : isTablet ? "300px" : "500px",
+                  backgroundColor: "lightgray",
+                }}
+              />
+            </Grid>
+          </Grid>
+        </Box>
 
-				{/* Category Card List */}
-				<Box
-					sx={{
-						padding: {
-							xs: "0px 10px", // For extra small screens (2 images per row)
-							sm: "0px 20px", // For small screens (3 images per row)
-							md: "0px 50px", // For medium screens (4 images per row)
-							lg: "0px 60px", // For large screens (6 images per row)
-							xl: "0px 100px", // For extra-large screens (6 images per row)
-						},
-						// marginTop: { xs: "100px", lg: "70px" },
-						marginBottom: { xs: "60px", lg: "10px" },
-					}}
-				>
-					<Grid container spacing={1}>
-						{products.map((category, index) => (
-							<Grid
-								item
-								xs={6} // 2 images per row on extra small screens
-								sm={5} // 3 images per row on small screens
-								md={4} // 4 images per row on medium screens
-								lg={3} // 6 images per row on large screens
-								xl={3} // 6 images per row on extra-large screens
-								key={index}
-								sx={{ cursor: "pointer" }}
-							>
-								<div>
-									<Card
-										onClick={() => handleNavigate(category)}
-										sx={{
-											backgroundColor: "#0a0a0a",
-											color: "white",
-											position: "relative",
-											overflow: "hidden",
-											width: "100%",
-											height: "100%",
-											aspectRatio: "1", // Square shape
-											borderRadius: "15px",
-										}}
-									>
-										<CardContent
-											sx={{
-												display: "flex",
-												flexDirection: "column",
-												alignItems: "center",
-												justifyContent: "center",
-												height: "100%",
-												position: "relative",
-											}}
-										>
-											<Box
-												sx={{
-													height: "90%",
-													width: "100%",
-													display: "flex",
-													alignItems: "center",
-													justifyContent: "center",
-												}}
-											>
-												<img
-													src={category?.CoverImageUrl}
-													alt="Product"
-													style={{
-														width: "100%",
-														height: "100%",
-														objectFit: "cover",
-														borderRadius: "8px",
-													}}
-												/>
-											</Box>
-											<Box
-												sx={{
-													height: "5%",
-													width: "100%",
-													display: "flex",
-													alignItems: "center",
-													justifyContent: "center",
-												}}
-											>
-												<Typography
-													variant="h6"
-													sx={{ color: "white", fontSize: "12px" }}
-												>
-													${category?.Price.toString()}, {category?.Title}
-												</Typography>
-											</Box>
-										</CardContent>
-									</Card>
-									{/* Add Material-UI Button Below */}
-									{/* <div style={{ width: "100%", textAlign: "center", marginTop: "10px", zIndex: "10" }}>
+        {/* Category Card List */}
+        <Box
+          sx={{
+            padding: {
+              xs: "0px 10px", // For extra small screens (2 images per row)
+              sm: "0px 20px", // For small screens (3 images per row)
+              md: "0px 50px", // For medium screens (4 images per row)
+              lg: "0px 60px", // For large screens (6 images per row)
+              xl: "0px 100px", // For extra-large screens (6 images per row)
+            },
+            // marginTop: { xs: "100px", lg: "70px" },
+            marginBottom: { xs: "60px", lg: "10px" },
+          }}
+        >
+          <Grid container spacing={1}>
+            {products.map((category, index) => (
+              <Grid
+                item
+                xs={6} // 2 images per row on extra small screens
+                sm={5} // 3 images per row on small screens
+                md={4} // 4 images per row on medium screens
+                lg={3} // 6 images per row on large screens
+                xl={3} // 6 images per row on extra-large screens
+                key={index}
+                sx={{ cursor: "pointer" }}
+              >
+                <div>
+                  <Card
+                    onClick={() => handleNavigate(category)}
+                    sx={{
+                      backgroundColor: "#0a0a0a",
+                      color: "white",
+                      position: "relative",
+                      overflow: "hidden",
+                      width: "100%",
+                      height: "100%",
+                      aspectRatio: "1", // Square shape
+                      borderRadius: "15px",
+                    }}
+                  >
+                    <CardContent
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "100%",
+                        position: "relative",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          height: "90%",
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <img
+                          src={category?.CoverImageUrl}
+                          alt="Product"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            borderRadius: "8px",
+                          }}
+                        />
+                      </Box>
+                      <Box
+                        sx={{
+                          height: "5%",
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Typography
+                          variant="h6"
+                          sx={{ color: "white", fontSize: "12px" }}
+                        >
+                          ${category?.Price.toString()}, {category?.Title}
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                  {/* Add Material-UI Button Below */}
+                  {/* <div style={{ width: "100%", textAlign: "center", marginTop: "10px", zIndex: "10" }}>
                                         <Button
                                             variant="contained" // Uncommented this line
                                             color="primary"
@@ -506,16 +502,16 @@ const Marketplace: React.FC = () => {
                                             {category?.Category || "Test Button"}
                                         </Button>
                                     </div> */}
-								</div>
-							</Grid>
-						))}
-					</Grid>
-				</Box>
+                </div>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
 
-				<Footer />
-			</Box>
-		</>
-	);
+        <Footer />
+      </Box>
+    </>
+  );
 };
 
 export default Marketplace;
