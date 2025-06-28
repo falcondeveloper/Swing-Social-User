@@ -389,7 +389,7 @@ export default function MobileSweaping() {
 
   // This function now performs the actual backend updates and index increment
   const processSwipe = useCallback(
-    async (direction: string, targetProfile: any) => {
+    (direction: string, targetProfile: any) => {
       setCurrentIndex((prevIndex) => prevIndex + 1);
       setCardStyles({
         active: {
@@ -402,40 +402,36 @@ export default function MobileSweaping() {
         },
       });
 
-      try {
-        const promises: Promise<any>[] = [];
+      // Fire API calls in background without awaiting
+      const apiCalls = [];
 
-        if (direction === "left") {
-          promises.push(handleUpdateCategoryRelation("Denied", targetProfile));
-        } else if (direction === "right") {
-          promises.push(handleUpdateCategoryRelation("Liked", targetProfile));
-          promises.push(handleUpdateLikeMatch(targetProfile));
-        } else if (direction === "down") {
-          promises.push(handleUpdateCategoryRelation("Maybe", targetProfile));
-        }
-
-        await Promise.all(promises);
-
-        // Handle post-API logic (e.g., show match popup)
-        if (currentIndex + 1 >= userProfiles.length) {
-          setShowEndPopup(true);
-        }
-
-        if (!isUserPremium() && hasReachedSwipeLimit()) {
-          setShowLimitPopup(true);
-        } else if (!isUserPremium()) {
-          setSwipeCount((prev) => prev + 1);
-        }
-      } catch (error) {
-        console.error("Error processing swipe:", error);
-        // IMPORTANT: Revert UI changes if API fails
-        setCurrentIndex((prevIndex) => prevIndex - 1); // Go back to the failed card
-        // You might also want to show a toast/notification about the error
-      } finally {
-        setIsProcessingSwipe(false); // Reset processing flag
-        setIsExiting(false); // Reset exiting flag
-        setPendingSwipeAction(null); // Clear pending action
+      if (direction === "left") {
+        apiCalls.push(handleUpdateCategoryRelation("Denied", targetProfile));
+      } else if (direction === "right") {
+        apiCalls.push(handleUpdateCategoryRelation("Liked", targetProfile));
+        apiCalls.push(handleUpdateLikeMatch(targetProfile));
+      } else if (direction === "down") {
+        apiCalls.push(handleUpdateCategoryRelation("Maybe", targetProfile));
       }
+
+      Promise.all(apiCalls).catch((error) => {
+        console.error("Swipe API error:", error);
+      });
+
+      if (currentIndex + 1 >= userProfiles.length) {
+        setShowEndPopup(true);
+      }
+
+      if (!isUserPremium() && hasReachedSwipeLimit()) {
+        setShowLimitPopup(true);
+      } else if (!isUserPremium()) {
+        setSwipeCount((prev) => prev + 1);
+      }
+
+      // Reset swipe state
+      setIsProcessingSwipe(false);
+      setIsExiting(false);
+      setPendingSwipeAction(null);
     },
     [
       currentIndex,
