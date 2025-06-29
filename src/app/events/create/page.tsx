@@ -987,7 +987,7 @@ const EventForm: React.FC = () => {
                   }
                 }}
                 onBlur={() => handleBlur("coverPhoto")}
-                error={!formData.coverPhoto && errors.coverPhoto}
+                error={formData.coverPhoto ? undefined : errors.coverPhoto}
                 touched={touched.coverPhoto}
               />
             </div>
@@ -1528,7 +1528,7 @@ const EventForm: React.FC = () => {
                           }
                         }}
                         onBlur={() => handleBlur("coverPhoto")}
-                        error={!formData.coverPhoto && errors.coverPhoto}
+                        error={formData.coverPhoto ? undefined : errors.coverPhoto}
                         touched={touched.coverPhoto}
                       />
 
