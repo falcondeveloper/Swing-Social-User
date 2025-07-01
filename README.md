@@ -52,6 +52,7 @@ test
 -- deploy june 16 vansh - fix bug in view rsvp and remove up-swipe
 -- deploy june 17  - sqr images
 -- deploy june 18 for evenets email tickets
+-- deploy july 1
 -- swiping not saving matches properly = deploy fix
 -- deploy june 18 
 -- deploy june 18 again
