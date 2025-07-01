@@ -47,7 +47,7 @@ export async function POST(req: any) {
 						<p>Hello,</p>
 						<p>We received a request to reset your password for your Swing Social account.</p>
 						<p>To reset your password, please click on the link below:</p>
-						<p><a href="https://swing-social-website.vercel.app/reset-password?email=${encodeURIComponent(userName)}" style="padding: 10px 20px; background-color: #FF2D55; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
+						<p><a href="https://swing-social-user.vercel.app/reset-password?email=${encodeURIComponent(userName)}" style="padding: 10px 20px; background-color: #FF2D55; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
 						<p>If you didn't request this, you can safely ignore this email.</p>
 						<p>This link will expire in 24 hours.</p>
 						<br>

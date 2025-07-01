@@ -295,7 +295,7 @@ export default function UserProfileModal(props: any) {
           id: props?.userid,
           body: "Mail From Swing Social",
           image: "https://example.com/path/to/image.jpg",
-          url: `https://swing-social-website.vercel.app/mailbox/${props?.userid}`,
+          url: `https://swing-social-user.vercel.app/mailbox/${props?.userid}`,
         }),
       });
     } catch (error) {

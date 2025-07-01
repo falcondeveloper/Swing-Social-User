@@ -397,7 +397,7 @@ export default function ChatPage() {
                 title: myProfile?.Username,
                 body: message,
                 image: "https://example.com/path/to/image.jpg",
-                clickAction: "https://swing-social-website.vercel.app/",
+                clickAction: "https://swing-social-user.vercel.app/",
             }),
         });
 

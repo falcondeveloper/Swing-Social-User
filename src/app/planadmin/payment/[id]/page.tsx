@@ -109,7 +109,7 @@ export default function Payment(props: { params: Params }) {
 			confirmButtonText: "Tap here to login",
 		}).then(() => {
 			// Redirect after the user clicks "OK"
-			// window.location.href = 'https://swing-social-website.vercel.app/home';
+			// window.location.href = 'https://swing-social-user.vercel.app/home';
 			router.push("/home");
 		});
 	};
@@ -400,7 +400,7 @@ export default function Payment(props: { params: Params }) {
 		localStorage.setItem("logged_in_profile", data.currentProfileId);
 		localStorage.setItem("profileUsername", data.currentuserName);
 		localStorage.setItem("memberalarm", "0");
-		// window.location.href = 'https://swing-social-website.vercel.app/home';
+		// window.location.href = 'https://swing-social-user.vercel.app/home';
 		router.push("/home");
 	};
 

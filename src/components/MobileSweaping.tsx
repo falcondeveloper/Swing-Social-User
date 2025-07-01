@@ -280,7 +280,7 @@ export default function MobileSweaping() {
           id: targetProfile?.Id,
           body: message,
           image: "https://example.com/path/to/image.jpg",
-          url: `https://swing-social-website.vercel.app/members/${profileId}`,
+          url: `https://swing-social-user.vercel.app/members/${profileId}`,
         }),
       });
 

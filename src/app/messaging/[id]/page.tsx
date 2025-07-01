@@ -305,7 +305,7 @@ export default function ChatPage(props: { params: Params }) {
         id: userProfile.Id,
         body: message,
         image: "https://example.com/path/to/image.jpg",
-        url: `https://swing-social-website.vercel.app/messaging/${userProfile.Id}`,
+        url: `https://swing-social-user.vercel.app/messaging/${userProfile.Id}`,
       }),
     });
 

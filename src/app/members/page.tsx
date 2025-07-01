@@ -527,7 +527,7 @@ export default function Home() {
           id: id,
           body: message,
           image: "https://example.com/path/to/image.jpg",
-          url: `https://swing-social-website.vercel.app/members/${profileId}`,
+          url: `https://swing-social-user.vercel.app/members/${profileId}`,
         }),
       });
 
@@ -543,7 +543,7 @@ export default function Home() {
           id: id,
           body: message,
           image: "https://example.com/path/to/image.jpg",
-          url: `https://swing-social-website.vercel.app/members/${profileId}`,
+          url: `https://swing-social-user.vercel.app/members/${profileId}`,
         }),
       });
 

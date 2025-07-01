@@ -123,7 +123,7 @@ export default function Payment(props: { params: Params }) {
 	// 		confirmButtonText: "Tap here to login",
 	// 	}).then(() => {
 	// 		// Redirect after the user clicks "OK"
-	// 		window.location.href = "https://swing-social-website.vercel.app/login";
+	// 		window.location.href = "https://swing-social-user.vercel.app/login";
 	// 	});
 	// };
 

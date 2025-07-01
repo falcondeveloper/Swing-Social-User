@@ -257,7 +257,7 @@ export default function Pricing(props: { params: Params }) {
     localStorage.setItem('profileUsername', data.currentuserName);
     localStorage.setItem('memberalarm', data.memberAlarm);
     localStorage.setItem('memberShip', data.memberShip);
-    window.location.href = 'https://swing-social-website.vercel.app/login';
+    window.location.href = 'https://swing-social-user.vercel.app/login';
   }
 
   const handleNavigation = (plan: string, price: string) => {

@@ -556,7 +556,7 @@ export default function ChatPage() {
                 id: selectedUser.Id,
                 body: "Mail From Swing Social",
                 image: "https://example.com/path/to/image.jpg",
-                url: `https://swing-social-website.vercel.app/mailbox/${selectedUser.Id}`,
+                url: `https://swing-social-user.vercel.app/mailbox/${selectedUser.Id}`,
             }),
         });
 

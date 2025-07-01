@@ -67,7 +67,7 @@ messaging.onBackgroundMessage((payload) => {
     const notificationOptions = {
         body,
         icon: image || '/logo.png', // path to your "fallback" firebase notification logo
-        url: "https://swing-social-website.vercel.app/messaging",
+        url: "https://swing-social-user.vercel.app/messaging",
         data: restPayload,
     };
 
@@ -90,7 +90,7 @@ self.addEventListener('notificationclick', (event) => {
 
             // Otherwise, open a new window
             if (self.clients.openWindow) {
-                return self.clients.openWindow("https://swing-social-website.vercel.app/messaging");
+                return self.clients.openWindow("https://swing-social-user.vercel.app/messaging");
             }
         })
     );
