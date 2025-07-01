@@ -347,6 +347,53 @@ interface ImagePreview {
   isUploading: boolean;
 }
 
+interface UpdateProfileData {
+  ProfileId: string;
+  Username: string;
+  Age: number;
+  PartnerAge: null;
+  Gender: string;
+  PartnerGender: string;
+  Location: string;
+  Tagline: string;
+  About: string;
+  BodyType: string;
+  PartnerBodyType: string;
+  HairColor: string;
+  PartnerHairColor: string;
+  EyeColor: string;
+  PartnerEyeColor: string;
+  AccountType: string;
+  ProfileBanner?: string;
+  SwingStyle: any;
+  Avatar?: string;
+  Orientation?: string;
+  PartnerSexualOrientation?: string;
+  ProfileImages?: (string | null)[];
+  PrivateImages?: (string | null)[]; // Add this
+}
+
+interface ProfileData {
+  coverImage: string;
+  Avatar: string;
+  username: string;
+  gender: string;
+  age: number;
+  address: string;
+  tagline: string;
+  swingStyle: string;
+  about: string;
+  accountType: string;
+  bodyType: string;
+  hairColor: string;
+  eyeColor: string;
+  distance: string;
+  publicImages: string[];
+  privateImages: string[];
+  swingStyles: SwingStyles;
+  orientation: string;
+}
+
 const ProfileDetail: React.FC = () => {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -1229,6 +1276,19 @@ const ProfileDetail: React.FC = () => {
     </Card>
   );
 
+  const uploadImagesSequentially = async (
+    images: File[]
+  ): Promise<(string | null)[]> => {
+    const results: (string | null)[] = [];
+
+    for (const image of images) {
+      const result = await uploadImage(image); // Wait for each upload to finish
+      console.log(image);
+      results.push(result);
+    }
+    return results;
+  };
+
   // Initialize data on mount
   useEffect(() => {
     if (!mounted) return;
@@ -1291,6 +1351,241 @@ const ProfileDetail: React.FC = () => {
       </Box>
     );
   }
+
+  const validationRules = {
+    Username: {
+      required: true,
+      minLength: 2,
+      maxLength: 50,
+    },
+    Age: {
+      required: true,
+      min: 18,
+      max: 100,
+    },
+    Gender: {
+      required: true,
+    },
+    AccountType: {
+      required: true,
+    },
+    Location: {
+      required: true,
+      minLength: 5,
+    },
+    Tagline: {
+      required: true,
+      maxLength: 150,
+    },
+    About: {
+      required: true,
+      minLength: 10,
+      maxLength: 1000,
+    },
+    BodyType: {
+      required: true,
+    },
+    HairColor: {
+      required: true, // Add HairColor validation
+    },
+    EyeColor: {
+      required: true, // Add EyeColor validation
+    },
+    SexualOrientation: {
+      required: true, // Add Orientation validation
+    },
+    PartnerAge: {
+      required: true,
+      min: 18,
+      max: 100,
+    },
+    PartnerGender: {
+      required: true,
+    },
+  };
+
+  interface ValidatorRules {
+    required?: boolean;
+    minLength?: number;
+    maxLength?: number;
+    pattern?: RegExp;
+    min?: number;
+    max?: number;
+  }
+
+  const validateField = (
+    name: string,
+    value: any,
+    rules: ValidatorRules,
+    context?: any
+  ): string => {
+    if (!value && value !== 0) value = ""; // Handle null/undefined values
+
+    // Partner fields validation should only happen if AccountType is "Couple"
+    if (name.startsWith("Partner")) {
+      if (context?.AccountType === "Couple") {
+        // Validate partner fields for couples
+        if (rules.required && (!value || value.toString().trim() === "")) {
+          return `${name} is required for couples`;
+        }
+      } else {
+        return ""; // Skip validation for partner fields if not a couple
+      }
+    } else {
+      // Non-partner fields validation
+      if (rules.required && (!value || value.toString().trim() === "")) {
+        return `${name} is required`;
+      }
+    }
+
+    if (rules.min && Number(value) < rules.min) {
+      return `${name} must be at least ${rules.min}`;
+    }
+
+    if (rules.max && Number(value) > rules.max) {
+      return `${name} cannot exceed ${rules.max}`;
+    }
+
+    return "";
+  };
+
+  const handleSave = async () => {
+    setIsSubmitting(true);
+    const newErrors: ValidationErrors = {};
+
+    Object.entries(validationRules).forEach(([fieldName, rules]) => {
+      let fieldValue;
+
+      if (fieldName === "Age") {
+        fieldValue = currentAge;
+      } else if (fieldName === "PartnerAge") {
+        fieldValue = editedData.AccountType === "Couple" ? pCurrentAge : "";
+      } else {
+        fieldValue = editedData[fieldName as keyof ProfileData];
+      }
+
+      const error = validateField(fieldName, fieldValue, rules, {
+        AccountType: editedData.AccountType,
+      });
+
+      if (error) {
+        newErrors[fieldName] = error;
+      }
+    });
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      setIsSubmitting(false);
+      const errorMessages = Object.values(newErrors).join(", ");
+      toast.error(`Validation errors: ${errorMessages}`);
+      return;
+    }
+    try {
+      const baseProfileData = {
+        ProfileId: profileId,
+        Username: editedData.Username || advertiser.Username,
+        Age: currentAge || advertiser.Age,
+        Gender: editedData.Gender || advertiser.Gender,
+        Location: editedData.Location || advertiser.Location,
+        Tagline: editedData.Tagline || advertiser.Tagline,
+        About: editedData.About || advertiser.About,
+        BodyType: editedData.BodyType || advertiser.BodyType,
+        HairColor: editedData.HairColor || advertiser.HairColor,
+        EyeColor: editedData.EyeColor || advertiser.EyeColor,
+        AccountType: editedData.AccountType || advertiser.AccountType,
+        Orientation:
+          editedData.SexualOrientation || advertiser.SexualOrientation,
+        SwingStyle: editedData?.swingStyles || advertiser.swingStyle,
+      };
+
+      let updatedProfileData: UpdateProfileData;
+
+      if (editedData.AccountType === "Couple") {
+        updatedProfileData = {
+          ...baseProfileData,
+          PartnerAge: pCurrentAge || advertiser.PartnerAge,
+          PartnerGender: editedData?.PartnerGender || advertiser.PartnerGender,
+          PartnerBodyType:
+            editedData?.PartnerBodyType || advertiser.PartnerBodyType,
+          PartnerHairColor:
+            editedData?.PartnerHairColor || advertiser.PartnerHairColor,
+          PartnerEyeColor:
+            editedData?.PartnerEyeColor || advertiser.PartnerEyeColor,
+          PartnerSexualOrientation:
+            editedData?.PartnerSexualOrientation ||
+            advertiser.PartnerSexualOrientation,
+        };
+      } else {
+        updatedProfileData = {
+          ...baseProfileData,
+          PartnerAge: null,
+          PartnerGender: "",
+          PartnerBodyType: "",
+          PartnerHairColor: "",
+          PartnerEyeColor: "",
+          PartnerSexualOrientation: "",
+        };
+      }
+
+      if (previewImages.banner) {
+        const bannerFile = editedData.ProfileBanner;
+        const bannerUrl = await uploadImage(bannerFile);
+        updatedProfileData.ProfileBanner = bannerUrl;
+      }
+
+      if (previewImages.avatar) {
+        const avatarFile = editedData.Avatar;
+        const avatarUrl = await uploadImage(avatarFile);
+        updatedProfileData.Avatar = avatarUrl;
+      }
+
+      if (publicImagePreviews.length > 0) {
+        const publicFiles = publicImagePreviews.map((preview) => preview.file);
+        const publicUrls = await uploadImagesSequentially(publicFiles);
+        updatedProfileData.ProfileImages = publicUrls;
+      }
+
+      if (privateImagePreviews.length > 0) {
+        const privateFiles = privateImagePreviews.map(
+          (preview) => preview.file
+        );
+        const privateUrls = await uploadImagesSequentially(privateFiles);
+        updatedProfileData.PrivateImages = privateUrls;
+      }
+      const response = await fetch("/api/user/profile/update/details", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedProfileData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      const reuslt = await response.json();
+      console.log(reuslt);
+
+      // Update local state
+      setAdvertiser(updatedProfileData);
+      setPreviewImages({
+        banner: null,
+        avatar: null,
+      });
+      setPublicImagePreviews([]);
+      setPrivateImagePreviews([]);
+      setIsEditing(false);
+      fetchData(profileId);
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      toast.error("Failed to update profile. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -1545,13 +1840,7 @@ const ProfileDetail: React.FC = () => {
                             )
                           }
                           label="Save"
-                          onClick={async () => {
-                            setIsSubmitting(true);
-                            // Add save logic here
-                            setIsEditing(false);
-                            setIsSubmitting(false);
-                            showSnackbar("Profile updated successfully!");
-                          }}
+                          onClick={handleSave}
                           disabled={isSubmitting}
                         />
                         <ActionChip
