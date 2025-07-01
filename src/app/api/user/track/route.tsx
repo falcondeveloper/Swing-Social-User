@@ -5,13 +5,16 @@ let pool: any;
 
 if (!pool) {
   pool = mysql.createPool({
-    user: "swing_social_admin",
     host: "localhost",
-    database: "swing_social_admin",
-    password: "B73I1RIAYOFJMDY6",
+    user: "root",
+    password: "",
+    database: "swing_social_user",
+    port: 3306,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
   });
 
-  // Test MySQL connection
   pool.getConnection((err: any, connection: any) => {
     if (err) {
       console.error("MySQL Connection Failed:", err.message, err);
@@ -35,6 +38,8 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { affiliate, referral, OS, page, url, userid } = body;
+
+    console.log("body", body);
 
     const queryString = `
       INSERT INTO wpgt_user_tracking (affiliate, referral, OS, page, url, userid)

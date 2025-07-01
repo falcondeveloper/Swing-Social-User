@@ -51,6 +51,7 @@ const Header = () => {
   const [userName, setUserName] = useState<string>("");
   const [isNotificationModalOpen, setNotificationModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [advertiser, setAdvertiser] = useState<any>([]);
   const [isNewMessage, setNewMessage] = useState<boolean>(() => {
     // Initialize state with localStorage value if available
     if (typeof window !== "undefined") {
@@ -86,8 +87,6 @@ const Header = () => {
     } else {
       router.push("/login");
     }
-
-    // Check notification permissions on component mount
     checkNotificationPermission();
   }, []);
 
@@ -208,6 +207,33 @@ const Header = () => {
     { icon: Calendar, label: "Events", path: "/events" },
   ];
 
+  const [profileId, setProfileId] = useState<any>();
+  useEffect(() => {
+    setProfileId(localStorage.getItem("logged_in_profile"));
+  }, []);
+
+  const fetchData = async () => {
+    if (!profileId) return;
+
+    try {
+      const response = await fetch(`/api/user/sweeping/user?id=${profileId}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+
+      const { user: advertiserData } = await response.json();
+
+      if (advertiserData) {
+        setAdvertiser(advertiserData);
+      }
+    } catch (error: any) {
+      console.error("Error fetching data:", error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [profileId]);
+
   return (
     <>
       {/* <NotificationModalPrompt /> */}
@@ -278,7 +304,11 @@ const Header = () => {
               >
                 <img
                   src={
-                    avatar && avatar.trim() !== "" ? avatar : "/noavatar.png"
+                    advertiser?.Avatar
+                      ? advertiser?.Avatar
+                      : avatar && avatar.trim() !== ""
+                      ? avatar
+                      : "/noavatar.png"
                   }
                   alt="Profile"
                   style={{
@@ -350,7 +380,11 @@ const Header = () => {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <Avatar
                     src={
-                      avatar && avatar.trim() !== "" ? avatar : "/noavatar.png"
+                      advertiser?.Avatar
+                        ? advertiser?.Avatar
+                        : avatar && avatar.trim() !== ""
+                        ? avatar
+                        : "/noavatar.png"
                     }
                     sx={{
                       width: 48,
@@ -778,7 +812,11 @@ const Header = () => {
               >
                 <img
                   src={
-                    avatar && avatar.trim() !== "" ? avatar : "/noavatar.png"
+                    advertiser?.Avatar
+                      ? advertiser?.Avatar
+                      : avatar && avatar.trim() !== ""
+                      ? avatar
+                      : "/noavatar.png"
                   }
                   alt="Avatar"
                   style={{

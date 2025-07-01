@@ -156,6 +156,8 @@ export default function MobileSweaping() {
       const queryParams = new URLSearchParams(window.location.search);
       var param = queryParams.get("q");
 
+      console.log("------------------", param);
+
       setIdparam(param);
       const id = localStorage.getItem("logged_in_profile");
       if (id) {
@@ -801,6 +803,10 @@ export default function MobileSweaping() {
       </Box>
     );
   }
+
+  // useEffect(() => {
+  //   window.scrollTo(0, 0);
+  // }, []);
 
   return (
     <>
