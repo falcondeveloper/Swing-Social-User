@@ -372,7 +372,6 @@ interface UpdateProfileData {
   ProfileImages?: (string | null)[];
   PrivateImages?: (string | null)[]; // Add this
 }
-
 interface ProfileData {
   coverImage: string;
   Avatar: string;
@@ -1197,19 +1196,17 @@ const ProfileDetail: React.FC = () => {
           )}
 
           <Grid item xs={12}>
-            <Box>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "#FF1B6B",
-                  fontWeight: "bold",
-                  mb: 2,
-                  display: "block",
-                }}
-              >
-                Swing Style
-              </Typography>
-              {isEditing ? (
+            {isEditing ? (
+              <Box>
+                <Typography
+                  sx={{
+                    color: "#e91e63",
+                    fontSize: "0.75rem",
+                    fontWeight: "700",
+                  }}
+                >
+                  Swing Style
+                </Typography>
                 <Grid container spacing={2}>
                   {Object.entries({
                     exploring: "Exploring/Unsure",
@@ -1232,9 +1229,12 @@ const ProfileDetail: React.FC = () => {
                                 [key]: e.target.checked,
                               })
                             }
+                            disabled={isSubmitting}
                             sx={{
-                              color: "rgba(255, 255, 255, 0.5)",
-                              "&.Mui-checked": { color: "#FF1B6B" },
+                              color: "white",
+                              "&.Mui-checked": {
+                                color: "#e91e63",
+                              },
                             }}
                           />
                         }
@@ -1244,32 +1244,59 @@ const ProfileDetail: React.FC = () => {
                     </Grid>
                   ))}
                 </Grid>
-              ) : (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                {/* Display the error message below the checkboxes */}
+                {errors.swingStyles && (
+                  <Typography
+                    sx={{ color: "#d32f2f", mt: 1, fontSize: "0.75rem" }}
+                  >
+                    {errors.swingStyles}
+                  </Typography>
+                )}
+              </Box>
+            ) : (
+              <Box>
+                <Typography
+                  sx={{
+                    color: "#e91e63",
+                    fontSize: "0.875rem",
+                    mb: 1,
+                    fontWeight: "bold",
+                  }}
+                >
+                  Swing Style
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 1,
+                  }}
+                >
                   {advertiser?.SwingStyleTags?.length > 0 ? (
                     advertiser.SwingStyleTags.map(
                       (tag: string, index: number) => (
-                        <Chip
+                        <Box
                           key={index}
-                          label={tag}
-                          size="small"
                           sx={{
-                            bgcolor: "rgba(255, 27, 107, 0.1)",
-                            color: "#FF1B6B",
-                            border: "1px solid rgba(255, 27, 107, 0.3)",
-                            fontWeight: 600,
+                            padding: "5px 10px",
+                            backgroundColor: "#272727",
+                            color: "white",
+                            borderRadius: "4px",
+                            fontSize: "14px",
                           }}
-                        />
+                        >
+                          {tag}
+                        </Box>
                       )
                     )
                   ) : (
-                    <Typography variant="body2" sx={{ color: "#aaaaaa" }}>
-                      No preferences selected
+                    <Typography sx={{ color: "white" }}>
+                      No data available
                     </Typography>
                   )}
                 </Box>
-              )}
-            </Box>
+              </Box>
+            )}
           </Grid>
         </Grid>
       </CardContent>
@@ -1351,6 +1378,30 @@ const ProfileDetail: React.FC = () => {
       </Box>
     );
   }
+
+  const handleEditToggle = () => {
+    if (isEditing) {
+      setEditedData(null);
+      setPreviewImages({
+        banner: null,
+        avatar: null,
+      });
+    } else {
+      setEditedData({
+        ...advertiser,
+        Location: advertiser?.Location || "",
+        Tagline: advertiser?.Tagline || "",
+        swingStyles: {
+          exploring: advertiser?.SwingStyleTags?.includes("exploring") || false,
+          fullSwap: advertiser?.SwingStyleTags?.includes("fullSwap") || false,
+          softSwap: advertiser?.SwingStyleTags?.includes("softSwap") || false,
+          voyeur: advertiser?.SwingStyleTags?.includes("voyeur") || false,
+        },
+      });
+      setCityInput(advertiser?.Location?.replace(", USA", "") || "");
+    }
+    setIsEditing(!isEditing);
+  };
 
   const handleSave = async () => {
     setIsSubmitting(true);
@@ -1727,7 +1778,8 @@ const ProfileDetail: React.FC = () => {
                       <ActionChip
                         icon={<Edit size={14} />}
                         label="Edit"
-                        onClick={() => setIsEditing(true)}
+                        // onClick={() => setIsEditing(true)}
+                        onClick={handleEditToggle}
                       />
                     )}
 
