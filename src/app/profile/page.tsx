@@ -1352,135 +1352,8 @@ const ProfileDetail: React.FC = () => {
     );
   }
 
-  const validationRules = {
-    Username: {
-      required: true,
-      minLength: 2,
-      maxLength: 50,
-    },
-    Age: {
-      required: true,
-      min: 18,
-      max: 100,
-    },
-    Gender: {
-      required: true,
-    },
-    AccountType: {
-      required: true,
-    },
-    Location: {
-      required: true,
-      minLength: 5,
-    },
-    Tagline: {
-      required: true,
-      maxLength: 150,
-    },
-    About: {
-      required: true,
-      minLength: 10,
-      maxLength: 1000,
-    },
-    BodyType: {
-      required: true,
-    },
-    HairColor: {
-      required: true, // Add HairColor validation
-    },
-    EyeColor: {
-      required: true, // Add EyeColor validation
-    },
-    SexualOrientation: {
-      required: true, // Add Orientation validation
-    },
-    PartnerAge: {
-      required: true,
-      min: 18,
-      max: 100,
-    },
-    PartnerGender: {
-      required: true,
-    },
-  };
-
-  interface ValidatorRules {
-    required?: boolean;
-    minLength?: number;
-    maxLength?: number;
-    pattern?: RegExp;
-    min?: number;
-    max?: number;
-  }
-
-  const validateField = (
-    name: string,
-    value: any,
-    rules: ValidatorRules,
-    context?: any
-  ): string => {
-    if (!value && value !== 0) value = ""; // Handle null/undefined values
-
-    // Partner fields validation should only happen if AccountType is "Couple"
-    if (name.startsWith("Partner")) {
-      if (context?.AccountType === "Couple") {
-        // Validate partner fields for couples
-        if (rules.required && (!value || value.toString().trim() === "")) {
-          return `${name} is required for couples`;
-        }
-      } else {
-        return ""; // Skip validation for partner fields if not a couple
-      }
-    } else {
-      // Non-partner fields validation
-      if (rules.required && (!value || value.toString().trim() === "")) {
-        return `${name} is required`;
-      }
-    }
-
-    if (rules.min && Number(value) < rules.min) {
-      return `${name} must be at least ${rules.min}`;
-    }
-
-    if (rules.max && Number(value) > rules.max) {
-      return `${name} cannot exceed ${rules.max}`;
-    }
-
-    return "";
-  };
-
   const handleSave = async () => {
     setIsSubmitting(true);
-    const newErrors: ValidationErrors = {};
-
-    Object.entries(validationRules).forEach(([fieldName, rules]) => {
-      let fieldValue;
-
-      if (fieldName === "Age") {
-        fieldValue = currentAge;
-      } else if (fieldName === "PartnerAge") {
-        fieldValue = editedData.AccountType === "Couple" ? pCurrentAge : "";
-      } else {
-        fieldValue = editedData[fieldName as keyof ProfileData];
-      }
-
-      const error = validateField(fieldName, fieldValue, rules, {
-        AccountType: editedData.AccountType,
-      });
-
-      if (error) {
-        newErrors[fieldName] = error;
-      }
-    });
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length > 0) {
-      setIsSubmitting(false);
-      const errorMessages = Object.values(newErrors).join(", ");
-      toast.error(`Validation errors: ${errorMessages}`);
-      return;
-    }
     try {
       const baseProfileData = {
         ProfileId: profileId,
@@ -1566,9 +1439,6 @@ const ProfileDetail: React.FC = () => {
       }
 
       const reuslt = await response.json();
-      console.log(reuslt);
-
-      // Update local state
       setAdvertiser(updatedProfileData);
       setPreviewImages({
         banner: null,

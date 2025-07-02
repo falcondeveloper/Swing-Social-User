@@ -212,7 +212,6 @@ export default function Preferences() {
   return (
     <Box
       sx={{
-        position: "relative",
         padding: {
           xs: 2,
           sm: 3,
