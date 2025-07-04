@@ -160,7 +160,6 @@ const Marketplace: React.FC = () => {
         },
       });
       const data = await response.json();
-      console.log(data.products);
       setProducts(data.products);
       setShowAnimation(true);
     } catch (error) {
@@ -182,17 +181,19 @@ const Marketplace: React.FC = () => {
     // Detect OS
     const getOS = () => {
       const userAgent = window.navigator.userAgent;
+
       if (userAgent.indexOf("Win") !== -1) return "Windows";
       if (userAgent.indexOf("Mac") !== -1) return "MacOS";
-      if (userAgent.indexOf("Linux") !== -1) return "Linux";
       if (userAgent.indexOf("Android") !== -1) return "Android";
-      if (userAgent.indexOf("iOS") !== -1) return "iOS";
-      return null;
+      if (/iPad|iPhone|iPod/.test(userAgent)) return "iOS";
+      if (userAgent.indexOf("Linux") !== -1) return "Linux";
+
+      return "Unknown";
     };
 
     // Get current URL and page info
     const currentUrl = window.location.href;
-    const currentPage = "MarketPlace"; // Since this is login page
+    const currentPage = "MarketPlace";
 
     if (id) {
       setProfileId(id);
@@ -230,7 +231,6 @@ const Marketplace: React.FC = () => {
 
   useEffect(() => {
     if (searchQuery) {
-      console.log(searchQuery);
       const searchProducts = async () => {
         try {
           const response = await fetch(
@@ -243,7 +243,6 @@ const Marketplace: React.FC = () => {
             }
           );
           const data = await response.json();
-          console.log("-----------------searchproducts", data.products.rows);
           setProducts(data.products.rows);
         } catch (error) {
           console.error("Error searching marketplace data:", error);
@@ -256,7 +255,6 @@ const Marketplace: React.FC = () => {
   }, [searchQuery]);
 
   const handleNavigate = (category: any) => {
-    console.log(category);
     router.push(`/marketplace/${category.Id}`);
   };
 

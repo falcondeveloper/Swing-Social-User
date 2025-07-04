@@ -392,22 +392,26 @@ const Home = () => {
     const aff = urlParams.get("aff");
     const refer = urlParams.get("refer");
 
+    // Detect OS
     const getOS = () => {
       const userAgent = window.navigator.userAgent;
+
       if (userAgent.indexOf("Win") !== -1) return "Windows";
       if (userAgent.indexOf("Mac") !== -1) return "MacOS";
-      if (userAgent.indexOf("Linux") !== -1) return "Linux";
       if (userAgent.indexOf("Android") !== -1) return "Android";
-      if (userAgent.indexOf("iOS") !== -1) return "iOS";
-      return null;
+      if (/iPad|iPhone|iPod/.test(userAgent)) return "iOS";
+      if (userAgent.indexOf("Linux") !== -1) return "Linux";
+
+      return "Unknown";
     };
 
+    // Get current URL and page info
     const currentUrl = window.location.href;
     const currentPage = "home";
 
     if (id) {
       setProfileId(id);
-      fetch("/api/user/track", {
+      fetch("/api/user/tracking", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -422,7 +426,7 @@ const Home = () => {
         }),
       });
     } else {
-      fetch("/api/user/track", {
+      fetch("/api/user/tracking", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

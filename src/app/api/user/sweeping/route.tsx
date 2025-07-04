@@ -48,7 +48,6 @@ export async function GET(req: Request) {
 
     // Fetch user by ID if provided
     if (userId) {
-      console.log('Fetching user with ID:', userId);
       const query = `SELECT * FROM get_likes_and_categories($1,$2)`;
       const values = [userId, category];
       const result = await pool.query(query, values);

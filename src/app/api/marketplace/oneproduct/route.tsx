@@ -20,7 +20,6 @@ export async function POST(req: Request) {
         const getQuery = `SELECT * FROM market_get_oneproduct($1)`;
 
         const result = await pool.query(getQuery, [id]);
-        console.log("result=====>", result.rows);
 
         if (result.rows[0] == null) {
             throw new Error(`We faced some error while getting the data`);

@@ -147,8 +147,7 @@ interface RestValidationState {
 
 // Particle animation component
 const ParticleField = memo(() => {
-
-  const isMobile = useMediaQuery('(max-width:600px)');
+  const isMobile = useMediaQuery("(max-width:600px)");
 
   const particles = useMemo(() => {
     const count = isMobile ? 15 : 50;
@@ -319,6 +318,62 @@ const LoginPage: React.FC = () => {
           }),
         });
       }
+    }
+  }, []);
+
+  useEffect(() => {
+    const id = localStorage.getItem("logged_in_profile");
+    const urlParams = new URLSearchParams(window.location.search);
+    const aff = urlParams.get("aff");
+    const refer = urlParams.get("refer");
+
+    // Detect OS
+    const getOS = () => {
+      const userAgent = window.navigator.userAgent;
+
+      if (userAgent.indexOf("Win") !== -1) return "Windows";
+      if (userAgent.indexOf("Mac") !== -1) return "MacOS";
+      if (userAgent.indexOf("Android") !== -1) return "Android";
+      if (/iPad|iPhone|iPod/.test(userAgent)) return "iOS";
+      if (userAgent.indexOf("Linux") !== -1) return "Linux";
+
+      return "Unknown";
+    };
+
+    // Get current URL and page info
+    const currentUrl = window.location.href;
+    const currentPage = "login";
+
+    if (id) {
+      fetch("/api/user/tracking", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          affiliate: aff,
+          referral: refer,
+          OS: getOS(),
+          page: currentPage,
+          url: currentUrl,
+          userid: id,
+        }),
+      });
+    } else {
+      fetch("/api/user/tracking", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          affiliate: aff,
+          referral: refer,
+          OS: getOS(),
+          page: currentPage,
+          url: currentUrl,
+          userid: null,
+        }),
+      });
     }
   }, []);
 

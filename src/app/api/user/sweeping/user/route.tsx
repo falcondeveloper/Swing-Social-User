@@ -57,7 +57,6 @@ export async function GET(req: Request) {
     }
 
     const offset = (page - 1) * size;
-    console.log('Fetching all users:', { search, type, page, size, offset });
 
     let query = `SELECT * FROM public.admin_getalldata()`;
     const conditions: string[] = [];

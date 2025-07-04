@@ -13,12 +13,10 @@ const pool = new Pool({
 
 export async function GET(req: Request) {
   try {
-    console.log("GET request received");
 
     const getQuery = `SELECT * FROM market_get_products()`;
 
     const result = await pool.query(getQuery);
-    console.log("result=====>", result.rows);
 
     if (result.rows[0] == null) {
       throw new Error(`We faced some error while getting the data`);
