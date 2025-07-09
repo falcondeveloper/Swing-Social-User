@@ -267,7 +267,7 @@ export default function MobileSweaping() {
 
       imageUrls.forEach((url) => {
         if (!preloadedImages.has(url)) {
-          const img = new Image();
+          const img = document.createElement("img");
           img.src = url;
           img.onload = () => {
             setPreloadedImages((prev) => {
