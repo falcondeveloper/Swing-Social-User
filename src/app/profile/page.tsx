@@ -372,26 +372,6 @@ interface UpdateProfileData {
   ProfileImages?: (string | null)[];
   PrivateImages?: (string | null)[]; // Add this
 }
-interface ProfileData {
-  coverImage: string;
-  Avatar: string;
-  username: string;
-  gender: string;
-  age: number;
-  address: string;
-  tagline: string;
-  swingStyle: string;
-  about: string;
-  accountType: string;
-  bodyType: string;
-  hairColor: string;
-  eyeColor: string;
-  distance: string;
-  publicImages: string[];
-  privateImages: string[];
-  swingStyles: SwingStyles;
-  orientation: string;
-}
 
 const ProfileDetail: React.FC = () => {
   const [mounted, setMounted] = useState(false);

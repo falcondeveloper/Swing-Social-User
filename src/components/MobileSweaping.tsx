@@ -774,10 +774,9 @@ export default function MobileSweaping() {
                 position: "relative",
               }}
             >
-              <Image
+              <img
                 src={profile.Avatar}
                 alt="preload"
-                fill
                 sizes="1px"
                 onLoad={() => {
                   setPreloadedImages((prev) => {
@@ -828,13 +827,11 @@ export default function MobileSweaping() {
                 },
               }}
             >
-              <Image
+              <img
                 src={selectedUserProfile?.Avatar || "/fallback-avatar.png"}
                 alt={selectedUserProfile?.Username || "Unknown"}
-                fill
                 sizes="(max-width: 768px) 100vw, 100vw"
                 style={{ objectFit: "cover" }}
-                priority
               />
 
               <Box
@@ -968,10 +965,9 @@ export default function MobileSweaping() {
                   />
                 )}
                 <div className="profile-img" style={{ position: "relative" }}>
-                  <Image
+                  <img
                     src={profile?.Avatar || "/fallback-avatar.png"}
                     alt={profile?.Username || "Unknown"}
-                    fill
                     className="profile-img"
                   />
                 </div>
