@@ -15,6 +15,7 @@ import { getMessaging, onMessage } from "firebase/messaging";
 import app from "../../firebase";
 import useFcmToken from "@/hooks/useFCMToken";
 
+
 interface UserProfile {
   Id: any;
   Username: any;
@@ -32,7 +33,7 @@ const UserSelectionPage = () => {
   const { token, notificationPermissionStatus } = useFcmToken();
 
   useEffect(() => {
-    router.push('/login');
+    router.push("/login");
   }, []);
 
   // useEffect(() => {
@@ -99,6 +100,7 @@ const UserSelectionPage = () => {
 
   return (
     <>
+      
       {/* <Container maxWidth="md">
         <Box
           display="flex"

@@ -27,6 +27,7 @@ import UserBottomNavigation from "@/components/BottomNavigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { jwtDecode } from "jwt-decode";
+import Image from "next/image";
 
 interface User {
   Id: string;
@@ -81,7 +82,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           await sendLocationToAPI(locationName, latitude, longitude);
         } catch (error) {
           console.error("Error processing location:", error);
-       //   notify.error("Failed to process your location. Please try again.");
+          //   notify.error("Failed to process your location. Please try again.");
         }
       },
       (error) => {
@@ -90,7 +91,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 300000
+        maximumAge: 300000,
       }
     );
   };
@@ -205,16 +206,24 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 setSelectedUserId(user.Id);
               }}
             >
-              <Avatar
-                src={user.Avatar}
-                alt={user.Username}
+              <Box
                 sx={{
-                  width: { xs: 50, sm: 65, md: 80 },
-                  height: { xs: 50, sm: 65, md: 80 },
+                  position: "relative",
+                  width: { xs: 60, sm: 65, md: 80 },
+                  height: { xs: 60, sm: 65, md: 80 },
                   borderRadius: "12px",
                   border: "2px solid rgba(233, 30, 99, 0.5)",
+                  overflow: "hidden",
                 }}
-              />
+              >
+                <Image
+                  src={user.Avatar || "/default-avatar.png"}
+                  alt={user.Username}
+                  fill
+                  sizes="(max-width: 80px) 100vw"
+                  style={{ objectFit: "cover" }}
+                />
+              </Box>
             </Box>
           </Grid>
 
@@ -466,8 +475,8 @@ export default function Pineapple() {
           align="center"
           gutterBottom
           sx={{
-            mb: { xs: 2, sm: 3, md: 4 },
-            marginTop: "40px",
+            marginTop: "30px",
+            marginBottom: "30px",
             fontWeight: 600,
             fontSize: { xs: "1.75rem", sm: "2rem", md: "2.25rem" },
             background: "linear-gradient(45deg, #e91e63, #9c27b0)",
@@ -475,7 +484,7 @@ export default function Pineapple() {
             WebkitTextFillColor: "transparent",
           }}
         >
-          Profiles Recently Active
+          Profiles Recently Active
         </Typography>
 
         {loading ? (

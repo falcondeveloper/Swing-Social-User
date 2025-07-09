@@ -42,6 +42,7 @@ import {
   Sparkles,
   Palette,
 } from "lucide-react";
+import Image from "next/image";
 
 const socket = io("https://api.nomolive.com/");
 
@@ -808,24 +809,34 @@ const Header = () => {
                     zIndex: -1,
                   },
                 }}
-                onClick={() => router.push("/profile/")}
+                onClick={() => router.push("/profile")}
               >
-                <img
-                  src={
-                    advertiser?.Avatar
-                      ? advertiser?.Avatar
-                      : avatar && avatar.trim() !== ""
-                      ? avatar
-                      : "/noavatar.png"
-                  }
-                  alt="Avatar"
-                  style={{
+                <Box
+                  sx={{
+                    position: "relative",
                     width: "100%",
                     height: "100%",
-                    objectFit: "cover",
                     borderRadius: "10px",
+                    overflow: "hidden",
                   }}
-                />
+                >
+                  <Image
+                    src={
+                      advertiser?.Avatar
+                        ? advertiser.Avatar
+                        : avatar && avatar.trim() !== ""
+                        ? avatar
+                        : "/noavatar.png"
+                    }
+                    alt="Avatar"
+                    fill
+                    style={{
+                      objectFit: "cover",
+                      borderRadius: "10px",
+                    }}
+                    sizes="42px"
+                  />
+                </Box>
               </Box>
             </Box>
           </Toolbar>

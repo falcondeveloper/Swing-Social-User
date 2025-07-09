@@ -27,12 +27,10 @@ import UserProfileModal from "@/components/UserProfileModal";
 import { Flag } from "@mui/icons-material";
 import Header from "@/components/Header";
 import AboutSection from "@/components/AboutSection";
-import "react-toastify/dist/ReactToastify.css";
-import { ToastContainer } from "react-toastify";
 import Footer from "./Footer";
 import { jwtDecode } from "jwt-decode";
-import profileInfoImage from "../../public/ProfileInfo.png";
-import MobileAboutSection from "./MobileAboutSection";
+import Image from "next/image";
+import { toast } from "react-toastify";
 
 export interface DetailViewHandle {
   open: (id: string) => void;
@@ -53,19 +51,19 @@ const SwipeIndicator = ({ type, opacity }: any) => {
     opacity: opacity,
     transition: "opacity 0.2s ease-in-out",
     zIndex: 10,
-    userSelect: "none", // Prevent text selection during swipe
-    pointerEvents: "none", // Ensure it doesn't interfere with touch events
+    userSelect: "none",
+    pointerEvents: "none",
   };
   const typeStyles: any = {
     delete: {
-      right: "5%", // Adjusted for better visibility
+      right: "5%",
       transform: "rotate(-25deg)",
-      color: `#F44336`, // Tinder uses red for reject
+      color: `#F44336`,
     },
     like: {
-      left: "5%", // Adjusted for better visibility
+      left: "5%",
       transform: "rotate(25deg)",
-      color: `#4CAF50`, // Tinder uses green for like
+      color: `#4CAF50`,
     },
     maybe: {
       left: "50%",
@@ -100,6 +98,13 @@ const SwipeIndicator = ({ type, opacity }: any) => {
 };
 
 export default function MobileSweaping() {
+  const lastSwipeTimeRef = useRef<number>(0);
+  const SWIPE_THROTTLE_MS = 0;
+  const currentCardRef = useRef<HTMLDivElement | null>(null);
+  const isSwiping = useRef(false);
+  const startPoint = useRef({ x: 0, y: 0 });
+  const router = useRouter();
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
   const [preloadedImages, setPreloadedImages] = useState<Set<string>>(
@@ -120,24 +125,18 @@ export default function MobileSweaping() {
   const [membership, setMembership] = useState(0);
   const [id, setId] = useState("");
   const [memberalarm, setMemberAlarm] = useState("0");
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportOptions, setReportOptions] = useState({
+    reportUser: false,
+    blockUser: false,
+  });
 
   const [isProcessingSwipe, setIsProcessingSwipe] = useState(false);
   const [cardStyles, setCardStyles] = useState<any>({ active: {}, next: {} });
-  const [isExiting, setIsExiting] = useState(false); // New state for exit animation
+  const [isExiting, setIsExiting] = useState(false);
   const [pendingSwipeAction, setPendingSwipeAction] = useState<string | null>(
     null
-  ); // Store action during exit anim
-  const lastSwipeTimeRef = useRef<number>(0);
-  const SWIPE_THROTTLE_MS = 500;
-  const currentCardRef = useRef<HTMLDivElement | null>(null);
-  const isSwiping = useRef(false);
-  const startPoint = useRef({ x: 0, y: 0 });
-  const router = useRouter();
-
-  const handleClose = () => {
-    setShowDetail(false);
-    setSelectedUserId(null);
-  };
+  );
 
   const visibleProfiles = useMemo(() => {
     return userProfiles.slice(currentIndex, currentIndex + 2);
@@ -151,42 +150,56 @@ export default function MobileSweaping() {
     return userProfiles[currentIndex];
   }, [userProfiles, currentIndex]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const queryParams = new URLSearchParams(window.location.search);
-      var param = queryParams.get("q");
+  const sendNotification = useCallback(
+    async (message: any, targetProfile: any) => {
+      const response = await fetch("/api/user/notification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: targetProfile?.Id,
+          body: message,
+          image: "https://example.com/path/to/image.jpg",
+          url: `https://swing-social-user.vercel.app/members/${profileId}`,
+        }),
+      });
 
-      console.log("------------------", param);
+      return await response.json();
+    },
+    [profileId]
+  );
 
-      setIdparam(param);
-      const id = localStorage.getItem("logged_in_profile");
-      if (id) {
-        getUserList(id);
-        fetchCurrentProfileInfo(param);
-        setProfileId(id);
+  const handleUpdateLikeMatch = useCallback(
+    async (targetProfile: any) => {
+      try {
+        const response = await fetch("/api/user/sweeping/match", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileid: profileId,
+            targetid: targetProfile?.Id,
+          }),
+        });
+        const username = localStorage.getItem("profileUsername");
+        const data = await response.json();
+        if (data?.isMatch) {
+          setMatchedProfile(targetProfile);
+          setShowMatchPopup(true);
+          setId(targetProfile?.Id);
+          sendNotification(
+            `You have a new match with ${username}!`,
+            targetProfile
+          );
+        }
+        return data;
+      } catch (error) {
+        console.error("Error:", error);
+        return null;
       }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("loginInfo");
-      const count = localStorage.getItem("memberalarm");
-      setMemberAlarm(count ?? "0");
-
-      if (token) {
-        const decodeToken = jwtDecode<any>(token);
-        setProfileId(decodeToken.profileId);
-        setMembership(decodeToken.membership);
-        fetchCurrentProfileInfo(decodeToken.profileId);
-        getUserList(decodeToken.profileId);
-      } else {
-        router.push("/login");
-      }
-    }
-  }, []);
-
-  const [isBlockingRefresh, setIsBlockingRefresh] = useState(false);
+    },
+    [profileId, sendNotification]
+  );
 
   const fetchCurrentProfileInfo = useCallback(async (currentProfileId: any) => {
     if (currentProfileId) {
@@ -269,26 +282,6 @@ export default function MobileSweaping() {
     [preloadedImages]
   );
 
-  const sendNotification = useCallback(
-    async (message: any, targetProfile: any) => {
-      const response = await fetch("/api/user/notification", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: targetProfile?.Id,
-          body: message,
-          image: "https://example.com/path/to/image.jpg",
-          url: `https://swing-social-user.vercel.app/members/${profileId}`,
-        }),
-      });
-
-      return await response.json();
-    },
-    [profileId]
-  );
-
   const handleUpdateCategoryRelation = useCallback(
     async (category: any, targetProfile: any) => {
       try {
@@ -304,60 +297,6 @@ export default function MobileSweaping() {
         });
         const data = await response.json();
         return data;
-      } catch (error) {
-        console.error("Error:", error);
-        return null;
-      }
-    },
-    [profileId]
-  );
-
-  const handleUpdateLikeMatch = useCallback(
-    async (targetProfile: any) => {
-      try {
-        const response = await fetch("/api/user/sweeping/match", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            profileid: profileId,
-            targetid: targetProfile?.Id,
-          }),
-        });
-        const username = localStorage.getItem("profileUsername");
-        const data = await response.json();
-        if (data?.isMatch) {
-          setMatchedProfile(targetProfile);
-          setShowMatchPopup(true);
-          setId(targetProfile?.Id);
-          sendNotification(
-            `You have a new match with ${username}!`,
-            targetProfile
-          );
-        }
-        return data;
-      } catch (error) {
-        console.error("Error:", error);
-        return null;
-      }
-    },
-    [profileId, sendNotification]
-  );
-
-  const handleReportUser = useCallback(
-    async (targetProfile: any) => {
-      try {
-        const response = await fetch("/api/user/sweeping/report", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            profileid: profileId,
-            targetid: targetProfile?.Id,
-          }),
-        });
-
-        return await response.json();
       } catch (error) {
         console.error("Error:", error);
         return null;
@@ -389,7 +328,6 @@ export default function MobileSweaping() {
   const isUserPremium = () => membership === 1;
   const hasReachedSwipeLimit = () => swipeCount >= DAILY_LIMIT;
 
-  // This function now performs the actual backend updates and index increment
   const processSwipe = useCallback(
     (direction: string, targetProfile: any) => {
       setCurrentIndex((prevIndex) => prevIndex + 1);
@@ -534,34 +472,34 @@ export default function MobileSweaping() {
         return;
       }
 
-      setIsExiting(true); // Start exit animation phase
-      setIsProcessingSwipe(true); // Prevent new gestures
-      setPendingSwipeAction(action); // Store action to process after animation
+      setIsExiting(true);
+      setIsProcessingSwipe(true);
+      setPendingSwipeAction(action);
 
       let exitTransform = "";
       let finalRotate = 0;
       if (action === "like") {
         exitTransform = "translateX(200vw)";
-        finalRotate = 30; // Rotate when it flies off
+        finalRotate = 30;
       } else if (action === "delete") {
         exitTransform = "translateX(-200vw)";
         finalRotate = -30;
       } else if (action === "maybe") {
         exitTransform = "translateY(200vh)";
-        finalRotate = 0; // No rotation for 'maybe'
+        finalRotate = 0;
       }
 
       setCardStyles((prev: any) => ({
         ...prev,
         active: {
           transform: `${exitTransform} rotate(${finalRotate}deg)`,
-          transition: `transform 0.5s ${spring}`, // Fast, smooth exit
-          swipeType: action, // Keep indicator visible during exit
-          swipeOpacity: 1, // Full opacity during exit
+          transition: `transform 0.1s ease-out`,
+          swipeType: action,
+          swipeOpacity: 1,
         },
         next: {
-          transform: "scale(1)", // Animate next card to full size quickly
-          transition: `transform 0.3s ${spring}`,
+          transform: "scale(1)",
+          transition: `transform 0.01s ease-in`,
         },
       }));
     },
@@ -582,7 +520,7 @@ export default function MobileSweaping() {
     if (!isSwiping.current || isProcessingSwipe || isExiting) return;
     isSwiping.current = false;
 
-    const swipeThreshold = 120; // Distance in pixels to confirm a swipe
+    const swipeThreshold = 120;
     const { transform = "" } = cardStyles.active || {};
     const deltaX = parseFloat(
       transform.match(/translateX\(([^p]+)px\)/)?.[1] || "0"
@@ -592,22 +530,19 @@ export default function MobileSweaping() {
     );
 
     let action = null;
-    // Determine action based on threshold
     if (deltaX > swipeThreshold) action = "like";
     else if (deltaX < -swipeThreshold) action = "delete";
     else if (deltaY > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX))
-      action = "maybe"; // Ensure vertical swipe is dominant for 'maybe'
+      action = "maybe";
 
     if (action) {
-      // Check limits before performing action
       if (!isUserPremium() && hasReachedSwipeLimit()) {
         setShowLimitPopup(true);
-        // Animate card back if limit reached and swipe action not taken
         setCardStyles({
           active: {
             transform: "scale(1)",
             transition: `transform 0.4s ${spring}`,
-            swipeType: null, // Clear indicator
+            swipeType: null,
             swipeOpacity: 0,
           },
           next: {
@@ -617,15 +552,13 @@ export default function MobileSweaping() {
         });
         return;
       }
-      // If action is valid, trigger the exit animation
       triggerExitAnimation(action);
     } else {
-      // If no action, reset card position
       setCardStyles({
         active: {
           transform: "scale(1)",
           transition: `transform 0.4s ${spring}`,
-          swipeType: null, // Clear indicator
+          swipeType: null,
           swipeOpacity: 0,
         },
         next: {
@@ -640,7 +573,7 @@ export default function MobileSweaping() {
     isExiting,
     isUserPremium,
     hasReachedSwipeLimit,
-    triggerExitAnimation, // Now a dependency
+    triggerExitAnimation,
   ]);
 
   useEffect(() => {
@@ -692,7 +625,6 @@ export default function MobileSweaping() {
     handleSwipeEnd,
   ]);
 
-  // Global touchmove listener to prevent scrolling *if* a swipe is active (for body scroll)
   useEffect(() => {
     const handleGlobalTouchMove = (e: TouchEvent) => {
       if (isSwiping.current && e.cancelable) {
@@ -707,7 +639,6 @@ export default function MobileSweaping() {
     };
   }, []);
 
-  // Initial and subsequent card style resets for new active card
   useEffect(() => {
     // This effect runs when currentIndex changes, after a card has exited
     // It resets the styles for the *new* active card (which was previously the 'next' card)
@@ -718,7 +649,7 @@ export default function MobileSweaping() {
         transition: `transform 0.5s ${spring}`,
       },
     });
-  }, [currentIndex]); // Depend on currentIndex
+  }, [currentIndex]);
 
   useEffect(() => {
     const handleTouchMove = (e: TouchEvent) => {
@@ -737,11 +668,37 @@ export default function MobileSweaping() {
     };
   }, []);
 
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportOptions, setReportOptions] = useState({
-    reportUser: false,
-    blockUser: false,
-  });
+  // EXTRA CODE
+  const handleClose = () => {
+    setShowDetail(false);
+    setSelectedUserId(null);
+  };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const queryParams = new URLSearchParams(window.location.search);
+      var param = queryParams.get("q");
+      setIdparam(param);
+      const id = localStorage.getItem("logged_in_profile");
+      const token = localStorage.getItem("loginInfo");
+      const count = localStorage.getItem("memberalarm");
+      setMemberAlarm(count ?? "0");
+      if (id) {
+        getUserList(id);
+        fetchCurrentProfileInfo(param);
+        setProfileId(id);
+      }
+      if (token) {
+        const decodeToken = jwtDecode<any>(token);
+        setProfileId(decodeToken.profileId);
+        setMembership(decodeToken.membership);
+        fetchCurrentProfileInfo(decodeToken.profileId);
+        getUserList(decodeToken.profileId);
+      } else {
+        router.push("/login");
+      }
+    }
+  }, []);
 
   const handleReportModalToggle = useCallback(() => {
     setIsReportModalOpen((prev) => !prev);
@@ -755,18 +712,38 @@ export default function MobileSweaping() {
     }));
   }, []);
 
-  const handleReportSubmit = useCallback(() => {
-    setIsReportModalOpen(false);
-    if (currentProfile) {
-      handleReportUser(currentProfile);
+  const handleReportSubmit = useCallback(async () => {
+    if (!currentProfile) return;
+
+    try {
+      const res = await fetch("/api/user/sweeping/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profileid: profileId,
+          targetid: currentProfile?.Id,
+        }),
+      });
+
+      if (res.ok) {
+        setIsReportModalOpen(false);
+        setReportOptions({
+          reportUser: false,
+          blockUser: false,
+        });
+        toast.success("User reported successfully");
+        return res.json();
+      } else {
+        toast.error("Failed to report user.");
+        return null;
+      }
+    } catch (err) {
+      toast.error("An error occurred while reporting.");
+      return null;
     }
-  }, [handleReportUser, currentProfile]);
+  }, [currentProfile, profileId]);
 
-  const handleChatAction = () => {
-    router.push(`/messaging/${id}`);
-  };
-
-  if (loading) {
+  if (userProfiles?.length === 0 && loading) {
     return (
       <Box
         display="flex"
@@ -775,58 +752,43 @@ export default function MobileSweaping() {
         height="100vh"
         bgcolor="#121212"
       >
-        <Box
-          component="img"
-          src="/loading.png"
-          alt="Logo"
-          sx={{ width: 50, height: "auto" }}
-        />
-        <span style={{ color: "#C2185B", paddingLeft: 10, fontSize: 32 }}>
-          SWINGSOCIAL
-        </span>
+        <>
+          <Typography variant="h6" color="white">
+            Please wait...
+          </Typography>
+        </>
       </Box>
     );
   }
-
-  if (userProfiles.length === 0) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="100vh"
-        bgcolor="#121212"
-      >
-        <Typography variant="h6" color="white">
-          Please wait...
-        </Typography>
-      </Box>
-    );
-  }
-
-  // useEffect(() => {
-  //   window.scrollTo(0, 0);
-  // }, []);
 
   return (
     <>
       <Header />
-      <ToastContainer position="top-right" autoClose={3000} />
+
       <div style={{ display: "none" }}>
         {preloadProfiles.map((profile, index) =>
           profile?.Avatar ? (
-            <img
+            <div
               key={`preload-${index}`}
-              src={profile.Avatar}
-              alt="preload"
-              onLoad={() => {
-                setPreloadedImages((prev) => {
-                  const updated = new Set(prev);
-                  updated.add(profile.Avatar);
-                  return updated;
-                });
+              style={{
+                position: "relative",
               }}
-            />
+            >
+              <Image
+                src={profile.Avatar}
+                alt="preload"
+                fill
+                sizes="1px"
+                onLoad={() => {
+                  setPreloadedImages((prev) => {
+                    const updated = new Set(prev);
+                    updated.add(profile.Avatar);
+                    return updated;
+                  });
+                }}
+                style={{ objectFit: "cover" }}
+              />
+            </div>
           ) : null
         )}
       </div>
@@ -866,18 +828,13 @@ export default function MobileSweaping() {
                 },
               }}
             >
-              <Avatar
+              <Image
+                src={selectedUserProfile?.Avatar || "/fallback-avatar.png"}
                 alt={selectedUserProfile?.Username || "Unknown"}
-                src={selectedUserProfile?.Avatar || ""}
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                  borderRadius: 0,
-                }}
-                imgProps={{
-                  loading: "eager", // Cargar la imagen con alta prioridad
-                  style: { objectFit: "cover" },
-                }}
+                fill
+                sizes="(max-width: 768px) 100vw, 100vw"
+                style={{ objectFit: "cover" }}
+                priority
               />
 
               <Box
@@ -974,7 +931,6 @@ export default function MobileSweaping() {
                 right: 0,
                 backgroundColor: "#121212",
                 color: "white",
-                // Apply cardStyles based on index
                 transform:
                   index === 0
                     ? cardStyles.active.transform
@@ -983,15 +939,14 @@ export default function MobileSweaping() {
                   index === 0
                     ? cardStyles.active.transition
                     : cardStyles.next.transition,
-                zIndex: index === 0 ? 2 : 1, // Active card on top
+                zIndex: index === 0 ? 2 : 1,
               }}
-              // onTransitionEnd event for the active card
               onTransitionEnd={(e) => {
                 if (
-                  index === 0 && // Only for the active card
-                  isExiting && // Only if an exit animation was triggered
-                  e.propertyName === "transform" && // Ensure it's the transform ending
-                  pendingSwipeAction // Ensure there's a pending action
+                  index === 0 &&
+                  isExiting &&
+                  e.propertyName === "transform" &&
+                  pendingSwipeAction
                 ) {
                   const actionMap: { [key: string]: string } = {
                     delete: "left",
@@ -999,7 +954,6 @@ export default function MobileSweaping() {
                     maybe: "down",
                   };
                   const direction = actionMap[pendingSwipeAction];
-                  // Perform the actual processing AFTER the card has animated out
                   if (currentProfile) {
                     processSwipe(direction, currentProfile);
                   }
@@ -1013,11 +967,14 @@ export default function MobileSweaping() {
                     opacity={cardStyles.active.swipeOpacity}
                   />
                 )}
-                <img
-                  src={profile?.Avatar || ""}
-                  alt={profile?.Username || "Unknown"}
-                  className="profile-img"
-                />
+                <div className="profile-img" style={{ position: "relative" }}>
+                  <Image
+                    src={profile?.Avatar || "/fallback-avatar.png"}
+                    alt={profile?.Username || "Unknown"}
+                    fill
+                    className="profile-img"
+                  />
+                </div>
 
                 <img
                   src="/ProfileInfo.png"
@@ -1089,10 +1046,6 @@ export default function MobileSweaping() {
                   </Typography>
                 </div>
               </div>
-              {/* <CardContent sx={{ padding: "5px 0", pb: 0 }}>
-
-                <MobileAboutSection aboutText={profile?.About} />
-              </CardContent> */}
             </Card>
           ))
         )}
@@ -1114,8 +1067,8 @@ export default function MobileSweaping() {
             left: "50%",
             transform: "translate(-50%, -50%)",
             width: 300,
-            bgcolor: "#1e1e1e", // Dark background
-            color: "white", // Default text color for dark background
+            bgcolor: "#1e1e1e",
+            color: "white",
             boxShadow: 24,
             p: 4,
             borderRadius: 2,
@@ -1126,12 +1079,12 @@ export default function MobileSweaping() {
           </Typography>
           <FormControlLabel
             sx={{
-              color: "white", // Label color
+              color: "white",
               "& .MuiCheckbox-root": {
-                color: "#9c27b0", // Checkbox color
+                color: "#9c27b0",
               },
               "& .MuiCheckbox-root.Mui-checked": {
-                color: "#9c27b0", // Checked checkbox color
+                color: "#9c27b0",
               },
             }}
             control={
@@ -1145,12 +1098,12 @@ export default function MobileSweaping() {
           />
           <FormControlLabel
             sx={{
-              color: "white", // Label color
+              color: "white",
               "& .MuiCheckbox-root": {
-                color: "#9c27b0", // Checkbox color
+                color: "#9c27b0",
               },
               "& .MuiCheckbox-root.Mui-checked": {
-                color: "#9c27b0", // Checked checkbox color
+                color: "#9c27b0",
               },
             }}
             control={
@@ -1180,8 +1133,8 @@ export default function MobileSweaping() {
         onClose={() => setShowLimitPopup(false)}
         PaperProps={{
           sx: {
-            backgroundColor: "#121212", // Dark background
-            color: "#ffffff", // White text
+            backgroundColor: "#121212",
+            color: "#ffffff",
           },
         }}
       >
@@ -1195,10 +1148,10 @@ export default function MobileSweaping() {
             onClick={() => router.push(`/membership`)}
             sx={{
               mt: 2,
-              backgroundColor: "#e91e63", // Pink color
+              backgroundColor: "#e91e63",
               color: "white",
               "&:hover": {
-                backgroundColor: "#d81b60", // Slightly darker pink on hover
+                backgroundColor: "#d81b60",
               },
             }}
           >
@@ -1211,7 +1164,7 @@ export default function MobileSweaping() {
               marginLeft: 1,
               color: "white",
               "&:hover": {
-                backgroundColor: "#d81b60", // Slightly darker pink on hover
+                backgroundColor: "#d81b60",
               },
             }}
           >
@@ -1226,8 +1179,8 @@ export default function MobileSweaping() {
         onClose={() => setShowMatchPopup(false)}
         PaperProps={{
           sx: {
-            backgroundColor: "#121212", // Dark background
-            color: "#ffffff", // White text
+            backgroundColor: "#121212",
+            color: "#ffffff",
           },
         }}
       >
@@ -1242,7 +1195,7 @@ export default function MobileSweaping() {
                   width: 100,
                   height: 100,
                   margin: "auto",
-                  border: "2px solid #03dac5", // Border for visibility
+                  border: "2px solid #03dac5",
                 }}
               />
               <Typography
@@ -1266,7 +1219,7 @@ export default function MobileSweaping() {
                   View Profile
                 </Button>
                 <Button
-                  onClick={handleChatAction}
+                  onClick={() => router.push(`/messaging/${id}`)}
                   variant="contained"
                   sx={{
                     backgroundColor: "#03dac5",
@@ -1278,6 +1231,7 @@ export default function MobileSweaping() {
                 >
                   Chat
                 </Button>
+
                 <Button
                   onClick={() => setShowMatchPopup(false)}
                   variant="outlined"
@@ -1304,8 +1258,8 @@ export default function MobileSweaping() {
         onClose={() => setShowEndPopup(false)}
         PaperProps={{
           sx: {
-            backgroundColor: "#121212", // Dark background
-            color: "#ffffff", // White text
+            backgroundColor: "#121212",
+            color: "#ffffff",
           },
         }}
       >

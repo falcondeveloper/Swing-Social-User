@@ -53,6 +53,7 @@ import "slick-carousel/slick/slick.css"; // Import the slick carousel CSS
 import "slick-carousel/slick/slick-theme.css"; // Import the slick carousel theme CSS
 import { error } from "console";
 import Swal from "sweetalert2";
+import Link from "next/link";
 
 // Create a custom theme with a sophisticated color palette
 const theme = createTheme({
@@ -981,7 +982,7 @@ const LoginPage: React.FC = () => {
                   }}
                 >
                   New to Swing Social?{" "}
-                  <a href="/registeradmin">Create an account</a>
+                  <Link href="/registeradmin">Create an account</Link>
                 </Typography>
                 <Typography
                   onClick={() => {

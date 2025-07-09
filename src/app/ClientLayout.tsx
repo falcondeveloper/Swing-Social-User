@@ -11,7 +11,7 @@ function TokenManager() {
     const storeDeviceToken = async () => {
       if (!token) return;
 
-      const loginToken = localStorage.getItem('loginInfo');
+      const loginToken = localStorage.getItem("loginInfo");
       if (!loginToken) return;
 
       try {
@@ -52,6 +52,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <>
       <TokenManager />
+      
       {children}
     </>
   );

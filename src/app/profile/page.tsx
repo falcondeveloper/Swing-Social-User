@@ -950,13 +950,31 @@ const ProfileDetail: React.FC = () => {
               </Grid>
               <Grid item xs={12}>
                 <Autocomplete
-                  options={cityOption}
+                  id="location-autocomplete"
+                  open={openCity}
+                  onOpen={() => setOpenCity(true)}
+                  onClose={() => setOpenCity(false)}
+                  isOptionEqualToValue={(option, value) =>
+                    option.City === value.City
+                  }
                   getOptionLabel={(option) => option.City || ""}
+                  options={cityOption}
+                  loading={cityLoading}
+                  inputValue={cityInput}
+                  noOptionsText={
+                    <Typography sx={{ color: "white" }}>No options</Typography>
+                  }
                   value={
                     editedData?.Location
-                      ? { City: editedData.Location.replace(", USA", "") }
+                      ? {
+                          City: editedData.Location.replace(", USA", ""),
+                        }
                       : null
                   }
+                  onInputChange={(event, newInputValue) => {
+                    if (event?.type === "change" || event?.type === "click")
+                      setCityInput(newInputValue);
+                  }}
                   onChange={(event, newValue) => {
                     if (newValue?.City)
                       handleInputChange("Location", newValue.City);
@@ -968,6 +986,7 @@ const ProfileDetail: React.FC = () => {
                       label="Location"
                       error={!!errors.Location}
                       helperText={errors.Location}
+                      disabled={isSubmitting}
                       InputProps={{
                         ...params.InputProps,
                         startAdornment: (
@@ -980,7 +999,7 @@ const ProfileDetail: React.FC = () => {
                         endAdornment: (
                           <>
                             {cityLoading ? (
-                              <CircularProgress color="inherit" size={20} />
+                              <CircularProgress color="inherit" size={15} />
                             ) : null}
                             {params.InputProps.endAdornment}
                           </>
@@ -1340,6 +1359,42 @@ const ProfileDetail: React.FC = () => {
 
     setMembership(localStorage.getItem("memberShip") || "0");
   }, [mounted]);
+
+  useEffect(() => {
+    if (!openCity) {
+      setCityOption([]);
+      return;
+    }
+    if (cityInput === "") return;
+
+    const fetchData = async () => {
+      setCityLoading(true);
+      try {
+        const response = await fetch(`/api/user/city?city=${cityInput}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const { cities } = await response.json();
+        const uniqueCities = cities.filter(
+          (city: any, index: any, self: any) =>
+            index === self.findIndex((t: any) => t.City === city.City)
+        );
+
+        setCityOption(uniqueCities);
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+      } finally {
+        setCityLoading(false);
+      }
+    };
+
+    const delayDebounceFn = setTimeout(() => {
+      fetchData();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [cityInput, openCity]);
 
   // Don't render until mounted
   if (!mounted) {

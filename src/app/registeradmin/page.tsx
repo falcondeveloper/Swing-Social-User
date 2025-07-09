@@ -65,7 +65,14 @@ const theme = createTheme({
 });
 
 export default function ProfileDetail() {
-  // State to hold form input values
+  const router = useRouter();
+  const navigate = useRouter();
+  const [open, setOpen] = useState(false);
+  const [cityLoading, setCityLoading] = useState(false);
+  const [openCity, setOpenCity] = useState(false);
+  const [cityOption, setCityOption] = useState<CityType[] | []>([]);
+  const [cityInput, setCityInput] = useState<string | "">("");
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -91,14 +98,16 @@ export default function ProfileDetail() {
     },
   });
 
-  const [particles, setParticles] = useState<Array<{
-    id: number;
-    size: number;
-    x: number;
-    y: number;
-    duration: number;
-    delay: number;
-  }>>([]);
+  const [particles, setParticles] = useState<
+    Array<{
+      id: number;
+      size: number;
+      x: number;
+      y: number;
+      duration: number;
+      delay: number;
+    }>
+  >([]);
 
   useEffect(() => {
     const generatedParticles = [...Array(50)].map((_, i) => ({
@@ -335,21 +344,14 @@ export default function ProfileDetail() {
     }
   };
 
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const navigate = useRouter();
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
   const handleContinue = () => {
     handleClose();
     handleClose();
     navigate.push(`/otpadmin/${profileId}`);
   };
-
-  const [cityLoading, setCityLoading] = useState(false);
-  const [openCity, setOpenCity] = useState(false);
-  const [cityOption, setCityOption] = useState<CityType[] | []>([]);
-  const [cityInput, setCityInput] = useState<string | "">("");
 
   useEffect(() => {
     if (!openCity) {
@@ -365,8 +367,6 @@ export default function ProfileDetail() {
       setCityLoading(true);
 
       try {
-        //API
-        console.log(cityInput);
         const response = await fetch(`/api/user/city?city=${cityInput}`);
         if (!response.ok) {
           console.error("Failed to fetch event data:", response.statusText);
@@ -436,6 +436,7 @@ export default function ProfileDetail() {
           We protect our community by making sure everyone on SwingSocial is
           real
         </Typography>
+
         <TextField
           fullWidth
           label="Email"
@@ -579,6 +580,7 @@ export default function ProfileDetail() {
             },
           }}
         />
+
         {touched && (
           <Box sx={{ mb: 3 }}>
             <LinearProgress
@@ -719,6 +721,7 @@ export default function ProfileDetail() {
             },
           }}
         />
+
         <Autocomplete
           id="autocomplete-filled"
           open={openCity}
@@ -729,7 +732,7 @@ export default function ProfileDetail() {
             }
             setOpenCity(false);
           }}
-          disableClearable 
+          disableClearable
           isOptionEqualToValue={(option, value) => option.id === value.id}
           getOptionLabel={(option) => option.City}
           options={cityOption.map((city) => ({ ...city, key: city.id }))}
