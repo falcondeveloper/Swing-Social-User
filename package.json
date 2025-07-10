@@ -55,6 +55,7 @@
     "react-easy-crop": "^5.2.0",
     "react-quill": "^2.0.0",
     "react-router-dom": "^7.0.2",
+    "react-select": "^5.10.1",
     "react-simple-swipe": "^0.2.0",
     "react-slick": "^0.30.3",
     "react-swipeable": "^7.0.2",

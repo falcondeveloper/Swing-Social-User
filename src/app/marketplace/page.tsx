@@ -3,118 +3,31 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Container,
   Typography,
   TextField,
   Button,
   Card,
   CardContent,
-  CardMedia,
-  Chip,
   Grid,
-  IconButton,
   InputAdornment,
-  AppBar,
-  Toolbar,
-  useTheme,
-  useMediaQuery,
-  Fade,
-  Zoom,
-  Grow,
-  alpha,
-  styled,
+  CircularProgress,
+  Chip,
+  Container,
+  IconButton,
 } from "@mui/material";
 import {
   Search as SearchIcon,
-  Favorite,
   FavoriteBorder,
-  ShoppingCart,
-  FilterList,
-  LocalOffer,
-  AddCircleOutline,
+  Favorite,
+  Sell,
+  Category,
 } from "@mui/icons-material";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import Slider from "react-slick"; // Import the react-slick slider
-import "slick-carousel/slick/slick.css"; // Import the slick carousel CSS
-import "slick-carousel/slick/slick-theme.css"; // Import the slick carousel theme CSS
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Select from "react-select";
 
-// Enhanced styled components with animations
-// const StyledCard = styled(Card)(({ theme }) => ({
-//     position: "relative",
-//     borderRadius: 16,
-//     transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-//     background: "rgba(255, 255, 255, 0.95)",
-//     backdropFilter: "blur(10px)",
-//     "&:hover": {
-//         transform: "translateY(-12px) scale(1.02)",
-//         boxShadow: "0 16px 32px rgba(0, 0, 0, 0.12)",
-//         "& .card-media": {
-//             transform: "scale(1.05)",
-//         },
-//         "& .card-overlay": {
-//             opacity: 1,
-//         },
-//     },
-// }));
-
-// const AnimatedChip = styled(Chip)(({ theme }) => ({
-//     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-//     "&:hover": {
-//         transform: "scale(1.08) translateY(-2px)",
-//         boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-//     },
-// }));
-
-// const CategoryBadge = styled(Typography)(({ theme }) => ({
-//     position: "absolute",
-//     top: 16,
-//     left: 16,
-//     backgroundColor: "rgba(0, 0, 0, 0.7)",
-//     color: "#fff",
-//     padding: "6px 16px",
-//     borderRadius: 20,
-//     fontSize: "0.875rem",
-//     backdropFilter: "blur(8px)",
-//     zIndex: 1,
-//     transform: "translateY(0)",
-//     transition: "all 0.3s ease",
-//     "&:hover": {
-//         transform: "translateY(-2px)",
-//         backgroundColor: "rgba(0, 0, 0, 0.8)",
-//     },
-// }));
-
-// Mask overlay styles
-// const MaskOverlay = styled(Box)(({ theme }) => ({
-//     position: "fixed",
-//     top: 0,
-//     left: 0,
-//     width: "100%",
-//     height: "100%",
-//     backgroundColor: "rgba(0, 0, 0, 0.7)", // Semi-transparent black overlay
-//     zIndex: 9999, // Ensure it sits above all content
-//     display: "flex",
-//     alignItems: "center", // Center the content vertically
-//     justifyContent: "center", // Center the content horizontally
-//     color: "#fff",
-//     textAlign: "center",
-// }));
-
-// // Text for "Coming Soon"
-// const ComingSoonText = styled(Typography)(({ theme }) => ({
-//     fontSize: "3rem",
-//     fontWeight: 700,
-//     letterSpacing: "2px",
-//     textTransform: "uppercase",
-//     textShadow: "0 4px 8px rgba(0, 0, 0, 0.5)",
-//     [theme.breakpoints.down("sm")]: {
-//         fontSize: "2rem",
-//     },
-// }));
-
-// Types
 interface Product {
   Id: string;
   Active: boolean;
@@ -125,33 +38,23 @@ interface Product {
   Rating: number;
   Title: string;
   Username: string;
-  Price: Number;
+  Price: number;
 }
 
-// const categories = [
-//     { name: "All", icon: <LocalOffer /> },
-//     { name: "Electronics", icon: <LocalOffer /> },
-//     { name: "Furniture", icon: <LocalOffer /> },
-//     { name: "Fashion", icon: <LocalOffer /> },
-//     { name: "Sports", icon: <LocalOffer /> },
-//     { name: "Vehicles", icon: <LocalOffer /> },
-//     { name: "Others", icon: <LocalOffer /> },
-// ];
-
 const Marketplace: React.FC = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [showAnimation, setShowAnimation] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [profileId, setProfileId] = useState("");
-  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [savedItems, setSavedItems] = useState<string[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [priceRange, setPriceRange] = useState<string>("all");
+  const [categories, setCategories] = useState<string[]>([]);
 
   const getAllProducts = async () => {
+    setIsLoading(true);
     try {
       const response = await fetch("/api/marketplace", {
         method: "GET",
@@ -161,15 +64,26 @@ const Marketplace: React.FC = () => {
       });
       const data = await response.json();
       setProducts(data.products);
-      setShowAnimation(true);
+
+      const uniqueCategories = Array.from(
+        new Set(data.products.map((p: Product) => p.Category))
+      ) as string[];
+      setCategories(uniqueCategories);
     } catch (error) {
       console.error("Error fetching marketplace data:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     setIsClient(true);
     getAllProducts();
+
+    const saved = localStorage.getItem("savedItems");
+    if (saved) {
+      setSavedItems(JSON.parse(saved));
+    }
   }, []);
 
   useEffect(() => {
@@ -178,59 +92,40 @@ const Marketplace: React.FC = () => {
     const aff = urlParams.get("aff");
     const refer = urlParams.get("refer");
 
-    // Detect OS
     const getOS = () => {
       const userAgent = window.navigator.userAgent;
-
       if (userAgent.indexOf("Win") !== -1) return "Windows";
       if (userAgent.indexOf("Mac") !== -1) return "MacOS";
       if (userAgent.indexOf("Android") !== -1) return "Android";
       if (/iPad|iPhone|iPod/.test(userAgent)) return "iOS";
       if (userAgent.indexOf("Linux") !== -1) return "Linux";
-
       return "Unknown";
     };
 
-    // Get current URL and page info
     const currentUrl = window.location.href;
     const currentPage = "MarketPlace";
 
-    if (id) {
-      setProfileId(id);
-      fetch("/api/user/tracking", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          affiliate: aff,
-          referral: refer,
-          OS: getOS(),
-          page: currentPage,
-          url: currentUrl,
-          userid: id,
-        }),
-      });
-    } else {
-      fetch("/api/user/tracking", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          affiliate: aff,
-          referral: refer,
-          OS: getOS(),
-          page: currentPage,
-          url: currentUrl,
-          userid: null,
-        }),
-      });
-    }
+    fetch("/api/user/tracking", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        affiliate: aff,
+        referral: refer,
+        OS: getOS(),
+        page: currentPage,
+        url: currentUrl,
+        userid: id ?? null,
+      }),
+    });
+
+    if (id) setProfileId(id);
   }, []);
 
   useEffect(() => {
     if (searchQuery) {
+      setIsLoading(true);
       const searchProducts = async () => {
         try {
           const response = await fetch(
@@ -244,6 +139,7 @@ const Marketplace: React.FC = () => {
           );
           const data = await response.json();
           setProducts(data.products.rows);
+          setIsLoading(false);
         } catch (error) {
           console.error("Error searching marketplace data:", error);
         }
@@ -254,261 +150,450 @@ const Marketplace: React.FC = () => {
     }
   }, [searchQuery]);
 
-  const handleNavigate = (category: any) => {
-    router.push(`/marketplace/${category.Id}`);
+  const handleNavigate = (product: Product) => {
+    router.push(`/marketplace/${product.Id}`);
   };
 
-  // const toggleFavorite = (productId: string) => {
-  //     setFavorites((prev) =>
-  //         prev.includes(productId)
-  //             ? prev.filter((id) => id !== productId)
-  //             : [...prev, productId]
-  //     );
-  // };
+  const toggleSavedItem = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    let updatedSavedItems;
+    if (savedItems.includes(id)) {
+      updatedSavedItems = savedItems.filter((item) => item !== id);
+    } else {
+      updatedSavedItems = [...savedItems, id];
+    }
+    setSavedItems(updatedSavedItems);
+    localStorage.setItem("savedItems", JSON.stringify(updatedSavedItems));
+  };
 
-  // const filteredProducts = products?.filter((product) => {
-  //     const matchesCategory =
-  //         selectedCategory === "All" || product.Category === selectedCategory;
-  //     const matchesSearch = product.Title.toLowerCase().includes(
-  //         searchQuery.toLowerCase()
-  //     );
-  //     return matchesCategory && matchesSearch;
-  // });
+  const filteredProducts = products.filter((product) => {
+    const categoryMatch =
+      categoryFilter === "all" || product.Category === categoryFilter;
 
-  if (!isClient) {
-    return null; // Prevent SSR issues
-  }
+    let priceMatch = true;
+    if (priceRange === "under50") {
+      priceMatch = product.Price < 50;
+    } else if (priceRange === "50to100") {
+      priceMatch = product.Price >= 50 && product.Price <= 100;
+    } else if (priceRange === "over100") {
+      priceMatch = product.Price > 100;
+    }
 
-  // const renderContent = () => (
-  //     <Box
-  //         sx={{
-  //             minHeight: "100vh",
-  //             background: isMobile
-  //                 ? `url(https://swingsocialphotos.blob.core.windows.net/images/1738171077933_marketplace.jpeg) no-repeat center center fixed`
-  //                 : "linear-gradient(145deg, #f8f9ff 0%, #f1f4f9 100%)",
-  //             backgroundSize: "cover",
-  //             pt: 8,
-  //         }}
-  //     >
-  //         {/* Existing Content */}
-  //         <Container maxWidth="lg" sx={{ mt: 4 }}>
-  //             {/* Your current marketplace content */}
-  //         </Container>
-  //     </Box>
-  // );
+    return categoryMatch && priceMatch;
+  });
 
-  // const sliderSettings = {
-  //     dots: true,
-  //     infinite: true,
-  //     speed: 500,
-  //     slidesToShow: 1,
-  //     slidesToScroll: 1,
-  //     autoplay: true,
-  //     autoplaySpeed: 3000,
-  // };
+  const customStyles = {
+    control: (provided: any, state: any) => ({
+      ...provided,
+      backgroundColor: "#1e1e1e",
+      borderColor: state.isFocused ? "#d219c4" : "#333",
+      fontSize: "14px",
+      borderRadius: "12px",
+      minHeight: "47px",
+      cursor: "pointer",
+      boxShadow: state.isFocused ? "0 0 0 2px rgba(210, 25, 196, 0.2)" : "none",
+      "&:hover": {
+        borderColor: "#555",
+      },
+    }),
+    option: (provided: any, state: any) => ({
+      ...provided,
+      backgroundColor: state.isSelected
+        ? "#d219c4"
+        : state.isFocused
+        ? "#2a2a2a"
+        : "#1e1e1e",
+      color: state.isSelected ? "#fff" : "#f0f0f0",
+      padding: "8px 12px",
+      fontSize: "14px",
+      cursor: "pointer",
+    }),
+    menu: (provided: any) => ({
+      ...provided,
+      backgroundColor: "#1e1e1e",
+      border: "1px solid #333",
+      borderRadius: "8px",
+      zIndex: 9999,
+    }),
+    singleValue: (provided: any) => ({
+      ...provided,
+      color: "#f0f0f0",
+    }),
+    input: (provided: any) => ({
+      ...provided,
+      color: "#f0f0f0",
+    }),
+    placeholder: (provided: any) => ({
+      ...provided,
+      color: "#aaa",
+    }),
+  };
+
+  if (!isClient) return null;
 
   return (
-    <>
-      <Box sx={{ color: "white", padding: "10px" }}>
-        <Header />
+    <Box
+      sx={{
+        backgroundColor: "#121212",
+        minHeight: "100vh",
+        color: "#f0f0f0",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Header />
 
-        {/* Title */}
+      <Container maxWidth="xl" sx={{ flex: 1, py: 4 }}>
         <Typography
-          variant="h6"
-          component="h6"
+          variant="h4"
           align="center"
-          gutterBottom
-          sx={{ marginTop: { xs: "100px", lg: "70px" } }}
+          sx={{
+            mt: { xs: 2, md: 3 },
+            mb: 3,
+            fontWeight: 700,
+            background: "linear-gradient(45deg, #e91e63, #9c27b0)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}
         >
           Marketplace
         </Typography>
 
-        <Box sx={{ marginTop: 2, marginBottom: 2 }}>
-          <Grid
-            container
-            spacing={2}
-            justifyContent="center"
-            alignItems="center"
-          >
-            <Grid item>
-              <Button
-                variant="contained"
-                sx={{
-                  fontSize: isMobile
-                    ? "0.7rem"
-                    : isTablet
-                    ? "0.875rem"
-                    : "1rem",
-                  padding: isMobile
-                    ? "3px 6px"
-                    : isTablet
-                    ? "8px 16px"
-                    : "10px 20px",
-                  backgroundColor: "#d219c4",
-                }}
-              >
-                Saved Items
-              </Button>
-            </Grid>
-            <Grid item>
-              <Button
-                variant="contained"
-                sx={{
-                  fontSize: isMobile
-                    ? "0.7rem"
-                    : isTablet
-                    ? "0.875rem"
-                    : "1rem",
-                  padding: isMobile
-                    ? "3px 16px"
-                    : isTablet
-                    ? "8px 16px"
-                    : "10px 20px",
-                  backgroundColor: "#d219c4",
-                }}
-                onClick={() => router.push(`/marketplace/create/${profileId}`)}
-              >
-                Sell
-              </Button>
-            </Grid>
-            <Grid item>
+        {/* Search and Filter Section */}
+        <Box sx={{ mb: 4 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
               <TextField
+                fullWidth
                 size="small"
                 variant="outlined"
-                placeholder="Search"
+                placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon />
+                      <SearchIcon sx={{ color: "#ccc" }} />
                     </InputAdornment>
                   ),
                 }}
                 sx={{
-                  fontSize: isMobile
-                    ? "0.6rem"
-                    : isTablet
-                    ? "0.875rem"
-                    : "1rem",
-                  width: isMobile ? "100%" : isTablet ? "300px" : "500px",
-                  backgroundColor: "lightgray",
+                  backgroundColor: "#1e1e1e",
+                  borderRadius: "12px",
+                  "& .MuiOutlinedInput-input": {
+                    color: "#f0f0f0",
+                    py: 1.5,
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": { borderColor: "#333" },
+                    "&:hover fieldset": { borderColor: "#555" },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#d219c4",
+                      boxShadow: "0 0 0 2px rgba(210, 25, 196, 0.2)",
+                    },
+                  },
                 }}
               />
+            </Grid>
+
+            <Grid item xs={6} sm={6} md={2}>
+              <Select
+                options={[
+                  { value: "all", label: "All Categories" },
+                  ...categories.map((category) => ({
+                    value: category,
+                    label: category,
+                  })),
+                ]}
+                value={{
+                  value: categoryFilter,
+                  label:
+                    categoryFilter === "all"
+                      ? "All Categories"
+                      : categoryFilter,
+                }}
+                onChange={(selectedOption: any) =>
+                  setCategoryFilter(selectedOption.value)
+                }
+                placeholder="Category"
+                styles={customStyles}
+                isSearchable={false}
+              />
+            </Grid>
+
+            <Grid item xs={6} sm={6} md={2}>
+              <Select
+                options={[
+                  { value: "all", label: "All Prices" },
+                  { value: "under50", label: "Under $50" },
+                  { value: "50to100", label: "$50 - $100" },
+                  { value: "over100", label: "Over $100" },
+                ]}
+                value={{
+                  value: priceRange,
+                  label:
+                    priceRange === "all"
+                      ? "All Prices"
+                      : priceRange === "under50"
+                      ? "Under $50"
+                      : priceRange === "50to100"
+                      ? "$50 - $100"
+                      : "Over $100",
+                }}
+                onChange={(selectedOption: any) =>
+                  setPriceRange(selectedOption.value)
+                }
+                placeholder="Price"
+                styles={customStyles}
+                isSearchable={false}
+              />
+            </Grid>
+
+            <Grid item xs={6} sm={6} md={2}>
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={<FavoriteBorder />}
+                // onClick={() => router.push("/marketplace/saved")}
+                sx={{
+                  backgroundColor: "#1e1e1e",
+                  color: "#f0f0f0",
+                  borderRadius: "12px",
+                  px: 2,
+                  py: 1.5,
+                  "&:hover": {
+                    backgroundColor: "#2a2a2a",
+                  },
+                }}
+              >
+                Saved Items
+              </Button>
+            </Grid>
+
+            <Grid item xs={6} sm={6} md={2}>
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={<Sell />}
+                onClick={() => router.push(`/marketplace/create/${profileId}`)}
+                sx={{
+                  background: "linear-gradient(45deg, #d219c4, #6c1dd6)",
+                  color: "#fff",
+                  borderRadius: "12px",
+                  px: 2,
+                  py: 1.5,
+                  "&:hover": {
+                    background: "linear-gradient(45deg, #b815aa, #5c19b8)",
+                  },
+                }}
+              >
+                Sell
+              </Button>
             </Grid>
           </Grid>
         </Box>
 
-        {/* Category Card List */}
+        {/* Products Grid */}
         <Box
           sx={{
-            padding: {
-              xs: "0px 10px", // For extra small screens (2 images per row)
-              sm: "0px 20px", // For small screens (3 images per row)
-              md: "0px 50px", // For medium screens (4 images per row)
-              lg: "0px 60px", // For large screens (6 images per row)
-              xl: "0px 100px", // For extra-large screens (6 images per row)
-            },
-            // marginTop: { xs: "100px", lg: "70px" },
-            marginBottom: { xs: "60px", lg: "10px" },
+            minHeight: "300px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
           }}
         >
-          <Grid container spacing={1}>
-            {products.map((category, index) => (
-              <Grid
-                item
-                xs={6} // 2 images per row on extra small screens
-                sm={5} // 3 images per row on small screens
-                md={4} // 4 images per row on medium screens
-                lg={3} // 6 images per row on large screens
-                xl={3} // 6 images per row on extra-large screens
-                key={index}
-                sx={{ cursor: "pointer" }}
+          {isLoading ? (
+            <CircularProgress sx={{ color: "#d219c4" }} size={60} />
+          ) : filteredProducts.length === 0 ? (
+            <Box
+              sx={{
+                textAlign: "center",
+                py: 8,
+                width: "100%",
+              }}
+            >
+              <Typography variant="h6" sx={{ color: "#aaa", mb: 2 }}>
+                {searchQuery
+                  ? "No products match your search."
+                  : "No products available."}
+              </Typography>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setSearchQuery("");
+                  setCategoryFilter("all");
+                  setPriceRange("all");
+                }}
+                sx={{
+                  color: "#d219c4",
+                  borderColor: "#d219c4",
+                  "&:hover": {
+                    backgroundColor: "rgba(210, 25, 196, 0.08)",
+                    borderColor: "#d219c4",
+                  },
+                }}
               >
-                <div>
+                Clear Filters
+              </Button>
+            </Box>
+          ) : (
+            <Grid container spacing={3}>
+              {filteredProducts.map((product, index) => (
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                  md={4}
+                  lg={3}
+                  key={index}
+                  sx={{
+                    transition: "transform 0.2s",
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                    },
+                  }}
+                >
                   <Card
-                    onClick={() => handleNavigate(category)}
+                    onClick={() => handleNavigate(product)}
                     sx={{
-                      backgroundColor: "#0a0a0a",
-                      color: "white",
-                      position: "relative",
+                      borderRadius: "16px",
                       overflow: "hidden",
-                      width: "100%",
+                      backgroundColor: "#1e1e1e",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+                      transition: "all 0.3s ease",
                       height: "100%",
-                      aspectRatio: "1", // Square shape
-                      borderRadius: "15px",
+                      display: "flex",
+                      flexDirection: "column",
+                      border: "1px solid #333",
+                      "&:hover": {
+                        boxShadow: "0 12px 28px rgba(210, 25, 196, 0.2)",
+                        cursor: "pointer",
+                      },
                     }}
                   >
-                    <CardContent
+                    <Box
                       sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        height: "100%",
                         position: "relative",
+                        height: { xs: 300, sm: 300, md: 300 },
+                        overflow: "hidden",
                       }}
                     >
-                      <Box
+                      <Image
+                        src={
+                          product.CoverImageUrl || "/placeholder-product.jpg"
+                        }
+                        alt={product.Title}
+                        fill
+                        style={{
+                          objectFit: "cover",
+                          transition: "transform 0.3s ease",
+                        }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder-product.jpg";
+                        }}
+                        unoptimized
+                      />
+
+                      <IconButton
+                        aria-label="save"
+                        onClick={(e) => toggleSavedItem(product.Id, e)}
                         sx={{
-                          height: "90%",
-                          width: "100%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          position: "absolute",
+                          top: 8,
+                          right: 8,
+                          backgroundColor: "rgba(0,0,0,0.5)",
+                          color: savedItems.includes(product.Id)
+                            ? "#ff4081"
+                            : "#fff",
+                          "&:hover": {
+                            backgroundColor: "rgba(0,0,0,0.7)",
+                          },
                         }}
                       >
-                        <img
-                          src={category?.CoverImageUrl}
-                          alt="Product"
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            borderRadius: "8px",
+                        {savedItems.includes(product.Id) ? (
+                          <Favorite fontSize="small" />
+                        ) : (
+                          <FavoriteBorder fontSize="small" />
+                        )}
+                      </IconButton>
+                    </Box>
+
+                    <CardContent sx={{ flexGrow: 1 }}>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{
+                          fontWeight: 600,
+                          mb: 1,
+                          color: "#fff",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 1,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {product.Title}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "#bbb",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                          mb: 2,
+                          fontSize: "0.875rem",
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {product.Description}
+                      </Typography>
+                    </CardContent>
+                    <Box
+                      sx={{
+                        px: 2,
+                        pb: 2,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          color: "#ff1b6b",
+                          fontWeight: 700,
+                        }}
+                      >
+                        ${product.Price.toFixed(2)}
+                      </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <Chip
+                          icon={<Category sx={{ color: "white" }} />}
+                          label={product.Category}
+                          size="medium"
+                          sx={{
+                            backgroundColor: "#FF1B6B",
+                            color: "#fff",
+                            fontWeight: 500,
+                            "& .MuiChip-icon": {
+                              color: "#fff",
+                            },
                           }}
                         />
                       </Box>
-                      <Box
-                        sx={{
-                          height: "5%",
-                          width: "100%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography
-                          variant="h6"
-                          sx={{ color: "white", fontSize: "12px" }}
-                        >
-                          ${category?.Price.toString()}, {category?.Title}
-                        </Typography>
-                      </Box>
-                    </CardContent>
+                    </Box>
                   </Card>
-                  {/* Add Material-UI Button Below */}
-                  {/* <div style={{ width: "100%", textAlign: "center", marginTop: "10px", zIndex: "10" }}>
-                                        <Button
-                                            variant="contained" // Uncommented this line
-                                            color="primary"
-                                            sx={{
-                                                backgroundColor: "#444", // Temporary debug color
-                                                border: "1px solid #444", // Add a border for visibility
-                                            }}
-                                        >
-                                            {category?.Category || "Test Button"}
-                                        </Button>
-                                    </div> */}
-                </div>
-              </Grid>
-            ))}
-          </Grid>
+                </Grid>
+              ))}
+            </Grid>
+          )}
         </Box>
+      </Container>
 
-        <Footer />
-      </Box>
-    </>
+      <Footer />
+    </Box>
   );
 };
 
