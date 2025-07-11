@@ -1,365 +1,380 @@
 import React, { useState } from "react";
 import {
-	Modal,
-	Box,
-	TextField,
-	Button,
-	MenuItem,
-	Select,
-	InputLabel,
-	FormControl,
+  Modal,
+  Box,
+  TextField,
+  Button,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  Snackbar,
+  Alert,
+  Typography,
+  useMediaQuery,
 } from "@mui/material";
-import { useMediaQuery } from "@mui/material";
-import Swal from "sweetalert2";
 
 export default function CreateProductModal({
-	open,
-	onClose,
-	categories,
+  open,
+  onClose,
+  categories,
+  onProductCreated,
 }: {
-	open: boolean;
-	onClose: () => void;
-	categories: any;
+  open: boolean;
+  onClose: () => void;
+  categories: any;
+  onProductCreated?: (product: any) => void;
 }) {
-	const isMobile = useMediaQuery("(max-width: 480px)");
-	const [title, setTitle] = useState("");
-	const [category, setCategory] = useState("");
-	const [description, setDescription] = useState("");
-	const [link, setLink] = useState("");
-	const [price, setPrice] = useState("");
-	const [images, setImages] = useState<File[]>([]);
-	const [previewImages, setPreviewImages] = useState<string[]>([]); // For previewing uploaded images
-	const [active, setActive] = useState<any>(false);
+  const isMobile = useMediaQuery("(max-width:480px)");
 
-	// Function to handle image uploads
-	const handleImageUpload = (
-		e: React.ChangeEvent<HTMLInputElement>,
-		index: number
-	) => {
-		const file = e.target.files?.[0];
-		if (file) {
-			// Update the images array
-			const updatedImages = [...images];
-			updatedImages[index] = file;
-			setImages(updatedImages);
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState(""); // optional
+  const [link, setLink] = useState(""); // optional
+  const [price, setPrice] = useState("");
+  const [images, setImages] = useState<File[]>([]);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [active, setActive] = useState(false);
 
-			// Update the preview images array
-			const updatedPreviews = [...previewImages];
-			updatedPreviews[index] = URL.createObjectURL(file);
-			setPreviewImages(updatedPreviews);
-		}
-	};
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({ open: false, message: "", severity: "success" });
 
-	// Function to upload a single image
-	const uploadImage = async (image: File): Promise<string | null> => {
-		try {
-			const formData = new FormData();
-			formData.append("image", image);
+  const resetForm = () => {
+    setTitle("");
+    setCategory("");
+    setDescription("");
+    setLink("");
+    setPrice("");
+    setImages([]);
+    setPreviewImages([]);
+    setActive(false);
+  };
 
-			const response = await fetch("/api/user/upload", {
-				method: "POST",
-				body: formData,
-			});
+  const handleImageUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const updatedImages = [...images];
+      updatedImages[index] = file;
+      setImages(updatedImages);
 
-			const data = await response.json();
-			if (!response.ok) {
-				throw new Error(data.message || "Failed to upload image");
-			}
+      const updatedPreviews = [...previewImages];
+      updatedPreviews[index] = URL.createObjectURL(file);
+      setPreviewImages(updatedPreviews);
+    }
+  };
 
-			return data?.blobUrl || null;
-		} catch (error) {
-			console.error("Error during image upload:", error);
-			return null;
-		}
-	};
+  const uploadImage = async (image: File): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append("image", image);
+      const res = await fetch("/api/user/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to upload image");
+      return data.blobUrl || null;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  };
 
-	// Handle form submission
-	const handleSubmit = async () => {
-		try {
-			console.log(images);
-			// Upload images to the server
-			const uploadedImageUrls: string[] = [];
-			for (const image of images) {
-				if (image) {
-					const imageUrl = await uploadImage(image);
-					if (imageUrl) {
-						uploadedImageUrls.push(imageUrl);
-					}
-				}
-			}
+  const handleSubmit = async () => {
+    if (!title.trim()) {
+      setSnackbar({
+        open: true,
+        message: "Title is required",
+        severity: "error",
+      });
+      return;
+    }
+    if (!category) {
+      setSnackbar({
+        open: true,
+        message: "Category is required",
+        severity: "error",
+      });
+      return;
+    }
+    if (!price || isNaN(+price) || +price < 0) {
+      setSnackbar({
+        open: true,
+        message: "Valid price is required",
+        severity: "error",
+      });
+      return;
+    }
+    if (!images.length || !images.some((img) => img)) {
+      setSnackbar({
+        open: true,
+        message: "At least 1 image is required",
+        severity: "error",
+      });
+      return;
+    }
 
-			// Log the product data (including uploaded image URLs)
-			console.log({
-				title,
-				category,
-				description,
-				link,
-				price,
-				images: uploadedImageUrls, // Uploaded image URLs
-				acitve: active,
-			});
+    try {
+      const uploadedImageUrls: string[] = [];
+      for (const image of images) {
+        if (image) {
+          const url = await uploadImage(image);
+          if (url) uploadedImageUrls.push(url);
+        }
+      }
 
-			const OrganizerId = localStorage.getItem("logged_in_profile");
+      const OrganizerId = localStorage.getItem("logged_in_profile");
 
-			const result = await fetch("/api/marketplace/create", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					title,
-					category,
-					description,
-					link,
-					price,
-					images: uploadedImageUrls,
-					OrganizerId: OrganizerId,
-					acitve: active,
-				}),
-			});
+      const res = await fetch("/api/marketplace/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          category,
+          description: description.trim() || null, // optional
+          link: link.trim() || null, // optional
+          price,
+          images: uploadedImageUrls,
+          OrganizerId,
+          active,
+        }),
+      });
 
-			if (result.ok) {
-				Swal.fire({
-					title: `Creating Product Success!`,
-					text: "You created the new product",
-					icon: "success",
-					confirmButtonText: "OK",
-				}).then(() => {
-					// Redirect after the user clicks "OK"
-					onClose();
-					window.location.reload();
-				});
-				console.log("Success");
-			} else {
-				console.log("Falied");
-			}
-			// Close the modal after submission
-			onClose();
-		} catch (error) {
-			console.error("Error submitting product:", error);
-		}
-	};
+      if (!res.ok) throw new Error("Failed to create product");
 
-	return (
-		<Modal open={open} onClose={onClose}>
-			<Box
-				sx={{
-					position: "absolute",
-					top: "50%",
-					left: "50%",
-					transform: "translate(-50%, -50%)",
-					width: isMobile ? "90%" : "50%",
-					bgcolor: "#222",
-					border: "2px solid #666",
-					borderRadius: "8px",
-					boxShadow: 24,
-					p: 4,
-					display: "flex",
-					flexDirection: "column",
-					gap: 2,
-					color: "white",
-				}}
-			>
-				<h2 style={{ margin: 0, textAlign: "center" }}>Create Product</h2>
+      const createdProduct = await res.json();
 
-				{/* Title and Category */}
-				<Box
-					sx={{
-						display: "flex",
-						flexDirection: isMobile ? "column" : "row",
-						gap: isMobile ? 1 : 2,
-					}}
-				>
-					<TextField
-						label="Title"
-						variant="outlined"
-						size="small"
-						fullWidth
-						value={title}
-						onChange={(e) => setTitle(e.target.value)}
-						sx={{
-							backgroundColor: "#333",
-							input: { color: "white" },
-							label: { color: "#aaa" },
-						}}
-					/>
-					<FormControl fullWidth size="small" sx={{ backgroundColor: "#333" }}>
-						<InputLabel sx={{ color: "#aaa" }}>Category</InputLabel>
-						<Select
-							value={category}
-							onChange={(e) => setCategory(e.target.value)}
-							label="Category"
-							variant="outlined"
-							sx={{
-								color: "white",
-								".MuiOutlinedInput-notchedOutline": {
-									borderColor: "#aaa",
-								},
-								"&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-									borderColor: "white",
-								},
-								"&:hover .MuiOutlinedInput-notchedOutline": {
-									borderColor: "white",
-								},
-								".MuiSvgIcon-root": {
-									color: "white",
-								},
-							}}
-						>
-							{categories.map((cat: any, index: any) => (
-								<MenuItem key={index} value={cat.Category}>
-									{cat.Category}
-								</MenuItem>
-							))}
-						</Select>
-					</FormControl>
-				</Box>
+      setSnackbar({
+        open: true,
+        message: "Product created successfully!",
+        severity: "success",
+      });
+      resetForm();
+      onClose();
+      if (onProductCreated) onProductCreated(createdProduct);
+    } catch (err) {
+      console.error(err);
+      setSnackbar({
+        open: true,
+        message: "Error creating product",
+        severity: "error",
+      });
+    }
+  };
 
-				{/* Description */}
-				<TextField
-					label="Description"
-					variant="outlined"
-					size="small"
-					fullWidth
-					multiline
-					rows={3}
-					value={description}
-					onChange={(e) => setDescription(e.target.value)}
-					sx={{
-						backgroundColor: "#333",
-						textarea: { color: "white" },
-						label: { color: "#aaa" },
-					}}
-				/>
+  return (
+    <>
+      <Modal open={open} onClose={onClose}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: isMobile ? "90%" : "50%",
+            bgcolor: "#222",
+            color: "white",
+            borderRadius: 2,
+            boxShadow: 24,
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
+        >
+          <Typography variant="h6" textAlign="center">
+            Create Product
+          </Typography>
 
-				{/* Link and Price */}
-				<Box
-					sx={{
-						display: "flex",
-						flexDirection: isMobile ? "column" : "row",
-						gap: isMobile ? 1 : 2,
-					}}
-				>
-					<p style={{ fontSize: "10px" }}>
-						Add a link ONLY if you want the buyer to click into another website
-						to purchase. Otherwise the buyer will contact you directly to
-						arrange payment
-					</p>
-					<TextField
-						label="Affiliate Product Link"
-						variant="outlined"
-						size="small"
-						fullWidth
-						value={link}
-						onChange={(e) => setLink(e.target.value)}
-						sx={{
-							backgroundColor: "#333",
-							input: { color: "white" },
-							label: { color: "#aaa" },
-						}}
-					/>
-					<TextField
-						label="Price ($)"
-						variant="outlined"
-						size="small"
-						fullWidth
-						value={price}
-						onChange={(e) => setPrice(e.target.value)}
-						sx={{
-							backgroundColor: "#333",
-							input: { color: "white" },
-							label: { color: "#aaa" },
-						}}
-					/>
-				</Box>
+          <Box
+            display="flex"
+            gap={2}
+            flexDirection={isMobile ? "column" : "row"}
+          >
+            <TextField
+              label="Title *"
+              size="small"
+              fullWidth
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              sx={{
+                backgroundColor: "#333",
+                input: { color: "white" },
+                label: { color: "#aaa" },
+              }}
+            />
+            <FormControl
+              size="small"
+              fullWidth
+              sx={{ backgroundColor: "#333" }}
+            >
+              <InputLabel sx={{ color: "#aaa" }}>Category *</InputLabel>
+              <Select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                sx={{
+                  color: "white",
+                  ".MuiOutlinedInput-notchedOutline": { borderColor: "#aaa" },
+                }}
+              >
+                {categories.map((cat: any, idx: number) => (
+                  <MenuItem key={idx} value={cat.Category}>
+                    {cat.Category}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
 
-				{/* Image Upload */}
-				<Box
-					sx={{
-						display: "flex",
-						gap: 2,
-						flexWrap: "wrap",
-						alignItems: "center",
-						textAlign: "center",
-					}}
-				>
-					{[...Array(5)].map((_, index) => (
-						<Box
-							key={index}
-							sx={{
-								flexShrink: 0,
-								width: { xs: "40px", sm: "55px", md: "75px", lg: "120px" },
-								height: { xs: "40px", sm: "55px", md: "75px", lg: "120px" },
-								borderRadius: 2,
-								overflow: "hidden",
-								boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
-								position: "relative",
-								backgroundColor: "black",
-							}}
-						>
-							{previewImages[index] ? (
-								<img
-									src={previewImages[index]}
-									alt={`Preview ${index + 1}`}
-									style={{
-										width: "100%",
-										height: "100%",
-										objectFit: "cover",
-										display: "block",
-									}}
-								/>
-							) : (
-								<label
-									htmlFor={`file-input-${index}`}
-									style={{
-										position: "absolute",
-										top: "50%",
-										left: "50%",
-										transform: "translate(-50%, -50%)",
-										cursor: "pointer",
-										width: "100%",
-										height: "100%",
-										display: "flex",
-										justifyContent: "center",
-										alignItems: "center",
-									}}
-								>
-									<img
-										src="/photocamera.png"
-										alt="Camera Icon"
-										style={{
-											width: "50%",
-											height: "50%",
-											objectFit: "contain",
-										}}
-									/>
-									<input
-										id={`file-input-${index}`}
-										type="file"
-										accept="image/*"
-										onChange={(event) => handleImageUpload(event, index)}
-										style={{ display: "none" }}
-									/>
-								</label>
-							)}
-						</Box>
-					))}
-				</Box>
-				<Button onClick={() => setActive(!active)}>
-					{active ? "Unactive" : "Active"}
-				</Button>
+          <TextField
+            label="Description (optional)"
+            size="small"
+            fullWidth
+            multiline
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            sx={{
+              backgroundColor: "#333",
+              textarea: { color: "white" },
+              label: { color: "#aaa" },
+            }}
+          />
 
-				<Button
-					variant="contained"
-					onClick={handleSubmit}
-					sx={{
-						backgroundColor: "#007BFF",
-						"&:hover": { backgroundColor: "#0056b3" },
-					}}
-				>
-					Submit
-				</Button>
-			</Box>
-		</Modal>
-	);
+          <Box
+            display="flex"
+            gap={2}
+            flexDirection={isMobile ? "column" : "row"}
+          >
+            <TextField
+              label="Affiliate Product Link (optional)"
+              size="small"
+              fullWidth
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              sx={{
+                backgroundColor: "#333",
+                input: { color: "white" },
+                label: { color: "#aaa" },
+              }}
+            />
+            <TextField
+              label="Price ($) *"
+              size="small"
+              fullWidth
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              sx={{
+                backgroundColor: "#333",
+                input: { color: "white" },
+                label: { color: "#aaa" },
+              }}
+            />
+          </Box>
+
+          <Typography variant="body2" sx={{ color: "#ccc", fontSize: "12px" }}>
+            Add a link ONLY if you want the buyer to click into another website
+            to purchase. Otherwise the buyer will contact you directly to
+            arrange payment.
+          </Typography>
+
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 2,
+              justifyContent: "center",
+            }}
+          >
+            {[...Array(5)].map((_, index) => (
+              <Box
+                key={index}
+                sx={{
+                  width: 80,
+                  height: 80,
+                  bgcolor: "#000",
+                  borderRadius: 1,
+                  overflow: "hidden",
+                  position: "relative",
+                }}
+              >
+                {previewImages[index] ? (
+                  <img
+                    src={previewImages[index]}
+                    alt={`Preview ${index + 1}`}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <label
+                    htmlFor={`file-${index}`}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <img
+                      src="/photocamera.png"
+                      alt="Upload"
+                      style={{ width: 30 }}
+                    />
+                    <input
+                      id={`file-${index}`}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, index)}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+                )}
+              </Box>
+            ))}
+          </Box>
+
+          <Button
+            variant={active ? "outlined" : "contained"}
+            color={active ? "error" : "success"}
+            onClick={() => setActive(!active)}
+          >
+            {active ? "Deactivate" : "Activate"}
+          </Button>
+
+          <Button
+            variant="contained"
+            sx={{ bgcolor: "#007BFF", "&:hover": { bgcolor: "#0056b3" } }}
+            onClick={handleSubmit}
+          >
+            Submit
+          </Button>
+        </Box>
+      </Modal>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={snackbar.severity}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </>
+  );
 }

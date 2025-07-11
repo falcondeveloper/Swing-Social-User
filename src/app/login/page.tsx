@@ -12,50 +12,30 @@ import {
   InputAdornment,
   ThemeProvider,
   createTheme,
-  LinearProgress,
-  Chip,
-  Divider,
   Modal,
   Backdrop,
   Alert,
-  Stack,
   tooltipClasses,
   Tooltip,
   styled,
   CircularProgress,
   TooltipProps,
-  Grid,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { useMediaQuery } from "@mui/material";
 import {
   Visibility,
   VisibilityOff,
-  Favorite,
-  Facebook,
-  Google,
-  Apple,
-  LocationOn,
   Password,
   Check,
-  Error,
-  CheckCircle,
-  Info,
-  ConstructionOutlined,
-  Token,
 } from "@mui/icons-material";
-import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import Snackbar, { SnackbarCloseReason } from "@mui/material/Snackbar";
 import { jwtDecode } from "jwt-decode";
-import { userAgentFromString } from "next/server";
-import Slider from "react-slick"; // Import the react-slick slider
-import "slick-carousel/slick/slick.css"; // Import the slick carousel CSS
-import "slick-carousel/slick/slick-theme.css"; // Import the slick carousel theme CSS
-import { error } from "console";
 import Swal from "sweetalert2";
 import Link from "next/link";
 
-// Create a custom theme with a sophisticated color palette
 const theme = createTheme({
   palette: {
     primary: {
@@ -83,7 +63,6 @@ const theme = createTheme({
   },
 });
 
-// Custom styled tooltip
 const ValidationTooltip = styled(
   ({ className, ...props }: TooltipProps & { className?: string }) => (
     <Tooltip
@@ -146,7 +125,6 @@ interface RestValidationState {
   };
 }
 
-// Particle animation component
 const ParticleField = memo(() => {
   const isMobile = useMediaQuery("(max-width:600px)");
 
@@ -205,7 +183,6 @@ const ParticleField = memo(() => {
   );
 });
 
-// 3D Card component
 const RotatingCard: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -246,10 +223,8 @@ const RotatingCard: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-// Main Login Component
 const LoginPage: React.FC = () => {
   const router = useRouter();
-  const isMobile = useMediaQuery("(max-width:600px)");
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -257,9 +232,7 @@ const LoginPage: React.FC = () => {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState(false);
-  const [resStatus, setResStatus] = useState<string>("");
   const [resetUserName, setResetUserName] = useState<string>("");
-  const [resetPassword, setResetPassword] = useState<string>("");
   const [validation, setValidation] = useState<ValidationState>({
     email: {
       error: false,
@@ -270,6 +243,8 @@ const LoginPage: React.FC = () => {
       message: "",
     },
   });
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [otpOption, setOtpOption] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -447,20 +422,6 @@ const LoginPage: React.FC = () => {
     };
   };
 
-  const validateResetPassword = (password: string) => {
-    if (!password) {
-      return {
-        error: true,
-        message: "Password is required",
-      };
-    }
-
-    return {
-      error: false,
-      message: "",
-    };
-  };
-
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value.trim();
     setEmail(newEmail);
@@ -484,17 +445,6 @@ const LoginPage: React.FC = () => {
     }));
   };
 
-  const handleResetPasswordChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const password = e.target.value.trim();
-    setResetPassword(password);
-    setResetValidation((prev) => ({
-      ...prev,
-      resetPassword: validateResetPassword(password),
-    }));
-  };
-
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = e.target.value.trim();
     setPassword(newPassword);
@@ -503,83 +453,6 @@ const LoginPage: React.FC = () => {
         ...prev,
         password: PasswordRequirements(password),
       }));
-    }
-    // Removed password validation logic
-  };
-
-  const handleResetPasswordEmail = async () => {
-    const resetValidation = validateResetUserName(resetUserName);
-    if (!resetValidation.error) {
-      const payload = {
-        userName: resetUserName,
-      };
-
-      try {
-        const result = await fetch("/api/user/resetPasswordEmail", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-        if (result) {
-          setShowLocationModal(false);
-          Swal.fire({
-            title: "Email Sent Successfully",
-            text: "A password reset email has been sent to your inbox. Please check your email and follow the instructions to reset your password.",
-            icon: "success",
-            confirmButtonText: "Got It",
-          });
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    }
-  };
-
-  const handleResetPassword = async () => {
-    const resetValidation = validateResetUserName(resetUserName);
-    const resetPasswordValidation = validateResetPassword(resetPassword);
-
-    setResetValidation({
-      resetUserName: resetValidation,
-      resetPassword: resetPasswordValidation,
-    });
-
-    if (!resetValidation.error && !resetPasswordValidation.error) {
-      const payload = {
-        userName: resetUserName,
-        pwd: resetPassword,
-      };
-
-      try {
-        const result = await fetch("/api/user/resetPassword", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await result.json();
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        // Handle successful login
-        console.log(data);
-        setMessage(data.message);
-        if (data.status == 404) {
-          console.log("==========>");
-          setOpen(true);
-        } else if (data.status == 500) {
-          console.log("==========>");
-          setOpen(true);
-        } else {
-          setOpen(true);
-          setShowLocationModal(false);
-          router.push("/login");
-        }
-      } catch (error) {
-        console.log(error);
-      }
     }
   };
 
@@ -691,57 +564,93 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  // const sendEmail = () => {
-  //     const result = await fetch("/api/user/login", {
-  //                 method: "POST",
-  //                 headers: {
-  //                     "Content-Type": "application/json"
-  //                 },
-  //                 body: JSON.stringify(payload)
-  //             });
-  // }
+  const handleResetPasswordEmail = async () => {
+    const resetValidation = validateResetUserName(resetUserName);
+    if (!resetValidation.error) {
+      const payload = {
+        userName: resetUserName,
+      };
+      setSubmitLoading(true);
 
-  const getStrengthColor = (strength: number) => {
-    if (strength < 40) return "error";
-    if (strength < 60) return "warning";
-    return "success";
+      try {
+        const result = await fetch("/api/user/resetPasswordEmail", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+        if (result) {
+          setShowLocationModal(false);
+          setResetUserName("");
+          setOtpOption("");
+          Swal.fire({
+            title: "Email Sent Successfully",
+            text: "A password reset email has been sent to your inbox. Please check your email and follow the instructions to reset your password.",
+            icon: "success",
+            confirmButtonText: "Got It",
+          });
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setSubmitLoading(false);
+      }
+    }
   };
 
-  const SocialButton: React.FC<{ icon: React.ReactNode; label: string }> = ({
-    icon,
-    label,
-  }) => (
-    <Button
-      fullWidth
-      variant="outlined"
-      startIcon={icon}
-      sx={{
-        my: 1,
-        py: 1.5,
-        color: "white",
-        borderColor: "rgba(255,255,255,0.3)",
-        backgroundColor: "rgba(255,255,255,0.05)",
-        backdropFilter: "blur(10px)",
-        transition: "all 0.3s ease",
-        "&:hover": {
-          backgroundColor: "rgba(255,255,255,0.1)",
-          transform: "translateY(-2px)",
-          boxShadow: "0 5px 15px rgba(0,0,0,0.3)",
-        },
-      }}
-    >
-      {label}
-    </Button>
-  );
+  const handleSendLoginCodeEmail = async () => {
+    const resetValidation = validateResetUserName(resetUserName);
+    let code = Math.floor(1000 + Math.random() * 9000);
 
-  const sliderSettings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 3000,
+    if (!resetValidation.error) {
+      setSubmitLoading(true);
+
+      try {
+        const response = await fetch("/api/user/resetLoginCodeEmail", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: resetUserName, code: code }),
+        });
+
+        if (response.ok) {
+          setShowLocationModal(false);
+          setResetUserName("");
+          Swal.fire({
+            title: "Login Code Sent!",
+            text: "We’ve emailed you a 4-digit one-time login code. Enter this code on the login page to access your account.",
+            icon: "success",
+            confirmButtonText: "OK",
+          }).then(() => {
+            const encodedEmail = encodeURIComponent(resetUserName);
+            router.push(`/verify-code?email=${encodedEmail}`);
+            sessionStorage.setItem("loginOtp", code.toString());
+            setOtpOption("");
+          });
+        } else {
+          setShowLocationModal(false);
+          Swal.fire({
+            title: "Something went wrong",
+            text: "We couldn’t send the login code. Please try again later or contact support.",
+            icon: "error",
+            confirmButtonText: "OK",
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        setShowLocationModal(false);
+        Swal.fire({
+          title: "Error",
+          text: "An unexpected error occurred. Please try again.",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+      } finally {
+        setSubmitLoading(false);
+      }
+    }
   };
 
   return (
@@ -801,17 +710,6 @@ const LoginPage: React.FC = () => {
                     SwingSocial
                   </Typography>
                 </Box>
-
-                {/* <Chip
-                                    icon={<LocationOn />}
-                                    label="Enable Location"
-                                    onClick={() => setShowLocationModal(true)}
-                                    sx={{
-                                        backgroundColor: 'rgba(255,255,255,0.1)',
-                                        color: 'white',
-                                        '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.2)' },
-                                    }}
-                                /> */}
               </Box>
 
               <Box component="form" onSubmit={handleSubmit}>
@@ -943,15 +841,6 @@ const LoginPage: React.FC = () => {
                     "Sign In"
                   )}
                 </Button>
-                {/* <Divider sx={{ my: 3, color: 'rgba(255,255,255,0.3)' }}>
-                                    or continue with
-                                </Divider>
-
-                                <Box sx={{ mt: 2 }}>
-                                    <SocialButton icon={<Google />} label="Google" />
-                                    <SocialButton icon={<Facebook />} label="Facebook" />
-                                    <SocialButton icon={<Apple />} label="Apple" />
-                                </Box> */}
 
                 <Typography
                   sx={{
@@ -1018,38 +907,6 @@ const LoginPage: React.FC = () => {
                 >
                   Forget Password? Reset your password
                 </Typography>
-                {/* <Typography
-                                    onClick={() => sendEmail()}
-                                    sx={{
-                                        mt: 1,
-                                        textAlign: 'center',
-                                        cursor: 'pointer',
-                                        color: '#FF2D55',
-                                        '& a': {
-                                            color: 'primary.main',
-                                            textDecoration: 'none',
-                                            position: 'relative',
-                                            '&::after': {
-                                                content: '""',
-                                                position: 'absolute',
-                                                width: '100%',
-                                                height: '2px',
-                                                bottom: -2,
-                                                left: 0,
-                                                background: 'linear-gradient(45deg, #FF2D55, #7000FF)',
-                                                transform: 'scaleX(0)',
-                                                transition: 'transform 0.3s ease',
-                                                transformOrigin: 'right',
-                                            },
-                                            '&:hover::after': {
-                                                transform: 'scaleX(1)',
-                                                transformOrigin: 'left',
-                                            },
-                                        },
-                                    }}
-                                >
-                                    Forget Password? Reset your password
-                                </Typography> */}
               </Box>
             </Paper>
           </RotatingCard>
@@ -1059,9 +916,7 @@ const LoginPage: React.FC = () => {
           open={showLocationModal}
           closeAfterTransition
           BackdropComponent={Backdrop}
-          BackdropProps={{
-            timeout: 500,
-          }}
+          BackdropProps={{ timeout: 500 }}
         >
           <Box
             sx={{
@@ -1079,8 +934,9 @@ const LoginPage: React.FC = () => {
           >
             <Password sx={{ fontSize: 48, color: "primary.main" }} />
             <Typography variant="h6" component="h2" gutterBottom sx={{ mb: 2 }}>
-              Reset your Password
+              Need Help Logging In?
             </Typography>
+
             <TextField
               fullWidth
               label="Email"
@@ -1096,124 +952,117 @@ const LoginPage: React.FC = () => {
               sx={{
                 mb: 2,
                 "& .MuiOutlinedInput-root": {
-                  color: "#FF2D55", // Input text color
-                  backgroundColor: "white", // Input background color
-                  "& fieldset": {
-                    borderColor: "#FF2D55", // Default border color
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "#FF617B", // Border color on hover
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#7000FF", // Border color when focused
-                  },
-                  "&.Mui-error fieldset": {
-                    borderColor: "#FF0000", // Border color when there's an error
-                  },
+                  color: "#FF2D55",
+                  backgroundColor: "white",
+                  "& fieldset": { borderColor: "#FF2D55" },
+                  "&:hover fieldset": { borderColor: "#FF617B" },
+                  "&.Mui-focused fieldset": { borderColor: "#7000FF" },
+                  "&.Mui-error fieldset": { borderColor: "#FF0000" },
                 },
                 "& .MuiInputLabel-root": {
-                  color: "#FF2D55!important", // Default label color
+                  color: "#FF2D55!important",
                 },
                 "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#7000FF", // Label color when focused
+                  color: "#7000FF",
                 },
                 "& .MuiInputLabel-root.Mui-error": {
-                  color: "#FF0000", // Label color when there's an error
+                  color: "#FF0000",
                 },
               }}
             />
-            {/* <TextField
-                            fullWidth
-                            label="Password"
-                            variant="outlined"
-                            type='password'
-                            value={resetPassword}
-                            onChange={handleResetPasswordChange}
-                            error={resetValidation.resetPassword.error}
-                            helperText={resetValidation.resetPassword.error ? resetValidation.resetPassword.message : ''}
-                            sx={{
-                                mb: 2,
-                                '& .MuiOutlinedInput-root': {
-                                    color: '#FF2D55', // Input text color
-                                    backgroundColor: 'white', // Input background color
-                                    '& fieldset': {
-                                        borderColor: '#FF2D55', // Default border color
-                                    },
-                                    '&:hover fieldset': {
-                                        borderColor: '#FF617B', // Border color on hover
-                                    },
-                                    '&.Mui-focused fieldset': {
-                                        borderColor: '#7000FF', // Border color when focused
-                                    },
-                                    '&.Mui-error fieldset': {
-                                        borderColor: '#FF0000', // Border color when there's an error
-                                    },
-                                },
-                                '& .MuiInputLabel-root': {
-                                    color: '#FF2D55!important', // Default label color
-                                },
-                                '& .MuiInputLabel-root.Mui-focused': {
-                                    color: '#7000FF', // Label color when focused
-                                },
-                                '& .MuiInputLabel-root.Mui-error': {
-                                    color: '#FF0000', // Label color when there's an error
-                                },
-                            }}
-                        /> */}
+
             <Typography sx={{ mb: 3 }}>
-              You can reset your password in a few seconds!
+              Choose an option to regain access to your account:
             </Typography>
+
+            <Select
+              fullWidth
+              value={otpOption}
+              onChange={(e) => setOtpOption(e.target.value)}
+              displayEmpty
+              sx={{ mb: 3 }}
+            >
+              <MenuItem value="" disabled>
+                Select an option
+              </MenuItem>
+              <MenuItem value="resetPassword">
+                Email me a Password Reset Link
+              </MenuItem>
+              <MenuItem value="loginCode">
+                Email me a 4-digit Login Code
+              </MenuItem>
+            </Select>
+
             <Button
+              fullWidth
               variant="contained"
-              onClick={handleResetPasswordEmail}
-              startIcon={<Password />}
+              onClick={() => {
+                if (!otpOption) {
+                  Swal.fire({
+                    title: "Select an Option",
+                    text: "Please choose an option before proceeding.",
+                    icon: "warning",
+                    confirmButtonText: "OK",
+                  });
+                  return;
+                }
+                if (otpOption === "resetPassword") {
+                  handleResetPasswordEmail();
+                } else if (otpOption === "loginCode") {
+                  handleSendLoginCodeEmail();
+                }
+              }}
+              disabled={submitLoading}
               sx={{
                 background: "linear-gradient(45deg, #FF2D55, #7000FF)",
                 py: 1.5,
                 px: 4,
+                mb: 1,
               }}
+              startIcon={
+                submitLoading ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <Check />
+                )
+              }
             >
-              Reset your password
+              {submitLoading ? "Sending..." : "Send"}
             </Button>
+
             <Button
-              variant="contained"
+              variant="text"
               onClick={() => {
                 router.push("/login");
                 setShowLocationModal(false);
               }}
-              startIcon={<Check />}
-              sx={{
-                background: "linear-gradient(45deg, #FF2D55, #7000FF)",
-                py: 1.5,
-                px: 4,
-                mt: 1,
-              }}
+              sx={{ mt: 2 }}
             >
-              Go to Login
+              Back to Login
             </Button>
           </Box>
         </Modal>
       </Box>
 
       <Snackbar
-        open={open} // Control this with state in a real application
+        open={open}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         autoHideDuration={5000}
         onClose={handleClose}
       >
         <Alert
-          severity="success" // Change severity as needed (e.g., "error", "warning", "info")
+          severity="success"
           sx={{
             backgroundColor: "white",
             color: "#fc4c82",
             fontWeight: "bold",
-            alignItems: "center", // Align items vertically
+            alignItems: "center",
             borderRight: "5px solid #fc4c82",
           }}
           icon={
             <Box
               component="img"
-              src="/icon.png" // Path to your image
+              src="/icon.png"
               alt="Logo"
               sx={{
                 width: "20px",

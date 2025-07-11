@@ -349,7 +349,6 @@ export default function ProfileDetail() {
 
   const handleContinue = () => {
     handleClose();
-    handleClose();
     navigate.push(`/otpadmin/${profileId}`);
   };
 

@@ -66,7 +66,6 @@ export default function Otp(props: { params: Params }) {
     // Convert vcode to a string and then to an array of characters
     const vcodeArray = vcode.toString().split('');
     const universalCode = ['1', '4', '8', '6'];
-    console.log(vcodeArray, "=====vcodeArray");
 
     console.log(currentOtp);
 

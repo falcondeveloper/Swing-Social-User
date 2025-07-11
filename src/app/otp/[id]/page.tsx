@@ -3,18 +3,18 @@ import React, { useState, Suspense, useEffect } from "react";
 import { Box, Button, Typography, TextField, Grid } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { useRouter } from "next/navigation";
-import 'react-toastify/dist/ReactToastify.css';
-import { toast, ToastContainer } from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css";
+import { toast, ToastContainer } from "react-toastify";
 
 interface OtpProps {
   params: any;
 }
-type Params = Promise<{ id: string }>
+type Params = Promise<{ id: string }>;
 
 export default function Otp(props: { params: Params }) {
   const router: any = useRouter();
   const [otp, setOtp] = useState<string[]>(["", "", "", ""]);
-  const [id, setId] = useState<string>(''); // State for error messages
+  const [id, setId] = useState<string>(""); // State for error messages
   const [error, setError] = useState(false);
   const [username, setUsername] = useState<any>(null); // State for error messages
   const [email, setEmail] = useState<any>(null);
@@ -25,28 +25,28 @@ export default function Otp(props: { params: Params }) {
     }
   }, [email]);
   useEffect(() => {
-    setUsername(localStorage.getItem('userName'))
-    setEmail(localStorage.getItem('email'));
+    setUsername(localStorage.getItem("userName"));
+    setEmail(localStorage.getItem("email"));
     const getIdFromParam = async () => {
       const params = await props.params;
       const pid: any = params.id;
       console.log(pid);
-      setId(pid)
-    }
+      setId(pid);
+    };
     getIdFromParam();
-    // toast.success('For testing use code 122.');
   }, [props]);
 
-  const [vcode, setCode] = useState<any>('');
+  const [vcode, setCode] = useState<any>("");
+
   const handleVerificationEmail = async (email: any) => {
     let code = Math.floor(Math.random() * 9000) + 1000;
     setCode(code);
     try {
       // Proceed with submitting the username
-      const response = await fetch('/api/user/email/verification', {
-        method: 'POST',
+      const response = await fetch("/api/user/email/verification", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email: email, username: username, code: code }),
       });
@@ -54,28 +54,27 @@ export default function Otp(props: { params: Params }) {
       if (response.ok) {
         // router.push(`/intrested/${id}`);
       } else {
-        console.error('Error submitting username:', await response.text());
+        console.error("Error submitting username:", await response.text());
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     }
+  };
 
-  }
-  console.log(id);
   const handleContinue = (currentOtp: string[]) => {
-    // Convert vcode to a string and then to an array of characters
-    const vcodeArray = vcode.toString().split('');
-    const universalCode = ['1', '4', '8', '6'];
-    console.log(vcodeArray, "=====vcodeArray");
+    const vcodeArray = vcode.toString().split("");
+    const universalCode = ["1", "4", "8", "6"];
 
-    console.log(currentOtp);
-
-    // Check if otp matches vcodeArray
-    if (currentOtp.length === vcodeArray.length && currentOtp.every((digit, index) => digit === vcodeArray[index])) {
-      console.log("Code is correct! Redirecting...");
+    if (
+      currentOtp.length === vcodeArray.length &&
+      currentOtp.every((digit, index) => digit === vcodeArray[index])
+    ) {
       router.push(`/screenname/${id}`);
     } else {
-      if (currentOtp.length === universalCode.length && currentOtp.every((digit, index) => digit === universalCode[index])) {
+      if (
+        currentOtp.length === universalCode.length &&
+        currentOtp.every((digit, index) => digit === universalCode[index])
+      ) {
         router.push(`/screenname/${id}`);
       }
       console.log("Verification code is incorrect");
@@ -86,34 +85,37 @@ export default function Otp(props: { params: Params }) {
   const handleOtpChange = (value: string, index: number) => {
     setOtp((prevOtp) => {
       const newOtp = [...prevOtp];
-      newOtp[index] = value.slice(-1); // Only keep the last character
+      newOtp[index] = value.slice(-1);
 
-      // Check if it's the last digit
       if (index === newOtp.length - 1) {
         setTimeout(() => {
-          handleContinue(newOtp); // Pass the updated OTP directly to handleContinue
-        }, 1000); // 1-second delay
+          handleContinue(newOtp);
+        }, 1000);
       }
 
       return newOtp;
     });
 
     if (value && index < otp.length - 1) {
-      // Focus on the next input
-      const nextInput = document.getElementById(`otp-${index + 1}`) as HTMLInputElement;
+      const nextInput = document.getElementById(
+        `otp-${index + 1}`
+      ) as HTMLInputElement;
       nextInput?.focus();
     }
   };
 
-
-
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const handleKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
     if (event.key === "Backspace" && !otp[index] && index > 0) {
-      const prevInput = document.getElementById(`otp-${index - 1}`) as HTMLInputElement;
+      const prevInput = document.getElementById(
+        `otp-${index - 1}`
+      ) as HTMLInputElement;
       prevInput?.focus();
     }
   };
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <Box
@@ -205,10 +207,10 @@ export default function Otp(props: { params: Params }) {
                 color: "#aaa",
                 mb: 4,
                 fontSize: "0.95rem",
-                fontStyle: "italic"
+                fontStyle: "italic",
               }}
             >
-              Haven't received your code?  Check your spam folder.
+              Haven't received your code? Check your spam folder.
             </Typography>
           </Grid>
 
@@ -236,7 +238,7 @@ export default function Otp(props: { params: Params }) {
           <Grid item xs={12} sx={{ textAlign: "center" }}>
             <Button
               onClick={() => {
-                toast.success('Code is resent');
+                toast.success("Code is resent");
                 handleVerificationEmail(email);
               }}
               sx={{
@@ -263,7 +265,6 @@ export default function Otp(props: { params: Params }) {
             >
               Come party with us
             </Typography>
-
           </Grid>
         </Grid>
       </Box>
