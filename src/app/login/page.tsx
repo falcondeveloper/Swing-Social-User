@@ -1012,7 +1012,7 @@ const LoginPage: React.FC = () => {
                   handleSendLoginCodeEmail();
                 }
               }}
-              disabled={submitLoading}
+              disabled={submitLoading || !otpOption}
               sx={{
                 background: "linear-gradient(45deg, #FF2D55, #7000FF)",
                 py: 1.5,
