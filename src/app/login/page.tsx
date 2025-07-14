@@ -221,7 +221,7 @@ const LoginPage: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState(false);
   const [resetUserName, setResetUserName] = useState<string>("");
-  const [loginMethod, setLoginMethod] = useState("password");
+  const [loginMethod, setLoginMethod] = useState("otp");
   const [validation, setValidation] = useState<ValidationState>({
     email: {
       error: false,
@@ -789,19 +789,19 @@ const LoginPage: React.FC = () => {
                 {/* Login method toggle */}
                 <Box sx={{ display: "flex", justifyContent: "center", mb: 5 }}>
                   <Button
+                    variant={loginMethod === "otp" ? "contained" : "outlined"}
+                    onClick={() => setLoginMethod("otp")}
+                    sx={{ mr: 1 }}
+                  >
+                    Login w/OTP
+                  </Button>
+                  <Button
                     variant={
                       loginMethod === "password" ? "contained" : "outlined"
                     }
                     onClick={() => setLoginMethod("password")}
-                    sx={{ mr: 1 }}
                   >
                     Login w/Password
-                  </Button>
-                  <Button
-                    variant={loginMethod === "otp" ? "contained" : "outlined"}
-                    onClick={() => setLoginMethod("otp")}
-                  >
-                    Login w/OTP
                   </Button>
                 </Box>
 
