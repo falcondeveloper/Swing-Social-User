@@ -189,18 +189,6 @@ const RotatingCard: React.FC<{ children: React.ReactNode }> = ({
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-  //     if (!cardRef.current) return;
-  //     const rect = cardRef.current.getBoundingClientRect();
-  //     const x = (e.clientY - rect.top) / rect.height - 0.5;
-  //     const y = (e.clientX - rect.left) / rect.width - 0.5;
-  //     setRotation({ x: x * 20, y: y * 20 });
-  // };
-
-  // const handleMouseLeave = () => {
-  //     setRotation({ x: 0, y: 0 });
-  // };
-
   return (
     <Box
       ref={cardRef}
@@ -233,6 +221,7 @@ const LoginPage: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState(false);
   const [resetUserName, setResetUserName] = useState<string>("");
+  const [loginMethod, setLoginMethod] = useState("password");
   const [validation, setValidation] = useState<ValidationState>({
     email: {
       error: false,
@@ -458,7 +447,6 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
     const urlParams = new URLSearchParams(window.location.search);
     const aff = urlParams.get("aff");
     const refer = urlParams.get("refer");
@@ -476,7 +464,7 @@ const LoginPage: React.FC = () => {
 
     // Get current URL and page info
     const currentUrl = window.location.href;
-    const currentPage = "Login"; // Since this is login page
+    const currentPage = "Login";
 
     if (aff || refer) {
       await fetch("/api/user/tracking", {
@@ -512,8 +500,6 @@ const LoginPage: React.FC = () => {
     if (!emailValidation.error && !passwordValidation.error) {
       setLoading(true);
       try {
-        // Simulate API call
-
         const payload = {
           email: email,
           pwd: password,
@@ -526,26 +512,18 @@ const LoginPage: React.FC = () => {
           },
           body: JSON.stringify(payload),
         });
-        console.log(result);
         const data = await result.json();
         await new Promise((resolve) => setTimeout(resolve, 2000));
-        // Handle successful login
-
         setMessage(data.message);
         if (data.status == 404) {
-          console.log("==========>");
           setOpen(true);
         } else if (data.status == 500) {
-          console.log("==========>");
           setOpen(true);
         } else {
           setOpen(true);
           if (data.currentuserName == "Webnew") {
             router.push(`/screennameadmin/${data.currentProfileId}`);
           } else {
-            // const token = jwt.sign({ profileId: data.profileId }, JWT_SECRET, { expiresIn: '24h' });
-            console.log(data.jwtToken);
-            const decoded = jwtDecode(data.jwtToken);
             localStorage.setItem("loginInfo", data.jwtToken);
             localStorage.setItem("logged_in_profile", data.currentProfileId);
             localStorage.setItem("profileUsername", data.currentuserName);
@@ -554,8 +532,6 @@ const LoginPage: React.FC = () => {
             router.push("/home");
           }
         }
-        console.log(data);
-        console.log("Login successful");
       } catch (error) {
         console.error("Login failed:", error);
       } finally {
@@ -628,6 +604,7 @@ const LoginPage: React.FC = () => {
             router.push(`/verify-code?email=${encodedEmail}`);
             sessionStorage.setItem("loginOtp", code.toString());
             setOtpOption("");
+            setLoginMethod("password");
           });
         } else {
           setShowLocationModal(false);
@@ -649,6 +626,96 @@ const LoginPage: React.FC = () => {
         });
       } finally {
         setSubmitLoading(false);
+      }
+    }
+  };
+
+  const handleLoginViaOTP = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    let code = Math.floor(1000 + Math.random() * 9000);
+    const urlParams = new URLSearchParams(window.location.search);
+    const aff = urlParams.get("aff");
+    const refer = urlParams.get("refer");
+
+    const getOS = () => {
+      const userAgent = window.navigator.userAgent;
+      if (userAgent.indexOf("Win") !== -1) return "Windows";
+      if (userAgent.indexOf("Mac") !== -1) return "MacOS";
+      if (userAgent.indexOf("Linux") !== -1) return "Linux";
+      if (userAgent.indexOf("Android") !== -1) return "Android";
+      if (userAgent.indexOf("iOS") !== -1) return "iOS";
+      return null;
+    };
+
+    const currentUrl = window.location.href;
+    const currentPage = "Login";
+
+    if (aff || refer) {
+      await fetch("/api/user/tracking", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          affiliate: aff,
+          referral: refer,
+          OS: getOS(),
+          page: currentPage,
+          url: currentUrl,
+          userid: null,
+        }),
+      });
+    }
+
+    const emailValidation = validateEmail(email);
+
+    if (!emailValidation.error) {
+      setLoading(true);
+      try {
+        const response = await fetch("/api/user/resetLoginCodeEmail", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: email, code: code }),
+        });
+
+        if (response.ok) {
+          setShowLocationModal(false);
+          setResetUserName("");
+          Swal.fire({
+            title: "Login Code Sent!",
+            text: "We’ve emailed you a 4-digit one-time login code. Enter this code on the login page to access your account.",
+            icon: "success",
+            confirmButtonText: "OK",
+          }).then(() => {
+            const encodedEmail = encodeURIComponent(email);
+            router.push(`/verify-code?email=${encodedEmail}`);
+            sessionStorage.setItem("loginOtp", code.toString());
+            setOtpOption("");
+            setLoginMethod("password");
+          });
+        } else {
+          setShowLocationModal(false);
+          Swal.fire({
+            title: "Something went wrong",
+            text: "We couldn’t send the login code. Please try again later or contact support.",
+            icon: "error",
+            confirmButtonText: "OK",
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        setShowLocationModal(false);
+        Swal.fire({
+          title: "Error",
+          text: "An unexpected error occurred. Please try again.",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -679,7 +746,13 @@ const LoginPage: React.FC = () => {
                 border: "1px solid rgba(255, 255, 255, 0.1)",
               }}
             >
-              <Box sx={{ mb: 4, textAlign: "center" }}>
+              <Box
+                sx={{ mb: 4, textAlign: "center" }}
+                component="form"
+                onSubmit={
+                  loginMethod === "password" ? handleSubmit : handleLoginViaOTP
+                }
+              >
                 <Box
                   sx={{
                     alignItems: "center",
@@ -712,12 +785,35 @@ const LoginPage: React.FC = () => {
                 </Box>
               </Box>
 
-              <Box component="form" onSubmit={handleSubmit}>
-                <ValidationTooltip
-                  open={touched.email && validation.email.error}
-                  title={validation.email.message}
-                  placement="right"
+              <Box>
+                {/* Login method toggle */}
+                <Box sx={{ display: "flex", justifyContent: "center", mb: 5 }}>
+                  <Button
+                    variant={
+                      loginMethod === "password" ? "contained" : "outlined"
+                    }
+                    onClick={() => setLoginMethod("password")}
+                    sx={{ mr: 1 }}
+                  >
+                    Login w/Password
+                  </Button>
+                  <Button
+                    variant={loginMethod === "otp" ? "contained" : "outlined"}
+                    onClick={() => setLoginMethod("otp")}
+                  >
+                    Login w/OTP
+                  </Button>
+                </Box>
+
+                <Box
+                  component="form"
+                  onSubmit={
+                    loginMethod === "password"
+                      ? handleSubmit
+                      : handleLoginViaOTP
+                  }
                 >
+                  {/* Email / Username */}
                   <TextField
                     fullWidth
                     label="Email or Username"
@@ -728,6 +824,7 @@ const LoginPage: React.FC = () => {
                       setTouched((prev) => ({ ...prev, email: true }))
                     }
                     error={touched.email && validation.email.error}
+                    helperText={touched.email && validation.email.message}
                     sx={{
                       mb: 2,
                       "& .MuiOutlinedInput-root": {
@@ -745,168 +842,168 @@ const LoginPage: React.FC = () => {
                       },
                     }}
                   />
-                </ValidationTooltip>
 
-                <ValidationTooltip
-                  open={touched.password && validation.password.error}
-                  title={validation.password.message}
-                  placement="right"
-                >
-                  <TextField
-                    fullWidth
-                    label="Password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={handlePasswordChange}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => setShowPassword(!showPassword)}
-                            edge="end"
-                            sx={{ color: "rgba(255,255,255,0.7)" }}
-                          >
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      mb: 1,
-                      "& .MuiOutlinedInput-root": {
-                        color: "white",
-                        backgroundColor: "rgba(255,255,255,0.05)",
-                        "& fieldset": {
-                          borderColor: "rgba(255,255,255,0.2)",
-                        },
-                        "&:hover fieldset": {
-                          borderColor: "rgba(255,255,255,0.4)",
-                        },
-                      },
-                      "& .MuiInputLabel-root": {
-                        color: "rgba(255,255,255,0.7)",
-                      },
-                    }}
-                  />
-                </ValidationTooltip>
-
-                {(validation.email.error || validation.password.error) &&
-                  touched.email &&
-                  touched.password && (
-                    <Alert
-                      severity="error"
+                  {/* Password or OTP */}
+                  {loginMethod === "password" && (
+                    <TextField
+                      fullWidth
+                      label="Password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={handlePasswordChange}
+                      onBlur={() =>
+                        setTouched((prev) => ({ ...prev, password: true }))
+                      }
+                      error={touched.password && validation.password.error}
+                      helperText={
+                        touched.password && validation.password.message
+                      }
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => setShowPassword(!showPassword)}
+                              edge="end"
+                              sx={{ color: "rgba(255,255,255,0.7)" }}
+                            >
+                              {showPassword ? (
+                                <VisibilityOff />
+                              ) : (
+                                <Visibility />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
                       sx={{
                         mb: 2,
-                        backgroundColor: "rgba(211, 47, 47, 0.1)",
-                        color: "#ff1744",
+                        "& .MuiOutlinedInput-root": {
+                          color: "white",
+                          backgroundColor: "rgba(255,255,255,0.05)",
+                          "& fieldset": {
+                            borderColor: "rgba(255,255,255,0.2)",
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "rgba(255,255,255,0.4)",
+                          },
+                        },
+                        "& .MuiInputLabel-root": {
+                          color: "rgba(255,255,255,0.7)",
+                        },
                       }}
-                    >
-                      Please fix the validation errors before proceeding
-                    </Alert>
+                    />
                   )}
 
-                <Button
-                  fullWidth
-                  type="submit"
-                  disabled={loading}
-                  sx={{
-                    py: 1.5,
-                    mb: 2,
-                    my: 3,
-                    position: "relative",
-                    overflow: "hidden",
-                    color: "white",
-                    background: "linear-gradient(45deg, #FF2D55, #7000FF)",
-                    "&::before": {
-                      content: '""',
-                      position: "absolute",
-                      top: 0,
-                      left: "-100%",
-                      width: "200%",
-                      height: "100%",
-                      background:
-                        "linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)",
-                      animation: "shine 2s infinite",
-                    },
-                    "@keyframes shine": {
-                      "100%": {
-                        left: "100%",
+                  {/* Submit Button */}
+                  <Button
+                    fullWidth
+                    type="submit"
+                    disabled={loading}
+                    sx={{
+                      py: 1.5,
+                      mb: 2,
+                      my: 3,
+                      position: "relative",
+                      overflow: "hidden",
+                      color: "white",
+                      background: "linear-gradient(45deg, #FF2D55, #7000FF)",
+                      "&::before": {
+                        content: '""',
+                        position: "absolute",
+                        top: 0,
+                        left: "-100%",
+                        width: "200%",
+                        height: "100%",
+                        background:
+                          "linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)",
+                        animation: "shine 2s infinite",
                       },
-                    },
-                  }}
-                >
-                  {loading ? (
-                    <CircularProgress size={24} color="inherit" />
-                  ) : (
-                    "Sign In"
-                  )}
-                </Button>
+                      "@keyframes shine": {
+                        "100%": {
+                          left: "100%",
+                        },
+                      },
+                    }}
+                  >
+                    {loading ? (
+                      <CircularProgress size={24} color="inherit" />
+                    ) : loginMethod === "password" ? (
+                      "SIGN IN"
+                    ) : (
+                      "Send OTP"
+                    )}
+                  </Button>
 
-                <Typography
-                  sx={{
-                    mt: 3,
-                    textAlign: "center",
-                    color: "rgba(255,255,255,0.7)",
-                    "& a": {
-                      color: "primary.main",
-                      textDecoration: "none",
-                      position: "relative",
-                      "&::after": {
-                        content: '""',
-                        position: "absolute",
-                        width: "100%",
-                        height: "2px",
-                        bottom: -2,
-                        left: 0,
-                        background: "linear-gradient(45deg, #FF2D55, #7000FF)",
-                        transform: "scaleX(0)",
-                        transition: "transform 0.3s ease",
-                        transformOrigin: "right",
+                  {/* Links */}
+                  <Typography
+                    sx={{
+                      mt: 3,
+                      textAlign: "center",
+                      color: "rgba(255,255,255,0.7)",
+                      "& a": {
+                        color: "primary.main",
+                        textDecoration: "none",
+                        position: "relative",
+                        "&::after": {
+                          content: '""',
+                          position: "absolute",
+                          width: "100%",
+                          height: "2px",
+                          bottom: -2,
+                          left: 0,
+                          background:
+                            "linear-gradient(45deg, #FF2D55, #7000FF)",
+                          transform: "scaleX(0)",
+                          transition: "transform 0.3s ease",
+                          transformOrigin: "right",
+                        },
+                        "&:hover::after": {
+                          transform: "scaleX(1)",
+                          transformOrigin: "left",
+                        },
                       },
-                      "&:hover::after": {
-                        transform: "scaleX(1)",
-                        transformOrigin: "left",
+                    }}
+                  >
+                    New to Swing Social?
+                    <Link href="/registeradmin">Create an account</Link>
+                  </Typography>
+
+                  <Typography
+                    onClick={() => {
+                      setShowLocationModal(true);
+                    }}
+                    sx={{
+                      mt: 1,
+                      textAlign: "center",
+                      cursor: "pointer",
+                      color: "#FF2D55",
+                      "& a": {
+                        color: "primary.main",
+                        textDecoration: "none",
+                        position: "relative",
+                        "&::after": {
+                          content: '""',
+                          position: "absolute",
+                          width: "100%",
+                          height: "2px",
+                          bottom: -2,
+                          left: 0,
+                          background:
+                            "linear-gradient(45deg, #FF2D55, #7000FF)",
+                          transform: "scaleX(0)",
+                          transition: "transform 0.3s ease",
+                          transformOrigin: "right",
+                        },
+                        "&:hover::after": {
+                          transform: "scaleX(1)",
+                          transformOrigin: "left",
+                        },
                       },
-                    },
-                  }}
-                >
-                  New to Swing Social?{" "}
-                  <Link href="/registeradmin">Create an account</Link>
-                </Typography>
-                <Typography
-                  onClick={() => {
-                    setShowLocationModal(true);
-                  }}
-                  sx={{
-                    mt: 1,
-                    textAlign: "center",
-                    cursor: "pointer",
-                    color: "#FF2D55",
-                    "& a": {
-                      color: "primary.main",
-                      textDecoration: "none",
-                      position: "relative",
-                      "&::after": {
-                        content: '""',
-                        position: "absolute",
-                        width: "100%",
-                        height: "2px",
-                        bottom: -2,
-                        left: 0,
-                        background: "linear-gradient(45deg, #FF2D55, #7000FF)",
-                        transform: "scaleX(0)",
-                        transition: "transform 0.3s ease",
-                        transformOrigin: "right",
-                      },
-                      "&:hover::after": {
-                        transform: "scaleX(1)",
-                        transformOrigin: "left",
-                      },
-                    },
-                  }}
-                >
-                  Forget Password? Reset your password
-                </Typography>
+                    }}
+                  >
+                    Forget Password? Reset your password
+                  </Typography>
+                </Box>
               </Box>
             </Paper>
           </RotatingCard>

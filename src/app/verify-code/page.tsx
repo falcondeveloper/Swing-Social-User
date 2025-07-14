@@ -18,7 +18,7 @@ import { Password } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 
-const ResetPasswordContent = () => {
+const OtpLoginContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -109,7 +109,7 @@ const ResetPasswordContent = () => {
     if (enteredCode === storedCode) {
       Swal.fire({
         title: "✅ OTP Verified!",
-        text: "Your one-time password has been verified successfully.",
+        text: "You have successfully logged in.",
         icon: "success",
         confirmButtonText: "Continue",
         allowOutsideClick: false,
@@ -148,7 +148,7 @@ const ResetPasswordContent = () => {
         >
           <Password sx={{ fontSize: 48, color: "#FF2D55", mb: 2 }} />
           <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
-            Email Code Verification
+            Login with Email OTP
           </Typography>
 
           <TextField
@@ -226,14 +226,14 @@ const ResetPasswordContent = () => {
             {loading ? (
               <CircularProgress size={24} sx={{ color: "white" }} />
             ) : (
-              "Reset Password"
+              "Login"
             )}
           </Button>
         </Paper>
       </Box>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-        <DialogTitle>Password Reset</DialogTitle>
+        <DialogTitle>Login Failed</DialogTitle>
         <DialogContent>
           <Typography>{dialogMessage}</Typography>
         </DialogContent>
@@ -242,7 +242,7 @@ const ResetPasswordContent = () => {
   );
 };
 
-const EmailCodeVerification = () => {
+const EmailOtpLogin = () => {
   return (
     <Suspense
       fallback={
@@ -258,9 +258,9 @@ const EmailCodeVerification = () => {
         </Container>
       }
     >
-      <ResetPasswordContent />
+      <OtpLoginContent />
     </Suspense>
   );
 };
 
-export default EmailCodeVerification;
+export default EmailOtpLogin;

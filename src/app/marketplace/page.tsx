@@ -474,7 +474,7 @@ const Marketplace: React.FC = () => {
                     <Box
                       sx={{
                         position: "relative",
-                        height: { xs: 300, sm: 300, md: 300 },
+                        height: { xs: 300, sm: 300, md: 400 },
                         overflow: "hidden",
                       }}
                     >
@@ -497,13 +497,13 @@ const Marketplace: React.FC = () => {
 
                       <IconButton
                         aria-label="save"
-                        onClick={(e) => toggleSavedItem(product.Id, e)}
+                        onClick={(e) => toggleSavedItem(product?.Id, e)}
                         sx={{
                           position: "absolute",
                           top: 8,
                           right: 8,
                           backgroundColor: "rgba(0,0,0,0.5)",
-                          color: savedItems.includes(product.Id)
+                          color: savedItems.includes(product?.Id)
                             ? "#ff4081"
                             : "#fff",
                           "&:hover": {
@@ -511,7 +511,7 @@ const Marketplace: React.FC = () => {
                           },
                         }}
                       >
-                        {savedItems.includes(product.Id) ? (
+                        {savedItems.includes(product?.Id) ? (
                           <Favorite fontSize="small" />
                         ) : (
                           <FavoriteBorder fontSize="small" />
