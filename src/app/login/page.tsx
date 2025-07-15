@@ -848,21 +848,49 @@ const LoginPage: React.FC = () => {
 
               <Box>
                 {/* Login method toggle */}
-                <Box sx={{ display: "flex", justifyContent: "center", mb: 5 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    justifyContent: "center",
+                    gap: { xs: 1, sm: 2 },
+                    mb: { xs: 3, sm: 5 },
+                    width: "100%",
+                    maxWidth: "600px",
+                    mx: "auto",
+                    px: { xs: 1, sm: 0 },
+                  }}
+                >
                   <Button
                     variant={loginMethod === "otp" ? "contained" : "outlined"}
                     onClick={() => setLoginMethod("otp")}
-                    sx={{ mr: 1 }}
+                    sx={{
+                      fontSize: { xs: "0.8rem", sm: "0.9rem", md: "0.9rem" },
+                      py: { xs: 1, sm: 1.5 },
+                      px: { xs: 1.5, sm: 3 },
+                      whiteSpace: "normal",
+                      wordBreak: "break-word",
+                      minHeight: { xs: "48px", sm: "56px" },
+                      lineHeight: { xs: 1.2, sm: 1.5 },
+                    }}
                   >
-                    Login w/OTP
+                    Login with Email Code (no password needed)
                   </Button>
                   <Button
                     variant={
                       loginMethod === "password" ? "contained" : "outlined"
                     }
                     onClick={() => setLoginMethod("password")}
+                    sx={{
+                      fontSize: { xs: "0.8rem", sm: "0.9rem", md: "0.9rem" },
+                      py: { xs: 1, sm: 1.5 },
+                      px: { xs: 1.5, sm: 3 },
+                      whiteSpace: "normal",
+                      wordBreak: "break-word",
+                      minHeight: { xs: "48px", sm: "56px" },
+                      lineHeight: { xs: 1.2, sm: 1.5 },
+                    }}
                   >
-                    Login w/Password
+                    Login with Password
                   </Button>
                 </Box>
 
