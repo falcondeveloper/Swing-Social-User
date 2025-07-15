@@ -864,12 +864,12 @@ const LoginPage: React.FC = () => {
                     variant={loginMethod === "otp" ? "contained" : "outlined"}
                     onClick={() => setLoginMethod("otp")}
                     sx={{
-                      fontSize: { xs: "0.8rem", sm: "0.9rem", md: "0.9rem" },
+                      fontSize: { xs: "0.7rem", sm: "0.9rem", md: "0.9rem" },
                       py: { xs: 1, sm: 1.5 },
                       px: { xs: 1.5, sm: 3 },
                       whiteSpace: "normal",
                       wordBreak: "break-word",
-                      minHeight: { xs: "48px", sm: "56px" },
+                      minHeight: { xs: "43px", sm: "45px" },
                       lineHeight: { xs: 1.2, sm: 1.5 },
                     }}
                   >
@@ -881,12 +881,12 @@ const LoginPage: React.FC = () => {
                     }
                     onClick={() => setLoginMethod("password")}
                     sx={{
-                      fontSize: { xs: "0.8rem", sm: "0.9rem", md: "0.9rem" },
+                      fontSize: { xs: "0.7rem", sm: "0.9rem", md: "0.9rem" },
                       py: { xs: 1, sm: 1.5 },
                       px: { xs: 1.5, sm: 3 },
                       whiteSpace: "normal",
                       wordBreak: "break-word",
-                      minHeight: { xs: "48px", sm: "56px" },
+                     minHeight: { xs: "43px", sm: "45px" },
                       lineHeight: { xs: 1.2, sm: 1.5 },
                     }}
                   >
