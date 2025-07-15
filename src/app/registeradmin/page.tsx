@@ -240,32 +240,51 @@ export default function ProfileDetail() {
       if (userAgent.indexOf("Mac") !== -1) return "MacOS";
       if (userAgent.indexOf("Linux") !== -1) return "Linux";
       if (userAgent.indexOf("Android") !== -1) return "Android";
-      if (userAgent.indexOf("iOS") !== -1) return "iOS";
-      return null;
+      if (
+        userAgent.indexOf("iPhone") !== -1 ||
+        userAgent.indexOf("iPad") !== -1
+      )
+        return "iOS";
+      return "Unknown";
     };
 
-    // Get current URL and page info
     const currentUrl = window.location.href;
     const currentPage = "Register"; // Since this is login page
 
-    const hitResponse = await fetch("/api/user/tracking", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        affiliate: aff || null,
-        referral: refer || null,
+    let hitId: string | null = null;
+
+    try {
+      const ipRes = await fetch("https://ipapi.co/json");
+      const ipData = await ipRes.json();
+
+      const payload = {
+        affiliate: aff,
+        referral: refer,
         OS: getOS(),
         page: currentPage,
         url: currentUrl,
         userid: null,
-      }),
-    });
+        ip: ipData?.ip,
+        city: ipData?.city,
+        region: ipData?.region,
+        country_name: ipData?.country_name,
+      };
 
-    const hit = await hitResponse.json();
+      const hitRes = await fetch("/api/user/tracking", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    // console.log(hit.data.HitId)
+      const hitData = await hitRes.json();
+      console.log("Tracking saved:", hitData);
+
+      hitId = hitData?.data?.HitId ?? null;
+    } catch (err) {
+      console.error("Failed to save tracking:", err);
+    }
 
     // Validate form fields
     if (!formData.userName) newErrors.userName = "User Name is required";
@@ -276,35 +295,33 @@ export default function ProfileDetail() {
     if (!formData.password) newErrors.password = "Password is required";
     if (formData.password !== formData.repeatPassword)
       newErrors.repeatPassword = "Passwords must match";
-
     if (!formData.city) newErrors.city = "City is required";
 
-    // If there are errors, prevent submission and show them
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    // Check if the username exists
-    const checkResponse = await fetch("/api/user/profile/check", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ search: formData.email }), // Pass the username to check
-    });
-
-    const checkData = await checkResponse.json();
-
-    if (checkData.exists) {
-      // Username is already taken
-      newErrors.email = "Email already taken";
-      setErrors(newErrors);
-      return;
-    }
-    handleOpen();
     try {
-      // Sending data to the Next.js API route
+      // Check if the email exists
+      const checkResponse = await fetch("/api/user/profile/check", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ search: formData.email }),
+      });
+
+      const checkData = await checkResponse.json();
+
+      if (checkData.exists) {
+        newErrors.email = "Email already taken";
+        setErrors(newErrors);
+        return;
+      }
+
+      handleOpen();
+
       const response = await fetch("/api/user", {
         method: "POST",
         headers: {
@@ -313,29 +330,28 @@ export default function ProfileDetail() {
         body: JSON.stringify({
           ...formData,
           affiliate: aff,
-          hitid: hit.data.HitId,
+          hitid: hitId,
         }),
       });
-      console.log(response);
+
       if (response.ok) {
-        // Handle success (e.g., show success message or redirect)
         const data = await response.json();
-        const profileId = data.profileId; // Access the profileId from the response
+        const profileId = data.profileId;
 
         if (profileId) {
           console.log("Profile ID:", profileId);
           setProfileId(profileId);
+
+          localStorage.setItem("email", formData?.email);
+          localStorage.setItem("userName", formData?.userName);
+          localStorage.setItem("password", formData?.password);
+          localStorage.setItem("logged_in_profile", profileId);
+
+          console.log("Form submitted successfully!");
         } else {
           console.log("Profile creation failed, no profileId returned.");
         }
-        localStorage.setItem("email", formData?.email);
-        localStorage.setItem("userName", formData?.userName);
-        localStorage.setItem("password", formData?.password);
-        localStorage.setItem("logged_in_profile", profileId);
-
-        console.log("Form submitted successfully!");
       } else {
-        // Handle error
         console.log("Error submitting form");
       }
     } catch (error) {

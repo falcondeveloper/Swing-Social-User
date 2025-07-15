@@ -94,33 +94,57 @@ const Marketplace: React.FC = () => {
 
     const getOS = () => {
       const userAgent = window.navigator.userAgent;
+
       if (userAgent.indexOf("Win") !== -1) return "Windows";
       if (userAgent.indexOf("Mac") !== -1) return "MacOS";
       if (userAgent.indexOf("Android") !== -1) return "Android";
       if (/iPad|iPhone|iPod/.test(userAgent)) return "iOS";
       if (userAgent.indexOf("Linux") !== -1) return "Linux";
+
       return "Unknown";
     };
 
     const currentUrl = window.location.href;
-    const currentPage = "MarketPlace";
+    const currentPage = "Marketplace";
 
-    fetch("/api/user/tracking", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        affiliate: aff,
-        referral: refer,
-        OS: getOS(),
-        page: currentPage,
-        url: currentUrl,
-        userid: id ?? null,
-      }),
-    });
+    fetch("https://ipapi.co/json")
+      .then((res) => res.json())
+      .then((ipData) => {
+        const payload = {
+          affiliate: aff,
+          referral: refer,
+          OS: getOS(),
+          page: currentPage,
+          url: currentUrl,
+          userid: id || null,
+          ip: ipData?.ip,
+          city: ipData?.city,
+          region: ipData?.region,
+          country_name: ipData?.country_name,
+        };
 
-    if (id) setProfileId(id);
+        if (id) {
+          setProfileId(id);
+        }
+
+        fetch("/api/user/tracking", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            console.log("Tracking saved:", data);
+          })
+          .catch((err) => {
+            console.error("Failed to save tracking:", err);
+          });
+      })
+      .catch((err) => {
+        console.error("Failed to fetch IP:", err);
+      });
   }, []);
 
   useEffect(() => {

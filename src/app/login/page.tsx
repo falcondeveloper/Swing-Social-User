@@ -236,63 +236,11 @@ const LoginPage: React.FC = () => {
   const [otpOption, setOtpOption] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("loginInfo");
-      if (token) {
-        router.push("/home");
-      }
-
-      // Get URL parameters
-      const urlParams = new URLSearchParams(window.location.search);
-      const tokenfrom = urlParams.get("token");
-      const aff = urlParams.get("aff");
-      const refer = urlParams.get("refer");
-
-      if (tokenfrom) {
-        localStorage.setItem("loginInfo", tokenfrom);
-      }
-
-      // Detect OS
-      const getOS = () => {
-        const userAgent = window.navigator.userAgent;
-        if (userAgent.indexOf("Win") !== -1) return "Windows";
-        if (userAgent.indexOf("Mac") !== -1) return "MacOS";
-        if (userAgent.indexOf("Linux") !== -1) return "Linux";
-        if (userAgent.indexOf("Android") !== -1) return "Android";
-        if (userAgent.indexOf("iOS") !== -1) return "iOS";
-        return null;
-      };
-
-      // Get current URL and page info
-      const currentUrl = window.location.href;
-      const currentPage = "Login"; // Since this is login page
-
-      if (aff || refer) {
-        fetch("/api/user/tracking", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            affiliate: aff,
-            referral: refer,
-            OS: getOS(),
-            page: currentPage,
-            url: currentUrl,
-            userid: null,
-          }),
-        });
-      }
-    }
-  }, []);
-
-  useEffect(() => {
     const id = localStorage.getItem("logged_in_profile");
     const urlParams = new URLSearchParams(window.location.search);
     const aff = urlParams.get("aff");
     const refer = urlParams.get("refer");
 
-    // Detect OS
     const getOS = () => {
       const userAgent = window.navigator.userAgent;
 
@@ -305,41 +253,106 @@ const LoginPage: React.FC = () => {
       return "Unknown";
     };
 
-    // Get current URL and page info
     const currentUrl = window.location.href;
-    const currentPage = "login";
+    const currentPage = "Login";
 
-    if (id) {
-      fetch("/api/user/tracking", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+    fetch("https://ipapi.co/json")
+      .then((res) => res.json())
+      .then((ipData) => {
+        console.log("ipData", ipData);
+        const ipv4 = ipData.ip;
+
+        const payload = {
           affiliate: aff,
           referral: refer,
           OS: getOS(),
           page: currentPage,
           url: currentUrl,
-          userid: id,
-        }),
+          userid: id || null,
+          ip: ipData?.ip,
+          city: ipData?.city,
+          region: ipData?.region,
+          country_name: ipData?.country_name,
+        };
+
+        fetch("/api/user/tracking", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            console.log("Tracking saved:", data);
+          })
+          .catch((err) => {
+            console.error("Failed to save tracking:", err);
+          });
+      })
+      .catch((err) => {
+        console.error("Failed to fetch IP:", err);
       });
-    } else {
-      fetch("/api/user/tracking", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+  }, []);
+
+  useEffect(() => {
+    const id = localStorage.getItem("logged_in_profile");
+    const urlParams = new URLSearchParams(window.location.search);
+    const aff = urlParams.get("aff");
+    const refer = urlParams.get("refer");
+
+    const getOS = () => {
+      const userAgent = window.navigator.userAgent;
+
+      if (userAgent.indexOf("Win") !== -1) return "Windows";
+      if (userAgent.indexOf("Mac") !== -1) return "MacOS";
+      if (userAgent.indexOf("Android") !== -1) return "Android";
+      if (/iPad|iPhone|iPod/.test(userAgent)) return "iOS";
+      if (userAgent.indexOf("Linux") !== -1) return "Linux";
+
+      return "Unknown";
+    };
+
+    const currentUrl = window.location.href;
+    const currentPage = "Login";
+
+    fetch("https://ipapi.co/json")
+      .then((res) => res.json())
+      .then((ipData) => {
+        console.log("ipData", ipData);
+        const ipv4 = ipData.ip;
+
+        const payload = {
           affiliate: aff,
           referral: refer,
           OS: getOS(),
           page: currentPage,
           url: currentUrl,
-          userid: null,
-        }),
+          userid: id || null,
+          ip: ipData?.ip,
+          city: ipData?.city,
+          region: ipData?.region,
+          country_name: ipData?.country_name,
+        };
+
+        fetch("/api/user/tracking", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            console.log("Tracking saved:", data);
+          })
+          .catch((err) => {
+            console.error("Failed to save tracking:", err);
+          });
+      })
+      .catch((err) => {
+        console.error("Failed to fetch IP:", err);
       });
-    }
   }, []);
 
   const [resetValidation, setResetValidation] = useState<RestValidationState>({
@@ -447,40 +460,62 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+
     const urlParams = new URLSearchParams(window.location.search);
     const aff = urlParams.get("aff");
     const refer = urlParams.get("refer");
 
-    // Detect OS
     const getOS = () => {
       const userAgent = window.navigator.userAgent;
       if (userAgent.indexOf("Win") !== -1) return "Windows";
       if (userAgent.indexOf("Mac") !== -1) return "MacOS";
       if (userAgent.indexOf("Linux") !== -1) return "Linux";
       if (userAgent.indexOf("Android") !== -1) return "Android";
-      if (userAgent.indexOf("iOS") !== -1) return "iOS";
-      return null;
+      if (
+        userAgent.indexOf("iPhone") !== -1 ||
+        userAgent.indexOf("iPad") !== -1
+      )
+        return "iOS";
+      return "Unknown";
     };
 
-    // Get current URL and page info
     const currentUrl = window.location.href;
     const currentPage = "Login";
 
+    let hitId: string | null = null;
+
     if (aff || refer) {
-      await fetch("/api/user/tracking", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      try {
+        const ipRes = await fetch("https://ipapi.co/json");
+        const ipData = await ipRes.json();
+
+        const trackingPayload = {
           affiliate: aff,
           referral: refer,
           OS: getOS(),
           page: currentPage,
           url: currentUrl,
           userid: null,
-        }),
-      });
+          ip: ipData?.ip,
+          city: ipData?.city,
+          region: ipData?.region,
+          country_name: ipData?.country_name,
+        };
+
+        const trackingRes = await fetch("/api/user/tracking", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(trackingPayload),
+        });
+
+        const trackingData = await trackingRes.json();
+        console.log("Tracking saved:", trackingData);
+        hitId = trackingData?.data?.HitId ?? null;
+      } catch (err) {
+        console.error("Failed to save tracking:", err);
+      }
     }
 
     // Validate all fields
@@ -503,6 +538,7 @@ const LoginPage: React.FC = () => {
         const payload = {
           email: email,
           pwd: password,
+          hitid: hitId,
         };
 
         const result = await fetch("/api/user/login", {
@@ -512,16 +548,18 @@ const LoginPage: React.FC = () => {
           },
           body: JSON.stringify(payload),
         });
+
         const data = await result.json();
+
         await new Promise((resolve) => setTimeout(resolve, 2000));
+
         setMessage(data.message);
-        if (data.status == 404) {
-          setOpen(true);
-        } else if (data.status == 500) {
+
+        if (data.status === 404 || data.status === 500) {
           setOpen(true);
         } else {
           setOpen(true);
-          if (data.currentuserName == "Webnew") {
+          if (data.currentuserName === "Webnew") {
             router.push(`/screennameadmin/${data.currentProfileId}`);
           } else {
             localStorage.setItem("loginInfo", data.jwtToken);
@@ -633,7 +671,7 @@ const LoginPage: React.FC = () => {
   const handleLoginViaOTP = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    let code = Math.floor(1000 + Math.random() * 9000);
+    const code = Math.floor(1000 + Math.random() * 9000);
     const urlParams = new URLSearchParams(window.location.search);
     const aff = urlParams.get("aff");
     const refer = urlParams.get("refer");
@@ -644,28 +682,51 @@ const LoginPage: React.FC = () => {
       if (userAgent.indexOf("Mac") !== -1) return "MacOS";
       if (userAgent.indexOf("Linux") !== -1) return "Linux";
       if (userAgent.indexOf("Android") !== -1) return "Android";
-      if (userAgent.indexOf("iOS") !== -1) return "iOS";
-      return null;
+      if (
+        userAgent.indexOf("iPhone") !== -1 ||
+        userAgent.indexOf("iPad") !== -1
+      )
+        return "iOS";
+      return "Unknown";
     };
 
     const currentUrl = window.location.href;
     const currentPage = "Login";
 
+    let hitId: string | null = null;
+
     if (aff || refer) {
-      await fetch("/api/user/tracking", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      try {
+        const ipRes = await fetch("https://ipapi.co/json");
+        const ipData = await ipRes.json();
+
+        const trackingPayload = {
           affiliate: aff,
           referral: refer,
           OS: getOS(),
           page: currentPage,
           url: currentUrl,
           userid: null,
-        }),
-      });
+          ip: ipData?.ip,
+          city: ipData?.city,
+          region: ipData?.region,
+          country_name: ipData?.country_name,
+        };
+
+        const trackingRes = await fetch("/api/user/tracking", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(trackingPayload),
+        });
+
+        const trackingData = await trackingRes.json();
+        console.log("Tracking saved:", trackingData);
+        hitId = trackingData?.data?.HitId ?? null;
+      } catch (err) {
+        console.error("Failed to save tracking:", err);
+      }
     }
 
     const emailValidation = validateEmail(email);
@@ -678,7 +739,7 @@ const LoginPage: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ email: email, code: code }),
+          body: JSON.stringify({ email: email, code: code, hitid: hitId }),
         });
 
         if (response.ok) {

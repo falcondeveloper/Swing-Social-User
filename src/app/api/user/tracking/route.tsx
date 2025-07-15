@@ -11,12 +11,34 @@ const pool = new Pool({
 });
 export async function POST(req: any) {
   try {
-    const { affiliate, referral, OS, page, url, userid } = await req.json();
+    const {
+      affiliate,
+      referral,
+      OS,
+      page,
+      url,
+      userid,
+      ip,
+      city,
+      region,
+      country_name,
+    } = await req.json();
     const result = await pool.query(
-      "SELECT * FROM public.hit_insert_1($1, $2, $3, $4, $5, $6)",
-      [affiliate, referral, OS, page, url, userid]
+      "SELECT * FROM public.hit_insert_1($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+      [
+        affiliate,
+        referral,
+        OS,
+        page,
+        url,
+        userid,
+        ip,
+        city,
+        region,
+        country_name,
+      ]
     );
-    console.log(result.rows)
+    console.log(result.rows);
     return NextResponse.json({
       message: "Tracking data stored successfully",
       data: result.rows[0],
