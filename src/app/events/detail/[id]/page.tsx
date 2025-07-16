@@ -1705,15 +1705,16 @@ export default function EventDetail(props: { params: Params }) {
                     </Typography>
                     <Button
                       variant="contained"
-                      disabled={
-                        loginProfileId === eventDetail?.OrganizerId
-                          ? false
-                          : true
-                      }
+                      disabled={loginProfileId !== eventDetail?.OrganizerId}
                       onClick={handleOpen}
                       sx={{
                         bgcolor: "#880E4F",
                         "&:hover": { bgcolor: "#560027" },
+                        "&.Mui-disabled": {
+                          bgcolor: "#880E4F",
+                          color: "white",
+                          opacity: 0.5,
+                        },
                       }}
                     >
                       Send Email

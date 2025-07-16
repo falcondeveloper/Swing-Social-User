@@ -15,11 +15,7 @@ import {
   Modal,
   Backdrop,
   Alert,
-  tooltipClasses,
-  Tooltip,
-  styled,
   CircularProgress,
-  TooltipProps,
   Select,
   MenuItem,
 } from "@mui/material";
@@ -32,7 +28,6 @@ import {
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import Snackbar, { SnackbarCloseReason } from "@mui/material/Snackbar";
-import { jwtDecode } from "jwt-decode";
 import Swal from "sweetalert2";
 import Link from "next/link";
 
@@ -62,45 +57,6 @@ const theme = createTheme({
     borderRadius: 16,
   },
 });
-
-const ValidationTooltip = styled(
-  ({ className, ...props }: TooltipProps & { className?: string }) => (
-    <Tooltip
-      {...props}
-      classes={{ popper: className }}
-      PopperProps={{
-        modifiers: [
-          {
-            name: "preventOverflow",
-            options: {
-              altAxis: true,
-              tether: false,
-              padding: 8,
-            },
-          },
-        ],
-      }}
-    />
-  )
-)(({ theme }) => ({
-  [`& .${tooltipClasses.tooltip}`]: {
-    backgroundColor: "rgba(0, 0, 0, 0.85)",
-    padding: theme.spacing(1.5),
-    [theme.breakpoints.up("sm")]: {
-      padding: theme.spacing(2),
-    },
-    maxWidth: {
-      xs: "250px",
-      sm: "300px",
-      md: "320px",
-    },
-    borderRadius: theme.shape.borderRadius,
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-  },
-  [`& .${tooltipClasses.arrow}`]: {
-    color: "rgba(0, 0, 0, 0.85)",
-  },
-}));
 
 interface ValidationState {
   email: {
@@ -234,127 +190,6 @@ const LoginPage: React.FC = () => {
   });
   const [submitLoading, setSubmitLoading] = useState(false);
   const [otpOption, setOtpOption] = useState("");
-
-  useEffect(() => {
-    const id = localStorage.getItem("logged_in_profile");
-    const urlParams = new URLSearchParams(window.location.search);
-    const aff = urlParams.get("aff");
-    const refer = urlParams.get("refer");
-
-    const getOS = () => {
-      const userAgent = window.navigator.userAgent;
-
-      if (userAgent.indexOf("Win") !== -1) return "Windows";
-      if (userAgent.indexOf("Mac") !== -1) return "MacOS";
-      if (userAgent.indexOf("Android") !== -1) return "Android";
-      if (/iPad|iPhone|iPod/.test(userAgent)) return "iOS";
-      if (userAgent.indexOf("Linux") !== -1) return "Linux";
-
-      return "Unknown";
-    };
-
-    const currentUrl = window.location.href;
-    const currentPage = "Login";
-
-    fetch("https://ipapi.co/json")
-      .then((res) => res.json())
-      .then((ipData) => {
-        console.log("ipData", ipData);
-        const ipv4 = ipData.ip;
-
-        const payload = {
-          affiliate: aff,
-          referral: refer,
-          OS: getOS(),
-          page: currentPage,
-          url: currentUrl,
-          userid: id || null,
-          ip: ipData?.ip,
-          city: ipData?.city,
-          region: ipData?.region,
-          country_name: ipData?.country_name,
-        };
-
-        fetch("/api/user/tracking", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            console.log("Tracking saved:", data);
-          })
-          .catch((err) => {
-            console.error("Failed to save tracking:", err);
-          });
-      })
-      .catch((err) => {
-        console.error("Failed to fetch IP:", err);
-      });
-  }, []);
-
-  useEffect(() => {
-    const id = localStorage.getItem("logged_in_profile");
-    const urlParams = new URLSearchParams(window.location.search);
-    const aff = urlParams.get("aff");
-    const refer = urlParams.get("refer");
-
-    const getOS = () => {
-      const userAgent = window.navigator.userAgent;
-
-      if (userAgent.indexOf("Win") !== -1) return "Windows";
-      if (userAgent.indexOf("Mac") !== -1) return "MacOS";
-      if (userAgent.indexOf("Android") !== -1) return "Android";
-      if (/iPad|iPhone|iPod/.test(userAgent)) return "iOS";
-      if (userAgent.indexOf("Linux") !== -1) return "Linux";
-
-      return "Unknown";
-    };
-
-    const currentUrl = window.location.href;
-    const currentPage = "Login";
-
-    fetch("https://ipapi.co/json")
-      .then((res) => res.json())
-      .then((ipData) => {
-        console.log("ipData", ipData);
-        const ipv4 = ipData.ip;
-
-        const payload = {
-          affiliate: aff,
-          referral: refer,
-          OS: getOS(),
-          page: currentPage,
-          url: currentUrl,
-          userid: id || null,
-          ip: ipData?.ip,
-          city: ipData?.city,
-          region: ipData?.region,
-          country_name: ipData?.country_name,
-        };
-
-        fetch("/api/user/tracking", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            console.log("Tracking saved:", data);
-          })
-          .catch((err) => {
-            console.error("Failed to save tracking:", err);
-          });
-      })
-      .catch((err) => {
-        console.error("Failed to fetch IP:", err);
-      });
-  }, []);
-
   const [resetValidation, setResetValidation] = useState<RestValidationState>({
     resetUserName: {
       error: false,
@@ -365,6 +200,67 @@ const LoginPage: React.FC = () => {
       message: "",
     },
   });
+  const [touched, setTouched] = useState({
+    email: false,
+    password: false,
+  });
+
+  useEffect(() => {
+    const id = localStorage.getItem("logged_in_profile");
+    const urlParams = new URLSearchParams(window.location.search);
+    const aff = urlParams.get("aff");
+    const refer = urlParams.get("refer");
+
+    const getOS = () => {
+      const userAgent = window.navigator.userAgent;
+
+      if (userAgent.indexOf("Win") !== -1) return "Windows";
+      if (userAgent.indexOf("Mac") !== -1) return "MacOS";
+      if (userAgent.indexOf("Android") !== -1) return "Android";
+      if (/iPad|iPhone|iPod/.test(userAgent)) return "iOS";
+      if (userAgent.indexOf("Linux") !== -1) return "Linux";
+
+      return "Unknown";
+    };
+
+    const currentUrl = window.location.href;
+    const currentPage = "Login";
+
+    fetch("https://ipapi.co/json")
+      .then((res) => res.json())
+      .then((ipData) => {
+        const payload = {
+          affiliate: aff,
+          referral: refer,
+          OS: getOS(),
+          page: currentPage,
+          url: currentUrl,
+          userid: id || null,
+          ip: ipData?.ip,
+          city: ipData?.city,
+          region: ipData?.region,
+          country_name: ipData?.country_name,
+        };
+
+        fetch("/api/user/tracking", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            console.log("Tracking saved:", data);
+          })
+          .catch((err) => {
+            console.error("Failed to save tracking:", err);
+          });
+      })
+      .catch((err) => {
+        console.error("Failed to fetch IP:", err);
+      });
+  }, []);
 
   const handleClose = (
     event: React.SyntheticEvent | Event,
@@ -375,11 +271,6 @@ const LoginPage: React.FC = () => {
     }
     setOpen(false);
   };
-
-  const [touched, setTouched] = useState({
-    email: false,
-    password: false,
-  });
 
   const PasswordRequirements = (password: string) => {
     if (!password) {
@@ -801,7 +692,7 @@ const LoginPage: React.FC = () => {
             <Paper
               elevation={24}
               sx={{
-                p: 4,
+                p: { xs: 2, sm: 2, md: 4 },
                 background: "rgba(255, 255, 255, 0.05)",
                 backdropFilter: "blur(20px)",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -852,12 +743,12 @@ const LoginPage: React.FC = () => {
                   sx={{
                     display: "grid",
                     justifyContent: "center",
-                    gap: { xs: 1, sm: 2 },
+                    gap: { xs: 1.5, sm: 2 },
                     mb: { xs: 3, sm: 5 },
                     width: "100%",
                     maxWidth: "600px",
                     mx: "auto",
-                    px: { xs: 1, sm: 0 },
+                    // px: { xs: 1, sm: 0 },
                   }}
                 >
                   <Button
@@ -873,7 +764,7 @@ const LoginPage: React.FC = () => {
                       lineHeight: { xs: 1.2, sm: 1.5 },
                     }}
                   >
-                    Login with Email Code (no password needed)
+                    Login w/Email Code (no password needed)
                   </Button>
                   <Button
                     variant={
@@ -886,11 +777,11 @@ const LoginPage: React.FC = () => {
                       px: { xs: 1.5, sm: 3 },
                       whiteSpace: "normal",
                       wordBreak: "break-word",
-                     minHeight: { xs: "43px", sm: "45px" },
+                      minHeight: { xs: "43px", sm: "45px" },
                       lineHeight: { xs: 1.2, sm: 1.5 },
                     }}
                   >
-                    Login with Password
+                    Login w/Password
                   </Button>
                 </Box>
 
@@ -1019,7 +910,7 @@ const LoginPage: React.FC = () => {
                     ) : loginMethod === "password" ? (
                       "SIGN IN"
                     ) : (
-                      "Send OTP"
+                      "Send Email Code"
                     )}
                   </Button>
 
