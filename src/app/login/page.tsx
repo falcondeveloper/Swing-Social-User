@@ -177,7 +177,7 @@ const LoginPage: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState(false);
   const [resetUserName, setResetUserName] = useState<string>("");
-  const [loginMethod, setLoginMethod] = useState("otp");
+  const [loginMethod, setLoginMethod] = useState("password");
   const [validation, setValidation] = useState<ValidationState>({
     email: {
       error: false,
@@ -739,7 +739,7 @@ const LoginPage: React.FC = () => {
 
               <Box>
                 {/* Login method toggle */}
-                <Box
+                {/* <Box
                   sx={{
                     display: "grid",
                     justifyContent: "center",
@@ -748,7 +748,6 @@ const LoginPage: React.FC = () => {
                     width: "100%",
                     maxWidth: "600px",
                     mx: "auto",
-                    // px: { xs: 1, sm: 0 },
                   }}
                 >
                   <Button
@@ -783,7 +782,7 @@ const LoginPage: React.FC = () => {
                   >
                     Login w/Password
                   </Button>
-                </Box>
+                </Box>*/}
 
                 <Box
                   component="form"
@@ -913,6 +912,64 @@ const LoginPage: React.FC = () => {
                       "Send Email Code"
                     )}
                   </Button>
+
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Box
+                      sx={{
+                        flexGrow: 1,
+                        bgcolor: "rgba(255,255,255,0.2)",
+                      }}
+                    />
+                    <Typography
+                      sx={{
+                        color: "rgba(255,255,255,0.6)",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      OR
+                    </Typography>
+                    <Box
+                      sx={{
+                        flexGrow: 1,
+                        height: 1,
+                        bgcolor: "rgba(255,255,255,0.2)",
+                      }}
+                    />
+                  </Box>
+
+                  {loginMethod === "password" ? (
+                    <Button
+                      fullWidth
+                      onClick={() => setLoginMethod("otp")}
+                      sx={{
+                        py: 1.2,
+                        mb: 1,
+                        color: "#fff",
+                        border: "none",
+                        background: "transparent",
+                        fontWeight: 500,
+                        letterSpacing: 1,
+                      }}
+                    >
+                      Login w/Email Code (no password needed)
+                    </Button>
+                  ) : (
+                    <Button
+                      fullWidth
+                      onClick={() => setLoginMethod("password")}
+                      sx={{
+                        py: 1.2,
+                        mb: 1,
+                        color: "#fff",
+                        border: "none",
+                        background: "transparent",
+                        fontWeight: 500,
+                        letterSpacing: 1,
+                      }}
+                    >
+                      Login w/password
+                    </Button>
+                  )}
 
                   {/* Links */}
                   <Typography

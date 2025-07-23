@@ -129,6 +129,7 @@ export default function MobileSweaping() {
   const [reportOptions, setReportOptions] = useState({
     reportUser: false,
     blockUser: false,
+    reportImage: false,
   });
 
   const [isProcessingSwipe, setIsProcessingSwipe] = useState(false);
@@ -730,6 +731,7 @@ export default function MobileSweaping() {
         setReportOptions({
           reportUser: false,
           blockUser: false,
+          reportImage: false,
         });
         toast.success("User reported successfully");
         return res.json();
@@ -1073,6 +1075,25 @@ export default function MobileSweaping() {
           <Typography variant="h6" gutterBottom>
             Report or Block User
           </Typography>
+          <FormControlLabel
+            sx={{
+              color: "white", // Label color
+              "& .MuiCheckbox-root": {
+                color: "#9c27b0", // Checkbox color
+              },
+              "& .MuiCheckbox-root.Mui-checked": {
+                color: "#9c27b0", // Checked checkbox color
+              },
+            }}
+            control={
+              <Checkbox
+                checked={reportOptions.reportImage}
+                onChange={handleCheckboxChange}
+                name="reportImage"
+              />
+            }
+            label="Inappropriate Image"
+          />
           <FormControlLabel
             sx={{
               color: "white",

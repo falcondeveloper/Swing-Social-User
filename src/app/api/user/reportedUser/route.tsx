@@ -9,43 +9,30 @@ const pool = new Pool({
   password: "Bmw635csi#",
   port: 5432,
 });
-export async function POST(req: any) {
+
+export async function POST(req: Request) {
   try {
     const {
-      affiliate,
-      referral,
-      OS,
-      page,
-      url,
-      userid,
-      ip,
-      city,
-      region,
-      country_name,
+      reportedById,
+      reportedByName,
+      reportedUserId,
+      reportedUserName,
+      image,
     } = await req.json();
+
     const result = await pool.query(
-      "SELECT * FROM public.hit_insert_1($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
-      [
-        affiliate,
-        referral,
-        OS,
-        page,
-        url,
-        userid,
-        ip,
-        city,
-        region,
-        country_name,
-      ]
+      "SELECT * FROM public.user_reports_image($1, $2, $3, $4, $5)",
+      [reportedById, reportedByName, reportedUserId, reportedUserName, image]
     );
+
     return NextResponse.json({
-      message: "Tracking data stored successfully",
+      message: "Image report stored successfully",
       data: result.rows[0],
     });
   } catch (error: any) {
     console.error("Tracking error:", error);
     return NextResponse.json(
-      { message: "Failed to store tracking data" },
+      { message: "Failed to store report data" },
       { status: 400 }
     );
   }

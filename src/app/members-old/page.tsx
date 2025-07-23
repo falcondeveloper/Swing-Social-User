@@ -17,7 +17,7 @@ export default function Home() {
   const [showDetail, setShowDetail] = useState<any>(false);
   const [selectedUserId, setSelectedUserId] = useState<any>(null);
   const [relationCategory, setRelationCategory] = useState(null);
-  const [profileId, setProfileId] = useState<any>("7c4cabe7-f7d2-4577-a9c2-de8b9c2af2c7");
+  const [profileId, setProfileId] = useState<any>("");
   const [bottomNav, setBottomNav] = useState();
   const [customProfile, setCustomProfile] = useState<any>(null);
 
@@ -44,7 +44,7 @@ export default function Home() {
       }
     };
     fetchUserProfiles();
-    fetchData("7c4cabe7-f7d2-4577-a9c2-de8b9c2af2c7");
+    fetchData("");
   }, []);
 
   const fetchData = async (userId: string) => {

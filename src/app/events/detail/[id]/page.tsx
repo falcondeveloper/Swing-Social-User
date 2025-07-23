@@ -99,6 +99,7 @@ export default function EventDetail(props: { params: Params }) {
   const [reportOptions, setReportOptions] = useState({
     reportUser: false,
     blockUser: false,
+    reportImage: false,
   });
   const [formState, setFormState] = useState({
     emailDescription: eventDetail?.Description,
@@ -1860,6 +1861,25 @@ export default function EventDetail(props: { params: Params }) {
           <Typography variant="h6" gutterBottom>
             Report or Block User
           </Typography>
+          <FormControlLabel
+            sx={{
+              color: "white", // Label color
+              "& .MuiCheckbox-root": {
+                color: "#9c27b0", // Checkbox color
+              },
+              "& .MuiCheckbox-root.Mui-checked": {
+                color: "#9c27b0", // Checked checkbox color
+              },
+            }}
+            control={
+              <Checkbox
+                checked={reportOptions.reportImage}
+                onChange={handleCheckboxChange}
+                name="reportImage"
+              />
+            }
+            label="Inappropriate Image"
+          />
           <FormControlLabel
             sx={{
               color: "white", // Label color

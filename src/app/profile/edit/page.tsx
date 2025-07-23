@@ -40,7 +40,7 @@ export default function EditProfile() {
     const [advertiser, setAdvertiser] = useState<any>({});
     const [enableNotifications, setEnableNotifications] = useState(false);
     const [bottomNav, setBottomNav] = useState(); // Bottom navigation state
-    const [id, setId] = useState<any>("7c4cabe7-f7d2-4577-a9c2-de8b9c2af2c7");
+    const [id, setId] = useState<any>("");
     const [profileId, setProfileId] = useState<any>(); // Animation direction
 
 

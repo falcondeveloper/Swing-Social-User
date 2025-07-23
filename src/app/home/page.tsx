@@ -438,9 +438,7 @@ const Home = () => {
           body: JSON.stringify(payload),
         })
           .then((res) => res.json())
-          .then((data) => {
-            console.log("Tracking saved:", data);
-          })
+          .then((data) => {})
           .catch((err) => {
             console.error("Failed to save tracking:", err);
           });

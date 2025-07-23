@@ -54,7 +54,7 @@ export default function Home() {
     const [swipeCount, setSwipeCount] = useState(0);
     console.log(swipeCount, "========swipeCount");
     const [dailyLimit, setDailyLimit] = useState(15);
-    const [profileId, setProfileId] = useState<any>("7c4cabe7-f7d2-4577-a9c2-de8b9c2af2c7"); // Animation direction
+    const [profileId, setProfileId] = useState<any>(""); // Animation direction
 
     const [showDetail, setShowDetail] = useState<any>(false);
     const [selectedUserId, setSelectedUserId] = useState<any>(null);

@@ -561,8 +561,6 @@ const BillingUpgrade: any = () => {
     }
   };
 
-  console.log("userProfile---", userProfile);
-
   const createTicket = async (storedEventDetails: any) => {
     try {
       console.log("createTicket1: ", storedEventDetails);

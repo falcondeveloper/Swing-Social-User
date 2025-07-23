@@ -60,6 +60,7 @@ export default function Home() {
   const [reportOptions, setReportOptions] = useState({
     reportUser: false,
     blockUser: false,
+    reportImage: false,
   });
   const [id, setId] = useState("");
   const [memberalarm, setMemberAlarm] = useState("0");
@@ -1285,6 +1286,25 @@ export default function Home() {
           <Typography variant="h6" gutterBottom>
             Report or Block User
           </Typography>
+          <FormControlLabel
+            sx={{
+              color: "white", // Label color
+              "& .MuiCheckbox-root": {
+                color: "#9c27b0", // Checkbox color
+              },
+              "& .MuiCheckbox-root.Mui-checked": {
+                color: "#9c27b0", // Checked checkbox color
+              },
+            }}
+            control={
+              <Checkbox
+                checked={reportOptions.reportImage}
+                onChange={handleCheckboxChange}
+                name="reportImage"
+              />
+            }
+            label="Inappropriate Image"
+          />
           <FormControlLabel
             sx={{
               color: "white", // Label color

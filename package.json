@@ -21,6 +21,7 @@
     "@tensorflow-models/mobilenet": "^2.1.1",
     "@tensorflow/tfjs": "^4.22.0",
     "@tinymce/tinymce-react": "^5.1.1",
+    "@vercel/speed-insights": "^1.2.0",
     "authorizenet": "^1.0.9",
     "basic-ftp": "^5.0.5",
     "browser-image-compression": "^2.0.2",
