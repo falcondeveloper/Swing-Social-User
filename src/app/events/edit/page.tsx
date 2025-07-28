@@ -1185,7 +1185,7 @@ const EditEvent: React.FC = () => {
                             </Box>
                         </Box>
 
-                        {/* Description Text Editor */}
+                      
                         <Typography variant="body1">
                             Description
                         </Typography>
@@ -1206,7 +1206,7 @@ const EditEvent: React.FC = () => {
                             }}
                         />
 
-                        {/* Email Description Text Editor */}
+                     
                         <Typography variant="body1" sx={{ marginTop: 2 }}>
                             Email Description
                         </Typography>

@@ -2028,7 +2028,7 @@ export default function EventDetail(props: { params: Params }) {
             />
             <Typography>Email Description</Typography>
             <Editor
-              apiKey={"l1j8914ctmajvo6bed8vxy873jf3a7w4hp7t3837ostucw87"}
+              apiKey={"3yffl36ic8qni4zhtxbmc0t1sujg1m25sc4l638375rwb5vs"}
               value={formState?.emailDescription}
               onEditorChange={(content) =>
                 handleEditorChange("emailDescription", content)

@@ -12,7 +12,7 @@ const useFcmToken = () => {
       try {
         if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
           const messaging = getMessaging(firebaseApp);
-          
+
           // First, delete any existing token
           try {
             await deleteToken(messaging);
@@ -27,7 +27,7 @@ const useFcmToken = () => {
             const currentToken = await getToken(messaging, {
               vapidKey: 'BCbLjHHDUjzyLY0OoZRL-oqpZ8OScEUlcsQ3mq-_yxhljEOKmpQWOmSEUrTM0h4wAK2Xl3ZMOcXXH61vs1CE4fA'
             });
-            
+
             if (currentToken) {
               setToken(currentToken);
               // Save this new token to your database

@@ -329,7 +329,7 @@ export default function Pineapple() {
           </Box>
         ) : (
           <>
-            {pineapple.map((user) => (
+            {pineapple.map((user, index) => (
               <>
                 <Card
                   sx={{
@@ -345,7 +345,7 @@ export default function Pineapple() {
                   }}
                 >
                   <CardContent>
-                    <Grid container spacing={1} alignItems="center">
+                    <Grid container spacing={1} alignItems="center" key={index}>
                       <Grid item xs={3} sm={2}>
                         <Box
                           sx={{
@@ -358,24 +358,16 @@ export default function Pineapple() {
                             setSelectedUserId(user.Id);
                           }}
                         >
-                          <Box
-                            sx={{
-                              position: "relative",
-                              width: { xs: 60, sm: 65, md: 80 },
-                              height: { xs: 60, sm: 65, md: 80 },
+                          <img
+                            src={user.Avatar || "/default-avatar.png"}
+                            alt={user.Username}
+                            style={{
+                              objectFit: "cover",
+                              width: "80px",
+                              height: "80px",
                               borderRadius: "12px",
-                              border: "2px solid rgba(233, 30, 99, 0.5)",
-                              overflow: "hidden",
                             }}
-                          >
-                            <Image
-                              src={user.Avatar || "/default-avatar.png"}
-                              alt={user.Username}
-                              fill
-                              sizes="(max-width: 80px) 100vw"
-                              style={{ objectFit: "cover" }}
-                            />
-                          </Box>
+                          />
                         </Box>
                       </Grid>
 

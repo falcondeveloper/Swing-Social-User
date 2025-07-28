@@ -688,7 +688,7 @@ export default function EventDetail(props: { params: Params }) {
                         Describe your event
                     </Typography>
                     <Editor
-                        apiKey={"l1j8914ctmajvo6bed8vxy873jf3a7w4hp7t3837ostucw87"}
+                        apiKey={"3yffl36ic8qni4zhtxbmc0t1sujg1m25sc4l638375rwb5vs"}
                         value={formData.description}
                         onEditorChange={(content) => handleChange('description', content)}
                         init={{
@@ -709,7 +709,7 @@ export default function EventDetail(props: { params: Params }) {
                         Enter the description of the email
                     </Typography>
                     <Editor
-                        apiKey={"l1j8914ctmajvo6bed8vxy873jf3a7w4hp7t3837ostucw87"}
+                        apiKey={"3yffl36ic8qni4zhtxbmc0t1sujg1m25sc4l638375rwb5vs"}
                         value={formData.emailDescription}
                         onEditorChange={(content) => handleChange('emailDescription', content)}
                         init={{

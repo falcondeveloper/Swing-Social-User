@@ -948,7 +948,14 @@ const LoginPage: React.FC = () => {
                         border: "none",
                         background: "transparent",
                         fontWeight: 500,
-                        letterSpacing: 1,
+                        letterSpacing: {
+                          xs: 0.4,
+                          sm: 1,
+                        },
+                        fontSize: {
+                          xs: "0.75rem",
+                          sm: "0.85rem",
+                        },
                       }}
                     >
                       Login w/Email Code (no password needed)
@@ -964,7 +971,14 @@ const LoginPage: React.FC = () => {
                         border: "none",
                         background: "transparent",
                         fontWeight: 500,
-                        letterSpacing: 1,
+                        letterSpacing: {
+                          xs: 0.4,
+                          sm: 1,
+                        },
+                        fontSize: {
+                          xs: "0.75rem",
+                          sm: "0.85rem",
+                        },
                       }}
                     >
                       Login w/password
