@@ -1479,11 +1479,7 @@ export default function EventDetail(props: { params: Params }) {
                   </Grid>
                 </Grid>
               </Grid>
-              <UserProfileModal
-                open={openModalUser.state}
-                userid={openModalUser.id}
-                handleClose={() => setOpenModalUser({ state: false, id: null })}
-              />
+
               {/* Right Column - 4/12 width */}
               <Grid item xs={12} md={4}>
                 <Paper
@@ -2096,6 +2092,13 @@ export default function EventDetail(props: { params: Params }) {
       </Dialog>
       {/* Bottom Navigation Bar */}
       <Footer />
+
+      <UserProfileModal
+        handleGrantAccess={handleGrantAccess}
+        open={openModalUser.state}
+        userid={openModalUser.id}
+        handleClose={() => setOpenModalUser({ state: false, id: null })}
+      />
     </Box>
   );
 }

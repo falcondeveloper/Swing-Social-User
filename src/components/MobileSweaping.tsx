@@ -29,7 +29,6 @@ import Header from "@/components/Header";
 import AboutSection from "@/components/AboutSection";
 import Footer from "./Footer";
 import { jwtDecode } from "jwt-decode";
-import Image from "next/image";
 import { toast } from "react-toastify";
 
 export interface DetailViewHandle {
@@ -1050,12 +1049,15 @@ export default function MobileSweaping() {
       </div>
 
       {memberalarm && parseInt(memberalarm) > 2 ? null : <InstructionModal />}
-      <UserProfileModal
-        handleGrantAccess={handleGrantAccess}
-        handleClose={handleClose}
-        open={showDetail}
-        userid={selectedUserId}
-      />
+
+      {selectedUserId && (
+        <UserProfileModal
+          handleGrantAccess={handleGrantAccess}
+          handleClose={handleClose}
+          open={showDetail}
+          userid={selectedUserId}
+        />
+      )}
 
       <Modal open={isReportModalOpen} onClose={handleReportModalToggle}>
         <Box

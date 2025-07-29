@@ -359,7 +359,7 @@ export default function Pineapple() {
                           }}
                         >
                           <img
-                            src={user.Avatar || "/default-avatar.png"}
+                            src={user.Avatar}
                             alt={user.Username}
                             style={{
                               objectFit: "cover",

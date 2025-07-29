@@ -14,13 +14,10 @@ import {
   FormControlLabel,
   Checkbox,
   Container,
-  CardMedia,
-  CardActions,
   Chip,
   Fade,
   Paper,
   useMediaQuery,
-  useTheme,
   TextField,
   List,
   ListItem,
@@ -32,16 +29,9 @@ import {
   Autocomplete,
   Select,
   MenuItem,
-  Avatar,
   InputAdornment,
 } from "@mui/material";
-import {
-  ThumbUp,
-  Comment,
-  Flag,
-  Add,
-  ArrowCircleLeft,
-} from "@mui/icons-material";
+import { Flag } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -54,16 +44,14 @@ import Footer from "@/components/Footer";
 import { ArrowLeft } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import UserProfileModal from "@/components/UserProfileModal";
-import Image from "next/image";
 
 export default function MatchesPage() {
   const router = useRouter();
-
+  const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
   const [profiles, setProfiles] = useState<any>([]);
   const [filteredData, setFilteredData] = useState<any>([]);
   const [profileLoading, setProfileLoading] = useState(true);
   const [searchResults, setSearchResults] = useState<any>([]);
-  const [loading, setLoading] = useState(true);
   const [profileId, setProfileId] = useState<any>();
   const [currentMatch, setCurrentMatch] = useState<any>("Liked");
   const [targetId, setTargetId] = useState<any>(null);
@@ -104,7 +92,6 @@ export default function MatchesPage() {
     setShowDetail(false);
     setSelectedUserId(null);
   };
-  const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -441,11 +428,14 @@ export default function MatchesPage() {
                       overflow: "hidden",
                     }}
                   >
-                    <Image
+                    <img
                       alt={profile?.Username || "Profile"}
                       src={profile?.Avatar || "/default-avatar.png"}
-                      layout="fill"
-                      objectFit="cover"
+                      style={{
+                        objectFit: "cover",
+                        width: "100%",
+                        height: "100%",
+                      }}
                     />
                   </Box>
                   <CardContent sx={{ padding: "16px" }}>
@@ -549,7 +539,7 @@ export default function MatchesPage() {
                   <TextField
                     placeholder="Search by username"
                     fullWidth
-                    value={search}
+                    value={search ?? ""}
                     onChange={(e) => {
                       setSearch(e.target.value);
                       setErrors((prev: any) => ({ ...prev, search: "" }));
@@ -701,7 +691,7 @@ export default function MatchesPage() {
                             size="small"
                             type="number"
                             name="min"
-                            value={herAgeRange.min}
+                            value={herAgeRange.min ?? ""}
                             onChange={handleHerAgeChange}
                             sx={{
                               width: "60px",
@@ -717,7 +707,7 @@ export default function MatchesPage() {
                             size="small"
                             type="number"
                             name="max"
-                            value={herAgeRange.max}
+                            value={herAgeRange.max ?? ""}
                             onChange={handleHerAgeChange}
                             sx={{
                               width: "60px",
@@ -753,7 +743,7 @@ export default function MatchesPage() {
                             size="small"
                             type="number"
                             name="min"
-                            value={hisAgeRange.min}
+                            value={hisAgeRange.min ?? ""}
                             onChange={handleHisAgeChange}
                             sx={{
                               width: "60px",
@@ -769,7 +759,7 @@ export default function MatchesPage() {
                             size="small"
                             type="number"
                             name="max"
-                            value={hisAgeRange.max}
+                            value={hisAgeRange.max ?? ""}
                             onChange={handleHisAgeChange}
                             sx={{
                               width: "60px",
@@ -791,7 +781,7 @@ export default function MatchesPage() {
                           His Orientation
                         </InputLabel>
                         <Select
-                          value={hisOrientation}
+                          value={hisOrientation ?? ""}
                           onChange={handleHisOrientationChange}
                           sx={{
                             color: "white",
@@ -811,7 +801,7 @@ export default function MatchesPage() {
                           Her Orientation
                         </InputLabel>
                         <Select
-                          value={herOrientation}
+                          value={herOrientation ?? ""}
                           onChange={handleHerOrientationChange}
                           sx={{
                             color: "white",
@@ -928,13 +918,17 @@ export default function MatchesPage() {
                                     setSelectedUserId(profile?.Id);
                                   }}
                                 >
-                                  <Image
+                                  <img
                                     src={
                                       profile?.Avatar || "/default-avatar.png"
                                     }
                                     alt="Profile"
-                                    fill
-                                    style={{ objectFit: "cover" }}
+                                    loading="lazy"
+                                    style={{
+                                      objectFit: "cover",
+                                      width: "100%",
+                                      height: "100%",
+                                    }}
                                   />
                                 </Box>
                                 <CardContent sx={{ padding: "12px" }}>
@@ -1150,12 +1144,7 @@ export default function MatchesPage() {
               Matches
             </Typography>
           </Box>
-          <UserProfileModal
-            handleGrantAccess={handleGrantAccess}
-            handleClose={handleClose}
-            open={showDetail}
-            userid={selectedUserId}
-          />
+
           <Grid container spacing={3}>
             <Grid item xs={12} md={2}>
               <Paper
@@ -1259,7 +1248,7 @@ export default function MatchesPage() {
                       <TextField
                         fullWidth
                         placeholder="Search members..."
-                        value={search}
+                        value={search ?? ""}
                         onChange={(e) => {
                           setSearch(e.target.value);
                           setErrors((prev: any) => ({ ...prev, search: "" }));
@@ -1329,7 +1318,7 @@ export default function MatchesPage() {
                         City, State
                       </Typography>
                       <Autocomplete
-                        value={formData?.city}
+                        value={formData?.city ?? ""}
                         id="autocomplete-filled"
                         open={openCity}
                         clearOnBlur
@@ -1469,7 +1458,7 @@ export default function MatchesPage() {
                               size="small"
                               type="number"
                               name="min"
-                              value={herAgeRange.min}
+                              value={herAgeRange.min ?? ""}
                               onChange={handleHerAgeChange}
                               variant="outlined"
                               sx={{
@@ -1493,7 +1482,7 @@ export default function MatchesPage() {
                               size="small"
                               type="number"
                               name="max"
-                              value={herAgeRange.max}
+                              value={herAgeRange.max ?? ""}
                               onChange={handleHerAgeChange}
                               variant="outlined"
                               sx={{
@@ -1526,7 +1515,7 @@ export default function MatchesPage() {
                               size="small"
                               type="number"
                               name="min"
-                              value={hisAgeRange.min}
+                              value={hisAgeRange.min ?? ""}
                               onChange={handleHisAgeChange}
                               variant="outlined"
                               sx={{
@@ -1550,7 +1539,7 @@ export default function MatchesPage() {
                               size="small"
                               type="number"
                               name="max"
-                              value={hisAgeRange.max}
+                              value={hisAgeRange.max ?? ""}
                               onChange={handleHisAgeChange}
                               variant="outlined"
                               sx={{
@@ -1607,7 +1596,7 @@ export default function MatchesPage() {
                             <Select
                               labelId="his-orientation-label"
                               id="his-orientation"
-                              value={hisOrientation}
+                              value={hisOrientation ?? ""}
                               onChange={handleHisOrientationChange}
                               sx={{
                                 color: "#fff",
@@ -1642,7 +1631,7 @@ export default function MatchesPage() {
                             <Select
                               labelId="her-orientation-label"
                               id="her-orientation"
-                              value={herOrientation}
+                              value={herOrientation ?? ""}
                               onChange={handleHerOrientationChange}
                               sx={{
                                 color: "#fff",
@@ -1695,7 +1684,7 @@ export default function MatchesPage() {
                           },
                         }}
                       >
-                        Searchhh
+                        Search
                       </Button>
                     </Box>
                   </Grid>
@@ -1753,17 +1742,16 @@ export default function MatchesPage() {
                                     setSelectedUserId(profile?.Id);
                                   }}
                                 >
-                                  <Image
-                                    src={profile?.Avatar || "/loading.png"}
-                                    alt={profile?.Username || "Profile"}
-                                    fill
-                                    quality={100}
-                                    sizes="100vw"
+                                  <img
+                                    src={profile?.Avatar}
+                                    alt={profile?.Username}
+                                    loading="lazy"
                                     style={{
                                       objectFit: "cover",
                                       cursor: "pointer",
+                                      width: "100%",
+                                      height: "300px",
                                     }}
-                                    priority={false}
                                   />
                                 </Box>
 
