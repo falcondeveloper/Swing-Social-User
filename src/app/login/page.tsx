@@ -738,52 +738,6 @@ const LoginPage: React.FC = () => {
               </Box>
 
               <Box>
-                {/* Login method toggle */}
-                {/* <Box
-                  sx={{
-                    display: "grid",
-                    justifyContent: "center",
-                    gap: { xs: 1.5, sm: 2 },
-                    mb: { xs: 3, sm: 5 },
-                    width: "100%",
-                    maxWidth: "600px",
-                    mx: "auto",
-                  }}
-                >
-                  <Button
-                    variant={loginMethod === "otp" ? "contained" : "outlined"}
-                    onClick={() => setLoginMethod("otp")}
-                    sx={{
-                      fontSize: { xs: "0.7rem", sm: "0.9rem", md: "0.9rem" },
-                      py: { xs: 1, sm: 1.5 },
-                      px: { xs: 1.5, sm: 3 },
-                      whiteSpace: "normal",
-                      wordBreak: "break-word",
-                      minHeight: { xs: "43px", sm: "45px" },
-                      lineHeight: { xs: 1.2, sm: 1.5 },
-                    }}
-                  >
-                    Login w/Email Code (no password needed)
-                  </Button>
-                  <Button
-                    variant={
-                      loginMethod === "password" ? "contained" : "outlined"
-                    }
-                    onClick={() => setLoginMethod("password")}
-                    sx={{
-                      fontSize: { xs: "0.7rem", sm: "0.9rem", md: "0.9rem" },
-                      py: { xs: 1, sm: 1.5 },
-                      px: { xs: 1.5, sm: 3 },
-                      whiteSpace: "normal",
-                      wordBreak: "break-word",
-                      minHeight: { xs: "43px", sm: "45px" },
-                      lineHeight: { xs: 1.2, sm: 1.5 },
-                    }}
-                  >
-                    Login w/Password
-                  </Button>
-                </Box>*/}
-
                 <Box
                   component="form"
                   onSubmit={
@@ -938,39 +892,39 @@ const LoginPage: React.FC = () => {
                   </Box>
 
                   {loginMethod === "password" ? (
-                    <Button
-                      fullWidth
+                    <Typography
                       onClick={() => setLoginMethod("otp")}
                       sx={{
+                        cursor: "pointer",
                         py: 1.2,
                         mb: 1,
                         color: "#fff",
-                        border: "none",
-                        background: "transparent",
                         fontWeight: 500,
+                        textAlign: "center",
+                        background: "transparent",
                         letterSpacing: {
                           xs: 0.4,
                           sm: 1,
                         },
                         fontSize: {
                           xs: "0.75rem",
-                          sm: "0.85rem",
+                          sm: "1rem",
                         },
                       }}
                     >
                       Login w/Email Code (no password needed)
-                    </Button>
+                    </Typography>
                   ) : (
-                    <Button
-                      fullWidth
+                    <Typography
                       onClick={() => setLoginMethod("password")}
                       sx={{
+                        cursor: "pointer",
                         py: 1.2,
                         mb: 1,
                         color: "#fff",
-                        border: "none",
-                        background: "transparent",
                         fontWeight: 500,
+                        textAlign: "center",
+                        background: "transparent",
                         letterSpacing: {
                           xs: 0.4,
                           sm: 1,
@@ -982,7 +936,7 @@ const LoginPage: React.FC = () => {
                       }}
                     >
                       Login w/password
-                    </Button>
+                    </Typography>
                   )}
 
                   {/* Links */}
