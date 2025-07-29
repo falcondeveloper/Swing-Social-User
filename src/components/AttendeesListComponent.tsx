@@ -29,11 +29,30 @@ const AttendeesListComponent: React.FC<AttendeesListProps> = ({
   loginId,
   eventId,
 }) => {
-
-  const [openModalUser,setOpenModalUser] = useState<{state:boolean,id:null | string}>({
-    state:false,
-    id:null
+  const [openModalUser, setOpenModalUser] = useState<{
+    state: boolean;
+    id: null | string;
+  }>({
+    state: false,
+    id: null,
   });
+
+  const handleGrantAccess = async () => {
+    try {
+      // const checkResponse = await fetch('/api/user/sweeping/grant', {
+      //     method: 'POST',
+      //     headers: {
+      //         'Content-Type': 'application/json',
+      //     },
+      //     body: JSON.stringify({ profileid: profileId, targetid: userProfiles[currentIndex]?.Id }),
+      // });
+
+      // const checkData = await checkResponse.json();
+      const checkData = "121212";
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
 
   return (
     <>
@@ -71,9 +90,9 @@ const AttendeesListComponent: React.FC<AttendeesListProps> = ({
                 onClick={() => {
                   //Open modal with profile
                   setOpenModalUser({
-                    state:true,
-                    id:item.ProfileId
-                  })
+                    state: true,
+                    id: item.ProfileId,
+                  });
                 }}
                 sx={{
                   width: "100%",
@@ -95,9 +114,10 @@ const AttendeesListComponent: React.FC<AttendeesListProps> = ({
         </Box>
       </Box>
       <UserProfileModal
+        handleGrantAccess={handleGrantAccess}
         open={openModalUser.state}
         userid={openModalUser.id}
-        handleClose={() => setOpenModalUser({state:false,id:null})}
+        handleClose={() => setOpenModalUser({ state: false, id: null })}
       />
     </>
   );
