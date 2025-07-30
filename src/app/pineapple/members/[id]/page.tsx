@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSwipeable } from "react-swipeable";
 import {
@@ -10,29 +10,51 @@ import {
   Avatar,
   CircularProgress,
   Button,
-  IconButton,
-  BottomNavigation,
-  BottomNavigationAction,
   FormControlLabel,
   Checkbox,
   Modal,
 } from "@mui/material";
-import InfoIcon from "@mui/icons-material/Info";
 import InstructionModal from "@/components/InstructionModal";
 import UserProfileModal from "@/components/UserProfileModal";
 import { Flag } from "@mui/icons-material";
-import UserBottomNavigation from "@/components/BottomNavigation";
 import AboutSection from "@/components/AboutSection";
 import Footer from "@/components/Footer";
+import { toast } from "react-toastify";
+import { jwtDecode } from "jwt-decode";
 export interface DetailViewHandle {
   open: (id: string) => void;
 }
-interface OtpProps {
-  params: any;
-}
+
 type Params = Promise<{ id: string }>;
+
 export default function Home(props: { params: Params }) {
-  const [id, setId] = useState<string>(""); // State for error messages
+  const router = useRouter();
+  const [id, setId] = useState<string>("");
+  const [currentIndex, setCurrentIndex] = useState(
+    Math.floor(Math.random() * 1000) + 1
+  );
+  const [userProfiles, setUserProfiles] = useState<any>([]);
+  const [loading, setLoading] = useState(true);
+  const [swipeDirection, setSwipeDirection] = useState<any>(null);
+  const [profileId, setProfileId] = useState<any>("");
+  const [showDetail, setShowDetail] = useState<any>(false);
+  const [selectedUserId, setSelectedUserId] = useState<any>(null);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [currentSwipeImage, setCurrentSwipeImage] = useState<string | null>(
+    null
+  );
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [showCustomProfile, setShowCustomProfile] = useState(true);
+  const [customProfile, setCustomProfile] = useState<any>(null);
+  const [dynamicPosition, setDynmicPosition] = useState<any>("77%");
+  const [reportOptions, setReportOptions] = useState({
+    reportUser: false,
+    blockUser: false,
+    reportImage: false,
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     const getIdFromParam = async () => {
       const params = await props.params;
@@ -40,35 +62,17 @@ export default function Home(props: { params: Params }) {
 
       setId(pid);
       if (pid) {
-        console.log(pid, "=========pid");
         await fetchData(pid);
       }
     };
     getIdFromParam();
-    // toast.success('For testing use code 122.');
   }, [props]);
-  const [currentIndex, setCurrentIndex] = useState(
-    Math.floor(Math.random() * 1000) + 1
-  );
-  const [userProfiles, setUserProfiles] = useState<any>([]); // User profiles fetched from API
-  const [loading, setLoading] = useState(true); // Tracks loading state
-  const [swipeDirection, setSwipeDirection] = useState<any>(null); // Animation direction
-
-  const [profileId, setProfileId] = useState<any>(
-    ""
-  ); // Animation direction
-
-  const [showDetail, setShowDetail] = useState<any>(false);
-  const [selectedUserId, setSelectedUserId] = useState<any>(null);
-  const [relationCategory, setRelationCategory] = useState(null);
-
-  const router = useRouter();
 
   const handleClose = () => {
     setShowDetail(false);
     setSelectedUserId(null);
   };
-  const [bottomNav, setBottomNav] = useState(); // Bottom navigation state
+
   useEffect(() => {
     const getUserList = async () => {
       try {
@@ -92,8 +96,6 @@ export default function Home(props: { params: Params }) {
 
   const handleUpdateCategoryRelation = async (category: any) => {
     try {
-      // Check if t
-      // he username exists
       const checkResponse = await fetch("/api/user/sweeping/relation", {
         method: "POST",
         headers: {
@@ -103,28 +105,7 @@ export default function Home(props: { params: Params }) {
           pid: profileId,
           targetid: userProfiles[currentIndex]?.Id,
           newcategory: category,
-        }), // Pass the username to check
-      });
-
-      const checkData = await checkResponse.json();
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
-  const handleReportUser = async () => {
-    try {
-      // Check if t
-      // he username exists
-      const checkResponse = await fetch("/api/user/sweeping/report", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          profileid: profileId,
-          targetid: userProfiles[currentIndex]?.Id,
-        }), // Pass the username to check
+        }),
       });
 
       const checkData = await checkResponse.json();
@@ -135,8 +116,6 @@ export default function Home(props: { params: Params }) {
 
   const handleGrantAccess = async () => {
     try {
-      // Check if t
-      // he username exists
       const checkResponse = await fetch("/api/user/sweeping/grant", {
         method: "POST",
         headers: {
@@ -145,7 +124,7 @@ export default function Home(props: { params: Params }) {
         body: JSON.stringify({
           profileid: profileId,
           targetid: userProfiles[currentIndex]?.Id,
-        }), // Pass the username to check
+        }),
       });
 
       const checkData = await checkResponse.json();
@@ -153,13 +132,8 @@ export default function Home(props: { params: Params }) {
       console.error("Error:", error);
     }
   };
-  const [isSwiping, setIsSwiping] = useState(false);
-  const [currentSwipeImage, setCurrentSwipeImage] = useState<string | null>(
-    null
-  );
-  const [swipeOffset, setSwipeOffset] = useState(0);
+
   const handleSwipe = (direction: string) => {
-    // Update category relation based on direction
     if (direction === "left") {
       handleUpdateCategoryRelation("Denied");
     } else if (direction === "right") {
@@ -169,15 +143,10 @@ export default function Home(props: { params: Params }) {
     }
   };
 
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [showCustomProfile, setShowCustomProfile] = useState(true);
-  const [customProfile, setCustomProfile] = useState<any>(null);
   const fetchData = async (userId: any) => {
-    console.log(userId, "===========userId");
     if (userId) {
       setLoading(true);
       try {
-        // Fetch advertiser data using the custom API
         const response = await fetch(`/api/user/sweeping/user?id=${userId}`);
         if (!response.ok) {
           console.error(
@@ -202,11 +171,6 @@ export default function Home(props: { params: Params }) {
       }
     }
   };
-  const [reportOptions, setReportOptions] = useState({
-    reportUser: false,
-    blockUser: false,
-    reportImage: false,
-  });
 
   const handleReportModalToggle = () => {
     setIsReportModalOpen((prev) => !prev);
@@ -220,13 +184,107 @@ export default function Home(props: { params: Params }) {
     }));
   };
 
-  const handleReportSubmit = () => {
-    setIsReportModalOpen(false);
-    handleReportUser();
-    // Add logic to handle report or block user action
+  const reportImageApi = async ({
+    reportedById,
+    reportedByName,
+    reportedUserId,
+    reportedUserName,
+    image,
+  }: {
+    reportedById: string;
+    reportedByName: string;
+    reportedUserId: string;
+    reportedUserName: string;
+    image: string;
+  }) => {
+    try {
+      const response = await fetch("/api/user/reportedUser", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reportedById,
+          reportedByName,
+          reportedUserId,
+          reportedUserName,
+          image,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data?.message || "Failed to report image.");
+        return false;
+      }
+
+      toast.success("Image reported successfully!");
+      return true;
+    } catch (err) {
+      console.error("Error reporting image:", err);
+      toast.error("Error reporting image.");
+      return false;
+    }
   };
 
-  const [dynamicPosition, setDynmicPosition] = useState<any>("77%");
+  const handleReportSubmit = useCallback(async () => {
+    setIsSubmitting(true);
+
+    const token = localStorage.getItem("loginInfo");
+    const decodeToken = token ? jwtDecode<any>(token) : {};
+    const reportedByName = decodeToken?.profileName || "Me";
+
+    try {
+      if (reportOptions.reportImage) {
+        await reportImageApi({
+          reportedById: profileId,
+          reportedByName,
+          reportedUserId: userProfiles[currentIndex]?.Id,
+          reportedUserName: userProfiles[currentIndex]?.Username,
+          image: userProfiles[currentIndex]?.Avatar,
+        });
+      }
+
+      if (reportOptions.reportUser || reportOptions.blockUser) {
+        const res = await fetch("/api/user/sweeping/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileid: profileId,
+            targetid: userProfiles[currentIndex]?.Id,
+          }),
+        });
+
+        if (!res.ok) {
+          toast.error("Failed to report user.");
+          return null;
+        }
+
+        await res.json();
+        toast.success("User reported successfully");
+      }
+
+      if (
+        reportOptions.reportImage ||
+        reportOptions.reportUser ||
+        reportOptions.blockUser
+      ) {
+        setIsReportModalOpen(false);
+        setReportOptions({
+          reportUser: false,
+          blockUser: false,
+          reportImage: false,
+        });
+      }
+    } catch (err) {
+      toast.error("An error occurred while reporting.");
+      return null;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [profileId, reportOptions]);
+
   const swipeHandlers = useSwipeable({
     onSwiping: (eventData) => {
       setCustomProfile(null);
@@ -666,6 +724,7 @@ export default function Home(props: { params: Params }) {
                 </CardContent>
               </Card>
             ))}
+
         <Modal open={isReportModalOpen} onClose={handleReportModalToggle}>
           <Box
             sx={{
@@ -685,32 +744,34 @@ export default function Home(props: { params: Params }) {
               Report or Block User
             </Typography>
             <FormControlLabel
-              sx={{
-                color: "white", // Label color
-                "& .MuiCheckbox-root": {
-                  color: "#9c27b0", // Checkbox color
-                },
-                "& .MuiCheckbox-root.Mui-checked": {
-                  color: "#9c27b0", // Checked checkbox color
-                },
-              }}
               control={
                 <Checkbox
                   checked={reportOptions.reportImage}
                   onChange={handleCheckboxChange}
                   name="reportImage"
+                  sx={{
+                    color: "white",
+                    "& .MuiCheckbox-root": {
+                      color: "#9c27b0",
+                    },
+                    "& .MuiCheckbox-root.Mui-checked": {
+                      color: "#9c27b0",
+                    },
+                  }}
                 />
               }
               label="Inappropriate Image"
+              sx={{ display: "block", mb: 1 }}
             />
+
             <FormControlLabel
               sx={{
-                color: "white", // Label color
+                color: "white",
                 "& .MuiCheckbox-root": {
-                  color: "#9c27b0", // Checkbox color
+                  color: "#9c27b0",
                 },
                 "& .MuiCheckbox-root.Mui-checked": {
-                  color: "#9c27b0", // Checked checkbox color
+                  color: "#9c27b0",
                 },
               }}
               control={
@@ -724,12 +785,12 @@ export default function Home(props: { params: Params }) {
             />
             <FormControlLabel
               sx={{
-                color: "white", // Label color
+                color: "white",
                 "& .MuiCheckbox-root": {
-                  color: "#9c27b0", // Checkbox color
+                  color: "#9c27b0",
                 },
                 "& .MuiCheckbox-root.Mui-checked": {
-                  color: "#9c27b0", // Checked checkbox color
+                  color: "#9c27b0",
                 },
               }}
               control={
@@ -747,12 +808,15 @@ export default function Home(props: { params: Params }) {
                 variant="contained"
                 color="secondary"
               >
-                Submit
+                {isSubmitting ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Submit"
+                )}
               </Button>
             </Box>
           </Box>
         </Modal>
-        {/* Bottom Navigation Bar */}
         <Footer />
       </Box>
     </>

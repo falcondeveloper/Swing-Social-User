@@ -1,5 +1,11 @@
 "use client";
-import React, { useEffect, useRef, useState, Suspense } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  Suspense,
+  useCallback,
+} from "react";
 import { notify, handleGeolocationError } from "@/lib/notifications";
 import {
   Box,
@@ -18,6 +24,7 @@ import {
   Tooltip,
   keyframes,
   Container,
+  CircularProgress,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { Flag } from "@mui/icons-material";
@@ -62,6 +69,7 @@ export default function Home() {
     blockUser: false,
     reportImage: false,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [id, setId] = useState("");
   const [memberalarm, setMemberAlarm] = useState("0");
 
@@ -112,120 +120,6 @@ export default function Home() {
   interface LoadingScreenProps {
     logoSrc?: string;
   }
-
-  const LoadingScreen: React.FC<LoadingScreenProps> = ({
-    logoSrc = "/loading.png",
-  }) => {
-    return (
-      <>
-        <style>
-          {shimmerKeyframes}
-          {loadingBarKeyframes}
-        </style>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-            backgroundColor: "#121212",
-            position: "relative",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              marginBottom: 1,
-              gap: "12px",
-            }}
-          >
-            <Box
-              component="img"
-              src={logoSrc}
-              alt="Logo"
-              sx={{
-                width: "50px",
-                height: "auto",
-              }}
-            />
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: "32px",
-                letterSpacing: "-0.02em", // Reduced letter spacing
-                fontWeight: "bold",
-                color: "#C2185B",
-                position: "relative",
-                overflow: "hidden",
-                "&::after": {
-                  content: '""',
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                },
-              }}
-            >
-              SWINGSOCIAL
-            </Typography>
-          </Box>
-
-          {/* Loading Bar */}
-          <Box
-            sx={{
-              position: "relative",
-              width: "120px",
-              height: "2px",
-              backgroundColor: "rgba(194,24,91,0.2)",
-              borderRadius: "4px",
-              overflow: "hidden",
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                height: "100%",
-                backgroundColor: "#C2185B",
-                borderRadius: "4px",
-                animation: "loadingBar 1.5s infinite",
-              }}
-            />
-          </Box>
-
-          {/* Subtitle */}
-          <Box sx={{ textAlign: "center", marginTop: 2 }}>
-            <Typography
-              variant="subtitle1"
-              sx={{
-                fontSize: "14px",
-                letterSpacing: "0.02em",
-                opacity: 0.9,
-                color: "#C2185B",
-                position: "relative",
-                overflow: "hidden",
-                fontWeight: "bold",
-                "&::after": {
-                  content: '""',
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                },
-              }}
-            >
-              The best dating and events platform for Swingers
-            </Typography>
-          </Box>
-        </Box>
-      </>
-    );
-  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -616,9 +510,105 @@ export default function Home() {
     }));
   };
 
-  const handleReportSubmit = () => {
-    setIsReportModalOpen(false);
+  const reportImageApi = async ({
+    reportedById,
+    reportedByName,
+    reportedUserId,
+    reportedUserName,
+    image,
+  }: {
+    reportedById: string;
+    reportedByName: string;
+    reportedUserId: string;
+    reportedUserName: string;
+    image: string;
+  }) => {
+    try {
+      const response = await fetch("/api/user/reportedUser", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reportedById,
+          reportedByName,
+          reportedUserId,
+          reportedUserName,
+          image,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data?.message || "Failed to report image.");
+        return false;
+      }
+
+      toast.success("Image reported successfully!");
+      return true;
+    } catch (err) {
+      console.error("Error reporting image:", err);
+      toast.error("Error reporting image.");
+      return false;
+    }
   };
+
+  const handleReportSubmit = useCallback(async () => {
+    setIsSubmitting(true);
+    const token = localStorage.getItem("loginInfo");
+    const decodeToken = token ? jwtDecode<any>(token) : {};
+    const reportedByName = decodeToken?.profileName || "Me";
+
+    try {
+      if (reportOptions.reportImage) {
+        await reportImageApi({
+          reportedById: profileId,
+          reportedByName,
+          reportedUserId: userProfiles[currentIndex]?.Id,
+          reportedUserName: userProfiles[currentIndex]?.Username,
+          image: userProfiles[currentIndex]?.Avatar,
+        });
+      }
+
+      if (reportOptions.reportUser || reportOptions.blockUser) {
+        const res = await fetch("/api/user/sweeping/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileid: profileId,
+            targetid: userProfiles[currentIndex]?.Id,
+          }),
+        });
+
+        if (!res.ok) {
+          toast.error("Failed to report user.");
+          return null;
+        }
+
+        await res.json();
+        toast.success("User reported successfully");
+      }
+
+      if (
+        reportOptions.reportImage ||
+        reportOptions.reportUser ||
+        reportOptions.blockUser
+      ) {
+        setIsReportModalOpen(false);
+        setReportOptions({
+          reportUser: false,
+          blockUser: false,
+          reportImage: false,
+        });
+      }
+    } catch (err) {
+      toast.error("An error occurred while reporting.");
+      return null;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [profileId, reportOptions]);
 
   const checkIfMobile = () => {
     setIsMobileDevice(isMobile);
@@ -1288,12 +1278,12 @@ export default function Home() {
           </Typography>
           <FormControlLabel
             sx={{
-              color: "white", // Label color
+              color: "white",
               "& .MuiCheckbox-root": {
-                color: "#9c27b0", // Checkbox color
+                color: "#9c27b0",
               },
               "& .MuiCheckbox-root.Mui-checked": {
-                color: "#9c27b0", // Checked checkbox color
+                color: "#9c27b0",
               },
             }}
             control={
@@ -1349,7 +1339,11 @@ export default function Home() {
               variant="contained"
               color="secondary"
             >
-              Submit
+              {isSubmitting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Submit"
+              )}
             </Button>
           </Box>
         </Box>

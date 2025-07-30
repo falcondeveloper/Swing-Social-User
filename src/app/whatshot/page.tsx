@@ -30,6 +30,7 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  CircularProgress,
 } from "@mui/material";
 
 import {
@@ -43,12 +44,14 @@ import {
   Edit,
   Delete,
 } from "@mui/icons-material";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
 import { ArrowLeft } from "lucide-react";
 import UserProfileModal from "@/components/UserProfileModal";
 import Swal from "sweetalert2";
+import { jwtDecode } from "jwt-decode";
+import { toast } from "react-toastify";
 
 export default function Whatshot() {
   const router = useRouter();
@@ -71,6 +74,7 @@ export default function Whatshot() {
     blockUser: false,
     reportImage: false,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   //const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
@@ -304,26 +308,110 @@ export default function Whatshot() {
     }
   };
 
-  const handleReportModalToggle = (pid: string) => {
+  const handleReportModalToggle = (pid: any) => {
     setTargetId(pid);
     setIsReportModalOpen(!isReportModalOpen);
   };
 
-  const handleReportSubmit = async () => {
+  const reportImageApi = async ({
+    reportedById,
+    reportedByName,
+    reportedUserId,
+    reportedUserName,
+    image,
+  }: {
+    reportedById: string;
+    reportedByName: string;
+    reportedUserId: string;
+    reportedUserName: string;
+    image: string;
+  }) => {
     try {
-      await fetch("/api/user/sweeping/report", {
+      const response = await fetch("/api/user/reportedUser", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          profileid: localStorage.getItem("logged_in_profile"),
-          targetid: targetId,
+          reportedById,
+          reportedByName,
+          reportedUserId,
+          reportedUserName,
+          image,
         }),
       });
-      setIsReportModalOpen(false);
-    } catch (error) {
-      console.error("Error:", error);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data?.message || "Failed to report image.");
+        return false;
+      }
+
+      toast.success("Image reported successfully!");
+      return true;
+    } catch (err) {
+      console.error("Error reporting image:", err);
+      toast.error("Error reporting image.");
+      return false;
     }
   };
+
+  const handleReportSubmit = useCallback(async () => {
+    setIsSubmitting(true);
+    const token = localStorage.getItem("loginInfo");
+    const decodeToken = token ? jwtDecode<any>(token) : {};
+    const reportedByName = decodeToken?.profileName || "Me";
+
+    try {
+      if (reportOptions.reportImage) {
+        await reportImageApi({
+          reportedById: profileId,
+          reportedByName,
+          reportedUserId: targetId?.UserId,
+          reportedUserName: targetId?.Username,
+          image: targetId?.Avatar,
+        });
+      }
+
+      if (reportOptions.reportUser || reportOptions.blockUser) {
+        const res = await fetch("/api/user/sweeping/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileid: profileId,
+            targetid: targetId?.UserId,
+          }),
+        });
+
+        if (!res.ok) {
+          toast.error("Failed to report user.");
+          return null;
+        }
+
+        await res.json();
+        toast.success("User reported successfully");
+      }
+
+      if (
+        reportOptions.reportImage ||
+        reportOptions.reportUser ||
+        reportOptions.blockUser
+      ) {
+        setIsReportModalOpen(false);
+        setReportOptions({
+          reportUser: false,
+          blockUser: false,
+          reportImage: false,
+        });
+      }
+    } catch (err) {
+      toast.error("An error occurred while reporting.");
+      return null;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [profileId, reportOptions]);
 
   if (posts.length === 0) {
     return (
@@ -705,9 +793,7 @@ export default function Whatshot() {
                             </Grid>
                             <IconButton
                               size="small"
-                              onClick={() =>
-                                handleReportModalToggle(post?.UserId)
-                              }
+                              onClick={() => handleReportModalToggle(post)}
                               sx={{
                                 color: "#f50057",
                                 ml: 1,
@@ -1103,9 +1189,7 @@ export default function Whatshot() {
                             >
                               <IconButton
                                 sx={{ color: "#f50057" }}
-                                onClick={() =>
-                                  handleReportModalToggle(post?.UserId)
-                                }
+                                onClick={() => handleReportModalToggle(post)}
                               >
                                 <Flag />
                               </IconButton>
@@ -1147,12 +1231,12 @@ export default function Whatshot() {
             </Typography>
             <FormControlLabel
               sx={{
-                color: "white", // Label color
+                color: "white",
                 "& .MuiCheckbox-root": {
-                  color: "#9c27b0", // Checkbox color
+                  color: "#9c27b0",
                 },
                 "& .MuiCheckbox-root.Mui-checked": {
-                  color: "#9c27b0", // Checked checkbox color
+                  color: "#9c27b0",
                 },
               }}
               control={
@@ -1220,7 +1304,11 @@ export default function Whatshot() {
                 onClick={handleReportSubmit}
                 sx={{ bgcolor: "#f50057", "&:hover": { bgcolor: "#c51162" } }}
               >
-                Submit
+                {isSubmitting ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Submit"
+                )}
               </Button>
             </Box>
           </Box>

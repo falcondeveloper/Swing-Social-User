@@ -51,7 +51,6 @@ export default function MobileAttendeeSwing() {
   const [showEndPopup, setShowEndPopup] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState<any>(null);
   const [swipeCount, setSwipeCount] = useState(0);
-  console.log(swipeCount, "========swipeCount");
   const [dailyLimit, setDailyLimit] = useState(15);
   const [profileId, setProfileId] = useState<any>(); // Animation direction
   const [showDetail, setShowDetail] = useState<any>(false);
@@ -69,32 +68,13 @@ export default function MobileAttendeeSwing() {
     setShowDetail(false);
     setSelectedUserId(null);
   };
-  console.log(selectedUserId);
-  const [bottomNav, setBottomNav] = useState(); // Bottom navigation state
-
-  // useEffect(() => {
-  //     if (typeof window !== 'undefined') {
-
-  //         const queryParams = new URLSearchParams(window.location.search);
-  //         var param = queryParams.get('q');
-
-  //         console.log("****************");
-  //         console.log(param);
-
-  //         setIdparam(param);
-  //         const id = localStorage.getItem('logged_in_profile');
-  //         getUserList(id as string);
-  //         fetchCurrentProfileInfo(param);
-  //         setProfileId(localStorage.getItem('logged_in_profile'));
-  //     }
-  // }, []);
+  const [bottomNav, setBottomNav] = useState();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const queryParams = new URLSearchParams(window.location.search);
 
       if (queryParams.get("q")) {
-        console.log("-----------------------------", queryParams);
         var targetId = queryParams.get("q");
         var loginId = queryParams.get("id");
         var eventId = queryParams.get("eventid");
@@ -107,7 +87,6 @@ export default function MobileAttendeeSwing() {
             localStorage.setItem("eventId", eventId);
           }
         }
-        // console.log(queryParams.get('q'), queryParams.get('id'), queryParams.get('eventid'))
         const token = localStorage.getItem("loginInfo");
         const count = localStorage.getItem("memberalarm");
         setMemberAlarm(count ?? "0");
@@ -124,7 +103,6 @@ export default function MobileAttendeeSwing() {
           router.push("/login");
         }
       } else {
-        console.log("++++++++++++++++++++++++++++++++++++++++++++");
         const token = localStorage.getItem("loginInfo");
         const count = localStorage.getItem("memberalarm");
         const loginId = localStorage.getItem("loginId");
@@ -201,11 +179,7 @@ export default function MobileAttendeeSwing() {
 
       const data = await response.json();
 
-      console.log(data);
-
       setUserProfiles(data?.swipes || []);
-      console.log("data profiles");
-      console.log(data.profiles);
       if (data?.totalRows !== undefined && data.totalRows <= 0) {
         setShowEndPopup(true);
       }
@@ -218,7 +192,6 @@ export default function MobileAttendeeSwing() {
 
   const getUserList = async (profileId: string) => {
     try {
-      console.log(profileId);
       const response = await fetch(
         "/api/user/sweeping/swipes?id=" + profileId,
         {
@@ -229,8 +202,6 @@ export default function MobileAttendeeSwing() {
         }
       );
       const data = await response.json();
-      console.log(profileId);
-      console.log(data);
       setUserProfiles(data?.swipes || []);
 
       if (data?.totalRows !== undefined && data.totalRows <= 0) {
@@ -245,11 +216,7 @@ export default function MobileAttendeeSwing() {
 
   const handleUpdateCategoryRelation = async (category: any) => {
     try {
-      // Check if the username exists
       setIdparam(null);
-      console.log(profileId);
-      console.log(userProfiles[currentIndex]?.Id);
-      console.log(category);
       const checkResponse = await fetch("/api/user/sweeping/relation", {
         method: "POST",
         headers: {
@@ -269,8 +236,6 @@ export default function MobileAttendeeSwing() {
   };
 
   const sendNotification = async (message: any) => {
-    // const params = await props.params
-    console.log("UserDeviceToken", profileId, userProfiles[currentIndex]?.Id);
     const id = userProfiles[currentIndex]?.Id;
     const response = await fetch("/api/user/notification", {
       method: "POST",
@@ -286,7 +251,6 @@ export default function MobileAttendeeSwing() {
     });
 
     const result = await response.json();
-    console.log(result);
   };
 
   const handleUpdateLikeMatch = async () => {
@@ -305,7 +269,6 @@ export default function MobileAttendeeSwing() {
       const username = localStorage.getItem("profileUsername");
 
       const data = await response.json();
-      console.log(data, "====data");
 
       if (data?.isMatch) {
         setMatchedProfile(userProfiles[currentIndex]);
@@ -320,8 +283,6 @@ export default function MobileAttendeeSwing() {
 
   const handleReportUser = async () => {
     try {
-      // Check if t
-      // he username exists
       const checkResponse = await fetch("/api/user/sweeping/report", {
         method: "POST",
         headers: {
@@ -330,7 +291,7 @@ export default function MobileAttendeeSwing() {
         body: JSON.stringify({
           profileid: profileId,
           targetid: userProfiles[currentIndex]?.Id,
-        }), // Pass the username to check
+        }),
       });
 
       const checkData = await checkResponse.json();
@@ -384,44 +345,7 @@ export default function MobileAttendeeSwing() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showCustomProfile, setShowCustomProfile] = useState(true);
   const [customProfile, setCustomProfile] = useState<any>(null);
-  // const fetchData = async (userId: string) => {
-  //     if (userId) {
-  //         console.log(userId, "======userId in view");
-  //         setLoading(true);
-  //         try {
-  //             // Fetch advertiser data using the custom API
-  //             const response = await fetch(`/api/user/sweeping/user?id=${userId}`);
-  //             if (!response.ok) {
-  //                 console.error('Failed to fetch advertiser data:', response.statusText);
-  //                 setCustomProfile(undefined);
-  //                 throw new Error(`HTTP error! status: ${response.status}`);
-  //             }
 
-  //             const { user: advertiserData } = await response.json();
-  //             if (!advertiserData) {
-  //                 console.error('Advertiser not found');
-  //                 setCustomProfile(undefined);
-  //             } else {
-  //                 console.log(advertiserData, "=========advertiser data");
-  //                 setCustomProfile(advertiserData);
-  //                 setSwipeCount(advertiserData?.SwipeCount)
-  //                 setDailyLimit(advertiserData?.SwipeMax)
-  //                 if (parseInt(advertiserData?.SwipeCount) >= parseInt(advertiserData?.SwipeMax)) {
-  //                     if (membership == 0) {
-  //                         setShowLimitPopup(true);
-  //                     } else {
-  //                         setShowLimitPopup(false);
-  //                     }
-  //                 }
-  //             }
-  //         } catch (error: any) {
-  //             console.error('Error fetching data:', error.message);
-  //         } finally {
-  //             setLoading(false);
-  //         }
-
-  //     }
-  // };
   const [reportOptions, setReportOptions] = useState({
     reportUser: false,
     blockUser: false,
@@ -440,12 +364,10 @@ export default function MobileAttendeeSwing() {
     }));
   };
 
-  const handleReportSubmit = () => {
-    console.log("Report Options:", reportOptions);
-    setIsReportModalOpen(false);
-    handleReportUser();
-    // Add logic to handle report or block user action
-  };
+  // const handleReportSubmit = () => {
+  //   setIsReportModalOpen(false);
+  //   handleReportUser();
+  // };
 
   const [dynamicPosition, setDynmicPosition] = useState<any>("77%");
   const handleSwipeAction = async (action: string) => {
@@ -505,7 +427,6 @@ export default function MobileAttendeeSwing() {
             setSwipeOffset(offsetX);
           }
 
-          console.log(offsetY, offsetX, "Swiping...");
           setIsSwiping(true);
           setSwipeDirection(eventData.dir.toLowerCase());
 
@@ -536,7 +457,6 @@ export default function MobileAttendeeSwing() {
         setSwipeOffset(offsetX);
       }
 
-      console.log(offsetY, offsetX, "Swiping...");
       setIsSwiping(true);
       setSwipeDirection(eventData.dir.toLowerCase());
 
@@ -1185,32 +1105,33 @@ export default function MobileAttendeeSwing() {
             Report or Block User
           </Typography>
           <FormControlLabel
-            sx={{
-              color: "white", // Label color
-              "& .MuiCheckbox-root": {
-                color: "#9c27b0", // Checkbox color
-              },
-              "& .MuiCheckbox-root.Mui-checked": {
-                color: "#9c27b0", // Checked checkbox color
-              },
-            }}
             control={
               <Checkbox
                 checked={reportOptions.reportImage}
                 onChange={handleCheckboxChange}
                 name="reportImage"
+                sx={{
+                  color: "white",
+                  "& .MuiCheckbox-root": {
+                    color: "#9c27b0",
+                  },
+                  "& .MuiCheckbox-root.Mui-checked": {
+                    color: "#9c27b0",
+                  },
+                }}
               />
             }
             label="Inappropriate Image"
+            sx={{ display: "block", mb: 1 }}
           />
           <FormControlLabel
             sx={{
-              color: "white", // Label color
+              color: "white",
               "& .MuiCheckbox-root": {
-                color: "#9c27b0", // Checkbox color
+                color: "#9c27b0",
               },
               "& .MuiCheckbox-root.Mui-checked": {
-                color: "#9c27b0", // Checked checkbox color
+                color: "#9c27b0",
               },
             }}
             control={
@@ -1224,12 +1145,12 @@ export default function MobileAttendeeSwing() {
           />
           <FormControlLabel
             sx={{
-              color: "white", // Label color
+              color: "white",
               "& .MuiCheckbox-root": {
-                color: "#9c27b0", // Checkbox color
+                color: "#9c27b0",
               },
               "& .MuiCheckbox-root.Mui-checked": {
-                color: "#9c27b0", // Checked checkbox color
+                color: "#9c27b0",
               },
             }}
             control={
@@ -1243,7 +1164,7 @@ export default function MobileAttendeeSwing() {
           />
           <Box mt={2} display="flex" justifyContent="flex-end">
             <Button
-              onClick={handleReportSubmit}
+              onClick={handleReportUser}
               variant="contained"
               color="secondary"
             >

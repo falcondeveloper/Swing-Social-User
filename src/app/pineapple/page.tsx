@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { notify, handleGeolocationError } from "@/lib/notifications";
 import {
   Box,
@@ -160,9 +160,8 @@ export default function Pineapple() {
     }));
   };
 
-  const handleReportUser = async () => {
+  const handleReportSubmit = useCallback(async () => {
     setIsSubmitting(true);
-
     const reportedUser = pineapple?.find((u) => u?.Id === targetId);
     const reportedUserName = reportedUser?.Username || "Unknown";
     const reportedUserImage = reportedUser?.Avatar || "";
@@ -171,20 +170,7 @@ export default function Pineapple() {
     const reportedByName = decodeToken?.profileName || "Me";
 
     try {
-      const response = await fetch("/api/user/sweeping/report", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ profileid: profileId, targetid: targetId }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        toast.success("User reported successfully!");
-      } else {
-        toast.error(data?.message || "Failed to submit report.");
-      }
-      if (reportOptions?.reportImage) {
+      if (reportOptions.reportImage) {
         await reportImageApi({
           reportedById: profileId,
           reportedByName,
@@ -194,18 +180,44 @@ export default function Pineapple() {
         });
       }
 
-      setIsReportModalOpen(false);
-      setReportOptions({
-        reportUser: false,
-        blockUser: false,
-        reportImage: false,
-      });
-    } catch (error) {
-      console.error("Error:", error);
+      if (reportOptions.reportUser || reportOptions.blockUser) {
+        const res = await fetch("/api/user/sweeping/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileid: profileId,
+            targetid: targetId,
+          }),
+        });
+
+        if (!res.ok) {
+          toast.error("Failed to report user.");
+          return null;
+        }
+
+        await res.json();
+        toast.success("User reported successfully");
+      }
+
+      if (
+        reportOptions.reportImage ||
+        reportOptions.reportUser ||
+        reportOptions.blockUser
+      ) {
+        setIsReportModalOpen(false);
+        setReportOptions({
+          reportUser: false,
+          blockUser: false,
+          reportImage: false,
+        });
+      }
+    } catch (err) {
+      toast.error("An error occurred while reporting.");
+      return null;
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [profileId, reportOptions]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -551,9 +563,12 @@ export default function Pineapple() {
                 onChange={handleCheckboxChange}
                 name="reportImage"
                 sx={{
-                  color: "#9c27b0",
-                  "&.Mui-checked": {
-                    color: "#e91e63",
+                  color: "white",
+                  "& .MuiCheckbox-root": {
+                    color: "#9c27b0",
+                  },
+                  "& .MuiCheckbox-root.Mui-checked": {
+                    color: "#9c27b0",
                   },
                 }}
               />
@@ -607,7 +622,7 @@ export default function Pineapple() {
               Cancel
             </Button>
             <Button
-              onClick={handleReportUser}
+              onClick={handleReportSubmit}
               variant="contained"
               color="secondary"
             >

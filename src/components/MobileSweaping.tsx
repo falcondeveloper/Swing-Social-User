@@ -21,6 +21,7 @@ import {
   DialogTitle,
   DialogContent,
   alpha,
+  CircularProgress,
 } from "@mui/material";
 import InstructionModal from "@/components/InstructionModal";
 import UserProfileModal from "@/components/UserProfileModal";
@@ -130,6 +131,7 @@ export default function MobileSweaping() {
     blockUser: false,
     reportImage: false,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isProcessingSwipe, setIsProcessingSwipe] = useState(false);
   const [cardStyles, setCardStyles] = useState<any>({ active: {}, next: {} });
@@ -640,8 +642,6 @@ export default function MobileSweaping() {
   }, []);
 
   useEffect(() => {
-    // This effect runs when currentIndex changes, after a card has exited
-    // It resets the styles for the *new* active card (which was previously the 'next' card)
     setCardStyles({
       active: { transform: "scale(1)", transition: `transform 0.5s ${spring}` },
       next: {
@@ -712,37 +712,114 @@ export default function MobileSweaping() {
     }));
   }, []);
 
-  const handleReportSubmit = useCallback(async () => {
-    if (!currentProfile) return;
-
+  const reportImageApi = async ({
+    reportedById,
+    reportedByName,
+    reportedUserId,
+    reportedUserName,
+    image,
+  }: {
+    reportedById: string;
+    reportedByName: string;
+    reportedUserId: string;
+    reportedUserName: string;
+    image: string;
+  }) => {
     try {
-      const res = await fetch("/api/user/sweeping/report", {
+      const response = await fetch("/api/user/reportedUser", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          profileid: profileId,
-          targetid: currentProfile?.Id,
+          reportedById,
+          reportedByName,
+          reportedUserId,
+          reportedUserName,
+          image,
         }),
       });
 
-      if (res.ok) {
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data?.message || "Failed to report image.");
+        return false;
+      }
+
+      toast.success("Image reported successfully!");
+      setIsReportModalOpen(false);
+      setReportOptions({
+        reportUser: false,
+        blockUser: false,
+        reportImage: false,
+      });
+    } catch (err) {
+      console.error("Error reporting image:", err);
+      toast.error("Error reporting image.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReportSubmit = useCallback(async () => {
+    if (!currentProfile) return;
+
+    setIsSubmitting(true);
+
+    const token = localStorage.getItem("loginInfo");
+    const decodeToken = token ? jwtDecode<any>(token) : {};
+    const reportedByName = decodeToken?.profileName || "Me";
+
+    try {
+      if (reportOptions.reportImage) {
+        await reportImageApi({
+          reportedById: profileId,
+          reportedByName,
+          reportedUserId: currentProfile?.Id,
+          reportedUserName: currentProfile?.Username,
+          image: currentProfile?.Avatar,
+        });
+      }
+
+      if (reportOptions.reportUser || reportOptions.blockUser) {
+        const res = await fetch("/api/user/sweeping/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileid: profileId,
+            targetid: currentProfile?.Id,
+          }),
+        });
+
+        if (!res.ok) {
+          toast.error("Failed to report user.");
+          return null;
+        }
+
+        await res.json();
+        toast.success("User reported successfully");
+      }
+
+      if (
+        reportOptions.reportImage ||
+        reportOptions.reportUser ||
+        reportOptions.blockUser
+      ) {
         setIsReportModalOpen(false);
         setReportOptions({
           reportUser: false,
           blockUser: false,
           reportImage: false,
         });
-        toast.success("User reported successfully");
-        return res.json();
-      } else {
-        toast.error("Failed to report user.");
-        return null;
       }
     } catch (err) {
       toast.error("An error occurred while reporting.");
       return null;
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [currentProfile, profileId]);
+  }, [currentProfile, profileId, reportOptions]);
 
   if (userProfiles?.length === 0 && loading) {
     return (
@@ -1078,23 +1155,24 @@ export default function MobileSweaping() {
             Report or Block User
           </Typography>
           <FormControlLabel
-            sx={{
-              color: "white", // Label color
-              "& .MuiCheckbox-root": {
-                color: "#9c27b0", // Checkbox color
-              },
-              "& .MuiCheckbox-root.Mui-checked": {
-                color: "#9c27b0", // Checked checkbox color
-              },
-            }}
             control={
               <Checkbox
                 checked={reportOptions.reportImage}
                 onChange={handleCheckboxChange}
                 name="reportImage"
+                sx={{
+                  color: "white",
+                  "& .MuiCheckbox-root": {
+                    color: "#9c27b0",
+                  },
+                  "& .MuiCheckbox-root.Mui-checked": {
+                    color: "#9c27b0",
+                  },
+                }}
               />
             }
             label="Inappropriate Image"
+            sx={{ display: "block" }}
           />
           <FormControlLabel
             sx={{
@@ -1140,7 +1218,11 @@ export default function MobileSweaping() {
               variant="contained"
               color="secondary"
             >
-              Submit
+              {isSubmitting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Submit"
+              )}
             </Button>
           </Box>
         </Box>

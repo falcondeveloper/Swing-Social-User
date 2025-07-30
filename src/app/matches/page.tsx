@@ -32,7 +32,7 @@ import {
   InputAdornment,
 } from "@mui/material";
 import { Flag } from "@mui/icons-material";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search as SearchIcon,
@@ -44,6 +44,7 @@ import Footer from "@/components/Footer";
 import { ArrowLeft } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import UserProfileModal from "@/components/UserProfileModal";
+import { toast } from "react-toastify";
 
 export default function MatchesPage() {
   const router = useRouter();
@@ -75,6 +76,8 @@ export default function MatchesPage() {
     blockUser: false,
     reportImage: false,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selctedProfile, setSelectedProfile] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     city: "",
@@ -134,9 +137,10 @@ export default function MatchesPage() {
     }
   };
 
-  const handleReportModalToggle = (pid: string) => {
-    setTargetId(pid);
+  const handleReportModalToggle = (pid: any) => {
+    setTargetId(pid?.Id);
     setIsReportModalOpen((prev) => !prev);
+    setSelectedProfile(pid);
   };
 
   const handleCheckboxChange = (event: any) => {
@@ -147,26 +151,107 @@ export default function MatchesPage() {
     }));
   };
 
-  const handleReportUser = async () => {
+  const reportImageApi = async ({
+    reportedById,
+    reportedByName,
+    reportedUserId,
+    reportedUserName,
+    image,
+  }: {
+    reportedById: string;
+    reportedByName: string;
+    reportedUserId: string;
+    reportedUserName: string;
+    image: string;
+  }) => {
     try {
-      const checkResponse = await fetch("/api/user/sweeping/report", {
+      const response = await fetch("/api/user/reportedUser", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ profileid: profileId, targetid: targetId }), // Pass the username to check
+        body: JSON.stringify({
+          reportedById,
+          reportedByName,
+          reportedUserId,
+          reportedUserName,
+          image,
+        }),
       });
-      setIsReportModalOpen((prev) => !prev);
-      const checkData = await checkResponse.json();
-    } catch (error) {
-      console.error("Error:", error);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data?.message || "Failed to report image.");
+        return false;
+      }
+
+      toast.success("Image reported successfully!");
+      return true;
+    } catch (err) {
+      console.error("Error reporting image:", err);
+      toast.error("Error reporting image.");
+      return false;
     }
   };
 
-  const handleReportSubmit = () => {
-    setIsReportModalOpen(false);
-    handleReportUser();
-  };
+  const handleReportSubmit = useCallback(async () => {
+    setIsSubmitting(true);
+    const token = localStorage.getItem("loginInfo");
+    const decodeToken = token ? jwtDecode<any>(token) : {};
+    const reportedByName = decodeToken?.profileName || "Me";
+
+    if (!selctedProfile) return;
+
+    try {
+      if (reportOptions.reportImage) {
+        await reportImageApi({
+          reportedById: profileId,
+          reportedByName,
+          reportedUserId: selctedProfile?.Id,
+          reportedUserName: selctedProfile?.Username,
+          image: selctedProfile?.Avatar,
+        });
+      }
+
+      if (reportOptions.reportUser || reportOptions.blockUser) {
+        const res = await fetch("/api/user/sweeping/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileid: profileId,
+            targetid: selctedProfile?.Id,
+          }),
+        });
+
+        if (!res.ok) {
+          toast.error("Failed to report user.");
+          return null;
+        }
+
+        await res.json();
+        toast.success("User reported successfully");
+      }
+
+      if (
+        reportOptions.reportImage ||
+        reportOptions.reportUser ||
+        reportOptions.blockUser
+      ) {
+        setIsReportModalOpen(false);
+        setReportOptions({
+          reportUser: false,
+          blockUser: false,
+          reportImage: false,
+        });
+      }
+    } catch (err) {
+      toast.error("An error occurred while reporting.");
+      return null;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [profileId, reportOptions]);
 
   const sidebarItems = [
     { label: "Matches", match: "Matches" },
@@ -1047,9 +1132,7 @@ export default function MatchesPage() {
                                       <IconButton
                                         sx={{ color: "#f50057" }}
                                         onClick={() =>
-                                          handleReportModalToggle(
-                                            profile?.UserId
-                                          )
+                                          handleReportModalToggle(profile)
                                         }
                                       >
                                         <Flag />
@@ -1791,7 +1874,7 @@ export default function MatchesPage() {
                                     </Stack>
                                     <IconButton
                                       onClick={() =>
-                                        handleReportModalToggle(profile?.UserId)
+                                        handleReportModalToggle(profile)
                                       }
                                       sx={{ color: "red" }}
                                     >
@@ -1921,12 +2004,12 @@ export default function MatchesPage() {
             </Typography>
             <FormControlLabel
               sx={{
-                color: "white", // Label color
+                color: "white",
                 "& .MuiCheckbox-root": {
-                  color: "#9c27b0", // Checkbox color
+                  color: "#9c27b0",
                 },
                 "& .MuiCheckbox-root.Mui-checked": {
-                  color: "#9c27b0", // Checked checkbox color
+                  color: "#9c27b0",
                 },
               }}
               control={
@@ -1987,7 +2070,11 @@ export default function MatchesPage() {
                   "&:hover": { bgcolor: "#c51162" },
                 }}
               >
-                Submit
+                {isSubmitting ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Submit"
+                )}
               </Button>
             </Box>
           </Box>

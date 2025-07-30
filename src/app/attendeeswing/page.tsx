@@ -1,5 +1,11 @@
 "use client";
-import React, { useEffect, useRef, useState, Suspense } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  Suspense,
+  useCallback,
+} from "react";
 import {
   Box,
   Card,
@@ -16,6 +22,7 @@ import {
   DialogActions,
   Tooltip,
   keyframes,
+  CircularProgress,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { Flag } from "@mui/icons-material";
@@ -69,6 +76,7 @@ export default function Home() {
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
   const refs = useRef<{ [key: string]: React.RefObject<any> }>({});
   const [idParam, setIdparam] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const shimmerKeyframes = `
   @keyframes shimmer {
@@ -224,7 +232,6 @@ export default function Home() {
       const queryParams = new URLSearchParams(window.location.search);
 
       if (queryParams.get("q")) {
-        console.log("-----------------------------", queryParams);
         var targetId = queryParams.get("q");
         var loginId = queryParams.get("id");
         var eventId = queryParams.get("eventid");
@@ -237,7 +244,6 @@ export default function Home() {
             localStorage.setItem("eventId", eventId);
           }
         }
-        // console.log(queryParams.get('q'), queryParams.get('id'), queryParams.get('eventid'))
         const token = localStorage.getItem("loginInfo");
         const count = localStorage.getItem("memberalarm");
         setMemberAlarm(count ?? "0");
@@ -254,7 +260,6 @@ export default function Home() {
           router.push("/login");
         }
       } else {
-        console.log("++++++++++++++++++++++++++++++++++++++++++++");
         const token = localStorage.getItem("loginInfo");
         const count = localStorage.getItem("memberalarm");
         const loginId = localStorage.getItem("loginId");
@@ -288,11 +293,6 @@ export default function Home() {
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
     var param = queryParams.get("q");
-    console.log(
-      queryParams.get("q"),
-      queryParams.get("id"),
-      queryParams.get("eventid")
-    );
 
     setIdparam(param);
 
@@ -328,8 +328,6 @@ export default function Home() {
         if (!advertiserData) {
           console.error("Advertiser not found");
         } else {
-          console.log("eeeeeee%%%%%%%%%%%%%%%%%");
-          console.log(advertiserData);
           setSelectedUserProfile(advertiserData);
         }
       } catch (error: any) {
@@ -397,11 +395,7 @@ export default function Home() {
 
       const data = await response.json();
 
-      console.log(data);
-
       setUserProfiles(data?.swipes || []);
-      console.log("data profiles");
-      console.log(data.profiles);
       setTotalUsers(data?.totalRows);
       if (data?.totalRows !== undefined && data.totalRows <= 0) {
         setShowEndPopup(true);
@@ -420,10 +414,7 @@ export default function Home() {
 
     if (idParam != null) {
       router.push("/attendeeswing");
-      // fetchCurrentProfileInfo(userProfiles[currentIndex]?.Id);
     }
-
-    console.log(swipeCount, dailyLimit, "=====================");
 
     if (swipeCount >= dailyLimit) {
       if (membership == 1) {
@@ -443,7 +434,6 @@ export default function Home() {
         }
 
         setTimeout(() => {
-          console.log("this is useEffect");
           setSwipeDirection(null);
           setCurrentIndex((prevIndex) => prevIndex + 1);
         }, 500);
@@ -451,7 +441,6 @@ export default function Home() {
         setShowLimitPopup(true);
         setSwipingDisable(true);
         setTimeout(() => {
-          console.log("this is useEffect");
           setSwipeDirection(null);
         }, 500);
       }
@@ -471,7 +460,6 @@ export default function Home() {
       }
 
       setTimeout(() => {
-        console.log("this is useEffect");
         setSwipeDirection(null);
         setCurrentIndex((prevIndex) => prevIndex + 1);
       }, 500);
@@ -480,8 +468,6 @@ export default function Home() {
 
   const handleButtonSwipe = async (direction: "left" | "right" | "down") => {
     const currentProfile = userProfiles[currentIndex];
-
-    console.log(swipeCount, dailyLimit, "=====================");
 
     if (swipeCount >= dailyLimit) {
       if (membership == 1) {
@@ -551,7 +537,6 @@ export default function Home() {
 
   const handleUpdateCategoryRelation = async (category: any) => {
     try {
-      console.log("-------------------", idParam);
       if (idParam != null) {
         const checkResponse = await fetch("/api/user/sweeping/relation", {
           method: "POST",
@@ -585,9 +570,7 @@ export default function Home() {
   };
 
   const sendNotification = async (message: any) => {
-    // const params = await props.params
     if (idParam != null) {
-      console.log("UserDeviceToken", profileId, idParam);
       const id = idParam;
       const response = await fetch("/api/user/notification", {
         method: "POST",
@@ -603,9 +586,7 @@ export default function Home() {
       });
 
       const result = await response.json();
-      console.log(result);
     } else {
-      console.log("UserDeviceToken", profileId, userProfiles[currentIndex]?.Id);
       const id = userProfiles[currentIndex]?.Id;
       const response = await fetch("/api/user/notification", {
         method: "POST",
@@ -620,15 +601,13 @@ export default function Home() {
         }),
       });
 
-      const result = await response.json();
-      console.log(result);
+      return await response.json();
     }
   };
 
   const handleUpdateLikeMatch = async () => {
     try {
       if (idParam != null) {
-        console.log(profileId, idParam);
         const response = await fetch("/api/user/sweeping/match", {
           method: "POST",
           headers: {
@@ -640,8 +619,6 @@ export default function Home() {
         const username = localStorage.getItem("profileUsername");
         const data = await response.json();
 
-        console.log("matched-Status", data);
-
         if (data?.isMatch == 1) {
           setMatchedProfile(userProfiles[currentIndex]);
           setShowMatchPopup(true);
@@ -649,7 +626,6 @@ export default function Home() {
           sendNotification(`You have a new match with ${username}!`);
         }
       } else {
-        console.log(profileId, userProfiles[currentIndex]?.Id);
         const response = await fetch("/api/user/sweeping/match", {
           method: "POST",
           headers: {
@@ -663,8 +639,6 @@ export default function Home() {
 
         const username = localStorage.getItem("profileUsername");
         const data = await response.json();
-
-        console.log("matched-Status", data);
 
         if (data?.isMatch == 1) {
           setMatchedProfile(userProfiles[currentIndex]);
@@ -695,35 +669,109 @@ export default function Home() {
     }));
   };
 
-  const handleReportUser = async () => {
-    console.log(reportOptions);
-    // try {
-    //     const checkResponse = await fetch('/api/user/sweeping/report', {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //         },
-    //         body: JSON.stringify({ profileid: profileId, targetid: userProfiles[currentIndex]?.Id }), // Pass the username to check
-    //     });
+  const reportImageApi = async ({
+    reportedById,
+    reportedByName,
+    reportedUserId,
+    reportedUserName,
+    image,
+  }: {
+    reportedById: string;
+    reportedByName: string;
+    reportedUserId: string;
+    reportedUserName: string;
+    image: string;
+  }) => {
+    try {
+      const response = await fetch("/api/user/reportedUser", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reportedById,
+          reportedByName,
+          reportedUserId,
+          reportedUserName,
+          image,
+        }),
+      });
 
-    //     const checkData = await checkResponse.json();
+      const data = await response.json();
 
-    // } catch (error) {
-    //     console.error('Error:', error);
-    // }
+      if (!response.ok) {
+        toast.error(data?.message || "Failed to report image.");
+        return false;
+      }
+
+      toast.success("Image reported successfully!");
+      return true;
+    } catch (err) {
+      console.error("Error reporting image:", err);
+      toast.error("Error reporting image.");
+      return false;
+    }
   };
 
-  const handleReportSubmit = () => {
-    console.log("Report Options:", reportOptions);
-    setIsReportModalOpen(false);
-    handleReportUser();
-  };
+  const handleReportSubmit = useCallback(async () => {
+    setIsSubmitting(true);
+    const token = localStorage.getItem("loginInfo");
+    const decodeToken = token ? jwtDecode<any>(token) : {};
+    const reportedByName = decodeToken?.profileName || "Me";
+
+    try {
+      if (reportOptions.reportImage) {
+        await reportImageApi({
+          reportedById: profileId,
+          reportedByName,
+          reportedUserId: userProfiles[currentIndex]?.Id,
+          reportedUserName: userProfiles[currentIndex]?.Username,
+          image: userProfiles[currentIndex]?.Avatar,
+        });
+      }
+
+      if (reportOptions.reportUser || reportOptions.blockUser) {
+        const res = await fetch("/api/user/sweeping/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileid: profileId,
+            targetid: userProfiles[currentIndex]?.Id,
+          }),
+        });
+
+        if (!res.ok) {
+          toast.error("Failed to report user.");
+          return null;
+        }
+
+        await res.json();
+        toast.success("User reported successfully");
+      }
+
+      if (
+        reportOptions.reportImage ||
+        reportOptions.reportUser ||
+        reportOptions.blockUser
+      ) {
+        setIsReportModalOpen(false);
+        setReportOptions({
+          reportUser: false,
+          blockUser: false,
+          reportImage: false,
+        });
+      }
+    } catch (err) {
+      toast.error("An error occurred while reporting.");
+      return null;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [profileId, reportOptions]);
 
   const checkIfMobile = () => {
     setIsMobileDevice(isMobile);
   };
-
-  console.log(currentIndex, "================userProfiles[currentIndex]");
 
   const handleChatAction = () => {
     router.push(`/messaging/${id}`);
@@ -810,7 +858,6 @@ export default function Home() {
 
       const data = await response.json();
       if (response.ok) {
-        console.log("Location sent successfully:", data);
       } else {
         console.error("Error sending location:", data.message);
       }
@@ -850,7 +897,6 @@ export default function Home() {
   }
 
   if (isMobileDevice) {
-    console.log(true);
     return <MobileAttendeeSwing />;
   }
 
@@ -1388,12 +1434,12 @@ export default function Home() {
           </Typography>
           <FormControlLabel
             sx={{
-              color: "white", // Label color
+              color: "white",
               "& .MuiCheckbox-root": {
-                color: "#9c27b0", // Checkbox color
+                color: "#9c27b0",
               },
               "& .MuiCheckbox-root.Mui-checked": {
-                color: "#9c27b0", // Checked checkbox color
+                color: "#9c27b0",
               },
             }}
             control={
@@ -1449,7 +1495,11 @@ export default function Home() {
               variant="contained"
               color="secondary"
             >
-              Submit
+              {isSubmitting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Submit"
+              )}
             </Button>
           </Box>
         </Box>

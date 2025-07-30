@@ -101,6 +101,7 @@ export default function EventDetail(props: { params: Params }) {
     blockUser: false,
     reportImage: false,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formState, setFormState] = useState({
     emailDescription: eventDetail?.Description,
     emailSubject: eventDetail?.Name,
@@ -136,7 +137,6 @@ export default function EventDetail(props: { params: Params }) {
     const getIdFromParam = async () => {
       const params = await props.params;
       const pid: any = params.id;
-      console.log(pid);
       setId(pid);
     };
     getIdFromParam();
@@ -176,9 +176,7 @@ export default function EventDetail(props: { params: Params }) {
       });
 
       const eventData = await checkResponse.json();
-      console.log("eventData---", eventData);
       const eventDescription = eventData?.event?.Description;
-      //Populate the tickets with the description of the event BUG
       eventData?.tickets.forEach((ticket: any) => {
         ticket.Description = eventDescription;
       });
@@ -216,38 +214,110 @@ export default function EventDetail(props: { params: Params }) {
     setFormState((prev: any) => ({ ...prev, [field]: !prev[field] }));
   };
 
-  const handleReportUser = async () => {
+  const reportImageApi = async ({
+    reportedById,
+    reportedByName,
+    reportedUserId,
+    reportedUserName,
+    image,
+  }: {
+    reportedById: string;
+    reportedByName: string;
+    reportedUserId: string;
+    reportedUserName: string;
+    image: string;
+  }) => {
     try {
-      // Check if t
-      // he username exists
-      const checkResponse = await fetch("/api/user/sweeping/report", {
+      const response = await fetch("/api/user/reportedUser", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ profileid: profileId, targetid: targetId }), // Pass the username to check
+        body: JSON.stringify({
+          reportedById,
+          reportedByName,
+          reportedUserId,
+          reportedUserName,
+          image,
+        }),
       });
-      setIsReportModalOpen((prev) => !prev);
-      const checkData = await checkResponse.json();
-    } catch (error) {
-      console.error("Error:", error);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data?.message || "Failed to report image.");
+        return false;
+      }
+
+      toast.success("Image reported successfully!");
+      return true;
+    } catch (err) {
+      console.error("Error reporting image:", err);
+      toast.error("Error reporting image.");
+      return false;
     }
   };
 
-  const handleReportSubmit = () => {
-    console.log("Report Options:", reportOptions);
-    setIsReportModalOpen(false);
-    handleReportUser();
-    // Add logic to handle report or block user action
-  };
+  const handleReportSubmit = useCallback(async () => {
+    setIsSubmitting(true);
+    const token = localStorage.getItem("loginInfo");
+    const decodeToken = token ? jwtDecode<any>(token) : {};
+    const reportedByName = decodeToken?.profileName || "Me";
+
+    try {
+      if (reportOptions.reportImage) {
+        await reportImageApi({
+          reportedById: profileId,
+          reportedByName,
+          reportedUserId: eventDetail?.OrganizerId,
+          reportedUserName: eventDetail?.Username,
+          image: eventDetail?.Avatar,
+        });
+      }
+
+      if (reportOptions.reportUser || reportOptions.blockUser) {
+        const res = await fetch("/api/user/sweeping/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileid: profileId,
+            targetid: targetId,
+          }),
+        });
+
+        if (!res.ok) {
+          toast.error("Failed to report user.");
+          return null;
+        }
+
+        await res.json();
+        toast.success("User reported successfully");
+      }
+
+      if (
+        reportOptions.reportImage ||
+        reportOptions.reportUser ||
+        reportOptions.blockUser
+      ) {
+        setIsReportModalOpen(false);
+        setReportOptions({
+          reportUser: false,
+          blockUser: false,
+          reportImage: false,
+        });
+      }
+    } catch (err) {
+      toast.error("An error occurred while reporting.");
+      return null;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [profileId, reportOptions]);
 
   const handleSendEmail = async (): Promise<void> => {
     setLoading(true);
-    console.log("eeeee");
-    console.log(eventDetail);
 
     try {
-      // Determine recipients based on formState
       let recipients: any[] = [];
 
       if (formState.rsvpChecked) {
@@ -258,10 +328,8 @@ export default function EventDetail(props: { params: Params }) {
         recipients = [...recipients, ...attendees];
       }
 
-      // Avoid duplicates if both are checked
       recipients = Array.from(new Set(recipients));
 
-      // Ensure recipients array is not empty
       if (recipients.length === 0) {
         setError(
           "Please select at least one recipient group (RSVP or Attendee)."
@@ -270,7 +338,6 @@ export default function EventDetail(props: { params: Params }) {
         return;
       }
 
-      // Send the email
       const response = await fetch("/api/user/events/email", {
         method: "POST",
         headers: {
@@ -294,7 +361,6 @@ export default function EventDetail(props: { params: Params }) {
       setError("Failed to send emails.");
     } finally {
       setLoading(false);
-      // setOpen(false);
     }
   };
 
@@ -342,16 +408,13 @@ export default function EventDetail(props: { params: Params }) {
     });
 
     const data = await response.json();
-    console.log(data);
 
     if (data.status == 200) {
       setOpenSaveRsvp(!openSaveRsvp);
     }
-    console.log(eventId);
   };
 
   const deleteEvent = async (eventId: any) => {
-    console.log(eventId);
     const response = await fetch("/api/user/events/delete/", {
       method: "POST",
       headers: {
@@ -383,8 +446,6 @@ export default function EventDetail(props: { params: Params }) {
   ) => {
     setDownloadRsvp(event.target.checked);
   };
-
-  console.log("attendees", attendees);
 
   const handleDownloadList = () => {
     if (!downloadAttendee && !downloadRsvp) {
@@ -1859,12 +1920,12 @@ export default function EventDetail(props: { params: Params }) {
           </Typography>
           <FormControlLabel
             sx={{
-              color: "white", // Label color
+              color: "white",
               "& .MuiCheckbox-root": {
-                color: "#9c27b0", // Checkbox color
+                color: "#9c27b0",
               },
               "& .MuiCheckbox-root.Mui-checked": {
-                color: "#9c27b0", // Checked checkbox color
+                color: "#9c27b0",
               },
             }}
             control={
@@ -1920,7 +1981,11 @@ export default function EventDetail(props: { params: Params }) {
               variant="contained"
               color="secondary"
             >
-              Submit
+              {isSubmitting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Submit"
+              )}
             </Button>
             <Button
               style={{ marginLeft: 10 }}
