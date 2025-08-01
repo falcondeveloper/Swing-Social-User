@@ -95,13 +95,9 @@ const Header = () => {
     if (typeof window === "undefined") return;
 
     // WebSocket event listeners
-    socket.on("connect", () => {
-      console.log("Connected to WebSocket server");
-    });
+    socket.on("connect", () => {});
 
-    socket.on("disconnect", () => {
-      console.log("Disconnected from WebSocket server");
-    });
+    socket.on("disconnect", () => {});
 
     socket.on("message", (message) => {
       const profileid = localStorage.getItem("logged_in_profile");
@@ -136,18 +132,15 @@ const Header = () => {
 
   const checkNotificationPermission = () => {
     if (!("Notification" in window)) {
-      console.log("This browser does not support notifications.");
       return;
     }
 
     // Check the current notification permission state
     switch (Notification.permission) {
       case "granted":
-        console.log("Notifications are enabled.");
         break;
 
       case "denied":
-        console.log("Notifications are denied by the user.");
         setNotificationModalOpen(true); // Show modal if denied
         break;
 
@@ -155,9 +148,7 @@ const Header = () => {
         Notification.requestPermission()
           .then((permission) => {
             if (permission === "granted") {
-              console.log("Notifications are now enabled!");
             } else if (permission === "denied") {
-              console.log("Notifications were denied.");
               setNotificationModalOpen(true); // Show modal if denied
             }
           })

@@ -35,6 +35,7 @@ import {
   Snackbar,
   Stack,
   Badge,
+  DialogActions,
 } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
@@ -67,6 +68,8 @@ import {
   AlertCircle,
   Settings2,
 } from "lucide-react";
+import Cropper, { Area } from "react-easy-crop";
+import getCroppedImg from "../../utils/cropImage";
 
 // Enhanced theme with your brand guidelines
 const theme = createTheme({
@@ -413,6 +416,14 @@ const ProfileDetail: React.FC = () => {
     message: "",
     severity: "success" as "success" | "error",
   });
+  const [tempFile, setTempFile] = useState<File | null>(null);
+  const [currentCropType, setCurrentCropType] = useState<
+    "avatar" | "cover" | null
+  >(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -430,7 +441,7 @@ const ProfileDetail: React.FC = () => {
   };
 
   const validateImage = (file: File) => {
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
     const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
 
     if (!allowedTypes.includes(file.type)) {
@@ -681,20 +692,19 @@ const ProfileDetail: React.FC = () => {
     type: "avatar" | "cover"
   ) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImages((prev) => ({
-          ...prev,
-          [type === "avatar" ? "avatar" : "banner"]: reader.result as string,
-        }));
-        setEditedData((prev: any) => ({
-          ...prev,
-          [type === "avatar" ? "Avatar" : "ProfileBanner"]: file,
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      // Open cropper for both avatar and cover
+      setSelectedImage(reader.result as string);
+      setCurrentCropType(type); // Save type for later in crop save handler
+      setTempFile(file); // Save original file for updating EditedData after cropping
+      setShowCropper(true);
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const renderImageSection = (type: "public" | "private") => {
@@ -1543,6 +1553,46 @@ const ProfileDetail: React.FC = () => {
     }
   };
 
+  const onCropComplete = (_croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const handleCropSave = async () => {
+    if (!selectedImage || !croppedAreaPixels || !currentCropType || !tempFile)
+      return;
+
+    try {
+      const croppedImage = await getCroppedImg(
+        selectedImage,
+        croppedAreaPixels
+      );
+
+      // Convert base64 -> File
+      const response = await fetch(croppedImage);
+      const blob = await response.blob();
+      const file = new File([blob], `${currentCropType}-cropped.jpg`, {
+        type: blob.type,
+      });
+
+      // Save to state
+      if (currentCropType === "avatar") {
+        setPreviewImages((prev) => ({ ...prev, avatar: croppedImage }));
+        setEditedData((prev: any) => ({ ...prev, Avatar: file }));
+      } else {
+        setPreviewImages((prev) => ({ ...prev, banner: croppedImage }));
+        setEditedData((prev: any) => ({ ...prev, ProfileBanner: file }));
+      }
+
+      // Reset cropper state
+      setSelectedImage(null);
+      setTempFile(null);
+      setCurrentCropType(null);
+      setShowCropper(false);
+    } catch (err) {
+      console.error("Cropping failed", err);
+    }
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ bgcolor: "#121212", minHeight: "100vh" }}>
@@ -1945,6 +1995,55 @@ const ProfileDetail: React.FC = () => {
             </IconButton>
           </DialogContent>
         </Dialog>
+
+        {/* Cropper Dialog */}
+        {showCropper && (
+          <>
+            <Dialog open={showCropper} onClose={() => setShowCropper(false)}>
+              <DialogContent
+                sx={{
+                  backgroundColor: "#000",
+                  color: "#fff",
+                  width: { xs: "300px", sm: "400px" }, // Adjust width for smaller screens
+                  height: { xs: "300px", sm: "400px" },
+                  position: "relative",
+                  padding: 0, // Remove padding to maximize crop area
+                }}
+              >
+                {selectedImage && (
+                  <Cropper
+                    image={selectedImage || undefined}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={currentCropType === "avatar" ? 1 : 16 / 9}
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onCropComplete={onCropComplete}
+                    objectFit="contain"
+                  />
+                )}
+              </DialogContent>
+              <DialogActions
+                sx={{
+                  backgroundColor: "#121212",
+                  padding: 2,
+                  justifyContent: "center",
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={handleCropSave}
+                  sx={{
+                    backgroundColor: "#c2185b",
+                    "&:hover": { backgroundColor: "#ad1457" },
+                  }}
+                >
+                  Crop
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </>
+        )}
 
         {/* Snackbar */}
         <Snackbar

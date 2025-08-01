@@ -251,7 +251,6 @@ const LoginPage: React.FC = () => {
         })
           .then((res) => res.json())
           .then((data) => {
-            console.log("Tracking saved:", data);
           })
           .catch((err) => {
             console.error("Failed to save tracking:", err);
@@ -330,7 +329,6 @@ const LoginPage: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const newUserName = e.target.value.trim();
-    console.log(newUserName);
     setResetUserName(newUserName);
     setResetValidation((prev) => ({
       ...prev,
@@ -402,7 +400,6 @@ const LoginPage: React.FC = () => {
         });
 
         const trackingData = await trackingRes.json();
-        console.log("Tracking saved:", trackingData);
         hitId = trackingData?.data?.HitId ?? null;
       } catch (err) {
         console.error("Failed to save tracking:", err);
@@ -613,7 +610,6 @@ const LoginPage: React.FC = () => {
         });
 
         const trackingData = await trackingRes.json();
-        console.log("Tracking saved:", trackingData);
         hitId = trackingData?.data?.HitId ?? null;
       } catch (err) {
         console.error("Failed to save tracking:", err);

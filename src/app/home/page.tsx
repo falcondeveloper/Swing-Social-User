@@ -92,10 +92,8 @@ const Home = () => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("loginInfo");
-      console.log(token);
       if (token) {
         const decodeToken = jwtDecode<any>(token);
-        console.log(decodeToken);
         setCurrentName(decodeToken?.profileName);
         setProfileId(decodeToken?.profileId);
         setProfile(decodeToken);
@@ -113,16 +111,11 @@ const Home = () => {
   useEffect(() => {
     if (typeof window === "undefined") return; // Prevent errors during SSR
 
-    socket.on("connect", () => {
-      console.log("Connected to WebSocket server");
-    });
+    socket.on("connect", () => {});
 
-    socket.on("disconnect", () => {
-      console.log("Disconnected from WebSocket server");
-    });
+    socket.on("disconnect", () => {});
 
     socket.on("message", (message) => {
-      console.log(message);
       const profileid = localStorage.getItem("logged_in_profile");
 
       if (message?.from === profileid || message?.to === profileid) {
@@ -248,7 +241,6 @@ const Home = () => {
 
       const data = await response.json();
       if (response.ok) {
-        console.log("Location sent successfully:", data);
       } else {
         console.error("Error sending location:", data.message);
       }
@@ -272,7 +264,6 @@ const Home = () => {
 
   useEffect(() => {
     if (profileId && token) {
-      console.log(token);
       // Prepare the API payload
       // const handleUpdateDeviceToken = async (token: any, profileId: any) => {
       //   const payload = {
@@ -342,14 +333,12 @@ const Home = () => {
     }
   }, [token, profileId]);
   // Use the token as needed
-  // token && console.log('FCM token:', token);
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       const messaging = getMessaging(app);
       const unsubscribe = onMessage(messaging, (payload: any) => {
-        console.log("Foreground push notification received:", payload);
         // Handle the received push notification while the app is in the foreground
         // You can display a notification or update the UI based on the payload
       });
@@ -364,12 +353,7 @@ const Home = () => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/firebase-messaging-sw.js")
-        .then((registration) => {
-          console.log(
-            "Service Worker registered with scope:",
-            registration.scope
-          );
-        })
+        .then((registration) => {})
         .catch((error) => {
           console.error("Service Worker registration failed:", error);
         });
@@ -410,7 +394,6 @@ const Home = () => {
     fetch("https://ipapi.co/json")
       .then((res) => res.json())
       .then((ipData) => {
-        console.log("ipData", ipData);
         const ipv4 = ipData.ip;
 
         const payload = {

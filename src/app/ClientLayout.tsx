@@ -52,7 +52,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <>
       <TokenManager />
-      
+
       {children}
     </>
   );
