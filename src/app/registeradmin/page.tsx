@@ -339,9 +339,6 @@ export default function ProfileDetail() {
         const profileId = data.profileId;
 
         if (profileId) {
-          console.log("Profile ID:", profileId);
-          setProfileId(profileId);
-
           localStorage.setItem("email", formData?.email);
           localStorage.setItem("userName", formData?.userName);
           localStorage.setItem("password", formData?.password);

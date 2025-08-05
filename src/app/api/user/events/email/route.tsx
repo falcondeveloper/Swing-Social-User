@@ -1,162 +1,154 @@
-/**
- * ! We haven't used this file in our template. We've used the server actions in the
- * ! `src/app/server/actions.ts` file to fetch the static data from the fake-db.
- * ! This file has been created to help you understand how you can create your own API routes.
- * ! Only consider making API routes if you're planing to share your project data with other applications.
- * ! else you can use the server actions or third-party APIs to fetch the data from your database.
- */
-
-// Next Imports
-import { responsiveFontSizes } from "@mui/material";
 import { NextResponse } from "next/server";
-import FormData from "form-data"; // form-data v4.0.1
+import FormData from "form-data";
 import Mailgun from "mailgun.js";
 import { Pool } from "pg";
-import { any } from "@tensorflow/tfjs";
 export const dynamic = "force-dynamic";
 
 const pool = new Pool({
-	user: "clark",
-	host: "199.244.49.83",
-	database: "swingsocialdb",
-	password: "Bmw635csi#",
-	port: 5432,
+  user: "clark",
+  host: "199.244.49.83",
+  database: "swingsocialdb",
+  password: "Bmw635csi#",
+  port: 5432,
 });
 
-function chunkArray(array: any, size: any) {
-	const chunks = [];
-	for (let i = 0; i < array.length; i += size) {
-		chunks.push(array.slice(i, i + size));
-	}
-	return chunks;
+function chunkArray(array: any, size: number) {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
 }
+
 export async function POST(req: any) {
-	try {
-		const result = await pool.query(
-			'SELECT * FROM "Configuration" WHERE "ConfigName" = $1',
-			["EmailApi"]
-		);
+  try {
+    const result = await pool.query(
+      'SELECT * FROM "Configuration" WHERE "ConfigName" = $1',
+      ["EmailApi"]
+    );
 
-		const mailgunKey = result.rows[0].ConfigValue;
-		if (!mailgunKey) {
-			throw new Error("MAILGUN_KEY environment variable is not defined");
-		}
+    const mailgunKey = result.rows[0]?.ConfigValue;
+    if (!mailgunKey) {
+      throw new Error("MAILGUN_KEY environment variable is not defined");
+    }
 
-		const { recipients, htmlBody, subject, ticket } = await req.json();
+    const { recipients, htmlBody, subject } = await req.json();
 
-		console.log(recipients, htmlBody, subject);
+    if (!recipients || recipients.length === 0) {
+      return NextResponse.json(
+        { message: "No recipients found for the selected segment." },
+        { status: 400 }
+      );
+    }
 
-		// const client = new ServerClient('dcd2cc9f-7ac2-4753-bf70-46cb9df05178');
-		const mailgun = new Mailgun(FormData);
-		const mg = mailgun.client({
-			username: "api",
-			key: mailgunKey,
-			// When you have an EU-domain, you must specify the endpoint:
-			// url: "https://api.eu.mailgun.net/v3"
-		});
+    const mailgun = new Mailgun(FormData);
+    const mg = mailgun.client({
+      username: "api",
+      key: mailgunKey,
+    });
 
-		// Retrieve email list based on target segment
+    const recipientChunks = chunkArray(recipients, 40);
+    const emailResults: { email: string; status: string; error?: string }[] =
+      [];
 
-		if (recipients.length === 0) {
-			return NextResponse.json(
-				{ message: "No recipients found for the selected segment." },
-				{ status: 400 }
-			);
-		}
-		console.log(recipients?.length, recipients[0]);
-		// Split the recipients into chunks of 40
-		const recipientChunks = chunkArray(recipients, 40);
+    for (const chunk of recipientChunks) {
+      const emailBatch = chunk.map((recipient: any) => ({
+        from: "info@swingsocial.co",
+        to: recipient.Email,
+        subject: subject,
+        text: "",
+        html: htmlBody,
+      }));
 
-		for (const chunk of recipientChunks) {
-			// Prepare email objects for the current chunk
-			const emailBatch = chunk.map((recipient: any) => ({
-				from: "info@swingsocial.co",
-				to: recipient.Email, // Assuming each recipient has an `email` property
-				subject: subject,
-				text: "",
-				html: htmlBody,
-				// message: "outbound",
-			}));
-			console.log(emailBatch);
-			// Send the email batch
-			try {
-				await Promise.all(
-					emailBatch.map((email: any) =>
-						mg.messages.create("swingsocial.co", email)
-					)
-				);
-				// await client.sendEmailBatch(emailBatch);
-				console.log(`Batch of ${emailBatch.length} emails sent successfully.`);
-			} catch (error) {
-				console.error("Error sending email batch:", error);
-			}
-		}
-		return NextResponse.json({ message: "Emails sent successfully!" });
-	} catch (error: any) {
-		console.error("Error sending bulk emails:", error);
-		return NextResponse.json(
-			{
-				message: "Error sending bulk emails",
-				error: error.message,
-			},
-			{ status: 500 }
-		);
-	}
+      await Promise.all(
+        emailBatch.map(async (email: any) => {
+          try {
+            await mg.messages.create("swingsocial.co", email);
+            emailResults.push({ email: email.to, status: "success" });
+          } catch (error: any) {
+            emailResults.push({
+              email: email.to,
+              status: "failed",
+              error: error.message || "Unknown error",
+            });
+          }
+        })
+      );
+    }
+
+    const totalSent = emailResults.filter((e) => e.status === "success").length;
+    const totalFailed = emailResults.filter(
+      (e) => e.status === "failed"
+    ).length;
+
+    return NextResponse.json({
+      message: "Bulk email process completed.",
+      totalRecipients: recipients.length,
+      totalSent,
+      totalFailed,
+      failedEmails: emailResults.filter((e) => e.status === "failed"),
+    });
+  } catch (error: any) {
+    console.error("Error sending bulk emails:", error);
+    return NextResponse.json(
+      {
+        message: "Error sending bulk emails",
+        error: error.message,
+      },
+      { status: 500 }
+    );
+  }
 }
 
 async function getEmailList(
-	targetSegment: string
+  targetSegment: string
 ): Promise<{ email: string; name: string }[]> {
-	try {
-		// Fetch all users from the database
-		const query = `SELECT * FROM public.admin_getalldata()`;
-		const { rows: users } = await pool.query(query);
+  try {
+    const query = `SELECT * FROM public.admin_getalldata()`;
+    const { rows: users } = await pool.query(query);
 
-		// Filter users based on the target segment
-		let filteredUsers: { email: string; name: string }[] = [];
+    let filteredUsers: { email: string; name: string }[] = [];
 
-		switch (targetSegment) {
-			case "All":
-				filteredUsers = users.map((user: any) => ({
-					email: user.Email,
-					name: user.Username,
-				}));
-				break;
-			case "Paid Members":
-				filteredUsers = users
-					.filter((user: any) => parseFloat(user.Price) > 0)
-					.map((user: any) => ({
-						email: user.Email,
-						name: user.Username,
-					}));
-				break;
-			case "Free Members":
-				filteredUsers = users
-					.filter((user: any) => parseFloat(user.Price) === 0)
-					.map((user: any) => ({
-						email: user.Email,
-						name: user.Username,
-					}));
-				break;
-			case "Legacy Members":
-				// Add filtering logic if Legacy Members have specific criteria
-				break;
-			case "New Platform Members":
-				// Add filtering logic if New Platform Members have specific criteria
-				filteredUsers = users
-					.filter((user: any) => user.Username === "Webnew")
-					.map((user: any) => ({
-						email: user.Email,
-						name: user.Username,
-					}));
-				break;
-			default:
-				throw new Error(`Invalid target segment: ${targetSegment}`);
-		}
+    switch (targetSegment) {
+      case "All":
+        filteredUsers = users.map((user: any) => ({
+          email: user.Email,
+          name: user.Username,
+        }));
+        break;
+      case "Paid Members":
+        filteredUsers = users
+          .filter((user: any) => parseFloat(user.Price) > 0)
+          .map((user: any) => ({
+            email: user.Email,
+            name: user.Username,
+          }));
+        break;
+      case "Free Members":
+        filteredUsers = users
+          .filter((user: any) => parseFloat(user.Price) === 0)
+          .map((user: any) => ({
+            email: user.Email,
+            name: user.Username,
+          }));
+        break;
+      case "Legacy Members":
+        break;
+      case "New Platform Members":
+        filteredUsers = users
+          .filter((user: any) => user.Username === "Webnew")
+          .map((user: any) => ({
+            email: user.Email,
+            name: user.Username,
+          }));
+        break;
+      default:
+        throw new Error(`Invalid target segment: ${targetSegment}`);
+    }
 
-		return filteredUsers;
-	} catch (error) {
-		console.error("Error fetching email list:", error);
-		throw new Error("Unable to retrieve email list");
-	}
+    return filteredUsers;
+  } catch (error) {
+    console.error("Error fetching email list:", error);
+    throw new Error("Unable to retrieve email list");
+  }
 }

@@ -121,6 +121,10 @@ export default function EventDetail(props: { params: Params }) {
     id: null,
   });
 
+  const handleUpgrade = () => {
+    router.push("/membership");
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("loginInfo");
     const profileId = localStorage.getItem("logged_in_profile");
@@ -338,6 +342,10 @@ export default function EventDetail(props: { params: Params }) {
         return;
       }
 
+      if (recipients.length > 0) {
+        setError("");
+      }
+
       const response = await fetch("/api/user/events/email", {
         method: "POST",
         headers: {
@@ -354,11 +362,29 @@ export default function EventDetail(props: { params: Params }) {
         throw new Error(`Failed to send email. Status: ${response.status}`);
       }
 
-      alert("Emails sent successfully!");
+      const data = await response.json();
+
+      Swal.fire({
+        title: "Emails Sent!",
+        html: `
+        <p>Total Recipients: <strong>${data.totalRecipients}</strong></p>
+        <p>Successfully Sent: <strong>${data.totalSent}</strong></p>
+        <p>Failed to Send: <strong>${data.totalFailed}</strong></p>
+      `,
+        icon: "success",
+        confirmButtonText: "OK",
+      });
       setOpen(false);
     } catch (error: any) {
       console.error("Error sending bulk email:", error);
       setError("Failed to send emails.");
+
+      Swal.fire({
+        title: "Error!",
+        text: "Something went wrong while sending emails.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
     } finally {
       setLoading(false);
     }
@@ -819,6 +845,7 @@ export default function EventDetail(props: { params: Params }) {
                     )}
                   </CardContent>
                 </Card>
+
                 <Box>
                   <Typography variant="h6" fontWeight="bold" color="white">
                     Details
@@ -1060,16 +1087,16 @@ export default function EventDetail(props: { params: Params }) {
                     {/* RSVP Button */}
                     <Button
                       variant="contained"
+                      disabled={loginProfileId !== eventDetail?.OrganizerId}
                       onClick={handleOpen}
-                      disabled={true}
                       sx={{
-                        background: "#aa1f72",
-                        width: { lg: "20%", md: "20%", sm: "100%", xs: "100%" },
-                        marginLeft: "auto",
-                        marginRight: "auto",
-                        marginTop: 2,
-                        borderRadius: "10px", // Rounded corners
-                        padding: "10px 20px", // Adjust padding to make it look better
+                        bgcolor: "#880E4F",
+                        "&:hover": { bgcolor: "#560027" },
+                        "&.Mui-disabled": {
+                          bgcolor: "#880E4F",
+                          color: "white",
+                          opacity: 0.5,
+                        },
                       }}
                     >
                       Send Email
@@ -1681,81 +1708,108 @@ export default function EventDetail(props: { params: Params }) {
                 {/* Tickets Section */}
                 {membership === 0 ? (
                   <>
-                    <Alert variant="filled" severity="info">
-                      You should upgrade your plan to buy the ticket.
-                    </Alert>
-                  </>
-                ) : (
-                  <></>
-                )}
-                <Card
-                  sx={{
-                    mb: 4,
-                    bgcolor: "#1a1a1a",
-                    borderRadius: 2,
-                    border: "0.0625rem solid rgb(55, 58, 64)",
-                  }}
-                >
-                  <CardContent>
-                    <Box
+                    <Card
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 2,
-                        px: 4,
-                        pt: 2,
+                        mb: 4,
+                        mt: 4,
+                        bgcolor: "#1a1a1a",
+                        borderRadius: 2,
+                        border: "0.0625rem solid rgb(55, 58, 64)",
                       }}
                     >
-                      <Typography
-                        variant="h5"
-                        sx={{ fontWeight: "bold", color: "white" }}
-                      >
-                        Available Tickets
-                      </Typography>
-                      <IconButton
-                        disabled={membership === 0 ? true : false}
-                        onClick={() => setExpanded(!expanded)}
-                        sx={{
-                          color: "white",
-                          transition: "transform 0.3s ease",
-                          transform: expanded
-                            ? "rotate(45deg)"
-                            : "rotate(0deg)",
-                        }}
-                      >
-                        <AddIcon />
-                      </IconButton>
-                    </Box>
-                    <Grow in={expanded} timeout={500}>
-                      <Box sx={{ display: expanded ? "block" : "none", px: 5 }}>
-                        <DTicketListComponent
-                          tickets={tickets}
-                          onTicketsChange={handleTicketsChange}
-                        />
-                      </Box>
-                    </Grow>
-                  </CardContent>
-                </Card>
-
-                {/* Email Reminder Card */}
-                {loginProfileId !== eventDetail?.OrganizerId ? (
-                  <>
-                    <Alert variant="filled" severity="info">
-                      Only the organzier can send the email.
-                    </Alert>
+                      <CardContent sx={{ textAlign: "center", py: 3 }}>
+                        <Typography variant="h6" color="white" sx={{ mb: 2 }}>
+                          You should upgrade your plan to buy the ticket.
+                        </Typography>
+                        <Button
+                          variant="contained"
+                          onClick={handleUpgrade}
+                          sx={{
+                            bgcolor: "#880E4F",
+                            "&:hover": { bgcolor: "#560027" },
+                          }}
+                        >
+                          Upgrade
+                        </Button>
+                      </CardContent>
+                    </Card>
                   </>
                 ) : (
-                  <></>
+                  <>
+                    <Card
+                      sx={{
+                        mb: 4,
+                        bgcolor: "#1a1a1a",
+                        borderRadius: 2,
+                        border: "0.0625rem solid rgb(55, 58, 64)",
+                      }}
+                    >
+                      <CardContent>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            mb: 2,
+                            px: 4,
+                            pt: 2,
+                          }}
+                        >
+                          <Typography
+                            variant="h5"
+                            sx={{ fontWeight: "bold", color: "white" }}
+                          >
+                            Available Tickets
+                          </Typography>
+                          <IconButton
+                            disabled={membership === 0 ? true : false}
+                            onClick={() => setExpanded(!expanded)}
+                            sx={{
+                              color: "white",
+                              transition: "transform 0.3s ease",
+                              transform: expanded
+                                ? "rotate(45deg)"
+                                : "rotate(0deg)",
+                            }}
+                          >
+                            <AddIcon />
+                          </IconButton>
+                        </Box>
+                        <Grow in={expanded} timeout={500}>
+                          <Box
+                            sx={{ display: expanded ? "block" : "none", px: 5 }}
+                          >
+                            <DTicketListComponent
+                              tickets={tickets}
+                              onTicketsChange={handleTicketsChange}
+                            />
+                          </Box>
+                        </Grow>
+                      </CardContent>
+                    </Card>
+                  </>
                 )}
+
                 <Card
                   sx={{
                     mb: 4,
+                    mt: 4,
                     bgcolor: "#1a1a1a",
                     borderRadius: 2,
                     border: "0.0625rem solid rgb(55, 58, 64)",
                   }}
                 >
+                  {loginProfileId !== eventDetail?.OrganizerId && (
+                    <>
+                      <Alert
+                        variant="filled"
+                        severity="info"
+                        style={{ marginBottom: "16px" }}
+                      >
+                        Only the organzier can send the email.
+                      </Alert>
+                    </>
+                  )}
                   <CardContent sx={{ textAlign: "center", py: 3 }}>
                     <EmailIcon sx={{ fontSize: 40, color: "#880E4F", mb: 2 }} />
                     <Typography variant="h6" color="white" sx={{ mb: 2 }}>

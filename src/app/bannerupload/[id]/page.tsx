@@ -48,10 +48,10 @@ const demoImages = [
 
 type Params = Promise<{ id: string }>;
 
-export default function UploadAvatar({ params }: { params: Params }) {
+export default function UploadBanner({ params }: { params: Params }) {
   const router = useRouter();
-  const [avatarImage, setAvatarImage] = useState<string | null>(null);
-  const [croppedAvatar, setCroppedAvatar] = useState<string | null>(null);
+  const [bannerImage, setBannerImage] = useState<string | null>(null);
+  const [croppedBanner, setCroppedBanner] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedArea, setCroppedArea] = useState<any>(null);
@@ -69,28 +69,33 @@ export default function UploadAvatar({ params }: { params: Params }) {
 
   const formik = useFormik({
     initialValues: {
-      avatar: "",
+      banner: "",
     },
     validationSchema: Yup.object().shape({
-      avatar: Yup.string().required("Please upload your avatar"),
+      banner: Yup.string().required("Please upload your banner"),
     }),
     onSubmit: async (values) => {
       setIsUploading(true);
-      const isAvatarOk = await analyzeImage(values.avatar);
-      const avatarUrl = await uploadImage(values.avatar);
+      const isBannerOk = await analyzeImage(values.banner);
+      const bannerUrl = await uploadImage(values.banner);
+
+      if (!bannerUrl) {
+        formik.setFieldError("banner", "Image upload failed. Try again.");
+        setIsUploading(false);
+        return;
+      }
 
       await fetch("/api/user/upload/database", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           pid: userId,
-          avatar: avatarUrl,
-          banner: "",
-          Questionable: 1,
+          banner: bannerUrl,
+          Questionable: isBannerOk ? 1 : 0,
         }),
       });
 
-      router.push(`/bannerupload/${userId}`);
+      router.push(`/about/${userId}`);
     },
   });
 
@@ -99,7 +104,7 @@ export default function UploadAvatar({ params }: { params: Params }) {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setAvatarImage(reader.result as string);
+        setBannerImage(reader.result as string);
         setOpenCropper(true);
       };
       reader.readAsDataURL(file);
@@ -107,26 +112,50 @@ export default function UploadAvatar({ params }: { params: Params }) {
   };
 
   const handleCropConfirm = () => {
-    if (!croppedArea || !avatarImage) return;
+    if (!croppedArea || !bannerImage) return;
 
     const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
     const image = new Image();
-    const { width, height } = { width: 200, height: 200 };
+
+    const width = 800;
+    const height = 450;
     canvas.width = width;
     canvas.height = height;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
 
-    image.src = avatarImage;
-
+    image.src = bannerImage;
     image.onload = () => {
-      const { x, y, width: cropWidth, height: cropHeight } = croppedArea!;
-      ctx.drawImage(image, x, y, cropWidth, cropHeight, 0, 0, width, height);
+      const scaleX = image.naturalWidth / image.width;
+      const scaleY = image.naturalHeight / image.height;
 
-      const croppedDataURL = canvas.toDataURL("image/jpeg");
-      setCroppedAvatar(croppedDataURL);
-      formik.setFieldValue("avatar", croppedDataURL);
-      setOpenCropper(false);
+      const scaledArea = {
+        x: croppedArea.x * scaleX,
+        y: croppedArea.y * scaleY,
+        width: croppedArea.width * scaleX,
+        height: croppedArea.height * scaleY,
+      };
+
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+
+        ctx.drawImage(
+          image,
+          scaledArea.x,
+          scaledArea.y,
+          scaledArea.width,
+          scaledArea.height,
+          0,
+          0,
+          width,
+          height
+        );
+
+        const croppedDataURL = canvas.toDataURL("image/jpeg");
+        setCroppedBanner(croppedDataURL);
+        formik.setFieldValue("banner", croppedDataURL);
+        setOpenCropper(false);
+      }
     };
   };
 
@@ -165,11 +194,18 @@ export default function UploadAvatar({ params }: { params: Params }) {
     const blob = await (await fetch(dataUrl)).blob();
     const formData = new FormData();
     formData.append("image", blob, `${Date.now()}.jpg`);
+
     const res = await fetch("/api/user/upload", {
       method: "POST",
       body: formData,
     });
+
     const result = await res.json();
+
+    if (!result.blobUrl) {
+      throw new Error("Upload failed");
+    }
+
     return result.blobUrl;
   };
 
@@ -214,13 +250,13 @@ export default function UploadAvatar({ params }: { params: Params }) {
               variant="h6"
               sx={{ color: "#c2185b", fontWeight: "bold", mb: 2 }}
             >
-              POST Avatar
+              POST Profile Banner
             </Typography>
 
             <Box
               sx={{
-                width: 200,
-                height: 200,
+                width: 300,
+                height: 150,
                 border: "2px dashed #fff",
                 borderRadius: 4,
                 backgroundColor: "#1d1d1d",
@@ -237,14 +273,14 @@ export default function UploadAvatar({ params }: { params: Params }) {
                 accept="image/*"
                 onChange={onFileChange}
                 style={{ display: "none" }}
-                id="upload-avatar"
+                id="upload-banner"
               />
-              <label htmlFor="upload-avatar">
-                {croppedAvatar ? (
+              <label htmlFor="upload-banner">
+                {croppedBanner ? (
                   <>
                     <img
-                      src={croppedAvatar}
-                      alt="Cropped Avatar"
+                      src={croppedBanner}
+                      alt="Cropped Banner"
                       style={{
                         width: "100%",
                         height: "100%",
@@ -277,10 +313,9 @@ export default function UploadAvatar({ params }: { params: Params }) {
                 )}
               </label>
             </Box>
-
-            {formik.errors.avatar && (
+            {formik.errors.banner && (
               <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-                {formik.errors.avatar}
+                {formik.errors.banner}
               </Typography>
             )}
           </Grid>
@@ -461,18 +496,26 @@ export default function UploadAvatar({ params }: { params: Params }) {
             padding: 0,
           }}
         >
-          <Cropper
-            image={avatarImage || undefined}
-            crop={crop}
-            zoom={zoom}
-            aspect={1}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={onCropComplete}
-          />
+          {bannerImage && (
+            <Cropper
+              image={bannerImage}
+              crop={crop}
+              zoom={zoom}
+              aspect={16 / 9}
+              minZoom={1}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+              objectFit="contain"
+            />
+          )}
         </DialogContent>
         <DialogActions
-          sx={{ backgroundColor: "#121212", justifyContent: "center", p: 2 }}
+          sx={{
+            backgroundColor: "#121212",
+            padding: 2,
+            justifyContent: "center",
+          }}
         >
           <Button
             variant="contained"
