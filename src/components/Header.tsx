@@ -12,7 +12,6 @@ import {
   ListItemText,
   Avatar,
   Typography,
-  Fade,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -22,31 +21,22 @@ import { useIsMobile } from "@/hooks/useResponsive";
 import {
   Home,
   Users,
-  Apple,
   MessageCircle,
   Heart,
-  User,
   Menu,
   Search,
   Bell,
   X,
   LogOut,
   Calendar,
-  Package,
-  FolderKanban,
-  Candy,
-  LayoutGrid,
-  Boxes,
-  Grape,
-  ChefHat,
-  Sparkles,
-  Palette,
 } from "lucide-react";
-import Image from "next/image";
 
 const socket = io("https://api.nomolive.com/");
 
 const Header = () => {
+  const router = useRouter();
+  const theme = useTheme();
+  const isMobile = useIsMobile();
   const [avatar, setAvatar] = useState<string>("");
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [userName, setUserName] = useState<string>("");
@@ -54,16 +44,12 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [advertiser, setAdvertiser] = useState<any>([]);
   const [isNewMessage, setNewMessage] = useState<boolean>(() => {
-    // Initialize state with localStorage value if available
     if (typeof window !== "undefined") {
       return localStorage.getItem("isNewMessage") === "true";
     }
     return false;
   });
-
-  const router = useRouter();
-  const theme = useTheme();
-  const isMobile = useIsMobile();
+  const [profileId, setProfileId] = useState<any>();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -83,7 +69,7 @@ const Header = () => {
         setUserName(decodeToken?.username || "User");
       } catch (error) {
         console.error("Invalid token:", error);
-        router.push("/login"); // Redirect to login if token is invalid
+        router.push("/login");
       }
     } else {
       router.push("/login");
@@ -93,16 +79,10 @@ const Header = () => {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    // WebSocket event listeners
     socket.on("connect", () => {});
-
     socket.on("disconnect", () => {});
-
     socket.on("message", (message) => {
       const profileid = localStorage.getItem("logged_in_profile");
-
-      // Show notification indicator if the message is relevant to the current user
       if (message?.from === profileid || message?.to === profileid) {
         setNewMessage(true);
         localStorage.setItem("isNewMessage", "true");
@@ -113,7 +93,6 @@ const Header = () => {
       console.error("WebSocket error:", error);
     });
 
-    // Cleanup WebSocket listeners on component unmount
     return () => {
       socket.off("connect");
       socket.off("disconnect");
@@ -122,7 +101,6 @@ const Header = () => {
     };
   }, []);
 
-  // Reset the "new message" indicator
   const resetNewMessage = () => {
     setNewMessage(false);
     if (typeof window !== "undefined") {
@@ -135,21 +113,20 @@ const Header = () => {
       return;
     }
 
-    // Check the current notification permission state
     switch (Notification.permission) {
       case "granted":
         break;
 
       case "denied":
-        setNotificationModalOpen(true); // Show modal if denied
+        setNotificationModalOpen(true);
         break;
 
-      case "default": // User has not made a decision
+      case "default":
         Notification.requestPermission()
           .then((permission) => {
             if (permission === "granted") {
             } else if (permission === "denied") {
-              setNotificationModalOpen(true); // Show modal if denied
+              setNotificationModalOpen(true);
             }
           })
           .catch((error) => {
@@ -178,6 +155,7 @@ const Header = () => {
     localStorage.removeItem("userName");
     localStorage.removeItem("password");
     router.push("/login");
+    localStorage.clear();
   };
 
   // Mobile navigation items
@@ -199,10 +177,9 @@ const Header = () => {
     { icon: Calendar, label: "Events", path: "/events" },
   ];
 
-  const [profileId, setProfileId] = useState<any>();
   useEffect(() => {
     setProfileId(localStorage.getItem("logged_in_profile"));
-  }, []);
+  }, [profileId]);
 
   const fetchData = async () => {
     if (!profileId) return;
@@ -229,7 +206,6 @@ const Header = () => {
   return (
     <>
       {/* <NotificationModalPrompt /> */}
-      {/* Modern Mobile Header */}
       {isMobile ? (
         <>
           <AppBar
@@ -295,13 +271,7 @@ const Header = () => {
                 }}
               >
                 <img
-                  src={
-                    advertiser?.Avatar
-                      ? advertiser?.Avatar
-                      : avatar && avatar.trim() !== ""
-                      ? avatar
-                      : "/noavatar.png"
-                  }
+                  src={avatar || advertiser?.Avatar}
                   alt="Profile"
                   style={{
                     width: "100%",
@@ -371,13 +341,7 @@ const Header = () => {
                 {/* User Info */}
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <Avatar
-                    src={
-                      advertiser?.Avatar
-                        ? advertiser?.Avatar
-                        : avatar && avatar.trim() !== ""
-                        ? avatar
-                        : "/noavatar.png"
-                    }
+                    src={avatar || advertiser?.Avatar}
                     sx={{
                       width: 48,
                       height: 48,
@@ -811,21 +775,15 @@ const Header = () => {
                     overflow: "hidden",
                   }}
                 >
-                  <Image
-                    src={
-                      advertiser?.Avatar
-                        ? advertiser.Avatar
-                        : avatar && avatar.trim() !== ""
-                        ? avatar
-                        : "/noavatar.png"
-                    }
+                  <img
+                    src={avatar || advertiser?.Avatar}
                     alt="Avatar"
-                    fill
                     style={{
                       objectFit: "cover",
                       borderRadius: "10px",
+                      width: "100%",
+                      height: "100%",
                     }}
-                    sizes="42px"
                   />
                 </Box>
               </Box>

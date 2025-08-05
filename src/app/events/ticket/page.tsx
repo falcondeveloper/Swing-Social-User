@@ -356,10 +356,7 @@ const BillingUpgrade: any = () => {
   };
 
   const handlePaymentProcess = () => {
-    console.log(eventDetails);
     if (validateForm()) {
-      // Proceed with payment processing
-      console.log("Payment data:", formData);
       setOpen(true);
     }
   };
@@ -563,7 +560,6 @@ const BillingUpgrade: any = () => {
 
   const createTicket = async (storedEventDetails: any) => {
     try {
-      console.log("createTicket1: ", storedEventDetails);
 
       var ticketDetailsArray = storedEventDetails;
       if (typeof storedEventDetails === "string") {
