@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import {
   Box,
   TextField,
@@ -11,7 +12,6 @@ import {
   Autocomplete,
   CircularProgress,
   LinearProgress,
-  ThemeProvider,
   createTheme,
   useMediaQuery,
 } from "@mui/material";
@@ -20,22 +20,14 @@ import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-
+import * as Yup from "yup";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useFormik } from "formik";
 
 type CityType = {
   id: number;
   City: string;
 };
-
-interface StrengthPassword {
-  password: {
-    error: boolean;
-    message: string;
-    strength: number;
-  };
-}
 
 const theme = createTheme({
   palette: {
@@ -73,30 +65,12 @@ export default function ProfileDetail() {
   const [cityOption, setCityOption] = useState<CityType[] | []>([]);
   const [cityInput, setCityInput] = useState<string | "">("");
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    repeatPassword: "",
-    userName: "",
-    phone: "",
-    age: "01/01/0101",
-    city: "",
-  });
-
   const isMobile = useMediaQuery("(max-width:600px)");
 
   const [profileId, setProfileId] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [checkPassword, setCheckPassword] = useState(false);
-  const [touched, setTouched] = useState(false);
-
-  const [validation, setValidation] = useState<StrengthPassword>({
-    password: {
-      error: false,
-      message: "",
-      strength: 0,
-    },
-  });
+  const [passwordStrength, setPasswordStrength] = useState(0);
 
   const [particles, setParticles] = useState<
     Array<{
@@ -165,12 +139,6 @@ export default function ProfileDetail() {
     );
   };
 
-  const getStrengthColor = (strength: number) => {
-    if (strength < 40) return "error";
-    if (strength < 60) return "warning";
-    return "success";
-  };
-
   const calculatePasswordStrength = (password: string): number => {
     let strength = 0;
     if (password.length >= 8) strength += 20;
@@ -187,174 +155,6 @@ export default function ProfileDetail() {
 
   const handleToggleCheckPasswordVisibility = () => {
     setCheckPassword((prev) => !prev);
-  };
-
-  // Handle change for each input field
-  const handleInputChange = (e: any) => {
-    const { name, value } = e.target;
-
-    const strength = calculatePasswordStrength(value);
-    if (name === "password") {
-      setTouched(true);
-      setValidation({
-        password: {
-          error: strength < 60,
-          message: strength < 60 ? "Password is not strong enough" : "",
-          strength,
-        },
-      });
-    }
-
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
-  const [errors, setErrors] = useState<any>({}); // State for error messages
-
-  // Email validation function
-  const validateEmail = (email: any) => {
-    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return regex.test(email);
-  };
-
-  // Phone validation function (basic validation for 10-digit numbers)
-  const validatePhone = (phone: any) => {
-    const regex = /^[0-9]{10}$/;
-    return regex.test(phone);
-  };
-
-  // Handle form submission
-  const handleSubmit = async () => {
-    const newErrors: any = {};
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const aff = urlParams.get("aff");
-    const refer = urlParams.get("refer");
-
-    // Detect OS
-    const getOS = () => {
-      const userAgent = window.navigator.userAgent;
-      if (userAgent.indexOf("Win") !== -1) return "Windows";
-      if (userAgent.indexOf("Mac") !== -1) return "MacOS";
-      if (userAgent.indexOf("Linux") !== -1) return "Linux";
-      if (userAgent.indexOf("Android") !== -1) return "Android";
-      if (
-        userAgent.indexOf("iPhone") !== -1 ||
-        userAgent.indexOf("iPad") !== -1
-      )
-        return "iOS";
-      return "Unknown";
-    };
-
-    const currentUrl = window.location.href;
-    const currentPage = "Register"; // Since this is login page
-
-    let hitId: string | null = null;
-
-    try {
-      const ipRes = await fetch("https://ipapi.co/json");
-      const ipData = await ipRes.json();
-
-      const payload = {
-        affiliate: aff,
-        referral: refer,
-        OS: getOS(),
-        page: currentPage,
-        url: currentUrl,
-        userid: null,
-        ip: ipData?.ip,
-        city: ipData?.city,
-        region: ipData?.region,
-        country_name: ipData?.country_name,
-      };
-
-      const hitRes = await fetch("/api/user/tracking", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const hitData = await hitRes.json();
-      console.log("Tracking saved:", hitData);
-
-      hitId = hitData?.data?.HitId ?? null;
-    } catch (err) {
-      console.error("Failed to save tracking:", err);
-    }
-
-    // Validate form fields
-    if (!formData.userName) newErrors.userName = "User Name is required";
-    if (!formData.email || !validateEmail(formData.email))
-      newErrors.email = "Please enter a valid email address";
-    if (!formData.phone || !validatePhone(formData.phone))
-      newErrors.phone = "Please enter a valid phone number (10 digits)";
-    if (!formData.password) newErrors.password = "Password is required";
-    if (formData.password !== formData.repeatPassword)
-      newErrors.repeatPassword = "Passwords must match";
-    if (!formData.city) newErrors.city = "City is required";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    try {
-      // Check if the email exists
-      const checkResponse = await fetch("/api/user/profile/check", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ search: formData.email }),
-      });
-
-      const checkData = await checkResponse.json();
-
-      if (checkData.exists) {
-        newErrors.email = "Email already taken";
-        setErrors(newErrors);
-        return;
-      }
-
-      handleOpen();
-
-      const response = await fetch("/api/user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          affiliate: aff,
-          hitid: hitId,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const profileId = data.profileId;
-
-        if (profileId) {
-          localStorage.setItem("email", formData?.email);
-          localStorage.setItem("userName", formData?.userName);
-          localStorage.setItem("password", formData?.password);
-          localStorage.setItem("logged_in_profile", profileId);
-
-          console.log("Form submitted successfully!");
-        } else {
-          console.log("Profile creation failed, no profileId returned.");
-        }
-      } else {
-        console.log("Error submitting form");
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      alert("Error submitting form");
-    }
   };
 
   const handleOpen = () => setOpen(true);
@@ -407,6 +207,147 @@ export default function ProfileDetail() {
     return () => clearTimeout(delayDebounceFn);
   }, [cityInput, openCity]);
 
+  const validationSchema = Yup.object({
+    userName: Yup.string().required("User Name is required"),
+    email: Yup.string()
+      .email("Please enter a valid email address")
+      .required("Email is required"),
+    phone: Yup.string()
+      .matches(/^[0-9]{10}$/, "Please enter a valid phone number (10 digits)")
+      .required("Phone is required"),
+    password: Yup.string()
+      .required("Password is required")
+      .test(
+        "password-strength",
+        "Password is not strong enough",
+        (value) => calculatePasswordStrength(value || "") >= 60
+      ),
+    repeatPassword: Yup.string()
+      .required("Repeat your password")
+      .oneOf([Yup.ref("password")], "Passwords must match"),
+    city: Yup.string().required("City is required"),
+  });
+
+  const formik = useFormik({
+    initialValues: {
+      userName: "",
+      email: "",
+      phone: "",
+      password: "",
+      repeatPassword: "",
+      city: "",
+    },
+    validationSchema,
+    onSubmit: async (values, { setSubmitting, setErrors }) => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const aff = urlParams.get("aff");
+      const refer = urlParams.get("refer");
+
+      const getOS = () => {
+        const userAgent = window.navigator.userAgent;
+        if (userAgent.indexOf("Win") !== -1) return "Windows";
+        if (userAgent.indexOf("Mac") !== -1) return "MacOS";
+        if (userAgent.indexOf("Linux") !== -1) return "Linux";
+        if (userAgent.indexOf("Android") !== -1) return "Android";
+        if (
+          userAgent.indexOf("iPhone") !== -1 ||
+          userAgent.indexOf("iPad") !== -1
+        )
+          return "iOS";
+        return "Unknown";
+      };
+
+      try {
+        const ipRes = await fetch("https://ipapi.co/json");
+        const ipData = await ipRes.json();
+
+        const payload = {
+          affiliate: aff,
+          referral: refer,
+          OS: getOS(),
+          page: "Register",
+          url: window.location.href,
+          userid: null,
+          ip: ipData?.ip,
+          city: ipData?.city,
+          region: ipData?.region,
+          country_name: ipData?.country_name,
+        };
+
+        const hitRes = await fetch("/api/user/tracking", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const hitData = await hitRes.json();
+        const hitId = hitData?.data?.HitId;
+
+        const checkRes = await fetch("/api/user/profile/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ search: values.email }),
+        });
+
+        const checkData = await checkRes.json();
+        if (checkData.exists) {
+          setErrors({ email: "Email already taken" });
+          setSubmitting(false);
+          return;
+        }
+
+        handleOpen();
+
+        const response = await fetch("/api/user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...values,
+            age: "01/01/0101",
+            affiliate: aff,
+            hitid: hitId,
+          }),
+        });
+
+        const data = await response.json();
+        const profileId = data.profileId;
+
+        if (profileId) {
+          localStorage.setItem("email", values.email);
+          localStorage.setItem("userName", values.userName);
+          localStorage.setItem("password", values.password);
+          localStorage.setItem("logged_in_profile", profileId);
+          setProfileId(profileId);
+        }
+      } catch (err) {
+        console.error("Error:", err);
+        alert("Something went wrong!");
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
+
+  const yourTextFieldSx = {
+    bgcolor: "#2a2a2a",
+    input: { color: "#fff" },
+    mb: 2,
+    borderRadius: 1,
+    "& .MuiOutlinedInput-root": {
+      color: "#FF2D55",
+      bgcolor: "white",
+      "& fieldset": { borderColor: "#FF2D55" },
+      "&:hover fieldset": { borderColor: "#FF617B" },
+      "&.Mui-focused fieldset": { borderColor: "#7000FF" },
+      "&.Mui-error fieldset": { borderColor: "#FF0000" },
+    },
+    "& .MuiInputLabel-root": {
+      color: "#FF2D55!important",
+      "&.Mui-focused": { color: "#7000FF" },
+      "&.Mui-error": { color: "#FF0000" },
+    },
+  };
+
   return (
     <Box
       sx={{
@@ -449,379 +390,234 @@ export default function ProfileDetail() {
           real
         </Typography>
 
-        <TextField
-          fullWidth
-          label="Email"
-          variant="filled"
-          size="small"
-          name="email"
-          value={formData.email}
-          onChange={handleInputChange}
-          error={!!errors.email}
-          helperText={errors.email}
-          sx={{
-            backgroundColor: "#2a2a2a",
-            input: { color: "#fff" },
-            mb: 2,
-            borderRadius: "4px",
-            "& .MuiOutlinedInput-root": {
-              color: "#FF2D55", // Input text color
-              backgroundColor: "white", // Input background color
-              "& fieldset": {
-                borderColor: "#FF2D55", // Default border color
-              },
-              "&:hover fieldset": {
-                borderColor: "#FF617B", // Border color on hover
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#7000FF", // Border color when focused
-              },
-              "&.Mui-error fieldset": {
-                borderColor: "#FF0000", // Border color when there's an error
-              },
-            },
-            "& .MuiInputLabel-root": {
-              color: "#FF2D55!important", // Default label color
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#7000FF", // Label color when focused
-            },
-            "& .MuiInputLabel-root.Mui-error": {
-              color: "#FF0000", // Label color when there's an error
-            },
-          }}
-        />
+        <form onSubmit={formik.handleSubmit}>
+          <TextField
+            fullWidth
+            label="Email"
+            variant="filled"
+            size="small"
+            name="email"
+            sx={yourTextFieldSx}
+            value={formik.values.email}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.email && Boolean(formik.errors.email)}
+            helperText={formik.touched.email && formik.errors.email}
+          />
 
-        <TextField
-          fullWidth
-          label="Name"
-          variant="filled"
-          size="small"
-          name="userName"
-          value={formData.userName}
-          onChange={handleInputChange}
-          error={!!errors.userName}
-          helperText={errors.userName}
-          sx={{
-            backgroundColor: "#2a2a2a",
-            input: { color: "#fff" },
-            mb: 2,
-            borderRadius: "4px",
-            "& .MuiOutlinedInput-root": {
-              color: "#FF2D55", // Input text color
-              backgroundColor: "white", // Input background color
-              "& fieldset": {
-                borderColor: "#FF2D55", // Default border color
-              },
-              "&:hover fieldset": {
-                borderColor: "#FF617B", // Border color on hover
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#7000FF", // Border color when focused
-              },
-              "&.Mui-error fieldset": {
-                borderColor: "#FF0000", // Border color when there's an error
-              },
-            },
-            "& .MuiInputLabel-root": {
-              color: "#FF2D55!important", // Default label color
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#7000FF", // Label color when focused
-            },
-            "& .MuiInputLabel-root.Mui-error": {
-              color: "#FF0000", // Label color when there's an error
-            },
-          }}
-        />
+          <TextField
+            fullWidth
+            label="Name"
+            variant="filled"
+            size="small"
+            name="userName"
+            sx={yourTextFieldSx}
+            value={formik.values.userName}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.userName && Boolean(formik.errors.userName)}
+            helperText={formik.touched.userName && formik.errors.userName}
+          />
 
-        <TextField
-          fullWidth
-          type={showPassword ? "text" : "password"}
-          InputProps={{
-            // Add the show/hide password button
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={handleTogglePasswordVisibility}
-                  edge="end"
-                  style={{ color: "white" }}
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-          label="Password"
-          variant="filled"
-          size="small"
-          name="password"
-          value={formData.password}
-          onChange={handleInputChange}
-          error={!!errors.password}
-          helperText={errors.password}
-          sx={{
-            backgroundColor: "#2a2a2a",
-            input: { color: "#fff" },
-            mb: 2,
-            borderRadius: "4px",
-            "& .MuiOutlinedInput-root": {
-              color: "#FF2D55", // Input text color
-              backgroundColor: "white", // Input background color
-              "& fieldset": {
-                borderColor: "#FF2D55", // Default border color
-              },
-              "&:hover fieldset": {
-                borderColor: "#FF617B", // Border color on hover
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#7000FF", // Border color when focused
-              },
-              "&.Mui-error fieldset": {
-                borderColor: "#FF0000", // Border color when there's an error
-              },
-            },
-            "& .MuiInputLabel-root": {
-              color: "#FF2D55!important", // Default label color
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#7000FF", // Label color when focused
-            },
-            "& .MuiInputLabel-root.Mui-error": {
-              color: "#FF0000", // Label color when there's an error
-            },
-          }}
-        />
+          <TextField
+            fullWidth
+            label="Password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            variant="filled"
+            size="small"
+            value={formik.values.password}
+            onChange={(e) => {
+              const value = e.target.value;
+              formik.setFieldValue("password", value);
+              const strength = calculatePasswordStrength(value);
+              setPasswordStrength(strength);
+            }}
+            onBlur={formik.handleBlur}
+            error={formik.touched.password && Boolean(formik.errors.password)}
+            helperText={formik.touched.password && formik.errors.password}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={handleTogglePasswordVisibility}
+                    edge="end"
+                    style={{ color: "white" }}
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={yourTextFieldSx}
+          />
 
-        {touched && (
-          <Box sx={{ mb: 3 }}>
-            <LinearProgress
-              variant="determinate"
-              value={validation.password.strength}
-              color={getStrengthColor(validation.password.strength)}
-              sx={{
-                my: 1,
-                height: 8,
-                borderRadius: 4,
-              }}
-            />
-            <Typography
-              variant="caption"
-              sx={{
-                color: "rgba(255,255,255,0.7)",
-                display: "flex",
-                alignItems: "center",
-                gap: 0.5,
-              }}
-            >
-              Password Strength:
-              <span
-                style={{
-                  color:
-                    theme.palette[
-                      getStrengthColor(validation.password.strength)
-                    ].main,
+          {formik.values.password.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <LinearProgress
+                variant="determinate"
+                value={passwordStrength}
+                color={
+                  passwordStrength < 40
+                    ? "error"
+                    : passwordStrength < 60
+                    ? "warning"
+                    : "success"
+                }
+                sx={{
+                  height: 8,
+                  borderRadius: 4,
+                  mt: 1,
+                  mb: 0.5,
+                }}
+              />
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
                 }}
               >
-                {validation.password.strength < 40 && "Weak"}
-                {validation.password.strength >= 40 &&
-                  validation.password.strength < 60 &&
-                  "Medium"}
-                {validation.password.strength >= 60 && "Strong"}
-              </span>
-            </Typography>
-          </Box>
-        )}
-
-        <TextField
-          fullWidth
-          type={checkPassword ? "text" : "password"}
-          InputProps={{
-            // Add the show/hide password button
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={handleToggleCheckPasswordVisibility}
-                  edge="end"
-                  style={{ color: "white" }}
+                Password Strength:
+                <span
+                  style={{
+                    color:
+                      passwordStrength < 40
+                        ? "#FF0000"
+                        : passwordStrength < 60
+                        ? "#FFA000"
+                        : "#00C853",
+                  }}
                 >
-                  {checkPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-          label="Repeat Password"
-          variant="filled"
-          size="small"
-          name="repeatPassword"
-          value={formData.repeatPassword}
-          onChange={handleInputChange}
-          error={!!errors.repeatPassword}
-          helperText={errors.repeatPassword}
-          sx={{
-            backgroundColor: "#2a2a2a",
-            input: { color: "#fff" },
-            mb: 2,
-            borderRadius: "4px",
-            "& .MuiOutlinedInput-root": {
-              color: "#FF2D55", // Input text color
-              backgroundColor: "white", // Input background color
-              "& fieldset": {
-                borderColor: "#FF2D55", // Default border color
-              },
-              "&:hover fieldset": {
-                borderColor: "#FF617B", // Border color on hover
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#7000FF", // Border color when focused
-              },
-              "&.Mui-error fieldset": {
-                borderColor: "#FF0000", // Border color when there's an error
-              },
-            },
-            "& .MuiInputLabel-root": {
-              color: "#FF2D55!important", // Default label color
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#7000FF", // Label color when focused
-            },
-            "& .MuiInputLabel-root.Mui-error": {
-              color: "#FF0000", // Label color when there's an error
-            },
-          }}
-        />
-
-        <TextField
-          fullWidth
-          label="Phone"
-          variant="filled"
-          size="small"
-          name="phone"
-          value={formData.phone}
-          onChange={handleInputChange}
-          error={!!errors.phone}
-          helperText={errors.phone}
-          sx={{
-            backgroundColor: "#2a2a2a",
-            input: { color: "#fff" },
-            mb: 2,
-            borderRadius: "4px",
-            "& .MuiOutlinedInput-root": {
-              color: "#FF2D55", // Input text color
-              backgroundColor: "white", // Input background color
-              "& fieldset": {
-                borderColor: "#FF2D55", // Default border color
-              },
-              "&:hover fieldset": {
-                borderColor: "#FF617B", // Border color on hover
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#7000FF", // Border color when focused
-              },
-              "&.Mui-error fieldset": {
-                borderColor: "#FF0000", // Border color when there's an error
-              },
-            },
-            "& .MuiInputLabel-root": {
-              color: "#FF2D55!important", // Default label color
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#7000FF", // Label color when focused
-            },
-            "& .MuiInputLabel-root.Mui-error": {
-              color: "#FF0000", // Label color when there's an error
-            },
-          }}
-        />
-
-        <Autocomplete
-          id="autocomplete-filled"
-          open={openCity}
-          onOpen={() => setOpenCity(true)}
-          onClose={(event, reason) => {
-            if (isMobile && reason === "blur") {
-              return;
-            }
-            setOpenCity(false);
-          }}
-          disableClearable
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          getOptionLabel={(option) => option.City}
-          options={cityOption.map((city) => ({ ...city, key: city.id }))}
-          loading={cityLoading}
-          inputValue={cityInput}
-          onInputChange={(event, newInputValue) => {
-            if (event?.type === "change" || event?.type === "click") {
-              setCityInput(newInputValue);
-            }
-          }}
-          onChange={(event, newValue) => {
-            if (newValue?.City) {
-              setFormData({ ...formData, city: newValue.City });
-            }
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              variant="filled"
-              label="City"
-              error={!!errors.city}
-              helperText={errors.city}
-              InputProps={{
-                ...params.InputProps,
-                endAdornment: (
-                  <>
-                    {cityLoading ? (
-                      <CircularProgress color="inherit" size={15} />
-                    ) : null}
-                    {params.InputProps.endAdornment}
-                  </>
-                ),
-              }}
-              sx={{
-                backgroundColor: "#2a2a2a",
-                input: { color: "#fff" },
-                mb: 3,
-                borderRadius: "4px",
-                "& .MuiOutlinedInput-root": {
-                  color: "#FF2D55",
-                  backgroundColor: "white",
-                  "& fieldset": { borderColor: "#FF2D55" },
-                  "&:hover fieldset": { borderColor: "#FF617B" },
-                  "&.Mui-focused fieldset": { borderColor: "#7000FF" },
-                  "&.Mui-error fieldset": { borderColor: "#FF0000" },
-                },
-                "& .MuiInputLabel-root": {
-                  color: "#FF2D55!important",
-                },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#7000FF",
-                },
-                "& .MuiInputLabel-root.Mui-error": {
-                  color: "#FF0000",
-                },
-              }}
-            />
+                  {passwordStrength < 40 && "Weak"}
+                  {passwordStrength >= 40 && passwordStrength < 60 && "Medium"}
+                  {passwordStrength >= 60 && "Strong"}
+                </span>
+              </Typography>
+            </Box>
           )}
-        />
 
-        <Button
-          sx={{
-            width: "56px",
-            height: "56px",
-            borderRadius: "50%",
-            backgroundColor: "#c2185b",
-            color: "#fff",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            margin: "0 auto 16px auto",
-            "&:hover": { backgroundColor: "#ad1457" },
-          }}
-          onClick={handleSubmit}
-        >
-          <ArrowForwardIosIcon />
-        </Button>
+          <TextField
+            fullWidth
+            label="Repeat Password"
+            name="repeatPassword"
+            type={checkPassword ? "text" : "password"}
+            variant="filled"
+            size="small"
+            value={formik.values.repeatPassword}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={
+              formik.touched.repeatPassword &&
+              Boolean(formik.errors.repeatPassword)
+            }
+            helperText={
+              formik.touched.repeatPassword && formik.errors.repeatPassword
+            }
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={handleToggleCheckPasswordVisibility}
+                    edge="end"
+                    style={{ color: "white" }}
+                  >
+                    {checkPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={yourTextFieldSx}
+          />
+
+          <TextField
+            fullWidth
+            label="Phone"
+            variant="filled"
+            size="small"
+            name="phone"
+            sx={yourTextFieldSx}
+            value={formik.values.phone}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.phone && Boolean(formik.errors.phone)}
+            helperText={formik.touched.phone && formik.errors.phone}
+          />
+
+          <Autocomplete
+            id="city-autocomplete"
+            open={openCity}
+            onOpen={() => setOpenCity(true)}
+            onClose={(event, reason) => {
+              if (isMobile && reason === "blur") return;
+              setOpenCity(false);
+            }}
+            disableClearable
+            isOptionEqualToValue={(option, value) => option.City === value.City}
+            getOptionLabel={(option) => option.City}
+            options={cityOption.map((city) => ({ ...city, key: city.id }))}
+            loading={cityLoading}
+            inputValue={cityInput}
+            onInputChange={(event, newInputValue) => {
+              if (event?.type === "change" || event?.type === "click") {
+                setCityInput(newInputValue);
+              }
+            }}
+            onChange={(event, newValue) => {
+              if (newValue?.City) {
+                formik.setFieldValue("city", newValue.City);
+              }
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                name="city"
+                variant="filled"
+                label="City"
+                error={formik.touched.city && Boolean(formik.errors.city)}
+                helperText={formik.touched.city && formik.errors.city}
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {cityLoading ? (
+                        <CircularProgress color="inherit" size={15} />
+                      ) : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+                sx={yourTextFieldSx}
+              />
+            )}
+          />
+
+          <Button
+            type="submit"
+            disabled={formik.isSubmitting}
+            sx={{
+              width: "56px",
+              height: "56px",
+              borderRadius: "50%",
+              backgroundColor: "#c2185b",
+              color: "#fff",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              margin: "0 auto 16px auto",
+              "&:hover": { backgroundColor: "#ad1457" },
+            }}
+          >
+            {formik.isSubmitting ? (
+              <CircularProgress size={24} sx={{ color: "#fff" }} />
+            ) : (
+              <ArrowForwardIosIcon />
+            )}
+          </Button>
+        </form>
+
         <Typography
           sx={{ color: "#c2185b", fontWeight: "bold", fontSize: "1rem" }}
         >
@@ -843,13 +639,14 @@ export default function ProfileDetail() {
             cursor: "pointer",
           }}
           onClick={(e) => {
-            e.preventDefault(); // Prevent the default behavior of the anchor tag
-            router.push("/login"); // Use router.push for navigation
+            e.preventDefault();
+            router.push("/login");
           }}
         >
           Already registered? Click here to Login
         </Button>
       </Box>
+
       {/* Dialog Component */}
       <Dialog
         open={open}

@@ -1056,11 +1056,43 @@ export default function EventDetail(props: { params: Params }) {
                   </Box>
                 </Box>
 
-                <MTicketListComponent
-                  tickets={tickets}
-                  onTicketsChange={handleTicketsChange}
-                  summary={summary}
-                />
+                {membership === 0 ? (
+                  <>
+                    <Card
+                      sx={{
+                        mb: 4,
+                        mt: 4,
+                        bgcolor: "#1a1a1a",
+                        borderRadius: 2,
+                        border: "0.0625rem solid rgb(55, 58, 64)",
+                      }}
+                    >
+                      <CardContent sx={{ textAlign: "center", py: 3 }}>
+                        <Typography variant="h6" color="white" sx={{ mb: 2 }}>
+                          Premium membership required to purchase
+                        </Typography>
+                        <Button
+                          variant="contained"
+                          onClick={handleUpgrade}
+                          sx={{
+                            bgcolor: "#880E4F",
+                            "&:hover": { bgcolor: "#560027" },
+                          }}
+                        >
+                          Upgrade
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </>
+                ) : (
+                  <>
+                    <MTicketListComponent
+                      tickets={tickets}
+                      onTicketsChange={handleTicketsChange}
+                      summary={summary}
+                    />
+                  </>
+                )}
 
                 <Box sx={{ marginTop: 4 }}>
                   <Box
@@ -1719,7 +1751,7 @@ export default function EventDetail(props: { params: Params }) {
                     >
                       <CardContent sx={{ textAlign: "center", py: 3 }}>
                         <Typography variant="h6" color="white" sx={{ mb: 2 }}>
-                          You should upgrade your plan to buy the ticket.
+                          Premium membership required to purchase
                         </Typography>
                         <Button
                           variant="contained"
