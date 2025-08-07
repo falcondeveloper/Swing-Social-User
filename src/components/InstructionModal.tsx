@@ -3,39 +3,36 @@ import React, { useEffect, useState } from "react";
 import { Box, Dialog, DialogContent, Typography, Button } from "@mui/material";
 
 export default function InstructionModal() {
-  const [open, setOpen] = useState(true); // Dialog state to show on page load
-  
+  const [open, setOpen] = useState(true);
+
   useEffect(() => {
-      const count = localStorage.getItem('memberalarm') || "0";
-      localStorage.setItem('memberalarm', (parseInt(count) + 1).toString());
+    const count = localStorage.getItem("memberalarm") || "0";
+    localStorage.setItem("memberalarm", (parseInt(count) + 1).toString());
   }, []);
-  
 
   const handleClose = async () => {
     const userid = localStorage.getItem("logged_in_profile");
-    console.log(userid)
     await fetch("/api/user/memberalarm", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(userid)
+      body: JSON.stringify(userid),
     });
     setOpen(false);
   };
 
   return (
     <>
-      {/* Instruction Dialog */}
       <Dialog
         open={open}
         onClose={handleClose}
         sx={{
           "& .MuiDialog-paper": {
-            backgroundColor: "#333", // Dark background
-            color: "#fff", // White text
-            borderRadius: "12px", // Rounded corners
-            padding: "16px", // Inner padding
+            backgroundColor: "#333",
+            color: "#fff",
+            borderRadius: "12px",
+            padding: "16px",
           },
         }}
       >
@@ -55,7 +52,16 @@ export default function InstructionModal() {
             <br />
             Swipe <strong>LEFT</strong> if you're not interested.
           </Typography>
-          <Box display="flex" justifyContent="center" mt={2}>
+
+          <Typography variant="body2" sx={{ mt: 2, textAlign: "center" }}>
+            Members are registered as <strong>Males</strong>,{" "}
+            <strong>Females</strong>, or <strong>Couples</strong>. If you would
+            like to filter to couples only or females only, you can do so by
+            tapping your Avatar on the top right and tapping{" "}
+            <strong>Preferences</strong>.
+          </Typography>
+
+          <Box display="flex" justifyContent="center" mt={3}>
             <Button
               onClick={handleClose}
               variant="contained"

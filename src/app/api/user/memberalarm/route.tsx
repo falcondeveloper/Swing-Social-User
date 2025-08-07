@@ -14,7 +14,6 @@ const pool = new Pool({
 });
 
 export async function POST(req: any) {
-    console.log("---------------------------+++++++++++++++++++++++++++++")
     const data = await req.json();
     console.log(data)
     try {
