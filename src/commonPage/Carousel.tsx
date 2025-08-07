@@ -113,34 +113,6 @@ const Carousel = ({ title }: { title: string }) => {
             <ChevronRight />
           </IconButton>
 
-          {/* Gradient Overlays */}
-          <Box
-            sx={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "50px",
-              height: "100%",
-              background: "linear-gradient(to right, #000000cc, transparent)",
-              zIndex: 1,
-              pointerEvents: "none",
-              borderRadius: "16px 0 0 16px",
-            }}
-          />
-          <Box
-            sx={{
-              position: "absolute",
-              top: 0,
-              right: 0,
-              width: "50px",
-              height: "100%",
-              background: "linear-gradient(to left, #000000cc, transparent)",
-              zIndex: 1,
-              pointerEvents: "none",
-              borderRadius: "0 16px 16px 0",
-            }}
-          />
-
           {/* Swiper Slider */}
           <Swiper
             modules={[
