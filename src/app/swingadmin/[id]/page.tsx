@@ -14,8 +14,8 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
-// ✅ Declare valid swing options
 type SwingOption = "Full Swap" | "Soft Swap" | "Voyeur";
 
 type Params = Promise<{ id: string }>;
@@ -111,6 +111,22 @@ export default function Swing(props: { params: Params }) {
             boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
           }}
         >
+          <Grid item xs={12} sx={{ mb: 2 }}>
+            <Button
+              onClick={() => router.back()}
+              startIcon={<ArrowBackIcon />}
+              sx={{
+                color: "#fff",
+                textTransform: "none",
+                fontWeight: "bold",
+                "&:hover": {
+                  backgroundColor: "#2e2e2e",
+                },
+              }}
+            >
+              Back
+            </Button>
+          </Grid>
           {/* Title */}
           <Grid item xs={12} sx={{ textAlign: "center", mb: 2 }}>
             <Typography

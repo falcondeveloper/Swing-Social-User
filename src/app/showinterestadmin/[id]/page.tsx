@@ -15,6 +15,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 type Params = Promise<{ id: string }>;
 
@@ -102,6 +103,23 @@ export default function ShowInterest(props: { params: Params }) {
             }}
           >
             {/* Title */}
+            <Grid item xs={12} sx={{ mb: 2 }}>
+              <Button
+                onClick={() => router.back()}
+                startIcon={<ArrowBackIcon />}
+                sx={{
+                  color: "#fff",
+                  textTransform: "none",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: "#2e2e2e",
+                  },
+                }}
+              >
+                Back
+              </Button>
+            </Grid>
+
             <Grid item xs={12} sx={{ textAlign: "center", mb: 2 }}>
               <Typography
                 variant="h5"

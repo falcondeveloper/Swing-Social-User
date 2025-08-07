@@ -7,16 +7,21 @@ import {
   TextField,
   Typography,
   CircularProgress,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 type Params = Promise<{ id: string }>;
 
 export default function ScreenName(props: { params: Params }) {
   const router = useRouter();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [id, setId] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
@@ -83,7 +88,7 @@ export default function ScreenName(props: { params: Params }) {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          padding: 2,
+          px: 2,
         }}
       >
         <Grid
@@ -93,14 +98,31 @@ export default function ScreenName(props: { params: Params }) {
           sx={{
             backgroundColor: "#121212",
             borderRadius: "16px",
-            maxWidth: "600px",
-            padding: "32px",
+            width: "100%",
+            maxWidth: 500,
+            p: { xs: 3, sm: 4 },
             boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
           }}
         >
-          <Grid item xs={8} sx={{ textAlign: "center" }}>
+          <Grid item xs={12} sx={{ mb: 2 }}>
+            <Button
+              onClick={() => router.back()}
+              startIcon={<ArrowBackIcon />}
+              sx={{
+                color: "#fff",
+                textTransform: "none",
+                fontWeight: "bold",
+                "&:hover": {
+                  backgroundColor: "#2e2e2e",
+                },
+              }}
+            >
+              Back
+            </Button>
+          </Grid>
+          <Grid item xs={12} sx={{ textAlign: "center" }}>
             <Typography
-              variant="h5"
+              variant={isMobile ? "h6" : "h5"}
               sx={{
                 color: "#fff",
                 fontWeight: "bold",
@@ -127,7 +149,7 @@ export default function ScreenName(props: { params: Params }) {
                 sx={{
                   backgroundColor: "#2a2a2a",
                   input: { color: "#fff" },
-                  mb: 2,
+                  mb: 3,
                   borderRadius: "4px",
                 }}
               />
@@ -136,15 +158,15 @@ export default function ScreenName(props: { params: Params }) {
                 type="submit"
                 disabled={loading}
                 sx={{
-                  width: "56px",
-                  height: "56px",
+                  width: 56,
+                  height: 56,
                   borderRadius: "50%",
                   backgroundColor: "#c2185b",
                   color: "#fff",
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
-                  margin: "0 auto",
+                  mx: "auto",
                   "&:hover": { backgroundColor: "#ad1457" },
                 }}
               >
@@ -159,7 +181,11 @@ export default function ScreenName(props: { params: Params }) {
 
           <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
             <Typography
-              sx={{ color: "#c2185b", fontWeight: "bold", fontSize: "1rem" }}
+              variant="body2"
+              sx={{
+                color: "#c2185b",
+                fontWeight: "bold",
+              }}
             >
               Come party with us
             </Typography>
