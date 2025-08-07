@@ -10,36 +10,33 @@ import {
   Button,
   ToggleButtonGroup,
   ToggleButton,
-  CircularProgress
+  CircularProgress,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
-import { TireRepair } from "@mui/icons-material";
-import { title } from "process";
+import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import { useRouter } from "next/navigation";
-import Link from 'next/link'
-import 'react-toastify/dist/ReactToastify.css';
-import { toast, ToastContainer } from 'react-toastify';
-import Swal from 'sweetalert2';
+import "react-toastify/dist/ReactToastify.css";
+import { toast, ToastContainer } from "react-toastify";
+import Swal from "sweetalert2";
 
-type Params = Promise<{ id: string }>
+type Params = Promise<{ id: string }>;
 export default function Pricing(props: { params: Params }) {
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState(0);
   const [billingCycle, setBillingCycle] = useState("1");
-  const [userName, setUsername] = useState<any>('');
-  const [fullName, setFullName] = useState<any>('');
-  const [email, setEmail] = useState<any>('');
-  const [id, setId] = useState<string>(''); // State for error messages
-  const [password, setPassword] = useState<any>('');
+  const [userName, setUsername] = useState<any>("");
+  const [fullName, setFullName] = useState<any>("");
+  const [email, setEmail] = useState<any>("");
+  const [id, setId] = useState<string>(""); // State for error messages
+  const [password, setPassword] = useState<any>("");
   const [firstMonthFree, setFirstMonthFree] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    setFullName(localStorage.getItem('fullName'))
-    setUsername(localStorage.getItem('userName'))
-    setEmail(localStorage.getItem('email'));
-    setPassword(localStorage.getItem('password'))
+    setFullName(localStorage.getItem("fullName"));
+    setUsername(localStorage.getItem("userName"));
+    setEmail(localStorage.getItem("email"));
+    setPassword(localStorage.getItem("password"));
     const handlePromoState = async () => {
       const params = await props.params;
       const userid: any = params.id;
@@ -82,8 +79,8 @@ export default function Pricing(props: { params: Params }) {
       const params = await props.params;
       const pid: any = params.id;
       console.log(pid);
-      setId(pid)
-    }
+      setId(pid);
+    };
     getIdFromParam();
     handlePromoState();
   }, [props]);
@@ -104,58 +101,58 @@ export default function Pricing(props: { params: Params }) {
         billingCycle === "1"
           ? "$ 17.95"
           : billingCycle === "12"
-            ? "$129.95"
-            : billingCycle === "3"
-              ? "$ 39.95"
-              : "$69.95",
+          ? "$129.95"
+          : billingCycle === "3"
+          ? "$ 39.95"
+          : "$69.95",
       core_features: [
         {
           title: "Browse & Search Members",
-          available: true
+          available: true,
         },
         {
           title: "Browse & Search Events",
-          available: true
+          available: true,
         },
         {
           title: "Design Your Own Profile",
-          available: true
+          available: true,
         },
         {
           title: "View Other Members Profiles",
-          available: true
+          available: true,
         },
         {
           title: "Send Unlimited Messages to Members",
-          available: true
+          available: true,
         },
         {
           title: "Get Tickets to Free & Paid Private Events",
-          available: true
+          available: true,
         },
       ],
       in_development: [
         {
           title: "Browse Travel & Make Bookings",
-          available: true
+          available: true,
         },
         {
           title: "Browse & Read Blog",
-          available: true
+          available: true,
         },
         {
           title: "What's Hot Search & Upload",
-          available: true
+          available: true,
         },
         {
           title: "Comment & React to What's Hot Posts",
-          available: true
+          available: true,
         },
         {
           title: "Play Dates",
-          available: true
+          available: true,
         },
-      ]
+      ],
     },
     {
       title: "Free",
@@ -163,63 +160,63 @@ export default function Pricing(props: { params: Params }) {
       core_features: [
         {
           title: "Browse & Search Members",
-          available: true
+          available: true,
         },
         {
           title: "Browse & Search Events",
-          available: true
+          available: true,
         },
         {
           title: "Design Your Own Profile",
-          available: true
+          available: true,
         },
         {
           title: "View Other Members Profiles",
-          available: false
+          available: false,
         },
         {
           title: "Send Unlimited Messages to Members",
-          available: false
+          available: false,
         },
         {
           title: "Get Tickets to Free & Paid Private Events",
-          available: false
+          available: false,
         },
       ],
       in_development: [
         {
           title: "Browse Travel & Make Bookings",
-          available: true
+          available: true,
         },
         {
           title: "Browse & Read Blog",
-          available: true
+          available: true,
         },
         {
           title: "What's Hot Search & Upload",
-          available: true
+          available: true,
         },
         {
           title: "Comment & React to What's Hot Posts",
-          available: false
+          available: false,
         },
         {
           title: "Play Dates",
-          available: true
+          available: true,
         },
-      ]
+      ],
     },
   ];
 
   const sendEmail = async (username: string, email: string) => {
     try {
       const response = await fetch("/api/user/email", {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ username: username, email: email }),
-      })
+      });
 
       if (!response.ok) {
         throw new Error(`Error: ${response.statusText}`);
@@ -230,58 +227,56 @@ export default function Pricing(props: { params: Params }) {
     } catch (error: any) {
       console.error("Error sending email:", error.message);
     }
-  }
+  };
 
   const handleLogin = async (userName: string, password: string) => {
     const payload = {
       email: userName,
-      pwd: password
-    }
+      pwd: password,
+    };
 
     const result = await fetch("/api/user/login", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     const data = await result.json();
 
     console.log(data);
 
-    localStorage.setItem('loginInfo', data.jwtToken);
-    localStorage.setItem('logged_in_profile', data.currentProfileId);
-    localStorage.setItem('profileUsername', data.currentuserName);
-    localStorage.setItem('memberalarm', data.memberAlarm);
-    localStorage.setItem('memberShip', data.memberShip);
+    localStorage.setItem("loginInfo", data.jwtToken);
+    localStorage.setItem("logged_in_profile", data.currentProfileId);
+    localStorage.setItem("profileUsername", data.currentuserName);
+    localStorage.setItem("memberalarm", data.memberAlarm);
+    localStorage.setItem("memberShip", data.memberShip);
     // window.location.href = 'https://swing-social-user.vercel.app/home';
-    router.push('/home');
-  }
+    router.push("/home");
+  };
 
   const handleNavigation = (plan: string, price: string) => {
-    if (plan == 'Free') {
-      toast.success('You have subscribe to free plan successfully');
+    if (plan == "Free") {
+      toast.success("You have subscribe to free plan successfully");
       sendEmail(userName, email);
       Swal.fire({
         title: `Thank you ${userName}!  Your password is ${password}`,
-        text: 'You will now be directed to login again to confirm your account and start using Swingsocial!',
-        icon: 'success',
-        confirmButtonText: 'Tap here to login',
+        text: "You will now be directed to login again to confirm your account and start using Swingsocial!",
+        icon: "success",
+        confirmButtonText: "Tap here to login",
       }).then(() => {
-
         // Redirect after the user clicks "OK"
         // window.location.href = 'https://swing-social-user.vercel.app/login';
         handleLogin(userName, password);
       });
-      // Redirect to an external URL      
+      // Redirect to an external URL
     } else {
-      localStorage.setItem('ssprice', price);
-      localStorage.setItem('ssplan', plan);
-      localStorage.setItem('ssunit', billingCycle);
+      localStorage.setItem("ssprice", price);
+      localStorage.setItem("ssplan", plan);
+      localStorage.setItem("ssunit", billingCycle);
       router.push(`/planadmin/payment/${id}`);
     }
-
   };
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -295,42 +290,42 @@ export default function Pricing(props: { params: Params }) {
           borderRadius: 2,
           backgroundColor: "#000",
           color: "#fff",
-          border: '1px solid'
+          border: "1px solid",
         }}
       >
         {isLoading ? (
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              flexDirection: 'column',
-              justifyContent: 'center', 
-              alignItems: 'center', 
-              minHeight: '200px',
-              gap: 2 // adds space between elements
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: "200px",
+              gap: 2, // adds space between elements
             }}
           >
-            <CircularProgress 
-              sx={{ 
-                color: '#f50057', // matches your theme color
-                mb: 2 
-              }} 
+            <CircularProgress
+              sx={{
+                color: "#f50057", // matches your theme color
+                mb: 2,
+              }}
             />
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: '#fff',
-                animation: 'pulse 1.5s infinite',
-                '@keyframes pulse': {
-                  '0%': {
+            <Typography
+              variant="h6"
+              sx={{
+                color: "#fff",
+                animation: "pulse 1.5s infinite",
+                "@keyframes pulse": {
+                  "0%": {
                     opacity: 0.6,
                   },
-                  '50%': {
+                  "50%": {
                     opacity: 1,
                   },
-                  '100%': {
+                  "100%": {
                     opacity: 0.6,
-                  }
-                }
+                  },
+                },
               }}
             >
               Checking Your Promostate...
@@ -370,9 +365,11 @@ export default function Pricing(props: { params: Params }) {
                 }}
               />
             </Tabs>
-            {selectedTab === 0 ? (<Typography variant="h6" mb={2} sx={{textAlign: "center"}}>
-              Signup for only $1 the first month, then $17.95 monthly
-            </Typography>) : null}
+            {selectedTab === 0 ? (
+              <Typography variant="h6" mb={2} sx={{ textAlign: "center" }}>
+                Signup for only $1 the first month, then $17.95 monthly
+              </Typography>
+            ) : null}
           </Box>
         ) : (
           <Box>
@@ -415,7 +412,6 @@ export default function Pricing(props: { params: Params }) {
                   textAlign: "center",
                 }}
               >
-
                 <ToggleButtonGroup
                   value={billingCycle}
                   exclusive
@@ -461,22 +457,36 @@ export default function Pricing(props: { params: Params }) {
                   sx={{
                     width: 300,
                     borderRadius: 2,
-                    border: index === selectedTab ? "2px solid #f50057" : "1px solid #444",
+                    border:
+                      index === selectedTab
+                        ? "2px solid #f50057"
+                        : "1px solid #444",
                     backgroundColor: "#2a2a2a",
                   }}
                 >
                   <CardContent>
                     <Typography
                       variant="h5"
-                      sx={{ color: index === selectedTab ? "#f50057" : "#fff", mb: 1 }}
+                      sx={{
+                        color: index === selectedTab ? "#f50057" : "#fff",
+                        mb: 1,
+                      }}
                     >
-                      {selectedTab === 1 ? plan.title : firstMonthFree ? "$1 Membership" : plan.title}
+                      {selectedTab === 1
+                        ? plan.title
+                        : firstMonthFree
+                        ? "$1 Membership"
+                        : plan.title}
                     </Typography>
                     <Typography
                       variant="h4"
                       sx={{ color: "#fff", fontWeight: "bold", mb: 2 }}
                     >
-                      {selectedTab === 1 ? plan.price : firstMonthFree ? "$1" : plan.price}
+                      {selectedTab === 1
+                        ? plan.price
+                        : firstMonthFree
+                        ? "$1"
+                        : plan.price}
                       <Typography
                         component="span"
                         variant="body2"
@@ -487,7 +497,11 @@ export default function Pricing(props: { params: Params }) {
                     </Typography>
                     <Typography
                       variant="h6"
-                      sx={{ color: "#f50057", mb: 2, textTransform: "uppercase" }}
+                      sx={{
+                        color: "#f50057",
+                        mb: 2,
+                        textTransform: "uppercase",
+                      }}
                     >
                       Core Features
                     </Typography>
@@ -501,13 +515,25 @@ export default function Pricing(props: { params: Params }) {
                           color: "rgba(255, 255, 255, 0.9)",
                         }}
                       >
-                        {feature.available == true ? <CheckCircleIcon sx={{ fontSize: 20, color: "#4caf50", mr: 1 }} /> : <RemoveCircleIcon sx={{ fontSize: 20, color: "red", mr: 1 }} />}
+                        {feature.available == true ? (
+                          <CheckCircleIcon
+                            sx={{ fontSize: 20, color: "#4caf50", mr: 1 }}
+                          />
+                        ) : (
+                          <RemoveCircleIcon
+                            sx={{ fontSize: 20, color: "red", mr: 1 }}
+                          />
+                        )}
                         <Typography variant="body2">{feature.title}</Typography>
                       </Box>
                     ))}
                     <Typography
                       variant="h6"
-                      sx={{ color: "#f50057", mb: 2, textTransform: "uppercase" }}
+                      sx={{
+                        color: "#f50057",
+                        mb: 2,
+                        textTransform: "uppercase",
+                      }}
                     >
                       In Development
                     </Typography>
@@ -521,7 +547,15 @@ export default function Pricing(props: { params: Params }) {
                           color: "rgba(255, 255, 255, 0.9)",
                         }}
                       >
-                        {feature.available == true ? <CheckCircleIcon sx={{ fontSize: 20, color: "#4caf50", mr: 1 }} /> : <RemoveCircleIcon sx={{ fontSize: 20, color: "red", mr: 1 }} />}
+                        {feature.available == true ? (
+                          <CheckCircleIcon
+                            sx={{ fontSize: 20, color: "#4caf50", mr: 1 }}
+                          />
+                        ) : (
+                          <RemoveCircleIcon
+                            sx={{ fontSize: 20, color: "red", mr: 1 }}
+                          />
+                        )}
                         <Typography variant="body2">{feature.title}</Typography>
                       </Box>
                     ))}
@@ -542,15 +576,10 @@ export default function Pricing(props: { params: Params }) {
                     >
                       Select {plan.title} Plan
                     </Button>
-
                   </CardContent>
                 </Card>
-
-              )
-          })
-
-          }
-
+              );
+          })}
         </Box>
       </Box>
       <ToastContainer position="top-right" autoClose={3000} />

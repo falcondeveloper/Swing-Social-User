@@ -1,81 +1,79 @@
 "use client";
-import React, { useState, Suspense, useEffect } from "react";
-import { Box, Grid, Button, TextField, Typography } from "@mui/material";
+import React, { useState, useEffect, Suspense } from "react";
+import {
+  Box,
+  Grid,
+  Button,
+  TextField,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 import { useRouter } from "next/navigation";
-import { useSearchParams } from 'next/navigation'
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-type Params = Promise<{ id: string }>
+import { useFormik } from "formik";
+import * as Yup from "yup";
+
+type Params = Promise<{ id: string }>;
 
 export default function ScreenName(props: { params: Params }) {
-  const router: any = useRouter();
-  const [errors, setErrors] = useState<any>({}); // State for error messages
-  const [id, setId] = useState<string>(''); // State for error messages
-  const [username, setUsername] = useState<string>(""); // State for error messages
-    const [email, setEmail] = useState<any>('');
+  const router = useRouter();
+  const [id, setId] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const getIdFromParam = async () => {
       const params = await props.params;
-      const pid: any = params.id;
-      console.log(pid);
-      setId(pid)
-    }
+      setId(params.id);
+    };
     getIdFromParam();
-   
   }, [props]);
 
+  const validationSchema = Yup.object({
+    username: Yup.string()
+      .required("Username is required")
+      .test("checkUsername", "Username already taken", async function (value) {
+        if (!value) return false;
+        try {
+          const res = await fetch("/api/user/screenname/check", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ search: value }),
+          });
+          const data = await res.json();
+          return !data.exists;
+        } catch (err) {
+          return this.createError({ message: "Error checking username" });
+        }
+      }),
+  });
 
-  const handleContinue = async () => {
-    const newErrors: any = {};
-  
-    if (!username) {
-      newErrors.username = "Username is required";
-      setErrors(newErrors);
-      return;
-    }
-  
-    try {
-      // Check if the username exists
-      const checkResponse = await fetch('/api/user/screenname/check', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ search:username }), // Pass the username to check
-      });
-      localStorage.setItem('userName',username);
-  
-      const checkData = await checkResponse.json();
-      
-      if (checkData.exists) {
-        // Username is already taken
-        newErrors.username = "Username already taken";
-        setErrors(newErrors);
-        return;
+  const formik = useFormik({
+    initialValues: { username: "" },
+    validationSchema,
+    onSubmit: async (values) => {
+      setLoading(true);
+      try {
+        localStorage.setItem("userName", values.username);
+        const response = await fetch("/api/user/screenname", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ pid: id, username: values.username }),
+        });
+
+        if (response.ok) {
+          router.push(`/intrestedadmin/${id}`);
+        } else {
+          console.error("Error submitting username:", await response.text());
+        }
+      } catch (err) {
+        console.error("Submit error:", err);
       }
-  
-      // Proceed with submitting the username
-      const response = await fetch('/api/user/screenname', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ pid: id, username }),
-      });
-  
-      if (response.ok) {
-        router.push(`/intrestedadmin/${id}`);
-      } else {
-        console.error('Error submitting username:', await response.text());
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      newErrors.username = "An error occurred. Please try again.";
-    }
-  
-    setErrors(newErrors);
-  };
-  
+      setLoading(false);
+    },
+  });
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <Box
@@ -111,56 +109,59 @@ export default function ScreenName(props: { params: Params }) {
             >
               Create a screen name
             </Typography>
-            <TextField
-              fullWidth
-              label="Username"
-              variant="filled"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              error={!!errors.username}
-              helperText={errors.username}
-              size="small"
-              sx={{
-                backgroundColor: "#2a2a2a",
-                input: { color: "#fff" },
-                mb: 2,
-                borderRadius: "4px",
-              }}
-            />
+
+            <form onSubmit={formik.handleSubmit}>
+              <TextField
+                fullWidth
+                label="Username"
+                name="username"
+                variant="filled"
+                value={formik.values.username}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={
+                  formik.touched.username && Boolean(formik.errors.username)
+                }
+                helperText={formik.touched.username && formik.errors.username}
+                size="small"
+                sx={{
+                  backgroundColor: "#2a2a2a",
+                  input: { color: "#fff" },
+                  mb: 2,
+                  borderRadius: "4px",
+                }}
+              />
+
+              <Button
+                type="submit"
+                disabled={loading}
+                sx={{
+                  width: "56px",
+                  height: "56px",
+                  borderRadius: "50%",
+                  backgroundColor: "#c2185b",
+                  color: "#fff",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  margin: "0 auto",
+                  "&:hover": { backgroundColor: "#ad1457" },
+                }}
+              >
+                {loading ? (
+                  <CircularProgress size={24} sx={{ color: "#fff" }} />
+                ) : (
+                  <ArrowForwardIosIcon />
+                )}
+              </Button>
+            </form>
           </Grid>
-          <Grid item xs={12} sx={{ textAlign: "center" }}>
-            <Button
-              sx={{
-                width: "56px",
-                height: "56px",
-                borderRadius: "50%",
-                backgroundColor: "#c2185b",
-                color: "#fff",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                margin: "0 auto",
-                "&:hover": { backgroundColor: "#ad1457" },
-              }}
-              onClick={handleContinue}
-            >
-              <ArrowForwardIosIcon />
-            </Button>
-          </Grid>
+
           <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
             <Typography
               sx={{ color: "#c2185b", fontWeight: "bold", fontSize: "1rem" }}
             >
               Come party with us
-            </Typography>
-            <Typography
-              sx={{
-                color: "#aaa",
-                fontSize: "0.85rem",
-                mt: 1,
-              }}
-            >
-              {/* This text should arrive between 23s */}
             </Typography>
           </Grid>
         </Grid>

@@ -48,7 +48,7 @@ console.log(JSON.stringify(interests));
     if (interests?.length>0) {
       setError(false); // Clear any previous error
       try {
-        const response = await fetch("/api/user/looingfor", {
+        const response = await fetch("/api/user/lookingfor", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
