@@ -139,7 +139,6 @@ export default function Pineapple() {
       const token = localStorage.getItem("loginInfo");
       if (token) {
         const decodeToken = jwtDecode<any>(token);
-        console.log("decodeToken", decodeToken);
         setProfileId(decodeToken?.profileId);
       } else {
         router.push("/login");
@@ -220,6 +219,7 @@ export default function Pineapple() {
   }, [profileId, reportOptions]);
 
   useEffect(() => {
+    if (!profileId) return;
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -364,22 +364,21 @@ export default function Pineapple() {
                             cursor: "pointer",
                             display: "flex",
                             justifyContent: "center",
+                            alignItems: "center",
+                            width: "80px",
+                            height: "80px",
+                            borderRadius: "12px",
+                            backgroundImage: `url(${user.Avatar})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            backgroundRepeat: "no-repeat",
                           }}
                           onClick={() => {
                             setShowDetail(true);
                             setSelectedUserId(user.Id);
                           }}
                         >
-                          <img
-                            src={user.Avatar}
-                            alt={user.Username}
-                            style={{
-                              objectFit: "cover",
-                              width: "80px",
-                              height: "80px",
-                              borderRadius: "12px",
-                            }}
-                          />
+                          {/* Optionally, you can add overlay or icons here */}
                         </Box>
                       </Grid>
 
