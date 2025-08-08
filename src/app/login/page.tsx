@@ -250,8 +250,7 @@ const LoginPage: React.FC = () => {
           body: JSON.stringify(payload),
         })
           .then((res) => res.json())
-          .then((data) => {
-          })
+          .then((data) => {})
           .catch((err) => {
             console.error("Failed to save tracking:", err);
           });
@@ -927,7 +926,7 @@ const LoginPage: React.FC = () => {
                         },
                         fontSize: {
                           xs: "0.75rem",
-                          sm: "0.85rem",
+                          sm: "1rem",
                         },
                       }}
                     >
@@ -965,8 +964,8 @@ const LoginPage: React.FC = () => {
                       },
                     }}
                   >
-                    New to Swing Social?
-                    <Link href="/registeradmin">Create an account</Link>
+                    New to Swing Social?{" "}
+                    <Link href="/register">Create an account</Link>
                   </Typography>
 
                   <Typography

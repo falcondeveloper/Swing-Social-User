@@ -1,3 +1,5 @@
+// app/pricing/page.tsx
+
 "use client";
 import React, { Suspense, useEffect, useState } from "react";
 import {
@@ -10,550 +12,398 @@ import {
   Button,
   ToggleButtonGroup,
   ToggleButton,
-  Alert,
-  CircularProgress
+  CircularProgress,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
-import { TireRepair } from "@mui/icons-material";
-import { title } from "process";
+import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import { useRouter } from "next/navigation";
-import Link from 'next/link'
-import 'react-toastify/dist/ReactToastify.css';
-import { toast, ToastContainer } from 'react-toastify';
-import Swal from 'sweetalert2';
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
-type Params = Promise<{ id: string }>
-export default function Pricing(props: { params: Params }) {
+type Params = Promise<{ id: string }>;
+
+export default function Pricing({ params }: { params: Params }) {
   const router = useRouter();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const [selectedTab, setSelectedTab] = useState(0);
   const [billingCycle, setBillingCycle] = useState("1");
-  const [userName, setUsername] = useState<any>('');
-  const [fullName, setFullName] = useState<any>('');
-  const [email, setEmail] = useState<any>('');
-  const [id, setId] = useState<string>(''); // State for error messages
-  const [password, setPassword] = useState<any>('');
+  const [userName, setUsername] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [id, setId] = useState("");
+  const [password, setPassword] = useState("");
   const [firstMonthFree, setFirstMonthFree] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    setFullName(localStorage.getItem('fullName'))
-    setUsername(localStorage.getItem('userName'))
-    setEmail(localStorage.getItem('email'));
-    setPassword(localStorage.getItem('password'))
-    const getIdFromParam = async () => {
-      const params = await props.params;
-      const pid: any = params.id;
-      console.log(pid);
-      setId(pid)
-    }
-    const handlePromoState = async () => {
-      const params = await props.params;
-      const userid: any = params.id;
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/user/state?userid=${userid}`);
-        if (!response.ok) {
-          console.log("Error : please check it out");
-        }
-        const { user: advertiserData } = await response.json();
-        console.log(advertiserData);
-        const [city, state] = advertiserData.Location.split(", ");
+    setFullName(localStorage.getItem("fullName") || "");
+    setUsername(localStorage.getItem("userName") || "");
+    setEmail(localStorage.getItem("email") || "");
+    setPassword(localStorage.getItem("password") || "");
 
-        const result = await fetch("/api/user/promostate", {
+    const initialize = async () => {
+      const { id } = await params;
+      setId(id);
+      setIsLoading(true);
+
+      try {
+        const res = await fetch(`/api/user/state?userid=${id}`);
+        const { user } = await res.json();
+        const state = user.Location.split(", ")[1];
+
+        const promoRes = await fetch("/api/user/promostate", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            state: state,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ state }),
         });
 
-        const data = await result.json();
-
-        if (data.result == 1) {
-          setFirstMonthFree(true);
-          console.log("Free Month");
-        } else {
-          console.log("Premium Month");
-          setFirstMonthFree(false);
-        }
+        const promoData = await promoRes.json();
+        setFirstMonthFree(promoData.result == 1);
       } catch (error) {
-        console.error("Error fetching promo state:", error);
+        console.error("Error:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    getIdFromParam();
-    handlePromoState();
-  }, [props]);
-  const handleTabChange = (event: any, newValue: any) => {
-    setSelectedTab(newValue);
-  };
 
-  const handleBillingCycleChange = (event: any, newCycle: any) => {
-    console.log(newCycle);
-    if (newCycle) {
-      setBillingCycle(newCycle);
-    }
-  };
+    initialize();
+  }, [params]);
 
   const plans = [
     {
       title: "Premium",
       price:
         billingCycle === "1"
-          ? "$ 17.95"
-          : billingCycle === "12"
-            ? "$ 129.95"
-            : billingCycle === "3"
-              ? "$ 39.95"
-              : "$ 69.95",
-      core_features: [
-        {
-          title: "Browse & Search Members",
-          available: true
-        },
-        {
-          title: "Browse & Search Events",
-          available: true
-        },
-        {
-          title: "Design Your Own Profile",
-          available: true
-        },
-        {
-          title: "View Other Members Profiles",
-          available: true
-        },
-        {
-          title: "Send Unlimited Messages to Members",
-          available: true
-        },
-        {
-          title: "Get Tickets to Free & Paid Private Events",
-          available: true
-        },
+          ? "$17.95"
+          : billingCycle === "3"
+          ? "$39.95"
+          : billingCycle === "6"
+          ? "$69.95"
+          : "$129.95",
+      features: [
+        "Browse & Search Members",
+        "Browse & Search Events",
+        "Design Your Own Profile",
+        "View Other Members Profiles",
+        "Send Unlimited Messages to Members",
+        "Get Tickets to Free & Paid Private Events",
       ],
-      in_development: [
-        {
-          title: "Browse Travel & Make Bookings",
-          available: true
-        },
-        {
-          title: "Browse & Read Blog",
-          available: true
-        },
-        {
-          title: "What's Hot Search & Upload",
-          available: true
-        },
-        {
-          title: "Comment & React to What's Hot Posts",
-          available: true
-        },
-        {
-          title: "Play Dates",
-          available: true
-        },
-      ]
+      devFeatures: [
+        "Browse Travel & Make Bookings",
+        "Read Blog",
+        "What's Hot & Upload",
+        "Comment & React to What's Hot Posts",
+        "Play Dates",
+      ],
+      availability: {
+        features: [true, true, true, true, true, true],
+        devFeatures: [true, true, true, true, true],
+      },
     },
     {
       title: "Free",
-      price: "$ 0",
-      core_features: [
-        {
-          title: "Browse & Search Members",
-          available: true
-        },
-        {
-          title: "Browse & Search Events",
-          available: true
-        },
-        {
-          title: "Design Your Own Profile",
-          available: true
-        },
-        {
-          title: "View Other Members Profiles",
-          available: false
-        },
-        {
-          title: "Send Unlimited Messages to Members",
-          available: false
-        },
-        {
-          title: "Get Tickets to Free & Paid Private Events",
-          available: false
-        },
+      price: "$0",
+      features: [
+        "Browse & Search Members",
+        "Browse & Search Events",
+        "Design Your Own Profile",
+        "View Other Members Profiles",
+        "Send Unlimited Messages to Members",
+        "Get Tickets to Free & Paid Private Events",
       ],
-      in_development: [
-        {
-          title: "Browse Travel & Make Bookings",
-          available: true
-        },
-        {
-          title: "Browse & Read Blog",
-          available: true
-        },
-        {
-          title: "What's Hot Search & Upload",
-          available: true
-        },
-        {
-          title: "Comment & React to What's Hot Posts",
-          available: false
-        },
-        {
-          title: "Play Dates",
-          available: true
-        },
-      ]
+      devFeatures: [
+        "Browse Travel & Make Bookings",
+        "Read Blog",
+        "What's Hot & Upload",
+        "Comment & React to What's Hot Posts",
+        "Play Dates",
+      ],
+      availability: {
+        features: [true, true, true, false, false, false],
+        devFeatures: [true, true, true, false, true],
+      },
     },
-    
   ];
 
-  const sendEmail = async (username: string, email: string) => {
+  const handlePlanSelect = async (plan: string, price: string) => {
+    setIsProcessing(true);
     try {
-      const response = await fetch("/api/user/email", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username: username, email: email }),
-      })
+      if (plan === "Free") {
+        toast.success("Subscribed to Free plan!");
+        await sendEmail(userName, email);
 
-      if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
+        await Swal.fire({
+          title: "You're All Set!",
+          html: `
+          <p style="margin-bottom: 10px;">Your free plan has been activated successfully.</p>
+          <strong>You're now ready to explore the platform.</strong>
+        `,
+          icon: "success",
+          confirmButtonText: "Access Swingsocial",
+          confirmButtonColor: "#f50057",
+        });
+
+        await handleLogin(userName, password);
+      } else {
+        localStorage.setItem("ssprice", price);
+        localStorage.setItem("ssplan", plan);
+        localStorage.setItem("ssunit", billingCycle);
+        router.push(`/plan/payment/${id}`);
       }
-
-      const data = await response.json();
-      console.log("Email sent successfully:", data);
-    } catch (error: any) {
-      console.error("Error sending email:", error.message);
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+      console.error(error);
+    } finally {
+      setIsProcessing(false);
     }
-  }
+  };
+
+  const sendEmail = async (username: string, email: string) => {
+    await fetch("/api/user/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, email }),
+    });
+  };
 
   const handleLogin = async (userName: string, password: string) => {
-    const payload = {
-      email: userName,
-      pwd: password
-    }
-
-    const result = await fetch("/api/user/login", {
+    const response = await fetch("/api/user/login", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: userName, pwd: password }),
     });
 
-    const data = await result.json();
-    console.log(data)
-
-    localStorage.setItem('loginInfo', data.jwtToken);
-    localStorage.setItem('logged_in_profile', data.currentProfileId);
-    localStorage.setItem('profileUsername', data.currentuserName);
-    localStorage.setItem('memberalarm', data.memberAlarm);
-    localStorage.setItem('memberShip', data.memberShip);
-    window.location.href = 'https://swing-social-user.vercel.app/login';
-  }
-
-  const handleNavigation = (plan: string, price: string) => {
-    if (plan == 'Free') {
-      toast.success('You have subscribe to free plan successfully');
-      sendEmail(userName, email);
-      Swal.fire({
-        title: `Thank you ${userName}!  Your password is ${password}`,
-        text: 'You will now be directed to login again to confirm your account and start using Swingsocial!',
-        icon: 'success',
-        confirmButtonText: 'Tap here to login',
-      }).then(() => {
-
-        // Redirect after the user clicks "OK"
-        handleLogin(userName, password);
-      });
-      // Redirect to an external URL      
-    } else {
-      localStorage.setItem('ssprice', price);
-      localStorage.setItem('ssplan', plan);
-      localStorage.setItem('ssunit', billingCycle);
-      router.push(`/plan/payment/${id}`);
-    }
-
+    const data = await response.json();
+    localStorage.setItem("loginInfo", data.jwtToken);
+    localStorage.setItem("logged_in_profile", data.currentProfileId);
+    localStorage.setItem("profileUsername", data.currentuserName);
+    localStorage.setItem("memberalarm", data.memberAlarm);
+    localStorage.setItem("memberShip", data.memberShip);
+    router.push("/home");
   };
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <Box
         sx={{
+          px: 2,
+          py: 4,
           width: "100%",
-          maxWidth: 800,
-          margin: "auto",
-          mt: 5,
-          p: 3,
-          borderRadius: 2,
           backgroundColor: "#000",
           color: "#fff",
-          border: '1px solid'
+          minHeight: "100vh",
         }}
       >
         {isLoading ? (
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              flexDirection: 'column',
-              justifyContent: 'center', 
-              alignItems: 'center', 
-              minHeight: '200px',
-              gap: 2 // adds space between elements
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
             }}
           >
-            <CircularProgress 
-              sx={{ 
-                color: '#f50057', // matches your theme color
-                mb: 2 
-              }} 
-            />
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: '#fff',
-                animation: 'pulse 1.5s infinite',
-                '@keyframes pulse': {
-                  '0%': {
-                    opacity: 0.6,
-                  },
-                  '50%': {
-                    opacity: 1,
-                  },
-                  '100%': {
-                    opacity: 0.6,
-                  }
-                }
-              }}
-            >
-              Checking Your Promostate...
-            </Typography>
-          </Box>
-        ) : firstMonthFree ? (
-          <Box>
-            <Tabs
-              value={selectedTab}
-              onChange={handleTabChange}
-              textColor="secondary"
-              indicatorColor="secondary"
-              sx={{
-                mb: 3,
-                "& .MuiTabs-flexContainer": {
-                  justifyContent: "space-around",
-                },
-              }}
-            >
-              <Tab
-                label="Premium"
-                sx={{
-                  color: selectedTab === 1 ? "#f50057" : "#fff",
-                  textTransform: "none",
-                }}
-                onClick={() => {
-                  if (firstMonthFree) {
-                    setBillingCycle("1");
-                  }
-                }}
-              />
-              <Tab
-                label="Free"
-                sx={{
-                  color: selectedTab === 0 ? "#f50057" : "#fff",
-                  textTransform: "none",
-                }}
-              />
-            </Tabs>
-            {selectedTab === 0 ? (<Typography variant="h6" mb={2} sx={{textAlign: "center"}}>
-              Signup for only $1 the first month, then $17.95 monthly
-            </Typography>) : null}
+            <CircularProgress sx={{ color: "#f50057" }} />
+            <Typography variant="h6">Checking Promo State...</Typography>
           </Box>
         ) : (
-          <Box>
-            <Typography variant="h6" mb={2}>
-              Select a plan
-            </Typography>
-            {/* <Alert variant="filled" sx={{ background: '#f50057' }}>Premium acccess only $1 for the first month!</Alert> */}
+          <>
             <Tabs
               value={selectedTab}
-              onChange={handleTabChange}
+              onChange={(_, value) => setSelectedTab(value)}
+              centered
+              variant={isMobile ? "fullWidth" : "standard"}
               textColor="secondary"
               indicatorColor="secondary"
-              sx={{
-                mb: 3,
-                "& .MuiTabs-flexContainer": {
-                  justifyContent: "space-around",
-                },
-              }}
             >
               <Tab
                 label="Premium"
-                sx={{
-                  color: selectedTab === 1 ? "#f50057" : "#fff",
-                  textTransform: "none",
-                }}
+                sx={{ color: selectedTab === 0 ? "#f50057" : "#fff" }}
               />
               <Tab
                 label="Free"
-                sx={{
-                  color: selectedTab === 0 ? "#f50057" : "#fff",
-                  textTransform: "none",
-                }}
+                sx={{ color: selectedTab === 1 ? "#f50057" : "#fff" }}
               />
             </Tabs>
 
             {selectedTab === 0 && (
-              <Box
-                sx={{
-                  mb: 3,
-                  textAlign: "center",
-                }}
-              >
+              <Box mt={3}>
+                <Typography variant="body1" mb={2} textAlign="center">
+                  {firstMonthFree
+                    ? "Enjoy your first month for just $1!"
+                    : "Choose your billing cycle:"}
+                </Typography>
 
-                <ToggleButtonGroup
-                  value={billingCycle}
-                  exclusive
-                  onChange={handleBillingCycleChange}
-                  aria-label="Billing Cycle"
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    "& .MuiToggleButton-root": {
-                      color: "#fff",
-                      border: "1px solid #444",
-                      backgroundColor: "#2a2a2a",
-                      "&.Mui-selected": {
-                        backgroundColor: "#f50057",
-                        color: "#fff",
-                      },
-                    },
-                  }}
-                >
-                  <ToggleButton value="1">Monthly</ToggleButton>
-                  <ToggleButton value="3">Quarterly</ToggleButton>
-                  <ToggleButton value="6">Bi-Annually</ToggleButton>
-                  <ToggleButton value="12">Annually</ToggleButton>
-                </ToggleButtonGroup>
-              </Box>
-            )}
-          </Box>
-        )}
-
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            gap: 3,
-            flexWrap: "wrap",
-          }}
-        >
-          {plans.map((plan, index) => {
-            if (index === selectedTab)
-              return (
-                <Card
-                  key={plan.title}
-                  sx={{
-                    width: 300,
-                    borderRadius: 2,
-                    border: index === selectedTab ? "2px solid #f50057" : "1px solid #444",
-                    backgroundColor: "#2a2a2a",
-                  }}
-                >
-                  <CardContent>
-                    <Typography
-                      variant="h5"
-                      sx={{ color: index === selectedTab ? "#f50057" : "#fff", mb: 1 }}
-                    >
-                      {selectedTab === 1 ? plan.title : firstMonthFree ? "$1 Membership" : plan.title}
-                    </Typography>
-                    <Typography
-                      variant="h4"
-                      sx={{ color: "#fff", fontWeight: "bold", mb: 2 }}
-                    >
-                      {selectedTab === 1 ? plan.price : firstMonthFree ? "$1" : plan.price}
-                      <Typography
-                        component="span"
-                        variant="body2"
-                        sx={{ ml: 1, color: "rgba(255, 255, 255, 0.7)" }}
-                      >
-                        USD
-                      </Typography>
-                    </Typography>
-                    <Typography
-                      variant="h6"
-                      sx={{ color: "#f50057", mb: 2, textTransform: "uppercase" }}
-                    >
-                      Core Features
-                    </Typography>
-                    {plan.core_features.map((feature, idx) => (
-                      <Box
-                        key={idx}
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          mb: 1,
-                          color: "rgba(255, 255, 255, 0.9)",
-                        }}
-                      >
-                        {feature.available == true ? <CheckCircleIcon sx={{ fontSize: 20, color: "#4caf50", mr: 1 }} /> : <RemoveCircleIcon sx={{ fontSize: 20, color: "red", mr: 1 }} />}
-                        <Typography variant="body2">{feature.title}</Typography>
-                      </Box>
-                    ))}
-                    <Typography
-                      variant="h6"
-                      sx={{ color: "#f50057", mb: 2, textTransform: "uppercase" }}
-                    >
-                      In Development
-                    </Typography>
-                    {plan.in_development.map((feature, idx) => (
-                      <Box
-                        key={idx}
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          mb: 1,
-                          color: "rgba(255, 255, 255, 0.9)",
-                        }}
-                      >
-                        {feature.available == true ? <CheckCircleIcon sx={{ fontSize: 20, color: "#4caf50", mr: 1 }} /> : <RemoveCircleIcon sx={{ fontSize: 20, color: "red", mr: 1 }} />}
-                        <Typography variant="body2">{feature.title}</Typography>
-                      </Box>
-                    ))}
-
-                    <Button
-                      onClick={() => handleNavigation(plan.title, plan.price)}
-                      variant="contained"
-                      color="primary"
+                {!firstMonthFree && (
+                  <Box
+                    sx={{
+                      overflowX: "auto",
+                      whiteSpace: "nowrap",
+                      display: { xs: "block", md: "flex" },
+                      justifyContent: { md: "center" },
+                      "&::-webkit-scrollbar": { display: "none" },
+                    }}
+                  >
+                    <ToggleButtonGroup
+                      value={billingCycle}
+                      exclusive
+                      onChange={(_, value) => value && setBillingCycle(value)}
                       sx={{
-                        mt: 3,
-                        textTransform: "none",
-                        backgroundColor: "#f50057",
-                        "&:hover": {
-                          backgroundColor: "#c51162",
+                        display: "inline-flex",
+                        flexWrap: "nowrap",
+                        "& .MuiToggleButton-root": {
+                          flex: "0 0 auto",
+                          color: "#fff",
+                          borderColor: "#f50057",
+                          m: 0.5,
+                          px: 2,
+                          backgroundColor: "#1c1c1c",
+                          borderRadius: 3,
+                          whiteSpace: "nowrap",
+                          "&.Mui-selected": {
+                            backgroundColor: "#f50057 !important",
+                            color: "#fff",
+                            borderColor: "#f50057",
+                          },
+                          "&:hover": {
+                            backgroundColor: "#f73378",
+                          },
                         },
                       }}
-                      fullWidth
                     >
-                      Select {plan.title} Plan
-                    </Button>
+                      <ToggleButton value="1">Monthly</ToggleButton>
+                      <ToggleButton value="3">Quarterly</ToggleButton>
+                      <ToggleButton value="6">Bi-Annually</ToggleButton>
+                      <ToggleButton value="12">Annually</ToggleButton>
+                    </ToggleButtonGroup>
+                  </Box>
+                )}
+              </Box>
+            )}
 
-                  </CardContent>
-                </Card>
+            <Box
+              mt={4}
+              width={isMobile ? "100%" : "25%"}
+              display="flex"
+              flexDirection={isMobile ? "column" : "row"}
+              margin={"30px auto"}
+              justifyContent="center"
+              alignItems="stretch"
+              gap={3}
+            >
+              {plans
+                .filter((_, i) => i === selectedTab)
+                .map((plan, i) => (
+                  <Card
+                    key={plan.title}
+                    sx={{
+                      flex: 1,
+                      borderRadius: 3,
+                      backgroundColor: "#1c1c1c",
+                      border: "1px solid #333",
+                      p: 1,
+                    }}
+                  >
+                    <CardContent>
+                      <Typography variant="h5" color="#f50057" mb={1}>
+                        {plan.title}
+                      </Typography>
+                      <Typography
+                        variant="h4"
+                        color="#fff"
+                        fontWeight="bold"
+                        mb={2}
+                      >
+                        {firstMonthFree && selectedTab === 0
+                          ? "$1"
+                          : plan.price}
+                        <Typography component="span" variant="body2" ml={1}>
+                          USD
+                        </Typography>
+                      </Typography>
 
-              )
-          })
+                      <Typography
+                        variant="subtitle1"
+                        color="#f50057"
+                        gutterBottom
+                      >
+                        Features
+                      </Typography>
+                      {plan.features.map((text, idx) => (
+                        <Box
+                          key={idx}
+                          display="flex"
+                          alignItems="center"
+                          mb={1}
+                        >
+                          {plan.availability.features[idx] ? (
+                            <CheckCircleIcon color="success" fontSize="small" />
+                          ) : (
+                            <RemoveCircleIcon color="error" fontSize="small" />
+                          )}
+                          <Typography variant="body2" ml={1} color="#fff">
+                            {text}
+                          </Typography>
+                        </Box>
+                      ))}
 
-          }
+                      <Typography
+                        variant="subtitle1"
+                        color="#f50057"
+                        mt={2}
+                        gutterBottom
+                      >
+                        In Development
+                      </Typography>
+                      {plan.devFeatures.map((text, idx) => (
+                        <Box
+                          key={idx}
+                          display="flex"
+                          alignItems="center"
+                          mb={1}
+                        >
+                          {plan.availability.devFeatures[idx] ? (
+                            <CheckCircleIcon color="success" fontSize="small" />
+                          ) : (
+                            <RemoveCircleIcon color="error" fontSize="small" />
+                          )}
+                          <Typography variant="body2" ml={1} color="#fff">
+                            {text}
+                          </Typography>
+                        </Box>
+                      ))}
 
-        </Box>
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        disabled={isProcessing}
+                        sx={{
+                          mt: 3,
+                          backgroundColor: "#f50057",
+                          "&:hover": {
+                            backgroundColor: "#c51162",
+                          },
+                        }}
+                        onClick={() => handlePlanSelect(plan.title, plan.price)}
+                      >
+                        {isProcessing ? (
+                          <CircularProgress size={24} sx={{ color: "#fff" }} />
+                        ) : (
+                          `Select ${plan.title} Plan`
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+            </Box>
+          </>
+        )}
       </Box>
-      <ToastContainer position="top-right" autoClose={3000} />
     </Suspense>
   );
 }

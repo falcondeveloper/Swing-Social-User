@@ -10,9 +10,9 @@ import {
   Typography,
 } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-type Params = Promise<{ id: string }>
+type Params = Promise<{ id: string }>;
 
 export default function ShowIntrest(props: { params: Params }) {
   const [selectedOption, setSelectedOption] = useState<string>("");
@@ -33,14 +33,14 @@ export default function ShowIntrest(props: { params: Params }) {
     borderRadius: "4px",
   };
 
-  const [id, setId] = useState<string>(''); // State for error messages
+  const [id, setId] = useState<string>(""); // State for error messages
   useEffect(() => {
     const getIdFromParam = async () => {
       const params = await props.params;
       const pid: any = params.id;
       console.log(pid);
-      setId(pid)
-    }
+      setId(pid);
+    };
     getIdFromParam();
   }, [props]);
 
@@ -52,7 +52,7 @@ export default function ShowIntrest(props: { params: Params }) {
 
   const handleSexualChange = (event: any) => {
     setSexualOrientation(event.target.value as string);
-  }
+  };
 
   const handlePartnerGenderChange = (event: any) => {
     setPartnerGender(event.target.value);
@@ -68,10 +68,14 @@ export default function ShowIntrest(props: { params: Params }) {
     const newErrors: any = {};
     if (!age) newErrors.age = "Age is required.";
     if (!gender) newErrors.gender = "Gender is required.";
-    if (!sexualOrientation) newErrors.sexualOrientation = "Sexual orientation is required.";
-    if (!partnerBirthday) newErrors.partnerBirthday = "Partner's age is required.";
-    if (!partnerGender) newErrors.partnerGender = "Partner's gender is required.";
-    if (!partnerOrientation) newErrors.partnerOrientation = "Partner's orientation is required.";
+    if (!sexualOrientation)
+      newErrors.sexualOrientation = "Sexual orientation is required.";
+    if (!partnerBirthday)
+      newErrors.partnerBirthday = "Partner's age is required.";
+    if (!partnerGender)
+      newErrors.partnerGender = "Partner's gender is required.";
+    if (!partnerOrientation)
+      newErrors.partnerOrientation = "Partner's orientation is required.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -101,24 +105,24 @@ export default function ShowIntrest(props: { params: Params }) {
       const requestBody =
         selectedOption === "Women" || selectedOption === "Man"
           ? {
-            pid: id,
-            accounttype: selectedOption,
-            age: parseInt(age, 10),
-            orientation1: sexualOrientation,
-          }
+              pid: id,
+              accounttype: selectedOption,
+              age: parseInt(age, 10),
+              orientation1: sexualOrientation,
+              gender1: selectedOption === "Women" ? "Female" : "Male",
+            }
           : {
-            pid: id,
-            accounttype: selectedOption,
-            gender1: gender,
-            age: parseInt(age, 10),
-            orientation1: sexualOrientation,
-            partnerbirthday: partnerBirthday,
-            partnergender: partnerGender,
-            partnerorientation: partnerOrientation,
-          };
+              pid: id,
+              accounttype: selectedOption,
+              gender1: gender,
+              age: parseInt(age, 10),
+              orientation1: sexualOrientation,
+              partnerbirthday: partnerBirthday,
+              partnergender: partnerGender,
+              partnerorientation: partnerOrientation,
+            };
 
       if (selectedOption === "Women" || selectedOption === "Man") {
-
         const response = await fetch("/api/user/intrested", {
           method: "POST",
           headers: {
@@ -128,7 +132,7 @@ export default function ShowIntrest(props: { params: Params }) {
         });
 
         if (response.ok) {
-          router.push(`/showinterest/${id}`);
+          router.push(`/upload/${id}`);
         } else {
           console.error("Error submitting form:", response.statusText);
         }
@@ -142,7 +146,7 @@ export default function ShowIntrest(props: { params: Params }) {
         });
 
         if (response.ok) {
-          router.push(`/showinterest/${id}`);
+          router.push(`/upload/${id}`);
         } else {
           console.error("Error submitting form:", response.statusText);
         }
@@ -151,8 +155,6 @@ export default function ShowIntrest(props: { params: Params }) {
       console.error("Error submitting form:", error);
     }
   };
-
-
 
   const renderAdditionalFields = () => {
     const sharedFieldStyles = {
@@ -323,7 +325,9 @@ export default function ShowIntrest(props: { params: Params }) {
                 displayEmpty
                 size="small"
                 sx={sharedFieldStyles}
-                inputProps={{ "aria-label": "What's your partner's orientation?" }}
+                inputProps={{
+                  "aria-label": "What's your partner's orientation?",
+                }}
                 error={!!errors.partnerOrientation}
               >
                 <MenuItem value="" disabled>
@@ -347,8 +351,6 @@ export default function ShowIntrest(props: { params: Params }) {
         return null;
     }
   };
-
-
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
