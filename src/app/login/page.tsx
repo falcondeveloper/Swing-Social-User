@@ -447,7 +447,7 @@ const LoginPage: React.FC = () => {
         } else {
           setOpen(true);
           if (data.currentuserName === "Webnew") {
-            router.push(`/screennameadmin/${data.currentProfileId}`);
+            router.push(`/screenname/${data.currentProfileId}`);
           } else {
             localStorage.setItem("loginInfo", data.jwtToken);
             localStorage.setItem("logged_in_profile", data.currentProfileId);

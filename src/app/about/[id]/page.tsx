@@ -56,7 +56,7 @@ export default function About(props: { params: Params }) {
         });
 
         if (response.ok) {
-          router.push(`/planadmin/${id}`);
+          router.push(`/plan/${id}`);
         } else {
           console.error("Error submitting form:", response.statusText);
         }
