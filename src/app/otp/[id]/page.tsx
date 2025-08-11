@@ -73,7 +73,7 @@ export default function Otp(props: { params: Params }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id, status: 1 }),
         });
-        router.push(`/screenname/${id}`);
+        router.push(`/intrested/${id}`);
       } else {
         setError(true);
 

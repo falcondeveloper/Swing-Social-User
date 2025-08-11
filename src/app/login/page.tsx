@@ -148,8 +148,6 @@ const RotatingCard: React.FC<{ children: React.ReactNode }> = ({
   return (
     <Box
       ref={cardRef}
-      // onMouseMove={handleMouseMove}
-      // onMouseLeave={handleMouseLeave}
       sx={{
         perspective: "1000px",
         transformStyle: "preserve-3d",

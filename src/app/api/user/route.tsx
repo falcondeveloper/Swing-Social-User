@@ -65,8 +65,17 @@ function extractName(userName: string): {
 }
 
 export async function POST(req: any) {
-  const { email, age, city, password, phone, userName, affiliate, hitid } =
-    await req.json();
+  const {
+    email,
+    age,
+    city,
+    password,
+    phone,
+    userName,
+    affiliate,
+    hitid,
+    user_name,
+  } = await req.json();
   try {
     const currentDate = new Date();
     const ageInt = parseInt(age, 10);
@@ -82,7 +91,7 @@ export async function POST(req: any) {
     const hashedPassword = hashPassword(password);
 
     const result = await pool.query(
-      "SELECT * FROM public.web_insert_profilepage1($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+      "SELECT * FROM public.web_insert_profilepage1($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
       [
         email,
         first_name,
@@ -93,6 +102,7 @@ export async function POST(req: any) {
         city,
         affiliate,
         hitid,
+        user_name,
       ]
     );
     const profileId = result.rows[0]?.ProfileId;
