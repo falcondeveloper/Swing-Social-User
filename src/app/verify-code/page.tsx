@@ -30,7 +30,7 @@ const OtpLoginContent = () => {
   const [vcode, setCode] = useState<any>("");
 
   useEffect(() => {
-    const emailParam = searchParams.get("email");
+    const emailParam = searchParams?.get("email") ?? "";
     if (emailParam) {
       setEmail(emailParam);
     }
