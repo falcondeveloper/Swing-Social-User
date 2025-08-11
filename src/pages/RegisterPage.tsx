@@ -145,7 +145,7 @@ const PolicyRow = ({ supportEmail }: PolicyRowProps) => (
       px: { xs: 2, sm: 0 },
     }}
   >
-    <Typography
+    {/* <Typography
       component="p"
       sx={{
         color: "#aaa",
@@ -157,7 +157,7 @@ const PolicyRow = ({ supportEmail }: PolicyRowProps) => (
       We respect privacy and follow industry best-practices (incl. principles of
       India’s DPDP Act, 2023). Your info is used only to create and secure your
       account.
-    </Typography>
+    </Typography> */}
 
     <Stack
       direction={{ xs: "column", sm: "row" }}
