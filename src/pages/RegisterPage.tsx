@@ -346,7 +346,7 @@ const RegisterPage = () => {
   const [checkPassword, setCheckPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
 
-  const [supportEmail, setSupportEmail] = useState("support@example.com");
+  const [supportEmail, setSupportEmail] = useState("info@swingsocial.co");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -547,8 +547,6 @@ const RegisterPage = () => {
           return setSubmitting(false);
         }
 
-        handleOpen();
-
         const data = await (
           await fetch("/api/user", {
             method: "POST",
@@ -569,6 +567,7 @@ const RegisterPage = () => {
           localStorage.setItem("logged_in_profile", data.profileId);
           localStorage.setItem("userName", values.user_name);
           setProfileId(data.profileId);
+          handleOpen();
         }
       } catch (err) {
         console.error(err);
