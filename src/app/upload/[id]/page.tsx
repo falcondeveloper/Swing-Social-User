@@ -96,44 +96,21 @@ export default function UploadAvatar({ params }: { params: Params }) {
     setCroppedArea(croppedAreaPixels);
   };
 
-  const analyzeImage = async (imageData: string): Promise<boolean> => {
-    const img = new Image();
-    img.src = imageData;
-
-    return new Promise((resolve) => {
-      img.onload = async () => {
-        const model = await mobilenet.load();
-        const predictions = await model.classify(img);
-        const bodyKeywords = [
-          "person",
-          "human",
-          "body",
-          "diaper",
-          "nappy",
-          "napkin",
-          "brassiere",
-          "bra",
-          "bandeau",
-        ];
-        const isNSFW = predictions.some((p) =>
-          bodyKeywords.some((k) => p.className.toLowerCase().includes(k))
-        );
-        resolve(isNSFW);
-      };
-    });
-  };
-
   const uploadImage = async (dataUrl: string): Promise<string> => {
     const blob = await (await fetch(dataUrl)).blob();
     const formData = new FormData();
     formData.append("image", blob, `${Date.now()}.jpg`);
-    const res = await fetch("/api/user/upload", {
+    const response = await fetch("/api/user/upload", {
       method: "POST",
       body: formData,
     });
-    const result = await res.json();
-    localStorage.setItem("avatar", result.blobUrl);
-    return result.blobUrl;
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to upload image");
+    }
+
+    return data?.blobUrl || null;
   };
 
   const formik = useFormik({
@@ -145,21 +122,33 @@ export default function UploadAvatar({ params }: { params: Params }) {
     }),
     onSubmit: async (values) => {
       setIsUploading(true);
-      // const isAvatarOk = await analyzeImage(values.avatar);
-      const avatarUrl = await uploadImage(values.avatar);
+      try {
+        const avatarUrl = await uploadImage(values.avatar);
 
-      await fetch("/api/user/upload/database", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pid: userId,
-          Questionable: 1,
-          avatar: avatarUrl,
-          banner: "",
-        }),
-      });
+        const response = await fetch("/api/user/upload/database", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            pid: userId,
+            Questionable: 1,
+            avatar: avatarUrl,
+            banner: "",
+          }),
+        });
 
-      router.push(`/bannerupload/${userId}`);
+        if (!response.ok) {
+          throw new Error("Failed to save in database");
+        }
+
+        router.push(`/bannerupload/${userId}`);
+      } catch (err) {
+        console.error("Form submit failed:", err);
+        formik.setFieldError("avatar", (err as Error).message);
+      } finally {
+        setIsUploading(false);
+      }
     },
   });
 
