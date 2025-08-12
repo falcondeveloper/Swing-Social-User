@@ -154,8 +154,7 @@ export default function About(props: { params: Params }) {
               Enter a short description about yourself or yourselves, such as
               <em>
                 {" "}
-                "We love boating and camping on the weekends and speed
-                dating..."
+                "We love boating and camping on the weekends and speed dating"
               </em>
             </Typography>
 
