@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -38,8 +38,41 @@ const demoImages = [
   "/images/event.png",
 ];
 
+type CarouselUser = {
+  Avatar: string;
+  Username: string;
+  [key: string]: any;
+};
+
 const Carousel = ({ title }: { title: string }) => {
+  const [data, setData] = useState<CarouselUser[]>([]);
   const [openProfileModal, setOpenProfileModal] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/user/carouselList", {
+          cache: "no-store",
+        });
+
+        const raw = await res.text();
+
+        let json: any;
+        try {
+          json = JSON.parse(raw);
+        } catch {
+          throw new Error("Response is not valid JSON");
+        }
+
+        const pineapples = json?.pineapples ?? json?.data ?? json;
+        const products = pineapples?.products ?? pineapples;
+        setData(products);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+    })();
+  }, []);
+
   return (
     <>
       <Grid
@@ -149,7 +182,7 @@ const Carousel = ({ title }: { title: string }) => {
               prevEl: ".custom-prev",
             }}
           >
-            {demoImages.map((img, index) => (
+            {data.map((img, index) => (
               <SwiperSlide key={index}>
                 <Box
                   onClick={() => setOpenProfileModal(true)}
@@ -163,8 +196,8 @@ const Carousel = ({ title }: { title: string }) => {
                   }}
                 >
                   <img
-                    src={img}
-                    alt={`user-${index}`}
+                    src={img?.Avatar}
+                    alt={`user-${img?.Username}`}
                     style={{
                       width: "100%",
                       height: "100%",

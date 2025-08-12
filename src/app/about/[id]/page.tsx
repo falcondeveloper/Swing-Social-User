@@ -113,11 +113,11 @@ export default function About(props: { params: Params }) {
                 Enter a short tagline other users can see when swiping through
                 pics. Examples are:
               </Typography>
-              <ul style={{ margin: "8px 0", paddingLeft: "20px" }}>
+              {/* <ul style={{ margin: "8px 0", paddingLeft: "20px" }}>
                 <li style={{ marginBottom: "5px" }}>New to the Lifestyle</li>
                 <li style={{ marginBottom: "5px" }}>We love Dancing</li>
                 <li>We love 3sums!</li>
-              </ul>
+              </ul> */}
             </Box>
 
             {/* Tagline Field */}
@@ -154,7 +154,8 @@ export default function About(props: { params: Params }) {
               Enter a short description about yourself or yourselves, such as
               <em>
                 {" "}
-                "We love boating and camping on the weekends and speed dating"
+                "We love boating and camping on the weekends and speed
+                dating..."
               </em>
             </Typography>
 
@@ -215,7 +216,7 @@ export default function About(props: { params: Params }) {
             </Grid>
           </form>
         </Grid>
-        {/* <Carousel title="This is the last screen!" /> */}
+        <Carousel title="This is the last screen!" />
       </Grid>
     </Box>
   );

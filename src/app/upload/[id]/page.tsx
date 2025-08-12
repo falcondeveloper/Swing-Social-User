@@ -21,6 +21,7 @@ import "@tensorflow/tfjs";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { EditIcon } from "lucide-react";
+import Carousel from "@/commonPage/Carousel";
 
 type Params = Promise<{ id: string }>;
 
@@ -327,6 +328,8 @@ export default function UploadAvatar({ params }: { params: Params }) {
               )}
             </Button>
           </Grid>
+
+          <Carousel title="These users are waiting to meet you!" />
         </Grid>
       </form>
 
