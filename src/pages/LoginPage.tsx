@@ -426,8 +426,6 @@ const LoginPage = () => {
                   disabled={loading}
                   sx={{
                     py: 1.5,
-                    mb: 2,
-                    my: 3,
                     position: "relative",
                     overflow: "hidden",
                     color: "white",
@@ -455,6 +453,18 @@ const LoginPage = () => {
                     "Send Email Code"
                   )}
                 </Button>
+                <Typography
+                  onClick={() => router.push("/forgot-password")}
+                  sx={{
+                    textAlign: "end",
+                    cursor: "pointer",
+                    color: "#FF2D55",
+                    marginBottom: "15px",
+                    marginTop: "2px",
+                  }}
+                >
+                  <Link href="forgot-password">Lost your password?</Link>
+                </Typography>
 
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <Box sx={{ flexGrow: 1, bgcolor: "rgba(255,255,255,0.2)" }} />
@@ -487,7 +497,7 @@ const LoginPage = () => {
                       fontWeight: 500,
                       textAlign: "center",
                       letterSpacing: { xs: 0.4, sm: 1 },
-                      fontSize: { xs: "0.75rem", sm: "1rem" },
+                      fontSize: { xs: "0.85rem", sm: "1rem" },
                     }}
                   >
                     Login w/Email Code (no password needed)
@@ -503,7 +513,7 @@ const LoginPage = () => {
                       fontWeight: 500,
                       textAlign: "center",
                       letterSpacing: { xs: 0.4, sm: 1 },
-                      fontSize: { xs: "0.75rem", sm: "1rem" },
+                      fontSize: { xs: "0.85rem", sm: "1rem" },
                     }}
                   >
                     Login w/password
@@ -540,18 +550,6 @@ const LoginPage = () => {
                 >
                   New to Swing Social?{" "}
                   <Link href="/register">Create an account</Link>
-                </Typography>
-
-                <Typography
-                  onClick={() => router.push("/forgot-password")}
-                  sx={{
-                    mt: 1,
-                    textAlign: "center",
-                    cursor: "pointer",
-                    color: "#FF2D55",
-                  }}
-                >
-                  Forget Password? Reset your password
                 </Typography>
               </Box>
             </Paper>

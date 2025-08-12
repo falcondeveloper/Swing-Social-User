@@ -626,7 +626,6 @@ const RegisterPage = () => {
               }}
             >
               {/* <SecureHeader /> */}
-
               <Box sx={{ mb: 2, textAlign: "center" }}>
                 <Box sx={{ mb: 2 }}>
                   <img

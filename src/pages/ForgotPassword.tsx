@@ -66,8 +66,13 @@ const ParticleField = memo(() => {
             animation: `float ${particle.duration}s infinite linear`,
             animationDelay: `${particle.delay}s`,
             "@keyframes float": {
-              "0%": { transform: "translate(0, 0) rotate(0deg)", opacity: 0 },
-              "50%": { opacity: 0.8 },
+              "0%": {
+                transform: "translate(0, 0) rotate(0deg)",
+                opacity: 0,
+              },
+              "50%": {
+                opacity: 0.8,
+              },
               "100%": {
                 transform: "translate(100px, -100px) rotate(360deg)",
                 opacity: 0,
@@ -339,256 +344,259 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onClose }) => {
     <ThemeProvider theme={theme}>
       <Box
         sx={{
-          minHeight: "100vh",
           display: "flex",
-          alignItems: "center",
+          justifyContent: "center",
           background:
             "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
           position: "relative",
           overflow: "hidden",
+          p: { xs: 1, sm: 2 },
         }}
       >
         <ParticleField />
-        <Container maxWidth="sm" sx={{ position: "relative", zIndex: 1 }}>
-          <RotatingCard>
-            <Paper
-              elevation={24}
-              sx={{
-                p: { xs: 2, sm: 2, md: 4 },
-                background: "rgba(255, 255, 255, 0.05)",
-                backdropFilter: "blur(20px)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: "12px",
-              }}
-            >
-              <Box sx={{ textAlign: "center", mb: { xs: 2, sm: 3 } }}>
-                <Box sx={{ mb: 2 }}>
-                  <img
-                    src="/logo.png"
-                    alt="SwingSocial Logo"
-                    style={{
-                      width: "250px",
-                      height: "auto",
-                      display: "block",
-                      margin: "0 auto",
-                      objectFit: "cover",
-                    }}
-                  />
-                </Box>
-
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 500,
-                    background: "linear-gradient(45deg, #FF2D55, #7000FF)",
-                    backgroundClip: "text",
-                    WebkitBackgroundClip: "text",
-                    color: "transparent",
-                    mt: 1,
+        <Container maxWidth="sm" sx={{ p: 0 }}>
+          {/* <RotatingCard> */}
+          <Paper
+            elevation={24}
+            sx={{
+              p: { xs: 2, sm: 3, md: 4 },
+              background: "rgba(255, 255, 255, 0.05)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              maxHeight: { xs: "85vh", sm: "95vh" },
+              overflowY: { xs: "auto", sm: "auto" },
+              scrollbarWidth: "thin",
+              "&::-webkit-scrollbar": { width: "6px" },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "rgba(255,255,255,0.3)",
+                borderRadius: "3px",
+              },
+            }}
+          >
+            <Box sx={{ mb: 2, textAlign: "center" }}>
+              <Box sx={{ mb: 2 }}>
+                <img
+                  src="/logo.png"
+                  alt="SwingSocial Logo"
+                  style={{
+                    width: "250px",
+                    height: "auto",
+                    display: "block",
+                    margin: "0 auto",
+                    objectFit: "cover",
                   }}
-                >
-                  Need Help Logging In?
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="#fff"
-                  sx={{ mt: 0.5, fontSize: { xs: "0.85rem", sm: "1rem" } }}
-                >
-                  Enter your email and choose how you’d like to get back in
-                </Typography>
+                />
               </Box>
 
-              <Formik<FormValues>
-                initialValues={initialValues}
-                validationSchema={validationSchema}
-                onSubmit={handleSubmit}
-              >
-                {({
-                  values,
-                  errors,
-                  touched,
-                  handleChange,
-                  handleBlur,
-                  handleSubmit,
-                  setFieldValue,
-                  isSubmitting,
-                  isValid,
-                }) => (
-                  <form noValidate onSubmit={handleSubmit}>
-                    <TextField
-                      fullWidth
-                      id="email"
-                      name="email"
-                      label="Email"
-                      type="email"
-                      value={values.email}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      error={touched.email && Boolean(errors.email)}
-                      helperText={touched.email && errors.email}
-                      margin="normal"
-                      autoComplete="email"
-                      inputProps={{ "aria-label": "Email address" }}
-                      sx={fieldSx}
-                    />
-
-                    {/* LAZY-FRIENDLY OPTIONS */}
-                    <FormControl
-                      fullWidth
-                      sx={{ mb: { xs: 1.5, sm: 1 } }}
-                      error={touched.option && Boolean(errors.option)}
-                    >
-                      <Typography
-                        variant="subtitle2"
-                        color="#fff"
-                        sx={{
-                          mb: { xs: 0.75, sm: 1 },
-                          fontSize: { xs: "0.9rem", sm: "1rem" },
-                        }}
-                      >
-                        Choose an option{" "}
-                      </Typography>
-
-                      <RadioGroup
-                        name="option"
-                        value={values.option}
-                        onChange={(e) =>
-                          setFieldValue("option", e.target.value)
-                        }
-                        row
-                        sx={{
-                          display: "flex",
-                          flexDirection: "row",
-                          gap: 2,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <FormControlLabel
-                          value="resetPassword"
-                          control={<Radio sx={{ display: "none" }} />}
-                          label={
-                            <OptionCard
-                              value="resetPassword"
-                              title="Email me a Password Reset Link"
-                              hint="Best if you forgot your password. We’ll send a secure link."
-                              selected={values.option === "resetPassword"}
-                              recommended={!isMobile}
-                              onSelect={() =>
-                                setFieldValue("option", "resetPassword")
-                              }
-                              shortcut="1"
-                            />
-                          }
-                          sx={{ m: 0 }}
-                        />
-
-                        <FormControlLabel
-                          value="loginCode"
-                          control={<Radio sx={{ display: "none" }} />}
-                          label={
-                            <OptionCard
-                              value="loginCode"
-                              title="Email me a 4-digit Login Code"
-                              hint="Quick sign-in without changing your password. Expires soon."
-                              selected={values.option === "loginCode"}
-                              recommended={isMobile}
-                              onSelect={() =>
-                                setFieldValue("option", "loginCode")
-                              }
-                              shortcut="2"
-                            />
-                          }
-                          sx={{ m: 0 }}
-                        />
-                      </RadioGroup>
-
-                      {touched.option && Boolean(errors.option) && (
-                        <FormHelperText>{errors.option}</FormHelperText>
-                      )}
-
-                      <Button
-                        type="button"
-                        onClick={() =>
-                          setFieldValue("option", recommendedOption)
-                        }
-                        sx={{
-                          mt: { xs: 1, sm: 1 },
-                          alignSelf: { xs: "stretch", sm: "flex-start" }, // full width on mobile
-                          textTransform: "none",
-                          justifyContent: { xs: "center", sm: "flex-start" },
-                        }}
-                      >
-                        Not sure? Choose for me
-                      </Button>
-                    </FormControl>
-
-                    <Button
-                      fullWidth
-                      type="submit"
-                      variant="contained"
-                      disabled={
-                        isSubmitting ||
-                        !values.option ||
-                        !values.email ||
-                        !isValid
-                      }
-                      sx={{
-                        py: 1.5,
-                        mb: 2,
-                        my: 3,
-                        position: "relative",
-                        borderRadius: "12px",
-                        overflow: "hidden",
-                        color: "white",
-                        background: "linear-gradient(45deg, #FF2D55, #7000FF)",
-                        "&::before": {
-                          content: '""',
-                          position: "absolute",
-                          top: 0,
-                          left: "-100%",
-                          width: "200%",
-                          height: "100%",
-                          background:
-                            "linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)",
-                          animation: "shine 2s infinite",
-                        },
-                        "@keyframes shine": { "100%": { left: "100%" } },
-                      }}
-                    >
-                      {isSubmitting ? "Sending..." : submitLabel(values.option)}
-                    </Button>
-
-                    <Link
-                      href="/login"
-                      style={{
-                        color: "#FF2D55",
-                        marginTop: 8,
-                        textDecoration: "none",
-                        cursor: "pointer",
-                        display: "flex",
-                        justifyContent: "center",
-                      }}
-                    >
-                      Back to Login
-                    </Link>
-                  </form>
-                )}
-              </Formik>
-
               <Typography
-                variant="caption"
-                color="#fff"
+                variant="h5"
                 sx={{
-                  display: "block",
-                  mt: 2,
-                  textAlign: "center",
-                  fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                  fontWeight: 500,
+                  background: "linear-gradient(45deg, #FF2D55, #7000FF)",
+                  backgroundClip: "text",
+                  WebkitBackgroundClip: "text",
+                  color: "transparent",
+                  mt: 1,
                 }}
               >
-                Tip: Check your spam folder if you don’t see our email
+                Need Help Logging In?
               </Typography>
-            </Paper>
-          </RotatingCard>
+              <Typography
+                variant="body2"
+                color="#fff"
+                sx={{ mt: 0.5, fontSize: { xs: "0.85rem", sm: "1rem" } }}
+              >
+                Enter your email and choose how you’d like to get back in
+              </Typography>
+            </Box>
+
+            <Formik<FormValues>
+              initialValues={initialValues}
+              validationSchema={validationSchema}
+              onSubmit={handleSubmit}
+            >
+              {({
+                values,
+                errors,
+                touched,
+                handleChange,
+                handleBlur,
+                handleSubmit,
+                setFieldValue,
+                isSubmitting,
+                isValid,
+              }) => (
+                <form noValidate onSubmit={handleSubmit}>
+                  <TextField
+                    fullWidth
+                    id="email"
+                    name="email"
+                    label="Email"
+                    type="email"
+                    value={values.email}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={touched.email && Boolean(errors.email)}
+                    helperText={touched.email && errors.email}
+                    margin="normal"
+                    autoComplete="email"
+                    inputProps={{ "aria-label": "Email address" }}
+                    sx={fieldSx}
+                  />
+
+                  {/* LAZY-FRIENDLY OPTIONS */}
+                  <FormControl
+                    fullWidth
+                    sx={{ mb: { xs: 1.5, sm: 1 } }}
+                    error={touched.option && Boolean(errors.option)}
+                  >
+                    <Typography
+                      variant="subtitle2"
+                      color="#fff"
+                      sx={{
+                        mb: { xs: 0.75, sm: 1 },
+                        fontSize: { xs: "0.9rem", sm: "1rem" },
+                      }}
+                    >
+                      Choose an option{" "}
+                    </Typography>
+
+                    <RadioGroup
+                      name="option"
+                      value={values.option}
+                      onChange={(e) => setFieldValue("option", e.target.value)}
+                      row
+                      sx={{
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: 2,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <FormControlLabel
+                        value="resetPassword"
+                        control={<Radio sx={{ display: "none" }} />}
+                        label={
+                          <OptionCard
+                            value="resetPassword"
+                            title="Email me a Password Reset Link"
+                            hint="Best if you forgot your password. We’ll send a secure link."
+                            selected={values.option === "resetPassword"}
+                            recommended={!isMobile}
+                            onSelect={() =>
+                              setFieldValue("option", "resetPassword")
+                            }
+                            shortcut="1"
+                          />
+                        }
+                        sx={{ m: 0 }}
+                      />
+
+                      <FormControlLabel
+                        value="loginCode"
+                        control={<Radio sx={{ display: "none" }} />}
+                        label={
+                          <OptionCard
+                            value="loginCode"
+                            title="Email me a 4-digit Login Code"
+                            hint="Quick sign-in without changing your password. Expires soon."
+                            selected={values.option === "loginCode"}
+                            recommended={isMobile}
+                            onSelect={() =>
+                              setFieldValue("option", "loginCode")
+                            }
+                            shortcut="2"
+                          />
+                        }
+                        sx={{ m: 0 }}
+                      />
+                    </RadioGroup>
+
+                    {touched.option && Boolean(errors.option) && (
+                      <FormHelperText>{errors.option}</FormHelperText>
+                    )}
+
+                    <Button
+                      type="button"
+                      onClick={() => setFieldValue("option", recommendedOption)}
+                      sx={{
+                        mt: { xs: 1, sm: 1 },
+                        alignSelf: { xs: "stretch", sm: "flex-start" }, // full width on mobile
+                        textTransform: "none",
+                        justifyContent: { xs: "center", sm: "flex-start" },
+                      }}
+                    >
+                      Not sure? Choose for me
+                    </Button>
+                  </FormControl>
+
+                  <Button
+                    fullWidth
+                    type="submit"
+                    variant="contained"
+                    disabled={
+                      isSubmitting ||
+                      !values.option ||
+                      !values.email ||
+                      !isValid
+                    }
+                    sx={{
+                      py: 1.5,
+                      mb: 2,
+                      my: 3,
+                      position: "relative",
+                      borderRadius: "12px",
+                      overflow: "hidden",
+                      color: "white",
+                      background: "linear-gradient(45deg, #FF2D55, #7000FF)",
+                      "&::before": {
+                        content: '""',
+                        position: "absolute",
+                        top: 0,
+                        left: "-100%",
+                        width: "200%",
+                        height: "100%",
+                        background:
+                          "linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)",
+                        animation: "shine 2s infinite",
+                      },
+                      "@keyframes shine": { "100%": { left: "100%" } },
+                    }}
+                  >
+                    {isSubmitting ? "Sending..." : submitLabel(values.option)}
+                  </Button>
+
+                  <Link
+                    href="/login"
+                    style={{
+                      color: "#FF2D55",
+                      marginTop: 8,
+                      textDecoration: "none",
+                      cursor: "pointer",
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
+                  >
+                    Back to Login
+                  </Link>
+                </form>
+              )}
+            </Formik>
+
+            <Typography
+              variant="caption"
+              color="#fff"
+              sx={{
+                display: "block",
+                mt: 2,
+                textAlign: "center",
+                fontSize: { xs: "0.7rem", sm: "0.75rem" },
+              }}
+            >
+              Tip: Check your spam folder if you don’t see our email
+            </Typography>
+          </Paper>
+          {/* </RotatingCard> */}
         </Container>
       </Box>
 
