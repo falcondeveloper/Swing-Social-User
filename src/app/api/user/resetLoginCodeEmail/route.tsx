@@ -16,15 +16,23 @@ export async function POST(req: any) {
   try {
     const { email, code } = await req.json();
 
-    const querybyUserName = `SELECT * FROM public.admin_getoneprofile_by_user($1)`;
+    const existsSql = `
+      SELECT EXISTS (
+        SELECT 1
+        FROM "Users"
+        WHERE LOWER("Email") = LOWER($1)
+      ) AS "exists";
+    `;
+    const { rows } = await pool.query(existsSql, [email]);
 
-    const searchByUser = await pool.query(querybyUserName, [email]);
-
-    if (searchByUser.rows.length == 0) {
-      return NextResponse.json({
-        success: false,
-        message: "No registered users found. Please sign up first!",
-      });
+    if (!rows[0]?.exists) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "No registered users found. Please sign up first!",
+        },
+        { status: 404 }
+      );
     }
 
     const result = await pool.query(
