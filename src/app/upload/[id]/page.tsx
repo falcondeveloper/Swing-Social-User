@@ -126,7 +126,7 @@ export default function UploadAvatar({ params }: { params: Params }) {
     if (!result.blobUrl) {
       throw new Error("Upload failed");
     }
-
+    localStorage.setItem("avatar", result.blobUrl);
     return result.blobUrl;
   };
 
@@ -153,34 +153,14 @@ export default function UploadAvatar({ params }: { params: Params }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             pid: userId,
-            avatar: avatarUrl,
             Questionable: 1,
+            avatar: avatarUrl,
             banner: "",
           }),
         });
         router.push(`/bannerupload/${userId}`);
-
-        // const response = await fetch("/api/user/upload/database", {
-        //   method: "POST",
-        //   headers: {
-        //     "Content-Type": "application/json",
-        //   },
-        //   body: JSON.stringify({
-        //     pid: userId,
-        //     Questionable: 1,
-        //     avatar: avatarUrl,
-        //     banner: "",
-        //   }),
-        // });
-
-        // if (!response.ok) {
-        //   throw new Error("Failed to save in database");
-        // }
-
-        // router.push(`/bannerupload/${userId}`);
       } catch (err) {
         console.error("Form submit failed:", err);
-        formik.setFieldError("avatar", (err as Error).message);
       } finally {
         setIsUploading(false);
       }
