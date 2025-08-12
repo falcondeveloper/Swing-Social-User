@@ -216,7 +216,7 @@ export default function About(props: { params: Params }) {
             </Grid>
           </form>
         </Grid>
-        <Carousel title="This is the last screen!" />
+        {/* <Carousel title="This is the last screen!" /> */}
       </Grid>
     </Box>
   );

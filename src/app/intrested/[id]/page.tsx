@@ -132,7 +132,7 @@ export default function ShowIntrest(props: { params: Params }) {
         });
 
         if (response.ok) {
-          router.push(`/upload/${id}`);
+          router.push(`/uploadadmin/${id}`);
         } else {
           console.error("Error submitting form:", response.statusText);
         }
@@ -146,7 +146,7 @@ export default function ShowIntrest(props: { params: Params }) {
         });
 
         if (response.ok) {
-          router.push(`/upload/${id}`);
+          router.push(`/uploadadmin/${id}`);
         } else {
           console.error("Error submitting form:", response.statusText);
         }

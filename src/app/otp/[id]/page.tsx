@@ -120,7 +120,9 @@ export default function Otp(props: { params: Params }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, username, code }),
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error("Error:", error);
+    }
   };
 
   return (
