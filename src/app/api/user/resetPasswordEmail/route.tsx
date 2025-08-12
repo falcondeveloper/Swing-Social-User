@@ -14,6 +14,19 @@ const pool = new Pool({
 
 export async function POST(req: any) {
   try {
+    const { userName } = await req.json();
+
+    const querybyUserName = `SELECT * FROM public.admin_getoneprofile_by_user($1)`;
+
+    const searchByUser = await pool.query(querybyUserName, [userName]);
+
+    if (searchByUser.rows.length == 0) {
+      return NextResponse.json({
+        success: false,
+        message: "No registered users found. Please sign up first!",
+      });
+    }
+
     const result = await pool.query(
       'SELECT * FROM "Configuration" WHERE "ConfigName" = $1',
       ["EmailApi"]
@@ -24,7 +37,6 @@ export async function POST(req: any) {
       throw new Error("MAILGUN_KEY environment variable is not defined");
     }
 
-    const { userName } = await req.json();
     const mailgun = new Mailgun(FormData);
     const mg = mailgun.client({
       username: "api",
@@ -57,7 +69,8 @@ export async function POST(req: any) {
 
     const data = await mg.messages.create("swingsocial.co", emailData);
     return NextResponse.json({
-      message: "Email is sent successfully",
+      success: true,
+      message: "Email sent successfully",
     });
   } catch (error: any) {
     console.error("Error sending email:", error);

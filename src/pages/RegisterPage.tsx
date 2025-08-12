@@ -584,6 +584,7 @@ const RegisterPage = () => {
     "& .MuiOutlinedInput-root": {
       color: "white",
       backgroundColor: "rgba(255,255,255,0.05)",
+      borderRadius: "12px",
       "& fieldset": { borderColor: "rgba(255,255,255,0.2)" },
       "&:hover fieldset": { borderColor: "rgba(255,255,255,0.4)" },
     },
@@ -643,10 +644,12 @@ const RegisterPage = () => {
                 <Typography
                   variant="h5"
                   sx={{
-                    color: "#fff",
-                    mb: 1,
-                    fontWeight: "bold",
-                    fontSize: { xs: "1.2rem", sm: "1.5rem" },
+                    fontWeight: 500,
+                    background: "linear-gradient(45deg, #FF2D55, #7000FF)",
+                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                    mt: 1,
                   }}
                 >
                   Create your account
@@ -661,7 +664,7 @@ const RegisterPage = () => {
                   {/* <CheckCircleOutlineIcon fontSize="small" /> */}
                   <Typography
                     sx={{
-                      color: "#aaa",
+                      color: "#fff",
                       fontSize: { xs: "0.85rem", sm: "1rem" },
                     }}
                   >
@@ -720,7 +723,7 @@ const RegisterPage = () => {
                 <WhyWeAsk
                   title="username"
                   points={[
-                    "Helps friends recognise you and reduces fake profiles",
+                    "Helps friends recognize you and reduces fake profiles",
                     "Shown on your profile. You can update it any time",
                   ]}
                 />

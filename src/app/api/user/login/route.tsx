@@ -70,7 +70,7 @@ export async function POST(req: any) {
 
       if (searchByUser.rows.length == 0) {
         return NextResponse.json({
-          message: "No registered users found. Please sign up on the homepage.",
+          message: "No registered users found. Please sign up first!",
           status: 404,
           profileId: null,
         });

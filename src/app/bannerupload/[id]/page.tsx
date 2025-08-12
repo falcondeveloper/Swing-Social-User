@@ -162,7 +162,7 @@ export default function UploadBanner({ params }: { params: Params }) {
     }),
     onSubmit: async (values) => {
       setIsUploading(true);
-      const isBannerOk = await analyzeImage(values.banner);
+      // const isBannerOk = await analyzeImage(values.banner);
       const bannerUrl = await uploadImage(values.banner);
 
       if (!bannerUrl) {
@@ -236,8 +236,7 @@ export default function UploadBanner({ params }: { params: Params }) {
             }}
           >
             Improve your profile with a banner that will be featured across the
-            top. You might wish to include an image with your hobbies or a
-            vacatation pic, etc.
+            top of your profile
           </Typography>
 
           <Grid item xs={12} sx={{ mt: 4, textAlign: "center" }}>
@@ -324,9 +323,8 @@ export default function UploadBanner({ params }: { params: Params }) {
               fontSize: "0.675rem",
             }}
           >
-            If you skip the profile banner one will be created for you featuring
-            your avatar centered with a faded background. You can always change
-            this later.
+            If you don't upload a banner one will be created for you. You can
+            always upload one at a later time
           </Typography>
 
           <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
@@ -344,7 +342,7 @@ export default function UploadBanner({ params }: { params: Params }) {
             >
               {isUploading ? (
                 <>
-                 <CircularProgress size={24} sx={{ color: "#fff" }} />
+                  <CircularProgress size={24} sx={{ color: "#fff" }} />
                   <Typography
                     sx={{
                       color: "#fff",

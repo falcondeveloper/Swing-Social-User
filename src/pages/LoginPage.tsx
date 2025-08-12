@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useMemo, memo } from "react";
+import React, { useEffect, useMemo, useState, useRef, memo } from "react";
 import {
   Box,
   Container,
@@ -12,81 +12,35 @@ import {
   InputAdornment,
   ThemeProvider,
   createTheme,
-  Modal,
-  Backdrop,
   Alert,
   CircularProgress,
-  Select,
-  MenuItem,
+  useMediaQuery,
 } from "@mui/material";
-import { useMediaQuery } from "@mui/material";
-import {
-  Visibility,
-  VisibilityOff,
-  Password,
-  Check,
-} from "@mui/icons-material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import Snackbar, { SnackbarCloseReason } from "@mui/material/Snackbar";
 import Swal from "sweetalert2";
 import Link from "next/link";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { toast } from "react-toastify";
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: "#FF2D55",
-      light: "#FF617B",
-      dark: "#CC1439",
-    },
-    secondary: {
-      main: "#7000FF",
-      light: "#9B4DFF",
-      dark: "#5200CC",
-    },
-    success: {
-      main: "#00D179",
-    },
-    background: {
-      default: "#0A0118",
-    },
+    primary: { main: "#FF2D55", light: "#FF617B", dark: "#CC1439" },
+    secondary: { main: "#7000FF", light: "#9B4DFF", dark: "#5200CC" },
+    success: { main: "#00D179" },
+    background: { default: "#0A0118" },
   },
-  typography: {
-    fontFamily: '"Poppins", "Roboto", "Arial", sans-serif',
-  },
-  shape: {
-    borderRadius: 16,
-  },
+  typography: { fontFamily: '"Poppins", "Roboto", "Arial", sans-serif' },
+  shape: { borderRadius: 16 },
 });
-
-interface ValidationState {
-  email: {
-    error: boolean;
-    message: string;
-  };
-  password: {
-    error: boolean;
-    message: string;
-  };
-}
-
-interface RestValidationState {
-  resetUserName: {
-    error: boolean;
-    message: string;
-  };
-
-  resetPassword: {
-    error: boolean;
-    message: string;
-  };
-}
 
 const ParticleField = memo(() => {
   const isMobile = useMediaQuery("(max-width:600px)");
-
   const particles = useMemo(() => {
     const count = isMobile ? 15 : 50;
-    return [...Array(count)].map((_, i) => ({
+    return Array.from({ length: count }, (_, i) => ({
       id: i,
       size: Math.random() * (isMobile ? 4 : 6) + 2,
       x: Math.random() * 100,
@@ -98,35 +52,24 @@ const ParticleField = memo(() => {
 
   return (
     <Box
-      sx={{
-        position: "absolute",
-        width: "100%",
-        height: "100%",
-        overflow: "hidden",
-        opacity: 0.6,
-      }}
+      sx={{ position: "absolute", inset: 0, overflow: "hidden", opacity: 0.6 }}
     >
-      {particles.map((particle) => (
+      {particles.map((p) => (
         <Box
-          key={particle.id}
+          key={p.id}
           sx={{
             position: "absolute",
-            width: particle.size,
-            height: particle.size,
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
+            width: p.size,
+            height: p.size,
+            left: `${p.x}%`,
+            top: `${p.y}%`,
             background: "linear-gradient(45deg, #FF2D55, #7000FF)",
             borderRadius: "50%",
-            animation: `float ${particle.duration}s infinite linear`,
-            animationDelay: `${particle.delay}s`,
+            animation: `float ${p.duration}s infinite linear`,
+            animationDelay: `${p.delay}s`,
             "@keyframes float": {
-              "0%": {
-                transform: "translate(0, 0) rotate(0deg)",
-                opacity: 0,
-              },
-              "50%": {
-                opacity: 0.8,
-              },
+              "0%": { transform: "translate(0, 0) rotate(0deg)", opacity: 0 },
+              "50%": { opacity: 0.8 },
               "100%": {
                 transform: "translate(100px, -100px) rotate(360deg)",
                 opacity: 0,
@@ -142,16 +85,12 @@ const ParticleField = memo(() => {
 const RotatingCard: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [rotation, setRotation] = useState({ x: 0, y: 0 });
+  const [rotation] = useState({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
-
   return (
     <Box
       ref={cardRef}
-      sx={{
-        perspective: "1000px",
-        transformStyle: "preserve-3d",
-      }}
+      sx={{ perspective: "1000px", transformStyle: "preserve-3d" }}
     >
       <Box
         sx={{
@@ -165,1020 +104,489 @@ const RotatingCard: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+const getOS = () => {
+  const ua = window.navigator.userAgent;
+  if (ua.includes("Win")) return "Windows";
+  if (ua.includes("Mac")) return "MacOS";
+  if (/iPad|iPhone|iPod/.test(ua)) return "iOS";
+  if (ua.includes("Android")) return "Android";
+  if (ua.includes("Linux")) return "Linux";
+  return "Unknown";
+};
+
+const trackHit = async ({
+  aff,
+  refer,
+}: {
+  aff: string | null;
+  refer: string | null;
+}) => {
+  if (!aff && !refer) return null;
+  try {
+    const ipData = await fetch("https://ipapi.co/json").then((r) => r.json());
+    const payload = {
+      affiliate: aff,
+      referral: refer,
+      OS: getOS(),
+      page: "Login",
+      url: window.location.href,
+      userid: null,
+      ip: ipData?.ip,
+      city: ipData?.city,
+      region: ipData?.region,
+      country_name: ipData?.country_name,
+    };
+    const res = await fetch("/api/user/tracking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    return data?.data?.HitId ?? null;
+  } catch {
+    return null;
+  }
+};
+
 const LoginPage = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [loginMethod, setLoginMethod] = useState<"password" | "otp">(
+    "password"
+  );
   const [loading, setLoading] = useState(false);
-  const [showLocationModal, setShowLocationModal] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState(false);
-  const [resetUserName, setResetUserName] = useState<string>("");
-  const [loginMethod, setLoginMethod] = useState("password");
-  const [validation, setValidation] = useState<ValidationState>({
-    email: {
-      error: false,
-      message: "",
-    },
-    password: {
-      error: false,
-      message: "",
-    },
-  });
-  const [submitLoading, setSubmitLoading] = useState(false);
-  const [otpOption, setOtpOption] = useState("");
-  const [resetValidation, setResetValidation] = useState<RestValidationState>({
-    resetUserName: {
-      error: false,
-      message: "",
-    },
-    resetPassword: {
-      error: false,
-      message: "",
-    },
-  });
-  const [touched, setTouched] = useState({
-    email: false,
-    password: false,
-  });
+  const [snack, setSnack] = useState({ open: false, message: "" });
 
   useEffect(() => {
     const id = localStorage.getItem("logged_in_profile");
     const urlParams = new URLSearchParams(window.location.search);
     const aff = urlParams.get("aff");
     const refer = urlParams.get("refer");
-
-    const getOS = () => {
-      const userAgent = window.navigator.userAgent;
-
-      if (userAgent.indexOf("Win") !== -1) return "Windows";
-      if (userAgent.indexOf("Mac") !== -1) return "MacOS";
-      if (userAgent.indexOf("Android") !== -1) return "Android";
-      if (/iPad|iPhone|iPod/.test(userAgent)) return "iOS";
-      if (userAgent.indexOf("Linux") !== -1) return "Linux";
-
-      return "Unknown";
-    };
-
-    const currentUrl = window.location.href;
-    const currentPage = "Login";
-
-    fetch("https://ipapi.co/json")
-      .then((res) => res.json())
-      .then((ipData) => {
-        const payload = {
-          affiliate: aff,
-          referral: refer,
-          OS: getOS(),
-          page: currentPage,
-          url: currentUrl,
-          userid: id || null,
-          ip: ipData?.ip,
-          city: ipData?.city,
-          region: ipData?.region,
-          country_name: ipData?.country_name,
-        };
-
-        fetch("/api/user/tracking", {
+    (async () => {
+      try {
+        const ipData = await fetch("https://ipapi.co/json").then((r) =>
+          r.json()
+        );
+        await fetch("/api/user/tracking", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        })
-          .then((res) => res.json())
-          .then((data) => {})
-          .catch((err) => {
-            console.error("Failed to save tracking:", err);
-          });
-      })
-      .catch((err) => {
-        console.error("Failed to fetch IP:", err);
-      });
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            affiliate: aff,
+            referral: refer,
+            OS: getOS(),
+            page: "Login",
+            url: window.location.href,
+            userid: id || null,
+            ip: ipData?.ip,
+            city: ipData?.city,
+            region: ipData?.region,
+            country_name: ipData?.country_name,
+          }),
+        });
+      } catch {}
+    })();
   }, []);
 
-  const handleClose = (
-    event: React.SyntheticEvent | Event,
-    reason?: SnackbarCloseReason
-  ) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setOpen(false);
-  };
+  const validationSchema = useMemo(
+    () =>
+      Yup.object({
+        email: Yup.string()
+          .required("Email is required")
+          .email("Enter a valid email"),
+        password:
+          loginMethod === "password"
+            ? Yup.string().required("Please enter a password")
+            : Yup.string().notRequired(),
+      }),
+    [loginMethod]
+  );
 
-  const PasswordRequirements = (password: string) => {
-    if (!password) {
-      return {
-        error: true,
-        message: "Please enter a password",
-      };
-    } else {
-      return {
-        error: false,
-        message: "",
-      };
-    }
-  };
-
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
-      return {
-        error: true,
-        message: "Email is required",
-      };
-    }
-
-    return {
-      error: false,
-      message: "",
-    };
-  };
-
-  const validateResetUserName = (email: string) => {
-    if (!email) {
-      return {
-        error: true,
-        message: "Email is required",
-      };
-    }
-
-    return {
-      error: false,
-      message: "",
-    };
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEmail = e.target.value.trim();
-    setEmail(newEmail);
-    if (touched.email) {
-      setValidation((prev) => ({
-        ...prev,
-        email: validateEmail(newEmail),
-      }));
-    }
-  };
-
-  const handleResetUserNameChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const newUserName = e.target.value.trim();
-    setResetUserName(newUserName);
-    setResetValidation((prev) => ({
-      ...prev,
-      resetUserName: validateResetUserName(newUserName),
-    }));
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newPassword = e.target.value.trim();
-    setPassword(newPassword);
-    if (touched.password) {
-      setValidation((prev) => ({
-        ...prev,
-        password: PasswordRequirements(password),
-      }));
-    }
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const aff = urlParams.get("aff");
-    const refer = urlParams.get("refer");
-
-    const getOS = () => {
-      const userAgent = window.navigator.userAgent;
-      if (userAgent.indexOf("Win") !== -1) return "Windows";
-      if (userAgent.indexOf("Mac") !== -1) return "MacOS";
-      if (userAgent.indexOf("Linux") !== -1) return "Linux";
-      if (userAgent.indexOf("Android") !== -1) return "Android";
-      if (
-        userAgent.indexOf("iPhone") !== -1 ||
-        userAgent.indexOf("iPad") !== -1
-      )
-        return "iOS";
-      return "Unknown";
-    };
-
-    const currentUrl = window.location.href;
-    const currentPage = "Login";
-
-    let hitId: string | null = null;
-
-    if (aff || refer) {
-      try {
-        const ipRes = await fetch("https://ipapi.co/json");
-        const ipData = await ipRes.json();
-
-        const trackingPayload = {
-          affiliate: aff,
-          referral: refer,
-          OS: getOS(),
-          page: currentPage,
-          url: currentUrl,
-          userid: null,
-          ip: ipData?.ip,
-          city: ipData?.city,
-          region: ipData?.region,
-          country_name: ipData?.country_name,
-        };
-
-        const trackingRes = await fetch("/api/user/tracking", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(trackingPayload),
-        });
-
-        const trackingData = await trackingRes.json();
-        hitId = trackingData?.data?.HitId ?? null;
-      } catch (err) {
-        console.error("Failed to save tracking:", err);
-      }
-    }
-
-    // Validate all fields
-    const emailValidation = validateEmail(email);
-    const passwordValidation = PasswordRequirements(password);
-
-    setValidation({
-      email: emailValidation,
-      password: passwordValidation,
-    });
-
-    setTouched({
-      email: true,
-      password: true,
-    });
-
-    if (!emailValidation.error && !passwordValidation.error) {
+  const formik = useFormik({
+    initialValues: { email: "", password: "" },
+    validationSchema,
+    onSubmit: async (values) => {
       setLoading(true);
+      const urlParams = new URLSearchParams(window.location.search);
+      const aff = urlParams.get("aff");
+      const refer = urlParams.get("refer");
+      const hitId = await trackHit({ aff, refer });
+
       try {
-        const payload = {
-          email: email,
-          pwd: password,
-          hitid: hitId,
-        };
+        if (loginMethod === "password") {
+          const res = await fetch("/api/user/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: values.email.trim(),
+              pwd: values.password.trim(),
+              hitid: hitId,
+            }),
+          });
+          const data = await res.json();
 
-        const result = await fetch("/api/user/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+          await new Promise((r) => setTimeout(r, 800));
 
-        const data = await result.json();
+          setSnack({ open: true, message: data.message ?? "Welcome!" });
 
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+          if (data.status === 404 || data.status === 500) return;
 
-        setMessage(data.message);
-
-        if (data.status === 404 || data.status === 500) {
-          setOpen(true);
-        } else {
-          setOpen(true);
           if (data.currentuserName === "Webnew") {
-            router.push(`/screenname/${data.currentProfileId}`);
+            return router.push(`/screenname/${data.currentProfileId}`);
+          }
+
+          localStorage.setItem("loginInfo", data.jwtToken);
+          localStorage.setItem("logged_in_profile", data.currentProfileId);
+          localStorage.setItem("profileUsername", data.currentuserName);
+          localStorage.setItem("memberalarm", data.memberAlarm);
+          localStorage.setItem("memberShip", data.memberShip);
+          router.push("/home");
+        } else {
+          const code = Math.floor(1000 + Math.random() * 9000);
+          const res = await fetch("/api/user/resetLoginCodeEmail", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: values.email.trim(),
+              code,
+              hitid: hitId,
+            }),
+          });
+          const data = await res.json();
+          if (data?.success === "false" || data?.success === false) {
+            setSnack({ open: true, message: data.message ?? "Welcome!" });
+            return;
           } else {
-            localStorage.setItem("loginInfo", data.jwtToken);
-            localStorage.setItem("logged_in_profile", data.currentProfileId);
-            localStorage.setItem("profileUsername", data.currentuserName);
-            localStorage.setItem("memberalarm", data.memberAlarm);
-            localStorage.setItem("memberShip", data.memberShip);
-            router.push("/home");
+            await Swal.fire({
+              title: "Login Code Sent!",
+              text: "We’ve emailed you a 4-digit one-time login code. Enter this code to access your account.",
+              icon: "success",
+              confirmButtonText: "OK",
+            });
+
+            sessionStorage.setItem("loginOtp", String(code));
+            router.push(
+              `/verify-code?email=${encodeURIComponent(values.email.trim())}`
+            );
+            setLoginMethod("password");
           }
         }
-      } catch (error) {
-        console.error("Login failed:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
-  const handleResetPasswordEmail = async () => {
-    const resetValidation = validateResetUserName(resetUserName);
-    if (!resetValidation.error) {
-      const payload = {
-        userName: resetUserName,
-      };
-      setSubmitLoading(true);
-
-      try {
-        const result = await fetch("/api/user/resetPasswordEmail", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-        if (result) {
-          setShowLocationModal(false);
-          setResetUserName("");
-          setOtpOption("");
-          Swal.fire({
-            title: "Email Sent Successfully",
-            text: "A password reset email has been sent to your inbox. Please check your email and follow the instructions to reset your password.",
-            icon: "success",
-            confirmButtonText: "Got It",
-          });
-        }
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setSubmitLoading(false);
-      }
-    }
-  };
-
-  const handleSendLoginCodeEmail = async () => {
-    const resetValidation = validateResetUserName(resetUserName);
-    let code = Math.floor(1000 + Math.random() * 9000);
-
-    if (!resetValidation.error) {
-      setSubmitLoading(true);
-
-      try {
-        const response = await fetch("/api/user/resetLoginCodeEmail", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email: resetUserName, code: code }),
-        });
-
-        if (response.ok) {
-          setShowLocationModal(false);
-          setResetUserName("");
-          Swal.fire({
-            title: "Login Code Sent!",
-            text: "We’ve emailed you a 4-digit one-time login code. Enter this code on the login page to access your account.",
-            icon: "success",
-            confirmButtonText: "OK",
-          }).then(() => {
-            const encodedEmail = encodeURIComponent(resetUserName);
-            router.push(`/verify-code?email=${encodedEmail}`);
-            sessionStorage.setItem("loginOtp", code.toString());
-            setOtpOption("");
-            setLoginMethod("password");
-          });
-        } else {
-          setShowLocationModal(false);
-          Swal.fire({
-            title: "Something went wrong",
-            text: "We couldn’t send the login code. Please try again later or contact support.",
-            icon: "error",
-            confirmButtonText: "OK",
-          });
-        }
-      } catch (error) {
-        console.error(error);
-        setShowLocationModal(false);
-        Swal.fire({
-          title: "Error",
-          text: "An unexpected error occurred. Please try again.",
-          icon: "error",
-          confirmButtonText: "OK",
-        });
-      } finally {
-        setSubmitLoading(false);
-      }
-    }
-  };
-
-  const handleLoginViaOTP = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    const code = Math.floor(1000 + Math.random() * 9000);
-    const urlParams = new URLSearchParams(window.location.search);
-    const aff = urlParams.get("aff");
-    const refer = urlParams.get("refer");
-
-    const getOS = () => {
-      const userAgent = window.navigator.userAgent;
-      if (userAgent.indexOf("Win") !== -1) return "Windows";
-      if (userAgent.indexOf("Mac") !== -1) return "MacOS";
-      if (userAgent.indexOf("Linux") !== -1) return "Linux";
-      if (userAgent.indexOf("Android") !== -1) return "Android";
-      if (
-        userAgent.indexOf("iPhone") !== -1 ||
-        userAgent.indexOf("iPad") !== -1
-      )
-        return "iOS";
-      return "Unknown";
-    };
-
-    const currentUrl = window.location.href;
-    const currentPage = "Login";
-
-    let hitId: string | null = null;
-
-    if (aff || refer) {
-      try {
-        const ipRes = await fetch("https://ipapi.co/json");
-        const ipData = await ipRes.json();
-
-        const trackingPayload = {
-          affiliate: aff,
-          referral: refer,
-          OS: getOS(),
-          page: currentPage,
-          url: currentUrl,
-          userid: null,
-          ip: ipData?.ip,
-          city: ipData?.city,
-          region: ipData?.region,
-          country_name: ipData?.country_name,
-        };
-
-        const trackingRes = await fetch("/api/user/tracking", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(trackingPayload),
-        });
-
-        const trackingData = await trackingRes.json();
-        hitId = trackingData?.data?.HitId ?? null;
-      } catch (err) {
-        console.error("Failed to save tracking:", err);
-      }
-    }
-
-    const emailValidation = validateEmail(email);
-
-    if (!emailValidation.error) {
-      setLoading(true);
-      try {
-        const response = await fetch("/api/user/resetLoginCodeEmail", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email: email, code: code, hitid: hitId }),
-        });
-
-        if (response.ok) {
-          setShowLocationModal(false);
-          setResetUserName("");
-          Swal.fire({
-            title: "Login Code Sent!",
-            text: "We’ve emailed you a 4-digit one-time login code. Enter this code on the login page to access your account.",
-            icon: "success",
-            confirmButtonText: "OK",
-          }).then(() => {
-            const encodedEmail = encodeURIComponent(email);
-            router.push(`/verify-code?email=${encodedEmail}`);
-            sessionStorage.setItem("loginOtp", code.toString());
-            setOtpOption("");
-            setLoginMethod("password");
-          });
-        } else {
-          setShowLocationModal(false);
-          Swal.fire({
-            title: "Something went wrong",
-            text: "We couldn’t send the login code. Please try again later or contact support.",
-            icon: "error",
-            confirmButtonText: "OK",
-          });
-        }
-      } catch (error) {
-        console.error(error);
-        setShowLocationModal(false);
-        Swal.fire({
-          title: "Error",
-          text: "An unexpected error occurred. Please try again.",
-          icon: "error",
-          confirmButtonText: "OK",
+      } catch (e) {
+        setSnack({
+          open: true,
+          message: "Something went wrong. Please try again.",
         });
       } finally {
         setLoading(false);
       }
-    }
+    },
+  });
+
+  const handleClose = (
+    _: React.SyntheticEvent | Event,
+    reason?: SnackbarCloseReason
+  ) => {
+    if (reason === "clickaway") return;
+    setSnack((s) => ({ ...s, open: false }));
   };
-  
+
   return (
-    <>
-      <ThemeProvider theme={theme}>
-        <Box
-          sx={{
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            background:
-              "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <ParticleField />
-
-          <Container maxWidth="sm" sx={{ position: "relative", zIndex: 1 }}>
-            <RotatingCard>
-              <Paper
-                elevation={24}
-                sx={{
-                  p: { xs: 2, sm: 2, md: 4 },
-                  background: "rgba(255, 255, 255, 0.05)",
-                  backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                }}
-              >
-                <Box
-                  sx={{ mb: 4, textAlign: "center" }}
-                  component="form"
-                  onSubmit={
-                    loginMethod === "password"
-                      ? handleSubmit
-                      : handleLoginViaOTP
-                  }
-                >
-                  <Box
-                    sx={{
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 2,
-                      animation: "slideDown 1s ease-out",
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src="/icon.png"
-                      alt="Logo"
-                      sx={{
-                        width: "50px",
-                        height: "auto",
-                      }}
-                    />
-                    <Typography
-                      variant="h4"
-                      sx={{
-                        fontWeight: 700,
-                        background: "linear-gradient(45deg, #FF2D55, #7000FF)",
-                        backgroundClip: "text",
-                        WebkitBackgroundClip: "text",
-                        color: "transparent",
-                      }}
-                    >
-                      SwingSocial
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box>
-                  <Box
-                    component="form"
-                    onSubmit={
-                      loginMethod === "password"
-                        ? handleSubmit
-                        : handleLoginViaOTP
-                    }
-                  >
-                    {/* Email / Username */}
-                    <TextField
-                      fullWidth
-                      label="Email or Username"
-                      variant="outlined"
-                      value={email}
-                      onChange={handleEmailChange}
-                      onBlur={() =>
-                        setTouched((prev) => ({ ...prev, email: true }))
-                      }
-                      error={touched.email && validation.email.error}
-                      helperText={touched.email && validation.email.message}
-                      sx={{
-                        mb: 2,
-                        "& .MuiOutlinedInput-root": {
-                          color: "white",
-                          backgroundColor: "rgba(255,255,255,0.05)",
-                          "& fieldset": {
-                            borderColor: "rgba(255,255,255,0.2)",
-                          },
-                          "&:hover fieldset": {
-                            borderColor: "rgba(255,255,255,0.4)",
-                          },
-                        },
-                        "& .MuiInputLabel-root": {
-                          color: "rgba(255,255,255,0.7)",
-                        },
-                      }}
-                    />
-
-                    {/* Password or OTP */}
-                    {loginMethod === "password" && (
-                      <TextField
-                        fullWidth
-                        label="Password"
-                        type={showPassword ? "text" : "password"}
-                        value={password}
-                        onChange={handlePasswordChange}
-                        onBlur={() =>
-                          setTouched((prev) => ({ ...prev, password: true }))
-                        }
-                        error={touched.password && validation.password.error}
-                        helperText={
-                          touched.password && validation.password.message
-                        }
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                onClick={() => setShowPassword(!showPassword)}
-                                edge="end"
-                                sx={{ color: "rgba(255,255,255,0.7)" }}
-                              >
-                                {showPassword ? (
-                                  <VisibilityOff />
-                                ) : (
-                                  <Visibility />
-                                )}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        }}
-                        sx={{
-                          mb: 2,
-                          "& .MuiOutlinedInput-root": {
-                            color: "white",
-                            backgroundColor: "rgba(255,255,255,0.05)",
-                            "& fieldset": {
-                              borderColor: "rgba(255,255,255,0.2)",
-                            },
-                            "&:hover fieldset": {
-                              borderColor: "rgba(255,255,255,0.4)",
-                            },
-                          },
-                          "& .MuiInputLabel-root": {
-                            color: "rgba(255,255,255,0.7)",
-                          },
-                        }}
-                      />
-                    )}
-
-                    {/* Submit Button */}
-                    <Button
-                      fullWidth
-                      type="submit"
-                      disabled={loading}
-                      sx={{
-                        py: 1.5,
-                        mb: 2,
-                        my: 3,
-                        position: "relative",
-                        overflow: "hidden",
-                        color: "white",
-                        background: "linear-gradient(45deg, #FF2D55, #7000FF)",
-                        "&::before": {
-                          content: '""',
-                          position: "absolute",
-                          top: 0,
-                          left: "-100%",
-                          width: "200%",
-                          height: "100%",
-                          background:
-                            "linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)",
-                          animation: "shine 2s infinite",
-                        },
-                        "@keyframes shine": {
-                          "100%": {
-                            left: "100%",
-                          },
-                        },
-                      }}
-                    >
-                      {loading ? (
-                        <CircularProgress size={24} color="inherit" />
-                      ) : loginMethod === "password" ? (
-                        "SIGN IN"
-                      ) : (
-                        "Send Email Code"
-                      )}
-                    </Button>
-
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <Box
-                        sx={{
-                          flexGrow: 1,
-                          bgcolor: "rgba(255,255,255,0.2)",
-                        }}
-                      />
-                      <Typography
-                        sx={{
-                          color: "rgba(255,255,255,0.6)",
-                          fontSize: "0.9rem",
-                        }}
-                      >
-                        OR
-                      </Typography>
-                      <Box
-                        sx={{
-                          flexGrow: 1,
-                          height: 1,
-                          bgcolor: "rgba(255,255,255,0.2)",
-                        }}
-                      />
-                    </Box>
-
-                    {loginMethod === "password" ? (
-                      <Typography
-                        onClick={() => setLoginMethod("otp")}
-                        sx={{
-                          cursor: "pointer",
-                          py: 1.2,
-                          mb: 1,
-                          color: "#fff",
-                          fontWeight: 500,
-                          textAlign: "center",
-                          background: "transparent",
-                          letterSpacing: {
-                            xs: 0.4,
-                            sm: 1,
-                          },
-                          fontSize: {
-                            xs: "0.75rem",
-                            sm: "1rem",
-                          },
-                        }}
-                      >
-                        Login w/Email Code (no password needed)
-                      </Typography>
-                    ) : (
-                      <Typography
-                        onClick={() => setLoginMethod("password")}
-                        sx={{
-                          cursor: "pointer",
-                          py: 1.2,
-                          mb: 1,
-                          color: "#fff",
-                          fontWeight: 500,
-                          textAlign: "center",
-                          background: "transparent",
-                          letterSpacing: {
-                            xs: 0.4,
-                            sm: 1,
-                          },
-                          fontSize: {
-                            xs: "0.75rem",
-                            sm: "1rem",
-                          },
-                        }}
-                      >
-                        Login w/password
-                      </Typography>
-                    )}
-
-                    {/* Links */}
-                    <Typography
-                      sx={{
-                        mt: 3,
-                        textAlign: "center",
-                        color: "rgba(255,255,255,0.7)",
-                        "& a": {
-                          color: "primary.main",
-                          textDecoration: "none",
-                          position: "relative",
-                          "&::after": {
-                            content: '""',
-                            position: "absolute",
-                            width: "100%",
-                            height: "2px",
-                            bottom: -2,
-                            left: 0,
-                            background:
-                              "linear-gradient(45deg, #FF2D55, #7000FF)",
-                            transform: "scaleX(0)",
-                            transition: "transform 0.3s ease",
-                            transformOrigin: "right",
-                          },
-                          "&:hover::after": {
-                            transform: "scaleX(1)",
-                            transformOrigin: "left",
-                          },
-                        },
-                      }}
-                    >
-                      New to Swing Social?{" "}
-                      <Link href="/register">Create an account</Link>
-                    </Typography>
-
-                    <Typography
-                      onClick={() => {
-                        setShowLocationModal(true);
-                      }}
-                      sx={{
-                        mt: 1,
-                        textAlign: "center",
-                        cursor: "pointer",
-                        color: "#FF2D55",
-                        "& a": {
-                          color: "primary.main",
-                          textDecoration: "none",
-                          position: "relative",
-                          "&::after": {
-                            content: '""',
-                            position: "absolute",
-                            width: "100%",
-                            height: "2px",
-                            bottom: -2,
-                            left: 0,
-                            background:
-                              "linear-gradient(45deg, #FF2D55, #7000FF)",
-                            transform: "scaleX(0)",
-                            transition: "transform 0.3s ease",
-                            transformOrigin: "right",
-                          },
-                          "&:hover::after": {
-                            transform: "scaleX(1)",
-                            transformOrigin: "left",
-                          },
-                        },
-                      }}
-                    >
-                      Forget Password? Reset your password
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-            </RotatingCard>
-          </Container>
-
-          <Modal
-            open={showLocationModal}
-            closeAfterTransition
-            BackdropComponent={Backdrop}
-            BackdropProps={{ timeout: 500 }}
-          >
-            <Box
+    <ThemeProvider theme={theme}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          background:
+            "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <ParticleField />
+        <Container maxWidth="sm" sx={{ position: "relative", zIndex: 1 }}>
+          <RotatingCard>
+            <Paper
+              elevation={24}
               sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                width: 400,
-                bgcolor: "background.paper",
-                borderRadius: 2,
-                boxShadow: 24,
-                p: 4,
-                textAlign: "center",
+                p: { xs: 2, sm: 2, md: 4 },
+                background: "rgba(255, 255, 255, 0.05)",
+                backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
               }}
             >
-              <Password sx={{ fontSize: 48, color: "primary.main" }} />
-              <Typography
-                variant="h6"
-                component="h2"
-                gutterBottom
-                sx={{ mb: 2 }}
-              >
-                Need Help Logging In?
-              </Typography>
+              <Box sx={{ mb: 4, textAlign: "center" }}>
+                <Box sx={{ mb: 2 }}>
+                  <img
+                    src="/logo.png"
+                    alt="SwingSocial Logo"
+                    style={{
+                      width: "250px",
+                      height: "auto",
+                      display: "block",
+                      margin: "0 auto",
+                      objectFit: "cover",
+                    }}
+                  />
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 500,
+                      background: "linear-gradient(45deg, #FF2D55, #7000FF)",
+                      backgroundClip: "text",
+                      WebkitBackgroundClip: "text",
+                      color: "transparent",
+                      mt: 1,
+                    }}
+                  >
+                    Welcome Back! Sign in to Continue
+                  </Typography>
+                </Box>
+              </Box>
 
-              <TextField
-                fullWidth
-                label="Email"
-                variant="outlined"
-                value={resetUserName}
-                onChange={handleResetUserNameChange}
-                error={resetValidation.resetUserName.error}
-                helperText={
-                  resetValidation.resetUserName.error
-                    ? resetValidation.resetUserName.message
-                    : ""
-                }
-                sx={{
-                  mb: 2,
-                  "& .MuiOutlinedInput-root": {
-                    color: "#FF2D55",
-                    backgroundColor: "white",
-                    "& fieldset": { borderColor: "#FF2D55" },
-                    "&:hover fieldset": { borderColor: "#FF617B" },
-                    "&.Mui-focused fieldset": { borderColor: "#7000FF" },
-                    "&.Mui-error fieldset": { borderColor: "#FF0000" },
-                  },
-                  "& .MuiInputLabel-root": {
-                    color: "#FF2D55!important",
-                  },
-                  "& .MuiInputLabel-root.Mui-focused": {
-                    color: "#7000FF",
-                  },
-                  "& .MuiInputLabel-root.Mui-error": {
-                    color: "#FF0000",
-                  },
-                }}
-              />
-
-              <Typography sx={{ mb: 3 }}>
-                Choose an option to regain access to your account:
-              </Typography>
-
-              <Select
-                fullWidth
-                value={otpOption}
-                onChange={(e) => setOtpOption(e.target.value)}
-                displayEmpty
-                sx={{ mb: 3 }}
-              >
-                <MenuItem value="" disabled>
-                  Select an option
-                </MenuItem>
-                <MenuItem value="resetPassword">
-                  Email me a Password Reset Link
-                </MenuItem>
-                <MenuItem value="loginCode">
-                  Email me a 4-digit Login Code
-                </MenuItem>
-              </Select>
-
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={() => {
-                  if (!otpOption) {
-                    Swal.fire({
-                      title: "Select an Option",
-                      text: "Please choose an option before proceeding.",
-                      icon: "warning",
-                      confirmButtonText: "OK",
-                    });
-                    return;
+              <Box component="form" noValidate onSubmit={formik.handleSubmit}>
+                <TextField
+                  fullWidth
+                  label={
+                    loginMethod === "password" ? "Email or Username" : "Email"
                   }
-                  if (otpOption === "resetPassword") {
-                    handleResetPasswordEmail();
-                  } else if (otpOption === "loginCode") {
-                    handleSendLoginCodeEmail();
-                  }
-                }}
-                disabled={submitLoading || !otpOption}
-                sx={{
-                  background: "linear-gradient(45deg, #FF2D55, #7000FF)",
-                  py: 1.5,
-                  px: 4,
-                  mb: 1,
-                }}
-                startIcon={
-                  submitLoading ? (
-                    <CircularProgress size={20} color="inherit" />
+                  name="email"
+                  value={formik.values.email}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.email && Boolean(formik.errors.email)}
+                  helperText={formik.touched.email && formik.errors.email}
+                  sx={{
+                    mb: 2,
+                    "& .MuiOutlinedInput-root": {
+                      color: "white",
+                      backgroundColor: "rgba(255,255,255,0.05)",
+                      "& fieldset": {
+                        borderColor: "rgba(255,255,255,0.2)",
+                        borderRadius: "12px",
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "rgba(255,255,255,0.4)",
+                      },
+                    },
+                    "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.7)" },
+                  }}
+                />
+
+                {loginMethod === "password" && (
+                  <TextField
+                    fullWidth
+                    label="Password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formik.values.password}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={
+                      formik.touched.password && Boolean(formik.errors.password)
+                    }
+                    helperText={
+                      formik.touched.password && formik.errors.password
+                    }
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword((s) => !s)}
+                            edge="end"
+                            sx={{ color: "rgba(255,255,255,0.7)" }}
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      mb: 2,
+                      "& .MuiOutlinedInput-root": {
+                        color: "white",
+                        backgroundColor: "rgba(255,255,255,0.05)",
+                        "& fieldset": {
+                          borderColor: "rgba(255,255,255,0.2)",
+                          borderRadius: "12px",
+                        },
+                        "&:hover fieldset": {
+                          borderColor: "rgba(255,255,255,0.4)",
+                        },
+                      },
+                      "& .MuiInputLabel-root": {
+                        color: "rgba(255,255,255,0.7)",
+                      },
+                    }}
+                  />
+                )}
+
+                <Button
+                  fullWidth
+                  type="submit"
+                  disabled={loading}
+                  sx={{
+                    py: 1.5,
+                    mb: 2,
+                    my: 3,
+                    position: "relative",
+                    overflow: "hidden",
+                    color: "white",
+                    borderRadius: "12px",
+                    background: "linear-gradient(45deg, #FF2D55, #7000FF)",
+                    "&::before": {
+                      content: '""',
+                      position: "absolute",
+                      top: 0,
+                      left: "-100%",
+                      width: "200%",
+                      height: "100%",
+                      background:
+                        "linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)",
+                      animation: "shine 2s infinite",
+                    },
+                    "@keyframes shine": { "100%": { left: "100%" } },
+                  }}
+                >
+                  {loading ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : loginMethod === "password" ? (
+                    "SIGN IN"
                   ) : (
-                    <Check />
-                  )
-                }
-              >
-                {submitLoading ? "Sending..." : "Send"}
-              </Button>
+                    "Send Email Code"
+                  )}
+                </Button>
 
-              <Button
-                variant="text"
-                onClick={() => {
-                  router.push("/login");
-                  setShowLocationModal(false);
-                }}
-                sx={{ mt: 2 }}
-              >
-                Back to Login
-              </Button>
-            </Box>
-          </Modal>
-        </Box>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Box sx={{ flexGrow: 1, bgcolor: "rgba(255,255,255,0.2)" }} />
+                  <Typography
+                    sx={{
+                      color: "rgba(255,255,255,0.6)",
+                      fontSize: "0.9rem",
+                      px: 2,
+                    }}
+                  >
+                    OR
+                  </Typography>
+                  <Box
+                    sx={{
+                      flexGrow: 1,
+                      height: 1,
+                      bgcolor: "rgba(255,255,255,0.2)",
+                    }}
+                  />
+                </Box>
 
-        <Snackbar
-          open={open}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-          autoHideDuration={5000}
-          onClose={handleClose}
+                {loginMethod === "password" ? (
+                  <Typography
+                    onClick={() => setLoginMethod("otp")}
+                    sx={{
+                      cursor: "pointer",
+                      py: 1.2,
+                      mb: 1,
+                      color: "#fff",
+                      fontWeight: 500,
+                      textAlign: "center",
+                      letterSpacing: { xs: 0.4, sm: 1 },
+                      fontSize: { xs: "0.75rem", sm: "1rem" },
+                    }}
+                  >
+                    Login w/Email Code (no password needed)
+                  </Typography>
+                ) : (
+                  <Typography
+                    onClick={() => setLoginMethod("password")}
+                    sx={{
+                      cursor: "pointer",
+                      py: 1.2,
+                      mb: 1,
+                      color: "#fff",
+                      fontWeight: 500,
+                      textAlign: "center",
+                      letterSpacing: { xs: 0.4, sm: 1 },
+                      fontSize: { xs: "0.75rem", sm: "1rem" },
+                    }}
+                  >
+                    Login w/password
+                  </Typography>
+                )}
+
+                <Typography
+                  sx={{
+                    mt: 3,
+                    textAlign: "center",
+                    color: "rgba(255,255,255,0.7)",
+                    "& a": {
+                      color: "primary.main",
+                      textDecoration: "none",
+                      position: "relative",
+                      "&::after": {
+                        content: '""',
+                        position: "absolute",
+                        width: "100%",
+                        height: "2px",
+                        bottom: -2,
+                        left: 0,
+                        background: "linear-gradient(45deg, #FF2D55, #7000FF)",
+                        transform: "scaleX(0)",
+                        transition: "transform 0.3s ease",
+                        transformOrigin: "right",
+                      },
+                      "&:hover::after": {
+                        transform: "scaleX(1)",
+                        transformOrigin: "left",
+                      },
+                    },
+                  }}
+                >
+                  New to Swing Social?{" "}
+                  <Link href="/register">Create an account</Link>
+                </Typography>
+
+                <Typography
+                  onClick={() => router.push("/forgot-password")}
+                  sx={{
+                    mt: 1,
+                    textAlign: "center",
+                    cursor: "pointer",
+                    color: "#FF2D55",
+                  }}
+                >
+                  Forget Password? Reset your password
+                </Typography>
+              </Box>
+            </Paper>
+          </RotatingCard>
+        </Container>
+      </Box>
+
+      <Snackbar
+        open={snack.open}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        autoHideDuration={5000}
+        onClose={handleClose}
+      >
+        <Alert
+          severity="success"
+          sx={{
+            backgroundColor: "white",
+            color: "#fc4c82",
+            fontWeight: "bold",
+            alignItems: "center",
+            borderRight: "5px solid #fc4c82",
+          }}
+          icon={
+            <Box
+              component="img"
+              src="/icon.png"
+              alt="Logo"
+              sx={{ width: 20, height: 20 }}
+            />
+          }
         >
-          <Alert
-            severity="success"
-            sx={{
-              backgroundColor: "white",
-              color: "#fc4c82",
-              fontWeight: "bold",
-              alignItems: "center",
-              borderRight: "5px solid #fc4c82",
-            }}
-            icon={
-              <Box
-                component="img"
-                src="/icon.png"
-                alt="Logo"
-                sx={{
-                  width: "20px",
-                  height: "20px",
-                }}
-              />
-            }
-          >
-            {message}
-          </Alert>
-        </Snackbar>
-      </ThemeProvider>
-    </>
+          {snack.message}
+        </Alert>
+      </Snackbar>
+    </ThemeProvider>
   );
 };
 
