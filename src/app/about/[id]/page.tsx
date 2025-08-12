@@ -111,7 +111,7 @@ export default function About(props: { params: Params }) {
             <Box sx={{ color: "#fff", mb: 2 }}>
               <Typography variant="body2">
                 Enter a short tagline other users can see when swiping through
-                pics. Examples are:
+                pics.
               </Typography>
               {/* <ul style={{ margin: "8px 0", paddingLeft: "20px" }}>
                 <li style={{ marginBottom: "5px" }}>New to the Lifestyle</li>
