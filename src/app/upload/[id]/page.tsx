@@ -145,7 +145,7 @@ export default function UploadAvatar({ params }: { params: Params }) {
     }),
     onSubmit: async (values) => {
       setIsUploading(true);
-      const isAvatarOk = await analyzeImage(values.avatar);
+      // const isAvatarOk = await analyzeImage(values.avatar);
       const avatarUrl = await uploadImage(values.avatar);
 
       await fetch("/api/user/upload/database", {

@@ -665,7 +665,7 @@ const RegisterPage = () => {
                       fontSize: { xs: "0.85rem", sm: "1rem" },
                     }}
                   >
-                    We verify every account to keep SwingSocial real.
+                    We verify every account to keep SwingSocial real
                   </Typography>
                 </Stack>
               </Box>
