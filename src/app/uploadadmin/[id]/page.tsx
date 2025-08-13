@@ -13,12 +13,11 @@ import {
 } from "@mui/material";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import { CircularProgress } from '@mui/material';
+import { CircularProgress } from "@mui/material";
 import Cropper from "react-easy-crop";
 import { useRouter } from "next/navigation";
-import * as mobilenet from '@tensorflow-models/mobilenet';
-import '@tensorflow/tfjs';
-type Params = Promise<{ id: string }>
+import "@tensorflow/tfjs";
+type Params = Promise<{ id: string }>;
 
 export default function UploadAvatar(props: { params: Params }) {
   const [avatarImage, setAvatarImage] = useState<string | null>(null);
@@ -30,23 +29,25 @@ export default function UploadAvatar(props: { params: Params }) {
   const [openCropper, setOpenCropper] = useState(false);
   const [currentCropType, setCurrentCropType] = useState<string>("avatar");
   const [croppedArea, setCroppedArea] = useState(null);
-  const [id, setId] = useState<string>(''); // State for error messages
+  const [id, setId] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const getIdFromParam = async () => {
       const params = await props.params;
       const pid: any = params.id;
-      console.log(pid);
-      setId(pid)
-    }
+      setId(pid);
+    };
     getIdFromParam();
   }, [props]);
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>, cropType: "avatar" | "banner") => {
+  const onFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    cropType: "avatar" | "banner"
+  ) => {
     const file = e.target.files?.[0];
-    console.log(e)
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
@@ -65,7 +66,6 @@ export default function UploadAvatar(props: { params: Params }) {
   const onCropComplete = (_croppedArea: any, croppedAreaPixels: any) => {
     setCroppedArea(croppedAreaPixels);
   };
-  const [error, setError] = useState(false);
 
   const handleCropConfirm = () => {
     if (!croppedArea || !currentCropType) return;
@@ -73,7 +73,9 @@ export default function UploadAvatar(props: { params: Params }) {
     const canvas = document.createElement("canvas");
     const image = new Image();
     const { width, height } =
-      currentCropType === "avatar" ? { width: 200, height: 200 } : { width: 800, height: 450 };
+      currentCropType === "avatar"
+        ? { width: 200, height: 200 }
+        : { width: 800, height: 450 };
 
     canvas.width = width;
     canvas.height = height;
@@ -96,92 +98,48 @@ export default function UploadAvatar(props: { params: Params }) {
     };
   };
 
-  const analyzeImage = async (imageData: string): Promise<boolean> => {
-      const img = new Image();
-      img.src = imageData;
-    
-      return new Promise((resolve) => {
-        img.onload = async () => {
-          const model = await mobilenet.load();
-          const predictions = await model.classify(img);
-    
-          console.log('Predictions:', predictions);
-    
-          // Check if any of the predictions indicate a body picture
-          const bodyKeywords = ['person', 'human', 'body', 'diaper', 'nappy', 'napkin', 'brassiere', 'bra', 'bandeau'];
-          const isBodyPicture = predictions.some(prediction =>
-            bodyKeywords.some(keyword => prediction.className.toLowerCase().includes(keyword))
-          );
-    
-          resolve(isBodyPicture);
-        };
-      });
-    };
-
   const handleContinue = async () => {
     if (!croppedAvatar || !croppedBanner) {
       setError(true);
       return;
     }
 
-    setIsUploading(true); // Set uploading state to true when starting
+    setIsUploading(true);
 
     try {
-      // const isAvatarBodyPicture = await analyzeImage(croppedAvatar);
       const isAvatarBodyPicture = true;
-  
-      // Function to upload an image and return its URL
+
       const uploadImage = async (imageData: string): Promise<string | null> => {
         try {
-          // Convert Base64 imageData to a Blob
           const blob = await (await fetch(imageData)).blob();
           const formData = new FormData();
-  
-          // Append the image Blob with a unique name
           formData.append("image", blob, `${Date.now()}.jpg`);
-          console.log("Blob details:", blob);
-  
-          // Send the FormData via fetch
-          const response = await fetch('/api/user/upload', {
-            method: 'POST',
+          const response = await fetch("/api/user/upload", {
+            method: "POST",
             body: formData,
           });
-  
-          // Parse the JSON response
           const data = await response.json();
-  
-          // Handle response errors
           if (!response.ok) {
-            throw new Error(data.message || 'Failed to upload image');
+            throw new Error(data.message || "Failed to upload image");
           }
-  
-          console.log("Upload response:", data);
-          return data?.blobUrl || null; // Return the uploaded image's URL
+
+          return data?.blobUrl || null;
         } catch (error) {
           console.error("Error during image upload:", error);
-          return null; // Return null in case of an error
+          return null;
         }
       };
-  
-      // Upload avatar and banner images
-      console.log("Uploading avatar...");
+
       const avatarUrl = await uploadImage(croppedAvatar);
-      console.log("Avatar URL:", avatarUrl);
-  
-      console.log("Uploading banner...");
       const bannerUrl = await uploadImage(croppedBanner);
-      console.log("Banner URL:", bannerUrl);
-  
+
       if (isAvatarBodyPicture) {
         const params = await props.params;
         const pid: any = params.id;
-  
-        // Store the avatar and banner
-        console.log("Storing avatar and banner for questionable content...");
-        const response = await fetch('/api/user/upload/database', {
-          method: 'POST',
+        const response = await fetch("/api/user/upload/database", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             pid: pid,
@@ -190,22 +148,18 @@ export default function UploadAvatar(props: { params: Params }) {
             banner: bannerUrl,
           }),
         });
-        if(response.ok){
+        if (response.ok) {
           router.push(`/about/${pid}`);
         }
-  
-        console.log("Body pictures are not allowed.");
       } else {
-        // Save the avatar and banner if they are not questionable
-        console.log("Saving avatar and banner for valid content...");
         const params = await props.params;
         const id: any = params.id;
-  
+
         try {
-          const response = await fetch('/api/user/upload/database', {
-            method: 'POST',
+          const response = await fetch("/api/user/upload/database", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               pid: id,
@@ -218,16 +172,15 @@ export default function UploadAvatar(props: { params: Params }) {
             router.push(`/about/${id}`);
           }
         } catch (error) {
-          console.error('Error submitting form:', error);
+          console.error("Error submitting form:", error);
         }
       }
     } catch (error) {
       console.error("Error uploading images:", error);
     } finally {
-      setIsUploading(false); // Reset uploading state when done
+      setIsUploading(false);
     }
   };
-
 
   return (
     <Box
@@ -252,14 +205,22 @@ export default function UploadAvatar(props: { params: Params }) {
           boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
         }}
       >
-        <Typography sx={{ textAlign: "center", color: "#c2185b", fontWeight: "bold" }}>No Nudity allowed on the website, we will verify and remove not allowed images</Typography>
+        <Typography
+          sx={{ textAlign: "center", color: "#c2185b", fontWeight: "bold" }}
+        >
+          No Nudity allowed on the website, we will verify and remove not
+          allowed images
+        </Typography>
         {error && (
           <Typography variant="body2" color="error" sx={{ mt: 1 }}>
             Please upload avatar and banner.
           </Typography>
         )}
         <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
-          <Typography variant="h6" sx={{ color: "#fff", fontWeight: "bold", mb: 2 }}>
+          <Typography
+            variant="h6"
+            sx={{ color: "#fff", fontWeight: "bold", mb: 2 }}
+          >
             POST Avatar
           </Typography>
           <Box
@@ -298,7 +259,9 @@ export default function UploadAvatar(props: { params: Params }) {
                 />
                 <label htmlFor="upload-avatar">
                   <IconButton component="span">
-                    <PhotoCameraOutlinedIcon sx={{ fontSize: 40, color: "#c2185b" }} />
+                    <PhotoCameraOutlinedIcon
+                      sx={{ fontSize: 40, color: "#c2185b" }}
+                    />
                   </IconButton>
                 </label>
               </>
@@ -308,7 +271,10 @@ export default function UploadAvatar(props: { params: Params }) {
 
         {/* Banner Upload */}
         <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
-          <Typography variant="h6" sx={{ color: "#fff", fontWeight: "bold", mb: 2 }}>
+          <Typography
+            variant="h6"
+            sx={{ color: "#fff", fontWeight: "bold", mb: 2 }}
+          >
             Post Profile Banner
           </Typography>
           <Box
@@ -347,12 +313,13 @@ export default function UploadAvatar(props: { params: Params }) {
                 />
                 <label htmlFor="upload-banner">
                   <IconButton component="span">
-                    <PhotoCameraOutlinedIcon sx={{ fontSize: 40, color: "#c2185b" }} />
+                    <PhotoCameraOutlinedIcon
+                      sx={{ fontSize: 40, color: "#c2185b" }}
+                    />
                   </IconButton>
                 </label>
               </>
             )}
-
           </Box>
         </Grid>
 
@@ -375,16 +342,23 @@ export default function UploadAvatar(props: { params: Params }) {
             onClick={handleContinue}
           >
             {isUploading ? (
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
                 <CircularProgress size={24} color="inherit" />
-                <Typography 
-                  sx={{ 
-                    color: '#fff', 
-                    fontSize: '0.875rem',
-                    position: 'absolute',
-                    top: '100%',
-                    width: '400px',
-                    marginTop: '8px'
+                <Typography
+                  sx={{
+                    color: "#fff",
+                    fontSize: "0.875rem",
+                    position: "absolute",
+                    top: "100%",
+                    width: "400px",
+                    marginTop: "8px",
                   }}
                 >
                   Don't take your pants off yet, give us a sec...
@@ -412,12 +386,11 @@ export default function UploadAvatar(props: { params: Params }) {
             <Cropper
               image={
                 currentCropType === "avatar"
-                  ? avatarImage || undefined // If `avatarImage` is null, pass undefined
+                  ? avatarImage || undefined
                   : currentCropType === "banner"
-                    ? bannerImage || undefined // If `bannerImage` is null, pass undefined
-                    : undefined // For other cases
+                  ? bannerImage || undefined
+                  : undefined
               }
-
               crop={crop}
               zoom={zoom}
               aspect={currentCropType === "avatar" ? 1 : 16 / 9}

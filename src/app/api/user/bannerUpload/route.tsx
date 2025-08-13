@@ -11,21 +11,20 @@ const pool = new Pool({
 });
 
 export async function POST(req: any) {
-  const { pid, avatar, banner, Questionable } = await req.json();
+  const { pid, banner, Questionable } = await req.json();
   try {
     const result = await pool.query(
-      "SELECT * FROM public.web_update_avatar($1, $2, $3, $4)",
-      [pid, avatar, banner, Questionable]
+      "SELECT * FROM public.web_new_banner($1, $2, $3)",
+      [pid, banner, Questionable]
     );
 
     return NextResponse.json({
-      message: "Profile created successfully",
+      message: "Banner added successfully",
     });
   } catch (error: any) {
+    console.error("web_new_banner failed:", error);
     return NextResponse.json(
-      {
-        message: "User Name Update failed",
-      },
+      { message: "Banner addition failed" },
       { status: 400 }
     );
   }

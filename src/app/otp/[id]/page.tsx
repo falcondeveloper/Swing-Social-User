@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, memo, useMemo } from "react";
 import {
   Box,
   Button,
@@ -8,13 +8,104 @@ import {
   TextField,
   Grid,
   CircularProgress,
+  Stepper,
+  Step,
+  StepLabel,
+  ThemeProvider,
+  createTheme,
+  useMediaQuery,
+  Container,
+  Paper,
 } from "@mui/material";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import "react-toastify/dist/ReactToastify.css";
+import { RefreshCwIcon } from "lucide-react";
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: "#FF2D55",
+      light: "#FF617B",
+      dark: "#CC1439",
+    },
+    secondary: {
+      main: "#7000FF",
+      light: "#9B4DFF",
+      dark: "#5200CC",
+    },
+    success: {
+      main: "#00D179",
+    },
+    background: {
+      default: "#0A0118",
+    },
+  },
+
+  typography: {
+    fontFamily: '"Poppins", "Roboto", "Arial", sans-serif',
+  },
+});
+
+const ParticleField = memo(() => {
+  const isMobile = useMediaQuery("(max-width:600px)");
+
+  const particles = useMemo(() => {
+    const count = isMobile ? 15 : 50;
+    return [...Array(count)].map((_, i) => ({
+      id: i,
+      size: Math.random() * (isMobile ? 4 : 6) + 2,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      duration: Math.random() * (isMobile ? 15 : 20) + 10,
+      delay: -Math.random() * 20,
+    }));
+  }, [isMobile]);
+
+  return (
+    <Box
+      sx={{
+        position: "absolute",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        opacity: 0.6,
+      }}
+    >
+      {particles.map((particle) => (
+        <Box
+          key={particle.id}
+          sx={{
+            position: "absolute",
+            width: particle.size,
+            height: particle.size,
+            left: `${particle.x}%`,
+            top: `${particle.y}%`,
+            background: "linear-gradient(45deg, #FF2D55, #7000FF)",
+            borderRadius: "50%",
+            animation: `float ${particle.duration}s infinite linear`,
+            animationDelay: `${particle.delay}s`,
+            "@keyframes float": {
+              "0%": {
+                transform: "translate(0, 0) rotate(0deg)",
+                opacity: 0,
+              },
+              "50%": {
+                opacity: 0.8,
+              },
+              "100%": {
+                transform: "translate(100px, -100px) rotate(360deg)",
+                opacity: 0,
+              },
+            },
+          }}
+        />
+      ))}
+    </Box>
+  );
+});
 
 type Params = Promise<{ id: string }>;
 
@@ -126,148 +217,255 @@ export default function Otp(props: { params: Params }) {
   };
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <Box
-        sx={{
-          backgroundColor: "#000",
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: 2,
-        }}
-      >
-        <Grid
-          container
-          justifyContent="center"
-          alignItems="center"
+    <>
+      <ThemeProvider theme={theme}>
+        <Box
           sx={{
-            backgroundColor: "#121212",
-            borderRadius: "16px",
-            maxWidth: "450px",
-            padding: "32px",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+            minHeight: "85vh",
+            display: "flex",
+            alignItems: "center",
+            background:
+              "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
+            position: "relative",
+            overflow: "hidden",
           }}
         >
-          <Grid item xs={12} sx={{ textAlign: "center" }}>
-            <Typography
-              variant="h5"
-              sx={{ color: "#fff", fontWeight: "bold", mb: 2 }}
+          <ParticleField />
+          <Container maxWidth="sm" sx={{ p: 0 }}>
+            <Paper
+              elevation={24}
+              sx={{
+                p: { xs: 2, sm: 2, md: 4 },
+                background: "rgba(255, 255, 255, 0.05)",
+                backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
             >
-              Verify your email?
-            </Typography>
-            <Typography sx={{ color: "#aaa", mb: 4, fontSize: "0.95rem" }}>
-              Enter the code we've sent to your email address
-            </Typography>
-          </Grid>
-
-          <Grid item xs={12} sx={{ textAlign: "center" }}>
-            <Box
-              sx={{ display: "flex", justifyContent: "center", gap: 2, mb: 4 }}
-            >
-              {formik.values.otp.map((digit, index) => (
-                <TextField
-                  key={index}
-                  id={`otp-${index}`}
-                  value={digit}
-                  onChange={(e: any) => handleOtpChange(e.target.value, index)}
-                  onKeyDown={(e: any) => handleKeyDown(e, index)}
-                  error={Boolean(formik.errors.otp?.[index])}
-                  inputProps={{
-                    maxLength: 1,
-                    style: {
-                      textAlign: "center",
-                      fontSize: "1.5rem",
-                      padding: "10px",
-                      color: "#fff",
-                    },
-                  }}
+              <Stepper
+                activeStep={1}
+                alternativeLabel
+                sx={{
+                  background: "transparent",
+                  width: "100%",
+                  margin: "0 auto 16px auto",
+                }}
+              >
+                {[
+                  "Profile Info",
+                  "Verify Email",
+                  "Preferences",
+                  "Avatar & Banner",
+                  "About",
+                ].map((label) => (
+                  <Step key={label}>
+                    <StepLabel
+                      sx={{
+                        "& .MuiStepLabel-label": {
+                          color: "#fff !important",
+                          fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                        },
+                        "& .MuiStepIcon-root": {
+                          color: "rgba(255,255,255,0.3)",
+                        },
+                        "& .MuiStepIcon-root.Mui-active": {
+                          color: "#c2185b",
+                        },
+                        "& .MuiStepIcon-root.Mui-completed": {
+                          color: "#c2185b",
+                        },
+                      }}
+                    >
+                      {/* {label} */}
+                    </StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "flex-start",
+                  mt: 2,
+                }}
+              >
+                <Grid
+                  container
+                  justifyContent="center"
+                  alignItems="center"
                   sx={{
-                    backgroundColor: "#2a2a2a",
-                    width: "50px",
-                    height: "50px",
-                    borderRadius: "8px",
-                    "& .MuiInputBase-input": { padding: 0 },
+                    padding: "16px",
                   }}
-                />
-              ))}
-            </Box>
-          </Grid>
+                >
+                  {/* Heading */}
+                  <Grid item xs={12} textAlign="center">
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        color: "#fff",
+                        fontWeight: "bold",
+                        mb: 1,
+                        fontSize: { xs: "1.4rem", sm: "1.6rem" },
+                      }}
+                    >
+                      Verify your email
+                    </Typography>
 
-          {error && (
-            <Typography variant="body2" color="error" sx={{ mt: 1, mb: 1 }}>
-              Please input the correct verification code
-            </Typography>
-          )}
+                    {email && (
+                      <Typography
+                        sx={{
+                          color: "#c2185b",
+                          fontWeight: "600",
+                          mb: 3,
+                          fontSize: { xs: "1rem", sm: "1.05rem" },
+                        }}
+                      >
+                        Code sent to <br />
+                        <span style={{ color: "#fff" }}>{email}</span>
+                      </Typography>
+                    )}
+                  </Grid>
 
-          <Grid item xs={12} sx={{ textAlign: "center" }}>
-            <Typography
-              sx={{
-                color: "#aaa",
-                mb: 4,
-                fontSize: "0.95rem",
-                fontStyle: "italic",
-              }}
-            >
-              Haven't received your code? Check your spam folder.
-            </Typography>
-          </Grid>
+                  {/* OTP Input */}
+                  <Grid item xs={12} sx={{ textAlign: "center" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        flexWrap: "nowrap",
+                        gap: { xs: 1, sm: 2 },
+                        mb: 4,
+                        overflowX: "auto",
+                      }}
+                    >
+                      {formik.values.otp.map((digit, index) => (
+                        <TextField
+                          key={index}
+                          id={`otp-${index}`}
+                          value={digit}
+                          onChange={(e: any) =>
+                            handleOtpChange(e.target.value, index)
+                          }
+                          onKeyDown={(e: any) => handleKeyDown(e, index)}
+                          error={Boolean(formik.errors.otp?.[index])}
+                          type="tel"
+                          variant="outlined"
+                          inputProps={{
+                            inputMode: "numeric",
+                            pattern: "[0-9]*",
+                            maxLength: 1,
+                            style: {
+                              textAlign: "center",
+                              fontSize: "1.5rem",
+                              color: "#fff",
+                              padding: 0,
+                              height: "50px",
+                            },
+                          }}
+                          sx={{
+                            backgroundColor: "#2a2a2a",
+                            width: "50px",
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "8px",
+                              "& fieldset": {
+                                borderColor: "rgba(255,255,255,0.3)",
+                              },
+                              "&:hover fieldset": {
+                                borderColor: "#c2185b",
+                              },
+                              "&.Mui-focused fieldset": {
+                                borderColor: "#c2185b",
+                                borderWidth: "2px",
+                              },
+                            },
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Grid>
 
-          <Grid item xs={12} sx={{ textAlign: "center" }}>
-            <Button
-              sx={{
-                width: "56px",
-                height: "56px",
-                borderRadius: "50%",
-                backgroundColor: "#c2185b",
-                color: "#fff",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                margin: "0 auto",
-                mb: 2,
-                "&:hover": { backgroundColor: "#ad1457" },
-              }}
-              onClick={() => formik.handleSubmit()}
-              disabled={loading}
-            >
-              {loading ? (
-                <CircularProgress size={24} sx={{ color: "white" }} />
-              ) : (
-                <ArrowForwardIosIcon />
-              )}
-            </Button>
-          </Grid>
+                  {/* Error message */}
+                  {error && (
+                    <Typography
+                      variant="body2"
+                      color="error"
+                      sx={{ textAlign: "center", mb: 2 }}
+                    >
+                      Please input the correct verification code
+                    </Typography>
+                  )}
 
-          <Grid item xs={12} sx={{ textAlign: "center" }}>
-            <Button
-              onClick={() => {
-                toast.success("Code is resent");
-                handleVerificationEmail(email ?? "");
-              }}
-              sx={{
-                backgroundColor: "#c2185b",
-                color: "#fff",
-                fontWeight: "bold",
-                padding: "10px 16px",
-                width: "100%",
-                "&:hover": { backgroundColor: "#ad1457" },
-              }}
-            >
-              Resend Code
-            </Button>
-          </Grid>
+                  {/* Helper text */}
+                  <Grid item xs={12} sx={{ textAlign: "center", mb: 2 }}>
+                    <Typography
+                      sx={{
+                        color: "#aaa",
+                        fontSize: "0.95rem",
+                        mb: 1,
+                      }}
+                    >
+                      Haven't received your code? Check your spam folder.
+                    </Typography>
+                    <Grid item xs={12} sx={{ textAlign: "center", mt: 1 }}>
+                      <Button
+                        variant="text"
+                        startIcon={<RefreshCwIcon size={16} />}
+                        onClick={() => {
+                          toast.success("Code is resent");
+                          handleVerificationEmail(email ?? "");
+                        }}
+                        sx={{
+                          color: "#e4518cff",
+                          fontWeight: 500,
+                          fontSize: "1rem",
+                          textTransform: "none",
+                          textDecoration: "underline",
+                          "&:hover": {
+                            textDecoration: "underline",
+                            backgroundColor: "transparent",
+                          },
+                        }}
+                      >
+                        Resend Code
+                      </Button>
+                    </Grid>
+                  </Grid>
 
-          <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
-            <Typography
-              sx={{ color: "#c2185b", fontWeight: "bold", fontSize: "1rem" }}
-            >
-              Come party with us
-            </Typography>
-          </Grid>
-        </Grid>
-      </Box>
-      <ToastContainer position="top-right" autoClose={3000} />
-    </Suspense>
+                  {/* Submit Button */}
+                  <Grid item xs={12} sx={{ textAlign: "center", mt: 2 }}>
+                    <Button
+                      fullWidth
+                      sx={{
+                        backgroundColor: "#c2185b",
+                        color: "#fff",
+                        fontSize: "1rem",
+                        fontWeight: "bold",
+                        py: 1.5,
+                        borderRadius: "8px",
+                        "&:hover": { backgroundColor: "#ad1457" },
+                      }}
+                      onClick={() => formik.handleSubmit()}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <CircularProgress size={24} sx={{ color: "white" }} />
+                      ) : (
+                        "Verify Code"
+                      )}
+                    </Button>
+                  </Grid>
+
+                  {/* Footer */}
+                  <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
+                    <Typography sx={{ color: "#c2185b", fontWeight: "bold" }}>
+                      Come party with us
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+            </Paper>
+          </Container>
+        </Box>
+      </ThemeProvider>
+    </>
   );
 }

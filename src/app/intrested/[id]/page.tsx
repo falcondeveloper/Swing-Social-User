@@ -1,446 +1,592 @@
 "use client";
-import React, { useState, Suspense, useEffect } from "react";
+import React, { Suspense, useEffect, useMemo, memo, useState } from "react";
 import {
   Box,
   Button,
+  CircularProgress,
+  Container,
+  createTheme,
   Grid,
   MenuItem,
+  Paper,
   Select,
+  Step,
+  StepLabel,
+  Stepper,
   TextField,
+  ThemeProvider,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-type Params = Promise<{ id: string }>;
+import { Formik, Form } from "formik";
+import * as Yup from "yup";
+import Carousel from "@/commonPage/Carousel";
 
-export default function ShowIntrest(props: { params: Params }) {
-  const [selectedOption, setSelectedOption] = useState<string>("");
-  const [dob, setDob] = useState<string>("");
-  const [sexualOrientation, setSexualOrientation] = useState<string>("");
+const theme = createTheme({
+  palette: {
+    primary: { main: "#FF2D55", light: "#FF617B", dark: "#CC1439" },
+    secondary: { main: "#7000FF", light: "#9B4DFF", dark: "#5200CC" },
+    success: { main: "#00D179" },
+    background: { default: "#0A0118" },
+  },
+  typography: { fontFamily: '"Poppins", "Roboto", "Arial", sans-serif' },
+});
 
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState("");
-  const [partnerBirthday, setPartnerBirthday] = useState("");
-  const [partnerGender, setPartnerGender] = useState("");
-  const [partnerOrientation, setPartnerOrientation] = useState("");
+const ParticleField = memo(() => {
+  const isMobile = useMediaQuery("(max-width:600px)");
+  const particles = useMemo(() => {
+    const count = isMobile ? 15 : 50;
+    return [...Array(count)].map((_, i) => ({
+      id: i,
+      size: Math.random() * (isMobile ? 4 : 6) + 2,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      duration: Math.random() * (isMobile ? 15 : 20) + 10,
+      delay: -Math.random() * 20,
+    }));
+  }, [isMobile]);
+  return (
+    <Box
+      sx={{
+        position: "absolute",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        opacity: 0.6,
+      }}
+    >
+      {particles.map((p) => (
+        <Box
+          key={p.id}
+          sx={{
+            position: "absolute",
+            width: p.size,
+            height: p.size,
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            background: "linear-gradient(45deg, #FF2D55, #7000FF)",
+            borderRadius: "50%",
+            animation: `float ${p.duration}s infinite linear`,
+            animationDelay: `${p.delay}s`,
+            "@keyframes float": {
+              "0%": { transform: "translate(0, 0) rotate(0deg)", opacity: 0 },
+              "50%": { opacity: 0.8 },
+              "100%": {
+                transform: "translate(100px, -100px) rotate(360deg)",
+                opacity: 0,
+              },
+            },
+          }}
+        />
+      ))}
+    </Box>
+  );
+});
 
-  const sharedFieldStyles = {
-    backgroundColor: "#2a2a2a",
-    input: { color: "#fff" },
-    mb: 2,
-    mt: 2,
-    borderRadius: "4px",
-  };
+const linkSx = {
+  mb: 2,
+  "& .MuiOutlinedInput-root": {
+    color: "white",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: "12px",
+    textAlign: "left",
+    "& fieldset": {
+      borderColor: "rgba(255,255,255,0.2)",
+    },
+    "&:hover fieldset": {
+      borderColor: "rgba(255,255,255,0.4)",
+    },
+  },
+  "& .MuiInputLabel-root": {
+    color: "rgba(255,255,255,0.7)",
+  },
+  "& .MuiSelect-select": {
+    textAlign: "left",
+  },
+} as const;
 
-  const [id, setId] = useState<string>(""); // State for error messages
-  useEffect(() => {
-    const getIdFromParam = async () => {
-      const params = await props.params;
-      const pid: any = params.id;
-      console.log(pid);
-      setId(pid);
-    };
-    getIdFromParam();
-  }, [props]);
-
-  console.log(id);
-
-  const handleOptionChange = (event: any) => {
-    setSelectedOption(event.target.value as string);
-  };
-
-  const handleSexualChange = (event: any) => {
-    setSexualOrientation(event.target.value as string);
-  };
-
-  const handlePartnerGenderChange = (event: any) => {
-    setPartnerGender(event.target.value);
-  };
-
-  const handlePartnerOrientationChange = (event: any) => {
-    setPartnerOrientation(event.target.value);
-  };
+export default function ShowInterest({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const router = useRouter();
-  const [errors, setErrors] = useState<any>({});
+  const [id, setId] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const validateFields = () => {
-    const newErrors: any = {};
-    if (!age) newErrors.age = "Age is required.";
-    if (!gender) newErrors.gender = "Gender is required.";
-    if (!sexualOrientation)
-      newErrors.sexualOrientation = "Sexual orientation is required.";
-    if (!partnerBirthday)
-      newErrors.partnerBirthday = "Partner's age is required.";
-    if (!partnerGender)
-      newErrors.partnerGender = "Partner's gender is required.";
-    if (!partnerOrientation)
-      newErrors.partnerOrientation = "Partner's orientation is required.";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  useEffect(() => {
+    (async () => {
+      const p = await params;
+      setId(p.id);
+    })();
+  }, [params]);
+
+  const validationSchema = Yup.object({
+    selectedOption: Yup.string().required("Please select an option"),
+    age: Yup.string().when("selectedOption", {
+      is: (val: string) => ["Man", "Women", "Throuple", "Couple"].includes(val),
+      then: (schema) => schema.required("Age is required"),
+    }),
+    gender: Yup.string().when("selectedOption", {
+      is: (val: string) => ["Throuple", "Couple"].includes(val),
+      then: (schema) => schema.required("Gender is required"),
+    }),
+    sexualOrientation: Yup.string().required("Sexual orientation is required"),
+    partnerBirthday: Yup.string().when("selectedOption", {
+      is: (val: string) => ["Throuple", "Couple"].includes(val),
+      then: (schema) => schema.required("Partner's age is required"),
+    }),
+    partnerGender: Yup.string().when("selectedOption", {
+      is: (val: string) => ["Throuple", "Couple"].includes(val),
+      then: (schema) => schema.required("Partner's gender is required"),
+    }),
+    partnerOrientation: Yup.string().when("selectedOption", {
+      is: (val: string) => ["Throuple", "Couple"].includes(val),
+      then: (schema) => schema.required("Partner's orientation is required"),
+    }),
+  });
+
+  const initialValues = {
+    selectedOption: "",
+    age: "",
+    gender: "",
+    sexualOrientation: "",
+    partnerBirthday: "",
+    partnerGender: "",
+    partnerOrientation: "",
   };
 
-  const handleContinue = async () => {
-    let isValid = false;
+  const handleSubmit = async (values: typeof initialValues) => {
+    setLoading(true);
+    const isSingle =
+      values.selectedOption === "Women" || values.selectedOption === "Man";
 
-    if (selectedOption === "Women" || selectedOption === "Man") {
-      // Validate only sexualOrientation for these options
-      if (!sexualOrientation) {
-        setErrors({ sexualOrientation: "Sexual orientation is required." });
-        if (!age) {
-          setErrors({ age: "Age is required." });
+    const requestBody = isSingle
+      ? {
+          pid: id,
+          accounttype: values.selectedOption,
+          age: parseInt(values.age, 10),
+          orientation1: values.sexualOrientation,
+          gender1: values.selectedOption === "Women" ? "Female" : "Male",
         }
-      } else {
-        isValid = true;
-      }
-    } else {
-      // Validate all fields for other cases
-      const allFieldsValid = validateFields();
-      isValid = allFieldsValid;
-    }
+      : {
+          pid: id,
+          accounttype: values.selectedOption,
+          gender1: values.gender,
+          age: parseInt(values.age, 10),
+          orientation1: values.sexualOrientation,
+          partnerbirthday: values.partnerBirthday,
+          partnergender: values.partnerGender,
+          partnerorientation: values.partnerOrientation,
+        };
 
-    if (!isValid) return;
+    const url = isSingle
+      ? "/api/user/intrested"
+      : "/api/user/intrested/partner";
 
     try {
-      const requestBody =
-        selectedOption === "Women" || selectedOption === "Man"
-          ? {
-              pid: id,
-              accounttype: selectedOption,
-              age: parseInt(age, 10),
-              orientation1: sexualOrientation,
-              gender1: selectedOption === "Women" ? "Female" : "Male",
-            }
-          : {
-              pid: id,
-              accounttype: selectedOption,
-              gender1: gender,
-              age: parseInt(age, 10),
-              orientation1: sexualOrientation,
-              partnerbirthday: partnerBirthday,
-              partnergender: partnerGender,
-              partnerorientation: partnerOrientation,
-            };
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
 
-      if (selectedOption === "Women" || selectedOption === "Man") {
-        const response = await fetch("/api/user/intrested", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        });
-
-        if (response.ok) {
-          router.push(`/uploadadmin/${id}`);
-        } else {
-          console.error("Error submitting form:", response.statusText);
-        }
-      } else {
-        const response = await fetch("/api/user/intrested/partner", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        });
-
-        if (response.ok) {
-          router.push(`/uploadadmin/${id}`);
-        } else {
-          console.error("Error submitting form:", response.statusText);
-        }
+      if (!response.ok) {
+        throw new Error("Failed to submit form");
       }
+
+      await router.push(`/upload/${id}`);
     } catch (error) {
       console.error("Error submitting form:", error);
-    }
-  };
-
-  const renderAdditionalFields = () => {
-    const sharedFieldStyles = {
-      backgroundColor: "#2a2a2a",
-      input: { color: "#fff" },
-      mb: 2,
-      mt: 2,
-      borderRadius: "4px",
-    };
-
-    switch (selectedOption) {
-      case "Man":
-      case "Women":
-        return (
-          <Suspense fallback={<div>Loading...</div>}>
-            <Grid item xs={12} sx={{ textAlign: "center" }}>
-              <TextField
-                fullWidth
-                label="What's your Age?"
-                variant="filled"
-                size="small"
-                sx={sharedFieldStyles}
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-                error={!!errors.age}
-                helperText={errors.age}
-              />
-            </Grid>
-            <Select
-              fullWidth
-              value={sexualOrientation}
-              onChange={handleSexualChange}
-              variant="filled"
-              displayEmpty
-              size="small"
-              sx={sharedFieldStyles}
-              inputProps={{ "aria-label": "What's your sexual orientation?" }}
-              error={!!errors.sexualOrientation}
-            >
-              <MenuItem value="" disabled>
-                What's your sexual orientation?
-              </MenuItem>
-              <MenuItem value="Straight">Straight</MenuItem>
-              <MenuItem value="Bi">Bi</MenuItem>
-              <MenuItem value="Bi-curious">Bi-curious</MenuItem>
-              <MenuItem value="Open minded">Open minded</MenuItem>
-            </Select>
-            {errors.sexualOrientation && (
-              <Typography color="error" variant="body2">
-                {errors.sexualOrientation}
-              </Typography>
-            )}
-          </Suspense>
-        );
-
-      case "Throuple":
-      case "Couple":
-        return (
-          <>
-            <Suspense fallback={<div>Loading...</div>}>
-              <Typography
-                variant="h6"
-                sx={{ color: "#fff", fontWeight: "bold", mb: 2 }}
-              >
-                My Information
-              </Typography>
-              <TextField
-                fullWidth
-                label="What's your Age?"
-                variant="filled"
-                size="small"
-                sx={sharedFieldStyles}
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-                error={!!errors.age}
-                helperText={errors.age}
-              />
-              <Select
-                fullWidth
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                variant="filled"
-                displayEmpty
-                size="small"
-                sx={sharedFieldStyles}
-                inputProps={{ "aria-label": "What's your sexual orientation?" }}
-                error={!!errors.gender}
-              >
-                <MenuItem value="" disabled>
-                  What's your Gender?
-                </MenuItem>
-                <MenuItem value="Male">Male</MenuItem>
-                <MenuItem value="Female">Female</MenuItem>
-              </Select>
-              {errors.gender && (
-                <Typography color="error" variant="body2">
-                  {errors.gender}
-                </Typography>
-              )}
-              <Select
-                fullWidth
-                value={sexualOrientation}
-                onChange={handleSexualChange}
-                variant="filled"
-                displayEmpty
-                size="small"
-                sx={sharedFieldStyles}
-                inputProps={{ "aria-label": "What's your sexual orientation?" }}
-                error={!!errors.sexualOrientation}
-              >
-                <MenuItem value="" disabled>
-                  What's your sexual orientation?
-                </MenuItem>
-                <MenuItem value="Straight">Straight</MenuItem>
-                <MenuItem value="Bi">Bi</MenuItem>
-                <MenuItem value="Bi-curious">Bi-curious</MenuItem>
-                <MenuItem value="Open minded">Open minded</MenuItem>
-              </Select>
-              {errors.sexualOrientation && (
-                <Typography color="error" variant="body2">
-                  {errors.sexualOrientation}
-                </Typography>
-              )}
-              <Typography
-                variant="h6"
-                sx={{ color: "#fff", fontWeight: "bold", mt: 2 }}
-              >
-                Your Partner's Info
-              </Typography>
-              <TextField
-                fullWidth
-                label="What's your partner's Age?"
-                value={partnerBirthday}
-                onChange={(e) => setPartnerBirthday(e.target.value)}
-                variant="filled"
-                size="small"
-                sx={sharedFieldStyles}
-                error={!!errors.partnerBirthday}
-                helperText={errors.partnerBirthday}
-              />
-              <Select
-                fullWidth
-                value={partnerGender}
-                onChange={handlePartnerGenderChange}
-                variant="filled"
-                displayEmpty
-                size="small"
-                sx={sharedFieldStyles}
-                inputProps={{ "aria-label": "What's your partner's Gender?" }}
-                error={!!errors.partnerGender}
-              >
-                <MenuItem value="" disabled>
-                  What's your partner's Gender?
-                </MenuItem>
-                <MenuItem value="Male">Male</MenuItem>
-                <MenuItem value="Female">Female</MenuItem>
-              </Select>
-              {errors.partnerGender && (
-                <Typography color="error" variant="body2">
-                  {errors.partnerGender}
-                </Typography>
-              )}
-              <Select
-                fullWidth
-                value={partnerOrientation}
-                onChange={handlePartnerOrientationChange}
-                variant="filled"
-                displayEmpty
-                size="small"
-                sx={sharedFieldStyles}
-                inputProps={{
-                  "aria-label": "What's your partner's orientation?",
-                }}
-                error={!!errors.partnerOrientation}
-              >
-                <MenuItem value="" disabled>
-                  What's your partner's orientation?
-                </MenuItem>
-                <MenuItem value="Straight">Straight</MenuItem>
-                <MenuItem value="Bi">Bi</MenuItem>
-                <MenuItem value="Bi-curious">Bi-curious</MenuItem>
-                <MenuItem value="Open minded">Open minded</MenuItem>
-              </Select>
-              {errors.partnerOrientation && (
-                <Typography color="error" variant="body2">
-                  {errors.partnerOrientation}
-                </Typography>
-              )}
-            </Suspense>
-          </>
-        );
-
-      default:
-        return null;
+      setLoading(false);
+      return;
     }
   };
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <ThemeProvider theme={theme}>
       <Box
         sx={{
-          backgroundColor: "#000",
-          minHeight: "100vh",
           display: "flex",
           justifyContent: "center",
-          alignItems: "center",
-          padding: 2,
+          background:
+            "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
+          position: "relative",
+          overflow: "hidden",
+          width: "100%",
         }}
       >
-        <Grid
-          container
-          justifyContent="center"
-          alignItems="center"
-          sx={{
-            backgroundColor: "#121212",
-            borderRadius: "16px",
-            maxWidth: "600px",
-            padding: "32px",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
-          }}
-        >
-          <Grid item xs={12} sx={{ textAlign: "center" }}>
-            <Typography
-              variant="h5"
-              sx={{ color: "#fff", fontWeight: "bold", mb: 2 }}
-            >
-              I am a
-            </Typography>
-            <Typography sx={{ color: "#aaa", fontSize: "0.85rem", mt: 1 }}>
-              Everyone's welcome on SwingSocial
-            </Typography>
-            <Select
-              fullWidth
-              value={selectedOption}
-              onChange={handleOptionChange}
-              variant="filled"
-              displayEmpty
+        <ParticleField />
+        <Container maxWidth="sm" sx={{ p: 0 }}>
+          <Paper
+            elevation={24}
+            sx={{
+              p: { xs: 2, sm: 3, md: 4 },
+              background: "rgba(255, 255, 255, 0.05)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              maxHeight: { xs: "85vh", sm: "95vh" },
+              overflowY: { xs: "auto", sm: "auto" },
+              scrollbarWidth: "thin",
+              "&::-webkit-scrollbar": { width: "6px" },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "rgba(255,255,255,0.3)",
+                borderRadius: "3px",
+              },
+            }}
+          >
+            <Stepper
+              activeStep={2}
+              alternativeLabel
               sx={{
-                backgroundColor: "#2a2a2a",
-                color: "#fff",
-                mb: 2,
-                mt: 2,
-                borderRadius: "4px",
+                background: "transparent",
+                width: "100%",
+                margin: "0 auto 16px auto",
               }}
-              inputProps={{ "aria-label": "Select your option" }}
             >
-              <MenuItem value="" disabled>
-                Select your option
-              </MenuItem>
-              <MenuItem value="Man">Man</MenuItem>
-              <MenuItem value="Women">Women</MenuItem>
-              <MenuItem value="Throuple">Throuple</MenuItem>
-              <MenuItem value="Couple">Couple</MenuItem>
-            </Select>
-            {renderAdditionalFields()}
-          </Grid>
-          <Grid item xs={12} sx={{ textAlign: "center" }}>
-            <Button
-              sx={{
-                width: "56px",
-                height: "56px",
-                borderRadius: "50%",
-                backgroundColor: "#c2185b",
-                color: "#fff",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                margin: "0 auto",
-                mt: 2,
-                "&:hover": { backgroundColor: "#ad1457" },
-              }}
-              onClick={handleContinue}
-            >
-              <ArrowForwardIosIcon />
-            </Button>
-          </Grid>
+              {[
+                "Profile Info",
+                "Verify Email",
+                "Preferences",
+                "Avatar & Banner",
+                "About",
+              ].map((label) => (
+                <Step key={label}>
+                  <StepLabel
+                    sx={{
+                      "& .MuiStepLabel-label": {
+                        color: "#fff !important",
+                        fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                      },
+                      "& .MuiStepIcon-root": {
+                        color: "rgba(255,255,255,0.3)",
+                      },
+                      "& .MuiStepIcon-root.Mui-active": {
+                        color: "#c2185b",
+                      },
+                      "& .MuiStepIcon-root.Mui-completed": {
+                        color: "#c2185b",
+                      },
+                    }}
+                  >
+                    {/* {label} */}
+                  </StepLabel>
+                </Step>
+              ))}
+            </Stepper>
 
-          <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
-            <Typography
-              sx={{ color: "#c2185b", fontWeight: "bold", fontSize: "1rem" }}
+            <Formik
+              initialValues={initialValues}
+              validationSchema={validationSchema}
+              onSubmit={handleSubmit}
             >
-              Come party with us
-            </Typography>
-          </Grid>
-        </Grid>
+              {({ values, errors, touched, handleChange }) => (
+                <Form>
+                  <Grid item xs={12} sx={{ textAlign: "center" }}>
+                    <Grid
+                      item
+                      xs={12}
+                      sx={{ textAlign: "center", mb: { xs: 2, sm: 3 } }}
+                    >
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          color: "#fff",
+                          fontWeight: "bold",
+                          mb: { xs: 1, sm: 1.5 },
+                          fontSize: { xs: "1.4rem", sm: "2rem" },
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        Tell Us About Yourself
+                      </Typography>
+
+                      <Typography
+                        sx={{
+                          color: "#bbb",
+                          fontSize: { xs: "0.85rem", sm: "1rem" },
+                          maxWidth: { xs: "90%", sm: "420px" },
+                          margin: "0 auto",
+                          lineHeight: 1.5,
+                          px: { xs: 1, sm: 0 },
+                        }}
+                      >
+                        Choose your identity and share a few details so we can
+                        personalize your experience.
+                      </Typography>
+                    </Grid>
+
+                    <TextField
+                      select
+                      fullWidth
+                      name="selectedOption"
+                      label="I am a"
+                      value={values.selectedOption}
+                      onChange={handleChange}
+                      variant="outlined"
+                      error={
+                        touched.selectedOption && Boolean(errors.selectedOption)
+                      }
+                      helperText={
+                        touched.selectedOption && errors.selectedOption
+                      }
+                      sx={linkSx}
+                    >
+                      <MenuItem value="" disabled>
+                        Select your option
+                      </MenuItem>
+                      <MenuItem value="Man">Man</MenuItem>
+                      <MenuItem value="Women">Woman</MenuItem>
+                      <MenuItem value="Throuple">Throuple</MenuItem>
+                      <MenuItem value="Couple">Couple</MenuItem>
+                    </TextField>
+
+                    {["Man", "Women"].includes(values.selectedOption) ? (
+                      <>
+                        <TextField
+                          fullWidth
+                          label="Age"
+                          name="age"
+                          placeholder="What's your age?"
+                          variant="outlined"
+                          value={values.age}
+                          type="tel"
+                          autoComplete="tel"
+                          onChange={handleChange}
+                          error={!!(touched.age && errors.age)}
+                          helperText={touched.age && errors.age}
+                          sx={linkSx}
+                        />
+
+                        <TextField
+                          select
+                          fullWidth
+                          label="What's your sexual orientation?"
+                          name="sexualOrientation"
+                          value={values.sexualOrientation}
+                          onChange={handleChange}
+                          variant="outlined"
+                          error={
+                            touched.sexualOrientation &&
+                            Boolean(errors.sexualOrientation)
+                          }
+                          helperText={
+                            touched.sexualOrientation &&
+                            errors.sexualOrientation
+                          }
+                          sx={linkSx}
+                        >
+                          <MenuItem value="" disabled>
+                            What's your sexual orientation?
+                          </MenuItem>
+                          <MenuItem value="Straight">Straight</MenuItem>
+                          <MenuItem value="Bi">Bi</MenuItem>
+                          <MenuItem value="Bi-curious">Bi-curious</MenuItem>
+                          <MenuItem value="Open minded">Open minded</MenuItem>
+                        </TextField>
+                      </>
+                    ) : ["Throuple", "Couple"].includes(
+                        values.selectedOption
+                      ) ? (
+                      <>
+                        <Typography
+                          variant="h6"
+                          sx={{ color: "#fff", fontWeight: "bold", mb: 2 }}
+                        >
+                          My Information
+                        </Typography>
+
+                        <TextField
+                          fullWidth
+                          label="Age"
+                          name="age"
+                          placeholder="What's your age?"
+                          variant="outlined"
+                          value={values.age}
+                          type="tel"
+                          autoComplete="tel"
+                          onChange={handleChange}
+                          error={!!(touched.age && errors.age)}
+                          helperText={touched.age && errors.age}
+                          sx={linkSx}
+                        />
+
+                        <TextField
+                          select
+                          fullWidth
+                          label="Gender"
+                          name="gender"
+                          value={values.gender}
+                          onChange={handleChange}
+                          variant="outlined"
+                          error={touched.gender && Boolean(errors.gender)}
+                          helperText={touched.gender && errors.gender}
+                          sx={linkSx}
+                        >
+                          <MenuItem value="" disabled>
+                            What's your Gender?
+                          </MenuItem>
+                          <MenuItem value="Male">Male</MenuItem>
+                          <MenuItem value="Female">Female</MenuItem>
+                        </TextField>
+
+                        <TextField
+                          select
+                          fullWidth
+                          label="What's your sexual orientation?"
+                          name="sexualOrientation"
+                          value={values.sexualOrientation}
+                          onChange={handleChange}
+                          variant="outlined"
+                          error={
+                            touched.sexualOrientation &&
+                            Boolean(errors.sexualOrientation)
+                          }
+                          helperText={
+                            touched.sexualOrientation &&
+                            errors.sexualOrientation
+                          }
+                          sx={linkSx}
+                        >
+                          <MenuItem value="" disabled>
+                            What's your sexual orientation?
+                          </MenuItem>
+                          <MenuItem value="Straight">Straight</MenuItem>
+                          <MenuItem value="Bi">Bi</MenuItem>
+                          <MenuItem value="Bi-curious">Bi-curious</MenuItem>
+                          <MenuItem value="Open minded">Open minded</MenuItem>
+                        </TextField>
+
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            color: "#fff",
+                            fontWeight: "bold",
+                            mt: 2,
+                            mb: 2,
+                          }}
+                        >
+                          Your Partner's Info
+                        </Typography>
+
+                        <TextField
+                          fullWidth
+                          name="partnerBirthday"
+                          label="Partner's age"
+                          placeholder="What's your Partner's age?"
+                          variant="outlined"
+                          value={values.partnerBirthday}
+                          type="tel"
+                          autoComplete="tel"
+                          onChange={handleChange}
+                          error={
+                            !!(
+                              touched.partnerBirthday && errors.partnerBirthday
+                            )
+                          }
+                          helperText={
+                            touched.partnerBirthday && errors.partnerBirthday
+                          }
+                          sx={linkSx}
+                        />
+
+                        <TextField
+                          select
+                          fullWidth
+                          label="Partner's Gender"
+                          placeholder="What's your partner's Gender?"
+                          name="partnerGender"
+                          value={values.partnerGender}
+                          onChange={handleChange}
+                          variant="outlined"
+                          error={
+                            touched.partnerGender &&
+                            Boolean(errors.partnerGender)
+                          }
+                          helperText={
+                            touched.partnerGender && errors.partnerGender
+                          }
+                          sx={linkSx}
+                        >
+                          <MenuItem value="" disabled>
+                            What's your partner's Gender?
+                          </MenuItem>
+                          <MenuItem value="Male">Male</MenuItem>
+                          <MenuItem value="Female">Female</MenuItem>
+                        </TextField>
+
+                        <TextField
+                          select
+                          fullWidth
+                          label="Partner's Orientation"
+                          placeholder="What's your partner's Orientation?"
+                          name="partnerOrientation"
+                          value={values.partnerOrientation}
+                          onChange={handleChange}
+                          variant="outlined"
+                          error={
+                            touched.partnerOrientation &&
+                            Boolean(errors.partnerOrientation)
+                          }
+                          helperText={
+                            touched.partnerOrientation &&
+                            errors.partnerOrientation
+                          }
+                          sx={linkSx}
+                        >
+                          <MenuItem value="" disabled>
+                            What's your partner's orientation?
+                          </MenuItem>
+                          <MenuItem value="Straight">Straight</MenuItem>
+                          <MenuItem value="Bi">Bi</MenuItem>
+                          <MenuItem value="Bi-curious">Bi-curious</MenuItem>
+                          <MenuItem value="Open minded">Open minded</MenuItem>
+                        </TextField>
+                      </>
+                    ) : null}
+                  </Grid>
+
+                  <Grid item xs={12} sx={{ textAlign: "center" }}>
+                    <Button
+                      type="submit"
+                      disabled={loading}
+                      sx={{
+                        width: "56px",
+                        height: "56px",
+                        borderRadius: "50%",
+                        backgroundColor: "#c2185b",
+                        color: "#fff",
+                        mt: 2,
+                        "&:hover": { backgroundColor: "#ad1457" },
+                      }}
+                    >
+                      {loading ? (
+                        <CircularProgress
+                          size={24}
+                          sx={{
+                            color: "#fff",
+                          }}
+                        />
+                      ) : (
+                        <ArrowForwardIosIcon />
+                      )}
+                    </Button>
+                  </Grid>
+
+                  <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
+                    <Typography sx={{ color: "#c2185b", fontWeight: "bold" }}>
+                      Come party with us
+                    </Typography>
+                  </Grid>
+                </Form>
+              )}
+            </Formik>
+            <Carousel title="Wild Events and Real Profiles are Waiting!" />
+          </Paper>
+        </Container>
       </Box>
-    </Suspense>
+    </ThemeProvider>
   );
 }

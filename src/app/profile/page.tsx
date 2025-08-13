@@ -1330,6 +1330,11 @@ const ProfileDetail: React.FC = () => {
     if (!mounted) return;
 
     const userid = localStorage.getItem("logged_in_profile");
+
+    if (!userid) {
+      router.push("/login");
+    }
+
     if (userid) {
       setProfileId(userid);
       fetchData(userid);

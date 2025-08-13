@@ -29,6 +29,9 @@ import {
   Tooltip,
   Avatar,
   DialogContentText,
+  Stepper,
+  Step,
+  StepLabel,
 } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -66,6 +69,7 @@ const theme = createTheme({
       default: "#0A0118",
     },
   },
+
   typography: {
     fontFamily: '"Poppins", "Roboto", "Arial", sans-serif',
   },
@@ -347,6 +351,7 @@ const RegisterPage = () => {
   const [passwordStrength, setPasswordStrength] = useState(0);
 
   const [supportEmail, setSupportEmail] = useState("info@swingsocial.co");
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -373,9 +378,9 @@ const RegisterPage = () => {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    await router.push(`/otp/${profileId}`);
     handleClose();
-    router.push(`/otp/${profileId}`);
   };
 
   useEffect(() => {
@@ -469,6 +474,7 @@ const RegisterPage = () => {
       };
 
       try {
+        setIsUploading(true);
         const ipData = await (await fetch("https://ipapi.co/json")).json();
 
         const hitData = await (
@@ -567,13 +573,14 @@ const RegisterPage = () => {
           localStorage.setItem("logged_in_profile", data.profileId);
           localStorage.setItem("userName", values.user_name);
           setProfileId(data.profileId);
+          setIsUploading(false);
           handleOpen();
         }
       } catch (err) {
         console.error(err);
         alert("Something went wrong!");
       } finally {
-        setSubmitting(false);
+        setIsUploading(false);
       }
     },
   });
@@ -601,12 +608,11 @@ const RegisterPage = () => {
               "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
             position: "relative",
             overflow: "hidden",
-            p: { xs: 1, sm: 2 },
+            width: "100%",
           }}
         >
           <ParticleField />
           <Container maxWidth="sm" sx={{ p: 0 }}>
-            {/* <RotatingCard> */}
             <Paper
               elevation={24}
               sx={{
@@ -624,6 +630,46 @@ const RegisterPage = () => {
                 },
               }}
             >
+              <Stepper
+                activeStep={0}
+                alternativeLabel
+                sx={{
+                  background: "transparent",
+                  width: "100%",
+                  margin: "0 auto 16px auto",
+                }}
+              >
+                {[
+                  "Profile Info",
+                  "Verify Email",
+                  "Preferences",
+                  "Avatar & Banner",
+                  "About",
+                ].map((label) => (
+                  <Step key={label}>
+                    <StepLabel
+                      sx={{
+                        "& .MuiStepLabel-label": {
+                          color: "#fff !important",
+                          fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                        },
+                        "& .MuiStepIcon-root": {
+                          color: "rgba(255,255,255,0.3)",
+                        },
+                        "& .MuiStepIcon-root.Mui-active": {
+                          color: "#c2185b",
+                        },
+                        "& .MuiStepIcon-root.Mui-completed": {
+                          color: "#c2185b",
+                        },
+                      }}
+                    >
+                      {/* {label} */}
+                    </StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+
               {/* <SecureHeader /> */}
               <Box sx={{ mb: 2, textAlign: "center" }}>
                 <Box sx={{ mb: 2 }}>
@@ -1026,7 +1072,7 @@ const RegisterPage = () => {
                 {/* SUBMIT */}
                 <Button
                   type="submit"
-                  disabled={formik.isSubmitting}
+                  disabled={isUploading}
                   sx={{
                     width: "56px",
                     height: "56px",
@@ -1040,7 +1086,7 @@ const RegisterPage = () => {
                     "&:hover": { backgroundColor: "#ad1457" },
                   }}
                 >
-                  {formik.isSubmitting ? (
+                  {isUploading ? (
                     <CircularProgress size={24} sx={{ color: "#fff" }} />
                   ) : (
                     <ArrowForwardIosIcon />
@@ -1076,7 +1122,6 @@ const RegisterPage = () => {
                 Already have an account? Login
               </Link>
             </Paper>
-            {/* </RotatingCard> */}
           </Container>
         </Box>
       </ThemeProvider>

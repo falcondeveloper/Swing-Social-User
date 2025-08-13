@@ -1,7 +1,5 @@
-// app/pricing/page.tsx
-
 "use client";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { memo, Suspense, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Typography,
@@ -15,6 +13,10 @@ import {
   CircularProgress,
   useMediaQuery,
   useTheme,
+  createTheme,
+  ThemeProvider,
+  Container,
+  Paper,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
@@ -23,6 +25,89 @@ import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 
 type Params = Promise<{ id: string }>;
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: "#FF2D55",
+      light: "#FF617B",
+      dark: "#CC1439",
+    },
+    secondary: {
+      main: "#7000FF",
+      light: "#9B4DFF",
+      dark: "#5200CC",
+    },
+    success: {
+      main: "#00D179",
+    },
+    background: {
+      default: "#0A0118",
+    },
+  },
+
+  typography: {
+    fontFamily: '"Poppins", "Roboto", "Arial", sans-serif',
+  },
+});
+
+const ParticleField = memo(() => {
+  const isMobile = useMediaQuery("(max-width:600px)");
+
+  const particles = useMemo(() => {
+    const count = isMobile ? 15 : 50;
+    return [...Array(count)].map((_, i) => ({
+      id: i,
+      size: Math.random() * (isMobile ? 4 : 6) + 2,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      duration: Math.random() * (isMobile ? 15 : 20) + 10,
+      delay: -Math.random() * 20,
+    }));
+  }, [isMobile]);
+
+  return (
+    <Box
+      sx={{
+        position: "absolute",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        opacity: 0.6,
+      }}
+    >
+      {particles.map((particle) => (
+        <Box
+          key={particle.id}
+          sx={{
+            position: "absolute",
+            width: particle.size,
+            height: particle.size,
+            left: `${particle.x}%`,
+            top: `${particle.y}%`,
+            background: "linear-gradient(45deg, #FF2D55, #7000FF)",
+            borderRadius: "50%",
+            animation: `float ${particle.duration}s infinite linear`,
+            animationDelay: `${particle.delay}s`,
+            "@keyframes float": {
+              "0%": {
+                transform: "translate(0, 0) rotate(0deg)",
+                opacity: 0,
+              },
+              "50%": {
+                opacity: 0.8,
+              },
+              "100%": {
+                transform: "translate(100px, -100px) rotate(360deg)",
+                opacity: 0,
+              },
+            },
+          }}
+        />
+      ))}
+    </Box>
+  );
+});
 
 export default function Pricing({ params }: { params: Params }) {
   const router = useRouter();
@@ -188,222 +273,269 @@ export default function Pricing({ params }: { params: Params }) {
   };
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <Box
-        sx={{
-          px: 2,
-          py: 4,
-          width: "100%",
-          backgroundColor: "#000",
-          color: "#fff",
-          minHeight: "100vh",
-        }}
-      >
-        {isLoading ? (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 2,
-            }}
-          >
-            <CircularProgress sx={{ color: "#f50057" }} />
-            <Typography variant="h6">Checking Promo State...</Typography>
-          </Box>
-        ) : (
-          <>
-            <Tabs
-              value={selectedTab}
-              onChange={(_, value) => setSelectedTab(value)}
-              centered
-              variant={isMobile ? "fullWidth" : "standard"}
-              textColor="secondary"
-              indicatorColor="secondary"
+    <>
+      <ThemeProvider theme={theme}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            background:
+              "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
+            position: "relative",
+            overflow: "hidden",
+            width: "100%",
+          }}
+        >
+          <ParticleField />
+          <Container maxWidth="sm" sx={{ p: 0 }}>
+            <Paper
+              elevation={24}
+              sx={{
+                p: { xs: 2, sm: 3, md: 4 },
+                background: "rgba(255, 255, 255, 0.05)",
+                backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                maxHeight: { xs: "85vh", sm: "95vh" },
+                overflowY: { xs: "auto", sm: "auto" },
+                scrollbarWidth: "thin",
+                "&::-webkit-scrollbar": { width: "6px" },
+                "&::-webkit-scrollbar-thumb": {
+                  backgroundColor: "rgba(255,255,255,0.3)",
+                  borderRadius: "3px",
+                },
+              }}
             >
-              <Tab
-                label="Premium"
-                sx={{ color: selectedTab === 0 ? "#f50057" : "#fff" }}
-              />
-              <Tab
-                label="Free"
-                sx={{ color: selectedTab === 1 ? "#f50057" : "#fff" }}
-              />
-            </Tabs>
+              {isLoading ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 2,
+                  }}
+                >
+                  <CircularProgress sx={{ color: "#fff" }} />
+                  <Typography variant="h6" sx={{ color: "#fff" }}>Checking Promo State...</Typography>
+                </Box>
+              ) : (
+                <>
+                  <Tabs
+                    value={selectedTab}
+                    onChange={(_, value) => setSelectedTab(value)}
+                    centered
+                    variant={isMobile ? "fullWidth" : "standard"}
+                    textColor="secondary"
+                    indicatorColor="secondary"
+                  >
+                    <Tab
+                      label="Premium"
+                      sx={{ color: selectedTab === 0 ? "#f50057" : "#fff" }}
+                    />
+                    <Tab
+                      label="Free"
+                      sx={{ color: selectedTab === 1 ? "#f50057" : "#fff" }}
+                    />
+                  </Tabs>
 
-            {selectedTab === 0 && (
-              <Box mt={3}>
-                <Typography variant="body1" mb={2} textAlign="center">
-                  {firstMonthFree
-                    ? "Enjoy your first month for just $1!"
-                    : "Choose your billing cycle:"}
-                </Typography>
+                  {selectedTab === 0 && (
+                    <Box mt={3}>
+                      <Typography variant="body1" mb={2} textAlign="center" sx={{ color: "#fff" }}>
+                        {firstMonthFree
+                          ? "Enjoy your first month for just $1!"
+                          : "Choose your billing cycle:"}
+                      </Typography>
 
-                {!firstMonthFree && (
+                      {!firstMonthFree && (
+                        <Box
+                          sx={{
+                            overflowX: "auto",
+                            whiteSpace: "nowrap",
+                            display: { xs: "block", md: "flex" },
+                            justifyContent: { md: "center" },
+                            "&::-webkit-scrollbar": { display: "none" },
+                          }}
+                        >
+                          <ToggleButtonGroup
+                            value={billingCycle}
+                            exclusive
+                            onChange={(_, value) =>
+                              value && setBillingCycle(value)
+                            }
+                            sx={{
+                              display: "inline-flex",
+                              flexWrap: "nowrap",
+                              "& .MuiToggleButton-root": {
+                                flex: "0 0 auto",
+                                color: "#fff",
+                                borderColor: "#f50057",
+                                m: 0.5,
+                                px: 2,
+                                backgroundColor: "#1c1c1c",
+                                borderRadius: 3,
+                                whiteSpace: "nowrap",
+                                "&.Mui-selected": {
+                                  backgroundColor: "#f50057 !important",
+                                  color: "#fff",
+                                  borderColor: "#f50057",
+                                },
+                                "&:hover": {
+                                  backgroundColor: "#f73378",
+                                },
+                              },
+                            }}
+                          >
+                            <ToggleButton value="1">Monthly</ToggleButton>
+                            <ToggleButton value="3">Quarterly</ToggleButton>
+                            <ToggleButton value="6">Bi-Annually</ToggleButton>
+                            <ToggleButton value="12">Annually</ToggleButton>
+                          </ToggleButtonGroup>
+                        </Box>
+                      )}
+                    </Box>
+                  )}
+
                   <Box
-                    sx={{
-                      overflowX: "auto",
-                      whiteSpace: "nowrap",
-                      display: { xs: "block", md: "flex" },
-                      justifyContent: { md: "center" },
-                      "&::-webkit-scrollbar": { display: "none" },
-                    }}
+                    mt={4}
+                    width={isMobile ? "100%" : "25%"}
+                    display="flex"
+                    flexDirection={isMobile ? "column" : "row"}
+                    margin={"30px auto"}
+                    justifyContent="center"
+                    alignItems="stretch"
+                    gap={3}
                   >
-                    <ToggleButtonGroup
-                      value={billingCycle}
-                      exclusive
-                      onChange={(_, value) => value && setBillingCycle(value)}
-                      sx={{
-                        display: "inline-flex",
-                        flexWrap: "nowrap",
-                        "& .MuiToggleButton-root": {
-                          flex: "0 0 auto",
-                          color: "#fff",
-                          borderColor: "#f50057",
-                          m: 0.5,
-                          px: 2,
-                          backgroundColor: "#1c1c1c",
-                          borderRadius: 3,
-                          whiteSpace: "nowrap",
-                          "&.Mui-selected": {
-                            backgroundColor: "#f50057 !important",
-                            color: "#fff",
-                            borderColor: "#f50057",
-                          },
-                          "&:hover": {
-                            backgroundColor: "#f73378",
-                          },
-                        },
-                      }}
-                    >
-                      <ToggleButton value="1">Monthly</ToggleButton>
-                      <ToggleButton value="3">Quarterly</ToggleButton>
-                      <ToggleButton value="6">Bi-Annually</ToggleButton>
-                      <ToggleButton value="12">Annually</ToggleButton>
-                    </ToggleButtonGroup>
+                    {plans
+                      .filter((_, i) => i === selectedTab)
+                      .map((plan, i) => (
+                        <Card
+                          key={plan.title}
+                          sx={{
+                            flex: 1,
+                            borderRadius: 3,
+                            backgroundColor: "#1c1c1c",
+                            border: "1px solid #333",
+                            p: 1,
+                          }}
+                        >
+                          <CardContent>
+                            <Typography variant="h5" color="#f50057" mb={1}>
+                              {plan.title}
+                            </Typography>
+                            <Typography
+                              variant="h4"
+                              color="#fff"
+                              fontWeight="bold"
+                              mb={2}
+                            >
+                              {firstMonthFree && selectedTab === 0
+                                ? "$1"
+                                : plan.price}
+                              <Typography
+                                component="span"
+                                variant="body2"
+                                ml={1}
+                              >
+                                USD
+                              </Typography>
+                            </Typography>
+
+                            <Typography
+                              variant="subtitle1"
+                              color="#f50057"
+                              gutterBottom
+                            >
+                              Features
+                            </Typography>
+                            {plan.features.map((text, idx) => (
+                              <Box
+                                key={idx}
+                                display="flex"
+                                alignItems="center"
+                                mb={1}
+                              >
+                                {plan.availability.features[idx] ? (
+                                  <CheckCircleIcon
+                                    color="success"
+                                    fontSize="small"
+                                  />
+                                ) : (
+                                  <RemoveCircleIcon
+                                    color="error"
+                                    fontSize="small"
+                                  />
+                                )}
+                                <Typography variant="body2" ml={1} color="#fff">
+                                  {text}
+                                </Typography>
+                              </Box>
+                            ))}
+
+                            <Typography
+                              variant="subtitle1"
+                              color="#f50057"
+                              mt={2}
+                              gutterBottom
+                            >
+                              In Development
+                            </Typography>
+                            {plan.devFeatures.map((text, idx) => (
+                              <Box
+                                key={idx}
+                                display="flex"
+                                alignItems="center"
+                                mb={1}
+                              >
+                                {plan.availability.devFeatures[idx] ? (
+                                  <CheckCircleIcon
+                                    color="success"
+                                    fontSize="small"
+                                  />
+                                ) : (
+                                  <RemoveCircleIcon
+                                    color="error"
+                                    fontSize="small"
+                                  />
+                                )}
+                                <Typography variant="body2" ml={1} color="#fff">
+                                  {text}
+                                </Typography>
+                              </Box>
+                            ))}
+
+                            <Button
+                              variant="contained"
+                              fullWidth
+                              disabled={isProcessing}
+                              sx={{
+                                mt: 3,
+                                backgroundColor: "#f50057",
+                                "&:hover": {
+                                  backgroundColor: "#c51162",
+                                },
+                              }}
+                              onClick={() =>
+                                handlePlanSelect(plan.title, plan.price)
+                              }
+                            >
+                              {isProcessing ? (
+                                <CircularProgress
+                                  size={24}
+                                  sx={{ color: "#fff" }}
+                                />
+                              ) : (
+                                `Select ${plan.title} Plan`
+                              )}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
                   </Box>
-                )}
-              </Box>
-            )}
-
-            <Box
-              mt={4}
-              width={isMobile ? "100%" : "25%"}
-              display="flex"
-              flexDirection={isMobile ? "column" : "row"}
-              margin={"30px auto"}
-              justifyContent="center"
-              alignItems="stretch"
-              gap={3}
-            >
-              {plans
-                .filter((_, i) => i === selectedTab)
-                .map((plan, i) => (
-                  <Card
-                    key={plan.title}
-                    sx={{
-                      flex: 1,
-                      borderRadius: 3,
-                      backgroundColor: "#1c1c1c",
-                      border: "1px solid #333",
-                      p: 1,
-                    }}
-                  >
-                    <CardContent>
-                      <Typography variant="h5" color="#f50057" mb={1}>
-                        {plan.title}
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        color="#fff"
-                        fontWeight="bold"
-                        mb={2}
-                      >
-                        {firstMonthFree && selectedTab === 0
-                          ? "$1"
-                          : plan.price}
-                        <Typography component="span" variant="body2" ml={1}>
-                          USD
-                        </Typography>
-                      </Typography>
-
-                      <Typography
-                        variant="subtitle1"
-                        color="#f50057"
-                        gutterBottom
-                      >
-                        Features
-                      </Typography>
-                      {plan.features.map((text, idx) => (
-                        <Box
-                          key={idx}
-                          display="flex"
-                          alignItems="center"
-                          mb={1}
-                        >
-                          {plan.availability.features[idx] ? (
-                            <CheckCircleIcon color="success" fontSize="small" />
-                          ) : (
-                            <RemoveCircleIcon color="error" fontSize="small" />
-                          )}
-                          <Typography variant="body2" ml={1} color="#fff">
-                            {text}
-                          </Typography>
-                        </Box>
-                      ))}
-
-                      <Typography
-                        variant="subtitle1"
-                        color="#f50057"
-                        mt={2}
-                        gutterBottom
-                      >
-                        In Development
-                      </Typography>
-                      {plan.devFeatures.map((text, idx) => (
-                        <Box
-                          key={idx}
-                          display="flex"
-                          alignItems="center"
-                          mb={1}
-                        >
-                          {plan.availability.devFeatures[idx] ? (
-                            <CheckCircleIcon color="success" fontSize="small" />
-                          ) : (
-                            <RemoveCircleIcon color="error" fontSize="small" />
-                          )}
-                          <Typography variant="body2" ml={1} color="#fff">
-                            {text}
-                          </Typography>
-                        </Box>
-                      ))}
-
-                      <Button
-                        variant="contained"
-                        fullWidth
-                        disabled={isProcessing}
-                        sx={{
-                          mt: 3,
-                          backgroundColor: "#f50057",
-                          "&:hover": {
-                            backgroundColor: "#c51162",
-                          },
-                        }}
-                        onClick={() => handlePlanSelect(plan.title, plan.price)}
-                      >
-                        {isProcessing ? (
-                          <CircularProgress size={24} sx={{ color: "#fff" }} />
-                        ) : (
-                          `Select ${plan.title} Plan`
-                        )}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-            </Box>
-          </>
-        )}
-      </Box>
-    </Suspense>
+                </>
+              )}
+            </Paper>
+          </Container>
+        </Box>
+      </ThemeProvider>
+    </>
   );
 }

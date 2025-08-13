@@ -33,7 +33,7 @@ const theme = createTheme({
     background: { default: "#0A0118" },
   },
   typography: { fontFamily: '"Poppins", "Roboto", "Arial", sans-serif' },
-  shape: { borderRadius: 16 },
+  // shape: { borderRadius: 16 },
 });
 
 const ParticleField = memo(() => {
