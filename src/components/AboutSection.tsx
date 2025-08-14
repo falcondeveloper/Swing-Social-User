@@ -1,86 +1,47 @@
-import React, { useState } from "react";
+import React from "react";
 
 interface AboutSectionProps {
   aboutText: string;
-  charLimit?: number;
 }
 
-const AboutSection: React.FC<AboutSectionProps> = ({
-  aboutText,
-  charLimit = 65,
-}) => {
-  const [showFullText, setShowFullText] = useState(false);
-
-  const toggleText = () => {
-    setShowFullText(!showFullText);
-  };
-
-  const truncateText = (text: string): string => {
-    if (showFullText || text.length <= charLimit) {
-      return text;
-    }
-    return text.slice(0, charLimit) + "...";
-  };
-
+const AboutSection: React.FC<AboutSectionProps> = ({ aboutText }) => {
   const getFirstParagraph = (): string => {
     const parser = new DOMParser();
-    const parsedHtml = parser.parseFromString(aboutText, "text/html");
+    const parsedHtml = parser.parseFromString(aboutText || "", "text/html");
     const firstParagraph = parsedHtml.body.querySelector("p");
-    return firstParagraph ? firstParagraph.textContent || "" : "";
+    return firstParagraph ? firstParagraph.textContent || "" : aboutText || "";
   };
 
-  const truncatedText = truncateText(getFirstParagraph());
+  const text = getFirstParagraph();
 
   return (
     <>
-      <style>
-        {`
-          .about-container {
-            text-align: center;
-			padding: 5px 10px;
-          }
+      <style>{`
+        .about-container {
+          text-align: center;
+          padding: 5px 10px;
+        }
+        .about-text {
+          font-size: 14px;
+          color: #757575;
+          margin: 0;
+          line-height: 1.4;
+          text-align: left;
+          word-break: break-word;
 
-          .about-text {
-           font-size: 14px;
-  		   color: #757575;
-           margin: 0;
-           word-wrap: break-word;
-           white-space: pre-wrap;
-           line-height: 1.4;
-		   text-align: left;
-          }
-
-          .about-button {
-            margin-top: 8px;
-            font-size: 14px;
-            background: none;
-            border: none;
-            color: #1976d2;
-            cursor: pointer;
-            text-transform: none;
-            padding: 0;
-          }
-
-          .about-button:hover {
-            text-decoration: underline;
-          }
-        `}
-      </style>
+          /* --- 2-line clamp with ellipsis --- */
+          display: -webkit-box;
+          -webkit-line-clamp: 2;   /* show only 2 lines */
+          line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          white-space: normal;     /* IMPORTANT: don't use pre-wrap or nowrap */
+        }
+      `}</style>
 
       <div className="about-container">
-        <p
-          className="about-text"
-          style={
-            showFullText
-              ? { whiteSpace: "pre-wrap" }
-              : {
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }
-          }
-        >
-          {getFirstParagraph()}
+        <p className="about-text" title={text}>
+          {text}
         </p>
       </div>
     </>
