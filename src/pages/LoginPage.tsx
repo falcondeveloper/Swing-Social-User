@@ -23,7 +23,6 @@ import Swal from "sweetalert2";
 import Link from "next/link";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { toast } from "react-toastify";
 
 const theme = createTheme({
   palette: {
@@ -33,7 +32,6 @@ const theme = createTheme({
     background: { default: "#0A0118" },
   },
   typography: { fontFamily: '"Poppins", "Roboto", "Arial", sans-serif' },
-  // shape: { borderRadius: 16 },
 });
 
 const ParticleField = memo(() => {
@@ -187,12 +185,24 @@ const LoginPage = () => {
     })();
   }, []);
 
+  const isEmail = (v: string) => /\S+@\S+\.\S+/.test(v);
+  const isUsername = (v: string) => /^[a-zA-Z0-9._-]{3,30}$/.test(v);
+
   const validationSchema = useMemo(
     () =>
       Yup.object({
-        email: Yup.string()
-          .required("Email is required")
-          .email("Enter a valid email"),
+        email:
+          loginMethod === "password"
+            ? Yup.string()
+                .required("Email or username is required")
+                .test(
+                  "email-or-username",
+                  "Enter a valid email or username",
+                  (val) => !!val && (isEmail(val) || isUsername(val))
+                )
+            : Yup.string()
+                .required("Email is required")
+                .email("Enter a valid email"),
         password:
           loginMethod === "password"
             ? Yup.string().required("Please enter a password")
