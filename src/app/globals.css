@@ -248,7 +248,6 @@ label {
 
 .mobile-sweeping-container .profile-img {
   width: 100%;
-  min-width: 100%;
   height: 74vh;
   object-fit: cover;
   display: block;
@@ -276,11 +275,6 @@ label {
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;
-}
-
-.about-container {
-  position: relative;
-  padding: 8px 10px 0 10px;
 }
 
 .about-scrollbox {

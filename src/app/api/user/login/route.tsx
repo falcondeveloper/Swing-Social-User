@@ -3,14 +3,15 @@ import { Pool } from "pg";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 
-const SALT_SIZE = 16;
-const HASH_ALGORITHM_NAME = "sha256";
-const VERSION = 1;
+const SALT_SIZE = 16; // Equivalent to `PasswordHasher.SaltSize` in C#
+const HASH_ALGORITHM_NAME = "sha256"; // Equivalent to `PasswordHasher.HashAlgorithmName.Name`
+const VERSION = 1; // Example version, same as `PasswordHasher.GetVersion
 
 export const dynamic = "force-dynamic";
 
 const JWT_SECRET = "SwingSocialLesile";
 
+// PostgreSQL pool connection setup
 const pool = new Pool({
   user: "clark",
   host: "199.244.49.83",
@@ -20,10 +21,10 @@ const pool = new Pool({
 });
 
 const hashPasswordWithSalt = (password: string, salt: Buffer): Buffer => {
-  const hash = crypto.createHash(HASH_ALGORITHM_NAME);
-  hash.update(salt);
-  hash.update(Buffer.from(password, "utf8"));
-  return hash.digest();
+  const hash = crypto.createHash(HASH_ALGORITHM_NAME); // Create a hash instance
+  hash.update(salt); // Add the salt to the hash
+  hash.update(Buffer.from(password, "utf8")); // Add the password to the hash
+  return hash.digest(); // Finalize and return the hash
 };
 
 const verifyPassword = (
@@ -31,18 +32,23 @@ const verifyPassword = (
   storedHash: string
 ): boolean => {
   try {
+    // Decode the stored hash from base64
     const combined = Buffer.from(storedHash, "base64");
 
+    // Extract components
     const version = combined[0];
     const salt = combined.slice(1, SALT_SIZE + 1);
     const hash = combined.slice(SALT_SIZE + 1);
 
+    // Verify version
     if (version !== VERSION) {
       return false;
     }
 
+    // Hash the provided password with the extracted salt
     const computedHash = hashPasswordWithSalt(providedPassword, salt);
 
+    // Compare the computed hash with the stored hash
     return crypto.timingSafeEqual(computedHash, hash);
   } catch (error) {
     console.error("Error verifying password:", error);

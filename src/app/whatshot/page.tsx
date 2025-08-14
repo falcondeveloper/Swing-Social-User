@@ -428,7 +428,6 @@ export default function Whatshot() {
   }
 
   const handleDeletePost = async (postId: string) => {
-    console.log("postId", postId);
     try {
       await fetch("/api/user/whatshot/post/delete", {
         method: "POST",
@@ -449,14 +448,15 @@ export default function Whatshot() {
         confirmButtonText: "OK",
       });
     }
-    // Add your delete logic here
-    // Example:
-    // await deletePost(postId);
-    // refreshPosts();
   };
 
   return (
-    <Box sx={{ bgcolor: "#121212", minHeight: "100vh" }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        backgroundColor: "#121212",
+      }}
+    >
       <Header />
 
       {isMobile === false ? (
@@ -882,7 +882,14 @@ export default function Whatshot() {
           </Grid>
         </Container>
       ) : (
-        <Grid container sx={{ marginTop: 10 }}>
+        <Container
+          maxWidth="md"
+          sx={{
+            pt: { xs: 2, sm: 2, md: 2 },
+            pb: { xs: 8, sm: 9, md: 10 },
+            px: { xs: 1, sm: 2, md: 3 },
+          }}
+        >
           <UserProfileModal
             handleGrantAccess={handleGrantAccess}
             handleClose={handleClose}
@@ -1203,7 +1210,7 @@ export default function Whatshot() {
               </CardContent>
             </Card>
           </Grid>
-        </Grid>
+        </Container>
       )}
 
       {/* Report Modal */}

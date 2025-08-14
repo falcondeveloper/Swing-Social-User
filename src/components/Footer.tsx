@@ -384,7 +384,7 @@ const Footer = () => {
           </BottomNavigation>
 
           {/* Spacer to push content above fixed bottom navigation */}
-          <Box sx={{ height: "80px" }} />
+          {/* <Box sx={{ height: "80px" }} /> */}
         </>
       )}
     </Box>

@@ -728,7 +728,13 @@ export default function CalendarView() {
     >
       <Header />
 
-      <Container maxWidth="xl" sx={{ pt: 1, pb: 4 }}>
+      <Container
+        maxWidth="md"
+        sx={{
+          pb: { xs: 8, sm: 9, md: 10 },
+          px: { xs: 1, sm: 2, md: 3 },
+        }}
+      >
         {isMobile ? (
           <>
             <Grid spacing={2} sx={{ mt: { xs: 2, sm: 4, md: 8 } }}>

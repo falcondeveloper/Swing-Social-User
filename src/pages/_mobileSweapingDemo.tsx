@@ -28,9 +28,10 @@ import UserProfileModal from "@/components/UserProfileModal";
 import { Flag } from "@mui/icons-material";
 import Header from "@/components/Header";
 import AboutSection from "@/components/AboutSection";
-import Footer from "./Footer";
+
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
+import Footer from "@/components/Footer";
 
 export interface DetailViewHandle {
   open: (id: string) => void;
@@ -1110,7 +1111,6 @@ export default function MobileSweaping() {
                   >
                     {profile?.Location?.replace(", USA", "") || ""}
                   </Typography>
-                  <AboutSection aboutText={profile?.About} />
                 </div>
               </div>
             </Card>

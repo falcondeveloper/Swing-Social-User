@@ -25,6 +25,7 @@ import {
   Snackbar,
   Alert,
   Backdrop,
+  Container,
 } from "@mui/material";
 import { Editor } from "@tinymce/tinymce-react";
 import PublishIcon from "@mui/icons-material/Upload";
@@ -669,479 +670,501 @@ const EventForm: React.FC = () => {
       <Header />
 
       {isMobile ? (
-        <Box
+        <Container
+          maxWidth="md"
           sx={{
-            padding: { lg: 4, md: 4, sm: 0, xs: 0 },
-            marginTop: 7,
-            marginBottom: 6,
+            pb: { xs: 8, sm: 9, md: 10 },
+            px: { xs: 1, sm: 2, md: 3 },
           }}
         >
-          <Typography variant="h6" sx={{ marginBottom: 2 }}>
-            Create Event
-          </Typography>
-
-          <form onSubmit={handleSubmit}>
-            <Grid
-              container
-              spacing={2}
-              sx={{ justifyContent: "center", padding: 3 }}
-            >
-              <LocalizationProvider dateAdapter={AdapterMoment}>
-                <FormControl fullWidth sx={{ marginBottom: 4 }}>
-                  <DateTimePicker
-                    label="Start Time"
-                    value={formData.startTime}
-                    onChange={(value: any) => handleChange("startTime", value)}
-                    onClose={() => handleBlur("startTime")}
-                    slotProps={{
-                      textField: {
-                        required: true,
-                        error: touched.startTime && Boolean(errors.startTime),
-                        helperText: touched.startTime && errors.startTime,
-                        sx: {
-                          "& .MuiOutlinedInput-root": {
-                            transition: "transform 0.2s",
-                            "&:hover": {
-                              transform: "scale(1.02)",
-                            },
-                            // Add color customization here
-                            "& .MuiInputBase-input": {
-                              color: "white", // Text color
-                            },
-                            "& .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "white", // Border color
-                            },
-                            "&:hover .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "white", // Hover border color
-                            },
-                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "white", // Focused border color
-                            },
-                          },
-                          "& .MuiInputLabel-root": {
-                            color: "white", // Label color
-                          },
-                          "& .MuiInputAdornment-root .MuiSvgIcon-root": {
-                            color: "white", // Calendar icon color
-                            fontSize: "1.5rem", // Adjust size of the calendar icon
-                            transition: "all 0.3s ease", // Add smooth transitions for hover effects
-                          },
-                        },
-                      },
-                    }}
-                  />
-                </FormControl>
-                <FormControl fullWidth sx={{ marginBottom: 2 }}>
-                  <DateTimePicker
-                    label="End Time"
-                    value={formData.endTime}
-                    onChange={(value: any) => handleChange("endTime", value)}
-                    onClose={() => handleBlur("endTime")}
-                    slotProps={{
-                      textField: {
-                        required: true,
-                        error: touched.endTime && Boolean(errors.endTime),
-                        helperText: touched.endTime && errors.endTime,
-                        sx: {
-                          "& .MuiOutlinedInput-root": {
-                            transition: "transform 0.2s",
-                            "&:hover": {
-                              transform: "scale(1.02)",
-                            },
-                            // Add color customization here
-                            "& .MuiInputBase-input": {
-                              color: "white", // Text color
-                            },
-                            "& .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "white", // Border color
-                            },
-                            "&:hover .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "white", // Hover border color
-                            },
-                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "white", // Focused border color
-                            },
-                          },
-                          "& .MuiInputLabel-root": {
-                            color: "white", // Label color
-                          },
-                        },
-                      },
-                    }}
-                  />
-                </FormControl>
-              </LocalizationProvider>
-            </Grid>
-
-            <FormControl fullWidth sx={{ marginBottom: 2 }}>
-              {/* Main Title as Label */}
-              <Typography variant="h6" sx={{ marginBottom: 1, color: "white" }}>
-                Category
-              </Typography>
-
-              {/* Description Below the Title */}
-              <Typography
-                variant="body2"
-                sx={{ marginBottom: 2, color: "gray" }}
-              >
-                Select your event category
-              </Typography>
-
-              {/* Category Select */}
-              <Select
-                name="category"
-                value={formData.category}
-                onChange={(e) => handleChange("category", e.target.value)}
-                sx={{
-                  color: "white",
-                  backgroundColor: "#2d2d2d",
-                  borderRadius: "8px",
-                  "& .MuiInputBase-root": {
-                    backgroundColor: "#2d2d2d",
-                    color: "white",
-                  },
-                  borderBottom: "1px solid #f50057",
-                }}
-              >
-                <MenuItem value="House Party">House Party</MenuItem>
-                <MenuItem value="Meet Greet">Meet Greet</MenuItem>
-                <MenuItem value="Hotel Takeover">Hotel Takeover</MenuItem>
-              </Select>
-
-              {/* Error Message */}
-              {errors.category && (
-                <FormHelperText error>{errors.category}</FormHelperText>
-              )}
-            </FormControl>
-
-            <FormControl fullWidth sx={{ marginBottom: 2 }}>
-              {/* Main Title as Label */}
-              <Typography variant="h6" sx={{ marginBottom: 1, color: "white" }}>
-                Event Name
-              </Typography>
-
-              {/* Event Name Input */}
-              <TextField
-                required
-                name="eventName"
-                value={formData.eventName}
-                onChange={(e) => handleChange("eventName", e.target.value)}
-                error={!!errors.eventName}
-                helperText={errors.eventName}
-                fullWidth
-                variant="standard"
-                InputProps={{
-                  sx: {
-                    height: 48, // Adjust the height
-                    backgroundColor: "#2d2d2d",
-                    borderRadius: "8px",
-                    "&:hover:not(.Mui-disabled)::before": {
-                      borderBottom: "2px solid #f50057", // Maintain border color on hover
-                    },
-                    "&::before": {
-                      borderBottom: "1px solid #f50057", // Default bottom border color
-                    },
-                    "&::after": {
-                      borderBottom: "2px solid #f50057", // Focused bottom border color
-                    },
-                  },
-                }}
-                sx={{
-                  "& .MuiInputBase-input": {
-                    color: "white", // Input text color
-                    padding: "12px", // Padding for comfortable height
-                  },
-                }}
-              />
-            </FormControl>
-
-            <Typography sx={{ color: "white", marginTop: "20px" }}>
-              State, City
+          <Box
+            sx={{
+              padding: { lg: 4, md: 4, sm: 0, xs: 0 },
+              marginTop: 7,
+              marginBottom: 6,
+            }}
+          >
+            <Typography variant="h6" sx={{ marginBottom: 2 }}>
+              Create Event
             </Typography>
 
-            <Typography
-              variant="body2"
-              sx={{ marginTop: "5px", color: "gray", marginBottom: 2 }}
-            >
-              Enter the location of your event
-            </Typography>
-
-            <Autocomplete
-              value={formData?.venue}
-              id="autocomplete-filled"
-              open={openCity}
-              clearOnBlur
-              onOpen={() => setOpenCity(true)}
-              onClose={() => setOpenCity(false)}
-              isOptionEqualToValue={(option: any, value: any) =>
-                option.id === value.id
-              }
-              getOptionLabel={(option: any) => option.City || ""}
-              options={cityOption.map((city: any) => ({
-                ...city,
-                key: city.id,
-              }))}
-              loading={cityLoading}
-              inputValue={cityInput}
-              onInputChange={(event: any, newInputValue: any) => {
-                if (event?.type === "change" || event?.type === "click")
-                  setCityInput(newInputValue);
-              }}
-              onChange={(event: any, newValue: any) => {
-                if (newValue?.City)
-                  setFormData({
-                    ...formData,
-                    venue: newValue?.City,
-                  });
-              }}
-              renderInput={(params: any) => (
-                <TextField
-                  required
-                  {...params}
-                  variant="filled"
-                  error={!!errors.venue}
-                  helperText={errors.venue}
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                      <>
-                        {cityLoading ? (
-                          <CircularProgress color="inherit" size={15} />
-                        ) : null}
-                        {params.InputProps.endAdornment}
-                      </>
-                    ),
-                  }}
-                  sx={{
-                    backgroundColor: "#2a2a2a",
-                    input: { color: "#fff" },
-                    mb: 3,
-                    borderRadius: "4px",
-                  }}
-                />
-              )}
-            />
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Checkbox
-                color="primary"
-                sx={{
-                  color: "white", // Default color when unchecked
-                  "&.Mui-checked": {
-                    color: "##f50057", // Custom color when checked
-                  },
-                }}
-                checked={formData.hideVenue == 1 ? true : false}
-                onChange={(e) => handleChange("hideVenue", e.target.checked)}
-              />
-              <Box>
-                <Typography variant="h6">Hide Address</Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ marginTop: "5px", color: "gray", marginBottom: 2 }}
-                >
-                  Hide Address from members
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Description Text Editor */}
-            <Typography variant="body1">Description</Typography>
-            <Typography
-              variant="body2"
-              sx={{ marginTop: "5px", color: "gray", marginBottom: 2 }}
-            >
-              Describe your event
-            </Typography>
-
-            <Editor
-              apiKey={"3yffl36ic8qni4zhtxbmc0t1sujg1m25sc4l638375rwb5vs"}
-              value={formData.description}
-              onEditorChange={(content) => handleChange("description", content)}
-              init={{
-                menubar: false,
-                statusbar: false,
-                plugins: ["lists", "link", "image", "code"],
-                toolbar:
-                  "undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link image",
-                content_style:
-                  "body { background-color: #2d2d2d; color: white; }",
-                skin: true,
-              }}
-            />
-
-            <div style={{ marginTop: "10px" }}>
-              <ImageUpload
-                isCoverPhoto
-                value={formData.coverPhoto ? [formData.coverPhoto] : null}
-                onChange={(files) => {
-                  if (files && files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                      setEventCoverImage(reader.result as string);
-                    };
-                    reader.readAsDataURL(files[0]);
-                    handleChange("coverPhoto", files[0]);
-                  } else {
-                    handleChange("coverPhoto", null);
-                    setEventCoverImage(null);
-                  }
-                }}
-                onBlur={() => handleBlur("coverPhoto")}
-                error={formData.coverPhoto ? undefined : errors.coverPhoto}
-                touched={touched.coverPhoto}
-              />
-            </div>
-
-            <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
-              <Paper
-                elevation={2}
-                sx={{
-                  p: 4,
-                  border: "2px dashed",
-                  borderColor: "white",
-                  borderRadius: 2,
-                  cursor: "pointer",
-                  backgroundColor: "#2a2a2a",
-                  transition: "all 0.3s ease",
-                  "&:hover": {
-                    backgroundColor: "#333333",
-                    borderColor: "white",
-                    transform: "translateY(-2px)",
-                    boxShadow: "0 4px 12px rgba(255,20,147,0.2)",
-                  },
-                }}
+            <form onSubmit={handleSubmit}>
+              <Grid
+                container
+                spacing={2}
+                sx={{ justifyContent: "center", padding: 3 }}
               >
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload("photos")}
-                  onBlur={() => handleBlur("photos")}
-                  style={{ display: "none" }}
-                  id="photos-upload"
-                />
-                <label
-                  htmlFor="photos-upload"
-                  style={{ width: "100%", cursor: "pointer" }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 2,
-                    }}
-                  >
-                    <CollectionsIcon
-                      sx={{
-                        fontSize: 48,
-                        color: "white",
-                        transition: "transform 0.3s ease",
-                        "&:hover": {
-                          transform: "scale(1.1)",
+                <LocalizationProvider dateAdapter={AdapterMoment}>
+                  <FormControl fullWidth sx={{ marginBottom: 4 }}>
+                    <DateTimePicker
+                      label="Start Time"
+                      value={formData.startTime}
+                      onChange={(value: any) =>
+                        handleChange("startTime", value)
+                      }
+                      onClose={() => handleBlur("startTime")}
+                      slotProps={{
+                        textField: {
+                          required: true,
+                          error: touched.startTime && Boolean(errors.startTime),
+                          helperText: touched.startTime && errors.startTime,
+                          sx: {
+                            "& .MuiOutlinedInput-root": {
+                              transition: "transform 0.2s",
+                              "&:hover": {
+                                transform: "scale(1.02)",
+                              },
+                              // Add color customization here
+                              "& .MuiInputBase-input": {
+                                color: "white", // Text color
+                              },
+                              "& .MuiOutlinedInput-notchedOutline": {
+                                borderColor: "white", // Border color
+                              },
+                              "&:hover .MuiOutlinedInput-notchedOutline": {
+                                borderColor: "white", // Hover border color
+                              },
+                              "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                {
+                                  borderColor: "white", // Focused border color
+                                },
+                            },
+                            "& .MuiInputLabel-root": {
+                              color: "white", // Label color
+                            },
+                            "& .MuiInputAdornment-root .MuiSvgIcon-root": {
+                              color: "white", // Calendar icon color
+                              fontSize: "1.5rem", // Adjust size of the calendar icon
+                              transition: "all 0.3s ease", // Add smooth transitions for hover effects
+                            },
+                          },
                         },
                       }}
                     />
-                    <Box sx={{ textAlign: "center" }}>
-                      <Typography variant="h6" sx={{ color: "white", mb: 1 }}>
-                        Upload Event Photos
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: "#999" }}>
-                        Drag and drop multiple images here, or click to select
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{ color: "#666", mt: 1, display: "block" }}
-                      >
-                        Supports: JPG, PNG, GIF (Max 10 images, 5MB each)
-                      </Typography>
-                      {formData.photos.length > 0 && (
-                        <Box
-                          sx={{
-                            mt: 2,
-                            p: 2,
-                            bgcolor: "rgb(144, 146, 150)",
-                            borderRadius: 1,
-                          }}
-                        >
-                          <Typography variant="body2">
-                            {formData.photos.length}{" "}
-                            {formData.photos.length === 1 ? "image" : "images"}{" "}
-                            selected
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Box>
-                </label>
-              </Paper>
-              {touched.photos && errors.photos && (
-                <FormHelperText error sx={{ ml: 2, color: "#ff6b6b" }}>
-                  {errors.photos}
-                </FormHelperText>
-              )}
-            </Grid>
+                  </FormControl>
+                  <FormControl fullWidth sx={{ marginBottom: 2 }}>
+                    <DateTimePicker
+                      label="End Time"
+                      value={formData.endTime}
+                      onChange={(value: any) => handleChange("endTime", value)}
+                      onClose={() => handleBlur("endTime")}
+                      slotProps={{
+                        textField: {
+                          required: true,
+                          error: touched.endTime && Boolean(errors.endTime),
+                          helperText: touched.endTime && errors.endTime,
+                          sx: {
+                            "& .MuiOutlinedInput-root": {
+                              transition: "transform 0.2s",
+                              "&:hover": {
+                                transform: "scale(1.02)",
+                              },
+                              // Add color customization here
+                              "& .MuiInputBase-input": {
+                                color: "white", // Text color
+                              },
+                              "& .MuiOutlinedInput-notchedOutline": {
+                                borderColor: "white", // Border color
+                              },
+                              "&:hover .MuiOutlinedInput-notchedOutline": {
+                                borderColor: "white", // Hover border color
+                              },
+                              "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                {
+                                  borderColor: "white", // Focused border color
+                                },
+                            },
+                            "& .MuiInputLabel-root": {
+                              color: "white", // Label color
+                            },
+                          },
+                        },
+                      }}
+                    />
+                  </FormControl>
+                </LocalizationProvider>
+              </Grid>
 
-            {formData.photos.length > 0 && (
-              <>
-                <Box
+              <FormControl fullWidth sx={{ marginBottom: 2 }}>
+                {/* Main Title as Label */}
+                <Typography
+                  variant="h6"
+                  sx={{ marginBottom: 1, color: "white" }}
+                >
+                  Category
+                </Typography>
+
+                {/* Description Below the Title */}
+                <Typography
+                  variant="body2"
+                  sx={{ marginBottom: 2, color: "gray" }}
+                >
+                  Select your event category
+                </Typography>
+
+                {/* Category Select */}
+                <Select
+                  name="category"
+                  value={formData.category}
+                  onChange={(e) => handleChange("category", e.target.value)}
                   sx={{
-                    mt: 2,
-                    p: 2,
-                    bgcolor: "rgb(144, 146, 150)",
-                    borderRadius: 1,
+                    color: "white",
+                    backgroundColor: "#2d2d2d",
+                    borderRadius: "8px",
+                    "& .MuiInputBase-root": {
+                      backgroundColor: "#2d2d2d",
+                      color: "white",
+                    },
+                    borderBottom: "1px solid #f50057",
                   }}
                 >
-                  <div>
-                    <h4>Selected Photos:</h4>
-                    <div
-                      style={{
+                  <MenuItem value="House Party">House Party</MenuItem>
+                  <MenuItem value="Meet Greet">Meet Greet</MenuItem>
+                  <MenuItem value="Hotel Takeover">Hotel Takeover</MenuItem>
+                </Select>
+
+                {/* Error Message */}
+                {errors.category && (
+                  <FormHelperText error>{errors.category}</FormHelperText>
+                )}
+              </FormControl>
+
+              <FormControl fullWidth sx={{ marginBottom: 2 }}>
+                {/* Main Title as Label */}
+                <Typography
+                  variant="h6"
+                  sx={{ marginBottom: 1, color: "white" }}
+                >
+                  Event Name
+                </Typography>
+
+                {/* Event Name Input */}
+                <TextField
+                  required
+                  name="eventName"
+                  value={formData.eventName}
+                  onChange={(e) => handleChange("eventName", e.target.value)}
+                  error={!!errors.eventName}
+                  helperText={errors.eventName}
+                  fullWidth
+                  variant="standard"
+                  InputProps={{
+                    sx: {
+                      height: 48, // Adjust the height
+                      backgroundColor: "#2d2d2d",
+                      borderRadius: "8px",
+                      "&:hover:not(.Mui-disabled)::before": {
+                        borderBottom: "2px solid #f50057", // Maintain border color on hover
+                      },
+                      "&::before": {
+                        borderBottom: "1px solid #f50057", // Default bottom border color
+                      },
+                      "&::after": {
+                        borderBottom: "2px solid #f50057", // Focused bottom border color
+                      },
+                    },
+                  }}
+                  sx={{
+                    "& .MuiInputBase-input": {
+                      color: "white", // Input text color
+                      padding: "12px", // Padding for comfortable height
+                    },
+                  }}
+                />
+              </FormControl>
+
+              <Typography sx={{ color: "white", marginTop: "20px" }}>
+                State, City
+              </Typography>
+
+              <Typography
+                variant="body2"
+                sx={{ marginTop: "5px", color: "gray", marginBottom: 2 }}
+              >
+                Enter the location of your event
+              </Typography>
+
+              <Autocomplete
+                value={formData?.venue}
+                id="autocomplete-filled"
+                open={openCity}
+                clearOnBlur
+                onOpen={() => setOpenCity(true)}
+                onClose={() => setOpenCity(false)}
+                isOptionEqualToValue={(option: any, value: any) =>
+                  option.id === value.id
+                }
+                getOptionLabel={(option: any) => option.City || ""}
+                options={cityOption.map((city: any) => ({
+                  ...city,
+                  key: city.id,
+                }))}
+                loading={cityLoading}
+                inputValue={cityInput}
+                onInputChange={(event: any, newInputValue: any) => {
+                  if (event?.type === "change" || event?.type === "click")
+                    setCityInput(newInputValue);
+                }}
+                onChange={(event: any, newValue: any) => {
+                  if (newValue?.City)
+                    setFormData({
+                      ...formData,
+                      venue: newValue?.City,
+                    });
+                }}
+                renderInput={(params: any) => (
+                  <TextField
+                    required
+                    {...params}
+                    variant="filled"
+                    error={!!errors.venue}
+                    helperText={errors.venue}
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {cityLoading ? (
+                            <CircularProgress color="inherit" size={15} />
+                          ) : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                    sx={{
+                      backgroundColor: "#2a2a2a",
+                      input: { color: "#fff" },
+                      mb: 3,
+                      borderRadius: "4px",
+                    }}
+                  />
+                )}
+              />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Checkbox
+                  color="primary"
+                  sx={{
+                    color: "white", // Default color when unchecked
+                    "&.Mui-checked": {
+                      color: "##f50057", // Custom color when checked
+                    },
+                  }}
+                  checked={formData.hideVenue == 1 ? true : false}
+                  onChange={(e) => handleChange("hideVenue", e.target.checked)}
+                />
+                <Box>
+                  <Typography variant="h6">Hide Address</Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ marginTop: "5px", color: "gray", marginBottom: 2 }}
+                  >
+                    Hide Address from members
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Description Text Editor */}
+              <Typography variant="body1">Description</Typography>
+              <Typography
+                variant="body2"
+                sx={{ marginTop: "5px", color: "gray", marginBottom: 2 }}
+              >
+                Describe your event
+              </Typography>
+
+              <Editor
+                apiKey={"3yffl36ic8qni4zhtxbmc0t1sujg1m25sc4l638375rwb5vs"}
+                value={formData.description}
+                onEditorChange={(content) =>
+                  handleChange("description", content)
+                }
+                init={{
+                  menubar: false,
+                  statusbar: false,
+                  plugins: ["lists", "link", "image", "code"],
+                  toolbar:
+                    "undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link image",
+                  content_style:
+                    "body { background-color: #2d2d2d; color: white; }",
+                  skin: true,
+                }}
+              />
+
+              <div style={{ marginTop: "10px" }}>
+                <ImageUpload
+                  isCoverPhoto
+                  value={formData.coverPhoto ? [formData.coverPhoto] : null}
+                  onChange={(files) => {
+                    if (files && files[0]) {
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        setEventCoverImage(reader.result as string);
+                      };
+                      reader.readAsDataURL(files[0]);
+                      handleChange("coverPhoto", files[0]);
+                    } else {
+                      handleChange("coverPhoto", null);
+                      setEventCoverImage(null);
+                    }
+                  }}
+                  onBlur={() => handleBlur("coverPhoto")}
+                  error={formData.coverPhoto ? undefined : errors.coverPhoto}
+                  touched={touched.coverPhoto}
+                />
+              </div>
+
+              <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
+                <Paper
+                  elevation={2}
+                  sx={{
+                    p: 4,
+                    border: "2px dashed",
+                    borderColor: "white",
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    backgroundColor: "#2a2a2a",
+                    transition: "all 0.3s ease",
+                    "&:hover": {
+                      backgroundColor: "#333333",
+                      borderColor: "white",
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 4px 12px rgba(255,20,147,0.2)",
+                    },
+                  }}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload("photos")}
+                    onBlur={() => handleBlur("photos")}
+                    style={{ display: "none" }}
+                    id="photos-upload"
+                  />
+                  <label
+                    htmlFor="photos-upload"
+                    style={{ width: "100%", cursor: "pointer" }}
+                  >
+                    <Box
+                      sx={{
                         display: "flex",
-                        justifyContent: "center",
+                        flexDirection: "column",
                         alignItems: "center",
-                        marginTop: "10px",
+                        gap: 2,
                       }}
                     >
-                      {formData.photos.map((file, index) => (
-                        <img
-                          key={index}
-                          src={URL.createObjectURL(file)}
-                          alt={`Preview ${index}`}
-                          style={{
-                            width: "150px",
-                            height: "150px",
-                            objectFit: "cover",
-                            borderRadius: "8px",
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </Box>
-              </>
-            )}
+                      <CollectionsIcon
+                        sx={{
+                          fontSize: 48,
+                          color: "white",
+                          transition: "transform 0.3s ease",
+                          "&:hover": {
+                            transform: "scale(1.1)",
+                          },
+                        }}
+                      />
+                      <Box sx={{ textAlign: "center" }}>
+                        <Typography variant="h6" sx={{ color: "white", mb: 1 }}>
+                          Upload Event Photos
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "#999" }}>
+                          Drag and drop multiple images here, or click to select
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "#666", mt: 1, display: "block" }}
+                        >
+                          Supports: JPG, PNG, GIF (Max 10 images, 5MB each)
+                        </Typography>
+                        {formData.photos.length > 0 && (
+                          <Box
+                            sx={{
+                              mt: 2,
+                              p: 2,
+                              bgcolor: "rgb(144, 146, 150)",
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Typography variant="body2">
+                              {formData.photos.length}{" "}
+                              {formData.photos.length === 1
+                                ? "image"
+                                : "images"}{" "}
+                              selected
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                  </label>
+                </Paper>
+                {touched.photos && errors.photos && (
+                  <FormHelperText error sx={{ ml: 2, color: "#ff6b6b" }}>
+                    {errors.photos}
+                  </FormHelperText>
+                )}
+              </Grid>
 
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              sx={{
-                mt: 2,
-                textTransform: "none",
-                backgroundColor: "#f50057",
-                py: 1.5,
-                fontSize: "16px",
-                fontWeight: "bold",
-                "&:hover": {
-                  backgroundColor: "#c51162",
-                },
-              }}
-            >
-              Create Event
-            </Button>
-          </form>
-        </Box>
+              {formData.photos.length > 0 && (
+                <>
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: 2,
+                      bgcolor: "rgb(144, 146, 150)",
+                      borderRadius: 1,
+                    }}
+                  >
+                    <div>
+                      <h4>Selected Photos:</h4>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          marginTop: "10px",
+                        }}
+                      >
+                        {formData.photos.map((file, index) => (
+                          <img
+                            key={index}
+                            src={URL.createObjectURL(file)}
+                            alt={`Preview ${index}`}
+                            style={{
+                              width: "150px",
+                              height: "150px",
+                              objectFit: "cover",
+                              borderRadius: "8px",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </Box>
+                </>
+              )}
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                sx={{
+                  mt: 2,
+                  textTransform: "none",
+                  backgroundColor: "#f50057",
+                  py: 1.5,
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: "#c51162",
+                  },
+                }}
+              >
+                Create Event
+              </Button>
+            </form>
+          </Box>
+        </Container>
       ) : (
         <Box
           sx={{
@@ -1528,7 +1551,9 @@ const EventForm: React.FC = () => {
                           }
                         }}
                         onBlur={() => handleBlur("coverPhoto")}
-                        error={formData.coverPhoto ? undefined : errors.coverPhoto}
+                        error={
+                          formData.coverPhoto ? undefined : errors.coverPhoto
+                        }
                         touched={touched.coverPhoto}
                       />
 

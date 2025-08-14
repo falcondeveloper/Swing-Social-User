@@ -66,7 +66,7 @@ const Header = () => {
       try {
         const decodeToken = jwtDecode<any>(token);
         setAvatar(decodeToken?.avatar || "");
-        setUserName(decodeToken?.username || "User");
+        setUserName(decodeToken?.profileName || "User");
       } catch (error) {
         console.error("Invalid token:", error);
         router.push("/login");

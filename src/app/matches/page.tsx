@@ -481,689 +481,728 @@ export default function MatchesPage() {
       {isMobile === true ? (
         <Box
           sx={{
-            padding: "20px 8px 8px 8px",
+            // padding: "20px 8px 8px 8px",
             backgroundColor: "#0a0a0a",
             minHeight: "100vh",
           }}
         >
-          {searchResults?.length > 0 ? (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {searchResults.map((profile: any, index: number) => (
-                <Card
-                  key={index}
-                  elevation={0}
-                  sx={{
-                    border: "none",
-                    width: "100%",
-                    boxShadow: "none",
-                    backgroundColor: "#1a1a1a",
-                    color: "white",
-                    borderRadius: "12px",
-                  }}
-                  onClick={() => {
-                    setShowDetail(true);
-                    setSelectedUserId(profile?.Id ? profile?.Id : profile?.Id);
-                  }}
+          <Container
+            maxWidth="md"
+            sx={{
+              pt: { xs: 4, sm: 4, md: 4 },
+              pb: { xs: 8, sm: 9, md: 10 },
+              px: { xs: 1, sm: 2, md: 3 },
+            }}
+          >
+            <>
+              {searchResults?.length > 0 ? (
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: "16px" }}
                 >
-                  <Box
-                    position="relative"
-                    width="100%"
-                    sx={{
-                      height: "300px",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <img
-                      alt={profile?.Username || "Profile"}
-                      src={profile?.Avatar || "/default-avatar.png"}
-                      style={{
-                        objectFit: "cover",
+                  {searchResults.map((profile: any, index: number) => (
+                    <Card
+                      key={index}
+                      elevation={0}
+                      sx={{
+                        border: "none",
                         width: "100%",
-                        height: "100%",
+                        boxShadow: "none",
+                        backgroundColor: "#1a1a1a",
+                        color: "white",
+                        borderRadius: "12px",
                       }}
-                    />
-                  </Box>
-                  <CardContent sx={{ padding: "16px" }}>
-                    <Typography
-                      variant="h6"
-                      component="div"
-                      gutterBottom
-                      sx={{ fontSize: "18px", fontWeight: "bold" }}
+                      onClick={() => {
+                        setShowDetail(true);
+                        setSelectedUserId(
+                          profile?.Id ? profile?.Id : profile?.Id
+                        );
+                      }}
                     >
-                      {profile?.Username || "Unknown"} ,{" "}
-                      {profile?.DateOfBirth
-                        ? new Date().getFullYear() -
-                          new Date(profile.DateOfBirth).getFullYear()
-                        : ""}
-                      {profile?.Gender === "Male"
-                        ? "M"
-                        : profile?.Gender === "Female"
-                        ? "F"
-                        : ""}
-                      {profile?.PartnerDateOfBirth && (
-                        <>
-                          {" | "}
-                          {new Date().getFullYear() -
-                            new Date(
-                              profile.PartnerDateOfBirth
-                            ).getFullYear()}{" "}
-                          {profile?.PartnerGender === "Male"
+                      <Box
+                        position="relative"
+                        width="100%"
+                        sx={{
+                          height: "300px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <img
+                          alt={profile?.Username || "Profile"}
+                          src={profile?.Avatar || "/default-avatar.png"}
+                          style={{
+                            objectFit: "cover",
+                            width: "100%",
+                            height: "100%",
+                          }}
+                        />
+                      </Box>
+                      <CardContent sx={{ padding: "16px" }}>
+                        <Typography
+                          variant="h6"
+                          component="div"
+                          gutterBottom
+                          sx={{ fontSize: "18px", fontWeight: "bold" }}
+                        >
+                          {profile?.Username || "Unknown"} ,{" "}
+                          {profile?.DateOfBirth
+                            ? new Date().getFullYear() -
+                              new Date(profile.DateOfBirth).getFullYear()
+                            : ""}
+                          {profile?.Gender === "Male"
                             ? "M"
-                            : profile?.PartnerGender === "Female"
+                            : profile?.Gender === "Female"
                             ? "F"
                             : ""}
-                        </>
-                      )}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="secondary"
-                      sx={{ color: "#aaa", marginBottom: "8px" }}
-                    >
-                      {profile?.Location?.replace(", USA", "") || ""}
-                    </Typography>
-                    <AboutSection aboutText={profile?.About} />
-                  </CardContent>
-                </Card>
-              ))}
-            </Box>
-          ) : (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <Box
-                sx={{
-                  overflowX: "auto",
-                  whiteSpace: "nowrap",
-                  paddingBottom: "8px",
-                  "&::-webkit-scrollbar": {
-                    display: "none",
-                  },
-                }}
-              >
-                <Box sx={{ display: "inline-flex", gap: "8px" }}>
-                  {sidebarItems.map((item, index) => (
-                    <Box
-                      key={index}
-                      onClick={() => setCurrentMatch(item.label)}
-                      sx={{
-                        backgroundColor:
-                          currentMatch === item.label ? "#f50057" : "#2d2d2d",
-                        borderRadius: "20px",
-                        padding: "8px 16px",
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        color: "white",
-                        fontWeight: "500",
-                        fontSize: "14px",
-                        minWidth: "fit-content",
-                      }}
-                    >
-                      {item.label}
-                    </Box>
+                          {profile?.PartnerDateOfBirth && (
+                            <>
+                              {" | "}
+                              {new Date().getFullYear() -
+                                new Date(
+                                  profile.PartnerDateOfBirth
+                                ).getFullYear()}{" "}
+                              {profile?.PartnerGender === "Male"
+                                ? "M"
+                                : profile?.PartnerGender === "Female"
+                                ? "F"
+                                : ""}
+                            </>
+                          )}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="secondary"
+                          sx={{ color: "#aaa", marginBottom: "8px" }}
+                        >
+                          {profile?.Location?.replace(", USA", "") || ""}
+                        </Typography>
+                        <AboutSection aboutText={profile?.About} />
+                      </CardContent>
+                    </Card>
                   ))}
                 </Box>
-              </Box>
-              <Card
-                sx={{
-                  backgroundColor: "#1a1a1a",
-                  borderRadius: "12px",
-                  padding: "16px",
-                }}
-              >
-                <Typography
-                  variant="h5"
-                  color="white"
-                  textAlign="center"
-                  sx={{ fontSize: "20px", marginBottom: "16px" }}
+              ) : (
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: "16px" }}
                 >
-                  {currentMatch}
-                </Typography>
-
-                {/* Search Input */}
-                <Box sx={{ marginBottom: "16px" }}>
-                  <TextField
-                    placeholder="Search by username"
-                    fullWidth
-                    value={search ?? ""}
-                    onChange={(e) => {
-                      setSearch(e.target.value);
-                      setErrors((prev: any) => ({ ...prev, search: "" }));
-                    }}
-                    sx={{
-                      backgroundColor: "#2a2a2a",
-                      input: {
-                        color: "#fff",
-                        padding: "12px 0",
-                      },
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "8px",
-                        "& fieldset": {
-                          borderColor: errors?.search ? "red" : "#444",
-                        },
-                      },
-                    }}
-                    error={Boolean(errors?.search)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon sx={{ color: "#aaa" }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  {errors?.search && (
-                    <Typography
-                      variant="body2"
-                      color="error"
-                      sx={{ mt: 1, textAlign: "center" }}
-                    >
-                      {errors?.search}
-                    </Typography>
-                  )}
-                </Box>
-
-                {currentMatch === "Search" && (
                   <Box
                     sx={{
-                      backgroundColor: "#2a2a2a",
-                      borderRadius: "12px",
-                      padding: "16px",
-                      marginTop: "8px",
+                      overflowX: "auto",
+                      whiteSpace: "nowrap",
+                      paddingBottom: "8px",
+                      "&::-webkit-scrollbar": {
+                        display: "none",
+                      },
                     }}
                   >
-                    {/* About Textarea */}
-                    <TextField
-                      multiline
-                      rows={3}
-                      variant="outlined"
-                      fullWidth
-                      sx={{
-                        backgroundColor: "#1a1a1a",
-                        borderRadius: "8px",
-                        "& .MuiOutlinedInput-root": {
-                          "& textarea": {
-                            color: "#fff",
-                          },
-                        },
-                      }}
-                    />
-
-                    {/* Location Search */}
+                    <Box sx={{ display: "inline-flex", gap: "8px" }}>
+                      {sidebarItems.map((item, index) => (
+                        <Box
+                          key={index}
+                          onClick={() => setCurrentMatch(item.label)}
+                          sx={{
+                            backgroundColor:
+                              currentMatch === item.label
+                                ? "#f50057"
+                                : "#2d2d2d",
+                            borderRadius: "20px",
+                            padding: "8px 16px",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            color: "white",
+                            fontWeight: "500",
+                            fontSize: "14px",
+                            minWidth: "fit-content",
+                          }}
+                        >
+                          {item.label}
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                  <Card
+                    sx={{
+                      backgroundColor: "#1a1a1a",
+                      borderRadius: "12px",
+                      padding: "16px",
+                    }}
+                  >
                     <Typography
-                      sx={{
-                        color: "white",
-                        marginTop: "16px",
-                        marginBottom: "8px",
-                      }}
+                      variant="h5"
+                      color="white"
+                      textAlign="center"
+                      sx={{ fontSize: "20px", marginBottom: "16px" }}
                     >
-                      City, State
+                      {currentMatch}
                     </Typography>
-                    <Autocomplete
-                      value={formData?.city || ""}
-                      open={openCity}
-                      onOpen={() => setOpenCity(true)}
-                      onClose={() => setOpenCity(false)}
-                      options={cityOption.map((city: any) => city.City)}
-                      loading={cityLoading}
-                      inputValue={cityInput}
-                      onInputChange={(event, newInputValue) => {
-                        if (event?.type === "change" || event?.type === "click")
-                          setCityInput(newInputValue);
-                      }}
-                      renderInput={(params) => (
+
+                    {/* Search Input */}
+                    <Box sx={{ marginBottom: "16px" }}>
+                      <TextField
+                        placeholder="Search by username"
+                        fullWidth
+                        value={search ?? ""}
+                        onChange={(e) => {
+                          setSearch(e.target.value);
+                          setErrors((prev: any) => ({ ...prev, search: "" }));
+                        }}
+                        sx={{
+                          backgroundColor: "#2a2a2a",
+                          input: {
+                            color: "#fff",
+                            padding: "12px 0",
+                          },
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: "8px",
+                            "& fieldset": {
+                              borderColor: errors?.search ? "red" : "#444",
+                            },
+                          },
+                        }}
+                        error={Boolean(errors?.search)}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <SearchIcon sx={{ color: "#aaa" }} />
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                      {errors?.search && (
+                        <Typography
+                          variant="body2"
+                          color="error"
+                          sx={{ mt: 1, textAlign: "center" }}
+                        >
+                          {errors?.search}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    {currentMatch === "Search" && (
+                      <Box
+                        sx={{
+                          backgroundColor: "#2a2a2a",
+                          borderRadius: "12px",
+                          padding: "16px",
+                          marginTop: "8px",
+                        }}
+                      >
+                        {/* About Textarea */}
                         <TextField
-                          {...params}
+                          multiline
+                          rows={3}
                           variant="outlined"
+                          fullWidth
                           sx={{
                             backgroundColor: "#1a1a1a",
                             borderRadius: "8px",
                             "& .MuiOutlinedInput-root": {
-                              "& input": {
+                              "& textarea": {
                                 color: "#fff",
                               },
                             },
                           }}
                         />
-                      )}
-                    />
 
-                    {/* Photos Checkbox */}
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={onlyPhotos == 1}
-                          onChange={handlePhotosChange}
-                          sx={{ color: "#aaa" }}
+                        {/* Location Search */}
+                        <Typography
+                          sx={{
+                            color: "white",
+                            marginTop: "16px",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          City, State
+                        </Typography>
+                        <Autocomplete
+                          value={formData?.city || ""}
+                          open={openCity}
+                          onOpen={() => setOpenCity(true)}
+                          onClose={() => setOpenCity(false)}
+                          options={cityOption.map((city: any) => city.City)}
+                          loading={cityLoading}
+                          inputValue={cityInput}
+                          onInputChange={(event, newInputValue) => {
+                            if (
+                              event?.type === "change" ||
+                              event?.type === "click"
+                            )
+                              setCityInput(newInputValue);
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              variant="outlined"
+                              sx={{
+                                backgroundColor: "#1a1a1a",
+                                borderRadius: "8px",
+                                "& .MuiOutlinedInput-root": {
+                                  "& input": {
+                                    color: "#fff",
+                                  },
+                                },
+                              }}
+                            />
+                          )}
                         />
-                      }
-                      label="Only profiles with Photos"
-                      sx={{
-                        color: "#fff",
-                        marginTop: "12px",
-                        "& .MuiTypography-root": { fontSize: "14px" },
-                      }}
-                    />
 
-                    {/* Age Range Sections */}
-                    <Box
-                      sx={{
-                        border: "1px solid #444",
-                        borderRadius: "8px",
-                        padding: "12px",
-                        marginTop: "16px",
-                      }}
-                    >
-                      {/* Her Age */}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          marginBottom: "12px",
-                        }}
-                      >
-                        <Typography sx={{ color: "#fff", fontSize: "14px" }}>
-                          Her age between
-                        </Typography>
+                        {/* Photos Checkbox */}
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={onlyPhotos == 1}
+                              onChange={handlePhotosChange}
+                              sx={{ color: "#aaa" }}
+                            />
+                          }
+                          label="Only profiles with Photos"
+                          sx={{
+                            color: "#fff",
+                            marginTop: "12px",
+                            "& .MuiTypography-root": { fontSize: "14px" },
+                          }}
+                        />
+
+                        {/* Age Range Sections */}
                         <Box
                           sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <TextField
-                            size="small"
-                            type="number"
-                            name="min"
-                            value={herAgeRange.min ?? ""}
-                            onChange={handleHerAgeChange}
-                            sx={{
-                              width: "60px",
-                              backgroundColor: "#1a1a1a",
-                              "& .MuiOutlinedInput-input": {
-                                color: "#fff",
-                                padding: "8px",
-                              },
-                            }}
-                          />
-                          <Typography sx={{ color: "#fff" }}>and</Typography>
-                          <TextField
-                            size="small"
-                            type="number"
-                            name="max"
-                            value={herAgeRange.max ?? ""}
-                            onChange={handleHerAgeChange}
-                            sx={{
-                              width: "60px",
-                              backgroundColor: "#1a1a1a",
-                              "& .MuiOutlinedInput-input": {
-                                color: "#fff",
-                                padding: "8px",
-                              },
-                            }}
-                          />
-                        </Box>
-                      </Box>
-
-                      {/* His Age */}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Typography sx={{ color: "#fff", fontSize: "14px" }}>
-                          His age between
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <TextField
-                            size="small"
-                            type="number"
-                            name="min"
-                            value={hisAgeRange.min ?? ""}
-                            onChange={handleHisAgeChange}
-                            sx={{
-                              width: "60px",
-                              backgroundColor: "#1a1a1a",
-                              "& .MuiOutlinedInput-input": {
-                                color: "#fff",
-                                padding: "8px",
-                              },
-                            }}
-                          />
-                          <Typography sx={{ color: "#fff" }}>and</Typography>
-                          <TextField
-                            size="small"
-                            type="number"
-                            name="max"
-                            value={hisAgeRange.max ?? ""}
-                            onChange={handleHisAgeChange}
-                            sx={{
-                              width: "60px",
-                              backgroundColor: "#1a1a1a",
-                              "& .MuiOutlinedInput-input": {
-                                color: "#fff",
-                                padding: "8px",
-                              },
-                            }}
-                          />
-                        </Box>
-                      </Box>
-                    </Box>
-
-                    {/* Orientation Selects */}
-                    <Box sx={{ marginTop: "16px" }}>
-                      <FormControl fullWidth sx={{ marginBottom: "16px" }}>
-                        <InputLabel sx={{ color: "#aaa" }}>
-                          His Orientation
-                        </InputLabel>
-                        <Select
-                          value={hisOrientation ?? ""}
-                          onChange={handleHisOrientationChange}
-                          sx={{
-                            color: "white",
-                            backgroundColor: "#1a1a1a",
+                            border: "1px solid #444",
                             borderRadius: "8px",
+                            padding: "12px",
+                            marginTop: "16px",
                           }}
                         >
-                          <MenuItem value="Straight">Straight</MenuItem>
-                          <MenuItem value="Bi">Bi</MenuItem>
-                          <MenuItem value="Bi-curious">Bi-curious</MenuItem>
-                          <MenuItem value="Open minded">Open minded</MenuItem>
-                        </Select>
-                      </FormControl>
-
-                      <FormControl fullWidth>
-                        <InputLabel sx={{ color: "#aaa" }}>
-                          Her Orientation
-                        </InputLabel>
-                        <Select
-                          value={herOrientation ?? ""}
-                          onChange={handleHerOrientationChange}
-                          sx={{
-                            color: "white",
-                            backgroundColor: "#1a1a1a",
-                            borderRadius: "8px",
-                          }}
-                        >
-                          <MenuItem value="Straight">Straight</MenuItem>
-                          <MenuItem value="Bi">Bi</MenuItem>
-                          <MenuItem value="Bi-curious">Bi-curious</MenuItem>
-                          <MenuItem value="Open minded">Open minded</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Box>
-
-                    {/* Search Button */}
-                    <Button
-                      onClick={handleSubmit}
-                      variant="contained"
-                      fullWidth
-                      sx={{
-                        backgroundColor: "#f50057",
-                        color: "white",
-                        marginTop: "24px",
-                        padding: "12px",
-                        borderRadius: "8px",
-                        fontWeight: "bold",
-                        "&:hover": {
-                          backgroundColor: "#c51162",
-                        },
-                      }}
-                    >
-                      Search
-                    </Button>
-                  </Box>
-                )}
-
-                {currentMatch !== "Search" && (
-                  <>
-                    {profileLoading ? (
-                      <Grid item xs={12}>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            py: 4,
-                            gap: 2,
-                          }}
-                        >
+                          {/* Her Age */}
                           <Box
                             sx={{
-                              position: "relative",
-                              width: 64,
-                              height: 64,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              marginBottom: "12px",
                             }}
                           >
+                            <Typography
+                              sx={{ color: "#fff", fontSize: "14px" }}
+                            >
+                              Her age between
+                            </Typography>
                             <Box
                               sx={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                width: "100%",
-                                height: "100%",
-                                borderRadius: "50%",
-                                border: "4px solid rgba(255, 255, 255, 0.2)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
                               }}
-                            />
-                            <CircularProgress
-                              thickness={4}
-                              size={64}
-                              sx={{
-                                color: "#e91e63",
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                              }}
-                            />
+                            >
+                              <TextField
+                                size="small"
+                                type="number"
+                                name="min"
+                                value={herAgeRange.min ?? ""}
+                                onChange={handleHerAgeChange}
+                                sx={{
+                                  width: "60px",
+                                  backgroundColor: "#1a1a1a",
+                                  "& .MuiOutlinedInput-input": {
+                                    color: "#fff",
+                                    padding: "8px",
+                                  },
+                                }}
+                              />
+                              <Typography sx={{ color: "#fff" }}>
+                                and
+                              </Typography>
+                              <TextField
+                                size="small"
+                                type="number"
+                                name="max"
+                                value={herAgeRange.max ?? ""}
+                                onChange={handleHerAgeChange}
+                                sx={{
+                                  width: "60px",
+                                  backgroundColor: "#1a1a1a",
+                                  "& .MuiOutlinedInput-input": {
+                                    color: "#fff",
+                                    padding: "8px",
+                                  },
+                                }}
+                              />
+                            </Box>
                           </Box>
-                          <Typography
+
+                          {/* His Age */}
+                          <Box
                             sx={{
-                              color: "rgba(255,255,255,0.7)",
-                              fontSize: "1rem",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
                             }}
                           >
-                            Loading profiles…
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    ) : (
-                      <>
-                        <Box sx={{ marginTop: "16px" }}>
-                          {profiles.length > 0 ? (
-                            profiles.map((profile: any, index: number) => (
-                              <Card
-                                key={index}
+                            <Typography
+                              sx={{ color: "#fff", fontSize: "14px" }}
+                            >
+                              His age between
+                            </Typography>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                            >
+                              <TextField
+                                size="small"
+                                type="number"
+                                name="min"
+                                value={hisAgeRange.min ?? ""}
+                                onChange={handleHisAgeChange}
                                 sx={{
-                                  backgroundColor: "rgba(45, 45, 45, 0.8)",
-                                  borderRadius: "12px",
-                                  marginBottom: "16px",
+                                  width: "60px",
+                                  backgroundColor: "#1a1a1a",
+                                  "& .MuiOutlinedInput-input": {
+                                    color: "#fff",
+                                    padding: "8px",
+                                  },
+                                }}
+                              />
+                              <Typography sx={{ color: "#fff" }}>
+                                and
+                              </Typography>
+                              <TextField
+                                size="small"
+                                type="number"
+                                name="max"
+                                value={hisAgeRange.max ?? ""}
+                                onChange={handleHisAgeChange}
+                                sx={{
+                                  width: "60px",
+                                  backgroundColor: "#1a1a1a",
+                                  "& .MuiOutlinedInput-input": {
+                                    color: "#fff",
+                                    padding: "8px",
+                                  },
+                                }}
+                              />
+                            </Box>
+                          </Box>
+                        </Box>
+
+                        {/* Orientation Selects */}
+                        <Box sx={{ marginTop: "16px" }}>
+                          <FormControl fullWidth sx={{ marginBottom: "16px" }}>
+                            <InputLabel sx={{ color: "#aaa" }}>
+                              His Orientation
+                            </InputLabel>
+                            <Select
+                              value={hisOrientation ?? ""}
+                              onChange={handleHisOrientationChange}
+                              sx={{
+                                color: "white",
+                                backgroundColor: "#1a1a1a",
+                                borderRadius: "8px",
+                              }}
+                            >
+                              <MenuItem value="Straight">Straight</MenuItem>
+                              <MenuItem value="Bi">Bi</MenuItem>
+                              <MenuItem value="Bi-curious">Bi-curious</MenuItem>
+                              <MenuItem value="Open minded">
+                                Open minded
+                              </MenuItem>
+                            </Select>
+                          </FormControl>
+
+                          <FormControl fullWidth>
+                            <InputLabel sx={{ color: "#aaa" }}>
+                              Her Orientation
+                            </InputLabel>
+                            <Select
+                              value={herOrientation ?? ""}
+                              onChange={handleHerOrientationChange}
+                              sx={{
+                                color: "white",
+                                backgroundColor: "#1a1a1a",
+                                borderRadius: "8px",
+                              }}
+                            >
+                              <MenuItem value="Straight">Straight</MenuItem>
+                              <MenuItem value="Bi">Bi</MenuItem>
+                              <MenuItem value="Bi-curious">Bi-curious</MenuItem>
+                              <MenuItem value="Open minded">
+                                Open minded
+                              </MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Box>
+
+                        {/* Search Button */}
+                        <Button
+                          onClick={handleSubmit}
+                          variant="contained"
+                          fullWidth
+                          sx={{
+                            backgroundColor: "#f50057",
+                            color: "white",
+                            marginTop: "24px",
+                            padding: "12px",
+                            borderRadius: "8px",
+                            fontWeight: "bold",
+                            "&:hover": {
+                              backgroundColor: "#c51162",
+                            },
+                          }}
+                        >
+                          Search
+                        </Button>
+                      </Box>
+                    )}
+
+                    {currentMatch !== "Search" && (
+                      <>
+                        {profileLoading ? (
+                          <Grid item xs={12}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                py: 4,
+                                gap: 2,
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  position: "relative",
+                                  width: 64,
+                                  height: 64,
                                 }}
                               >
                                 <Box
-                                  position="relative"
-                                  width="100%"
                                   sx={{
-                                    aspectRatio: "1 / 1",
-                                    overflow: "hidden",
-                                    cursor: "pointer",
+                                    position: "absolute",
+                                    top: 0,
+                                    left: 0,
+                                    width: "100%",
+                                    height: "100%",
+                                    borderRadius: "50%",
+                                    border:
+                                      "4px solid rgba(255, 255, 255, 0.2)",
                                   }}
-                                  onClick={() => {
-                                    setShowDetail(true);
-                                    setSelectedUserId(profile?.Id);
+                                />
+                                <CircularProgress
+                                  thickness={4}
+                                  size={64}
+                                  sx={{
+                                    color: "#e91e63",
+                                    position: "absolute",
+                                    top: 0,
+                                    left: 0,
                                   }}
-                                >
-                                  <img
-                                    src={
-                                      profile?.Avatar || "/default-avatar.png"
-                                    }
-                                    alt="Profile"
-                                    loading="lazy"
-                                    style={{
-                                      objectFit: "cover",
-                                      width: "100%",
-                                      height: "100%",
-                                    }}
-                                  />
-                                </Box>
-                                <CardContent sx={{ padding: "12px" }}>
-                                  <Box
+                                />
+                              </Box>
+                              <Typography
+                                sx={{
+                                  color: "rgba(255,255,255,0.7)",
+                                  fontSize: "1rem",
+                                }}
+                              >
+                                Loading profiles…
+                              </Typography>
+                            </Box>
+                          </Grid>
+                        ) : (
+                          <>
+                            <Box sx={{ marginTop: "16px" }}>
+                              {profiles.length > 0 ? (
+                                profiles.map((profile: any, index: number) => (
+                                  <Card
+                                    key={index}
                                     sx={{
-                                      display: "flex",
-                                      justifyContent: "space-between",
-                                      alignItems: "center",
+                                      backgroundColor: "rgba(45, 45, 45, 0.8)",
+                                      borderRadius: "12px",
+                                      marginBottom: "16px",
                                     }}
                                   >
-                                    <Box>
-                                      <Typography
-                                        variant="h6"
-                                        sx={{
-                                          color: "#e91e63",
-                                          fontWeight: 600,
-                                          mb: 0.5,
-                                          fontSize: {
-                                            xs: "1rem",
-                                            sm: "1.25rem",
-                                          },
+                                    <Box
+                                      position="relative"
+                                      width="100%"
+                                      sx={{
+                                        aspectRatio: "1 / 1",
+                                        overflow: "hidden",
+                                        cursor: "pointer",
+                                      }}
+                                      onClick={() => {
+                                        setShowDetail(true);
+                                        setSelectedUserId(profile?.Id);
+                                      }}
+                                    >
+                                      <img
+                                        src={
+                                          profile?.Avatar ||
+                                          "/default-avatar.png"
+                                        }
+                                        alt="Profile"
+                                        loading="lazy"
+                                        style={{
+                                          objectFit: "cover",
+                                          width: "100%",
+                                          height: "100%",
                                         }}
-                                      >
-                                        {profile.Username}
-                                      </Typography>
-
-                                      <Typography
-                                        variant="body2"
-                                        sx={{
-                                          color: "rgba(255, 255, 255, 0.8)",
-                                          display: "flex",
-                                          alignItems: "center",
-                                          gap: 0.5,
-                                          mb: 0.5,
-                                          fontSize: {
-                                            xs: "0.8rem",
-                                            sm: "0.875rem",
-                                          },
-                                        }}
-                                      >
-                                        {profile?.DateOfBirth && (
-                                          <>
-                                            {new Date().getFullYear() -
-                                              new Date(
-                                                profile.DateOfBirth
-                                              ).getFullYear()}
-                                            {profile?.Gender === "Male"
-                                              ? "M"
-                                              : profile?.Gender === "Female"
-                                              ? "F"
-                                              : ""}
-                                          </>
-                                        )}
-                                        {profile?.PartnerDateOfBirth && (
-                                          <>
-                                            {" | "}
-                                            {new Date().getFullYear() -
-                                              new Date(
-                                                profile.PartnerDateOfBirth
-                                              ).getFullYear()}
-                                            {profile?.PartnerGender === "Male"
-                                              ? "M"
-                                              : profile?.PartnerGender ===
-                                                "Female"
-                                              ? "F"
-                                              : ""}
-                                          </>
-                                        )}
-                                      </Typography>
-
+                                      />
+                                    </Box>
+                                    <CardContent sx={{ padding: "12px" }}>
                                       <Box
                                         sx={{
                                           display: "flex",
+                                          justifyContent: "space-between",
                                           alignItems: "center",
-                                          gap: 1,
-                                          flexWrap: "wrap",
                                         }}
                                       >
-                                        <Typography
-                                          variant="body2"
+                                        <Box>
+                                          <Typography
+                                            variant="h6"
+                                            sx={{
+                                              color: "#e91e63",
+                                              fontWeight: 600,
+                                              mb: 0.5,
+                                              fontSize: {
+                                                xs: "1rem",
+                                                sm: "1.25rem",
+                                              },
+                                            }}
+                                          >
+                                            {profile.Username}
+                                          </Typography>
+
+                                          <Typography
+                                            variant="body2"
+                                            sx={{
+                                              color: "rgba(255, 255, 255, 0.8)",
+                                              display: "flex",
+                                              alignItems: "center",
+                                              gap: 0.5,
+                                              mb: 0.5,
+                                              fontSize: {
+                                                xs: "0.8rem",
+                                                sm: "0.875rem",
+                                              },
+                                            }}
+                                          >
+                                            {profile?.DateOfBirth && (
+                                              <>
+                                                {new Date().getFullYear() -
+                                                  new Date(
+                                                    profile.DateOfBirth
+                                                  ).getFullYear()}
+                                                {profile?.Gender === "Male"
+                                                  ? "M"
+                                                  : profile?.Gender === "Female"
+                                                  ? "F"
+                                                  : ""}
+                                              </>
+                                            )}
+                                            {profile?.PartnerDateOfBirth && (
+                                              <>
+                                                {" | "}
+                                                {new Date().getFullYear() -
+                                                  new Date(
+                                                    profile.PartnerDateOfBirth
+                                                  ).getFullYear()}
+                                                {profile?.PartnerGender ===
+                                                "Male"
+                                                  ? "M"
+                                                  : profile?.PartnerGender ===
+                                                    "Female"
+                                                  ? "F"
+                                                  : ""}
+                                              </>
+                                            )}
+                                          </Typography>
+
+                                          <Box
+                                            sx={{
+                                              display: "flex",
+                                              alignItems: "center",
+                                              gap: 1,
+                                              flexWrap: "wrap",
+                                            }}
+                                          >
+                                            <Typography
+                                              variant="body2"
+                                              sx={{
+                                                color:
+                                                  "rgba(255, 255, 255, 0.7)",
+                                                fontSize: {
+                                                  xs: "0.75rem",
+                                                  sm: "0.875rem",
+                                                },
+                                              }}
+                                            >
+                                              {profile.Location}
+                                            </Typography>
+                                            <Typography
+                                              component="span"
+                                              sx={{
+                                                color:
+                                                  "rgba(255, 255, 255, 0.5)",
+                                                fontSize: {
+                                                  xs: "0.75rem",
+                                                  sm: "0.875rem",
+                                                },
+                                              }}
+                                            >
+                                              • {profile.Distance}
+                                            </Typography>
+                                          </Box>
+                                        </Box>
+                                        <Box
                                           sx={{
-                                            color: "rgba(255, 255, 255, 0.7)",
-                                            fontSize: {
-                                              xs: "0.75rem",
-                                              sm: "0.875rem",
-                                            },
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            alignItems: "flex-end",
+                                            gap: 0.5,
                                           }}
                                         >
-                                          {profile.Location}
-                                        </Typography>
-                                        <Typography
-                                          component="span"
-                                          sx={{
-                                            color: "rgba(255, 255, 255, 0.5)",
-                                            fontSize: {
-                                              xs: "0.75rem",
-                                              sm: "0.875rem",
-                                            },
-                                          }}
-                                        >
-                                          • {profile.Distance}
-                                        </Typography>
+                                          <IconButton sx={{ color: "white" }}>
+                                            {currentMatch}
+                                          </IconButton>
+                                          <IconButton
+                                            sx={{ color: "#f50057" }}
+                                            onClick={() =>
+                                              handleReportModalToggle(profile)
+                                            }
+                                          >
+                                            <Flag />
+                                          </IconButton>
+                                        </Box>
                                       </Box>
-                                    </Box>
-                                    <Box
-                                      sx={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        alignItems: "flex-end",
-                                        gap: 0.5,
-                                      }}
-                                    >
-                                      <IconButton sx={{ color: "white" }}>
-                                        {currentMatch}
-                                      </IconButton>
-                                      <IconButton
-                                        sx={{ color: "#f50057" }}
-                                        onClick={() =>
-                                          handleReportModalToggle(profile)
-                                        }
-                                      >
-                                        <Flag />
-                                      </IconButton>
-                                    </Box>
-                                  </Box>
-                                </CardContent>
-                              </Card>
-                            ))
-                          ) : (
-                            <Grid item xs={12}>
-                              <Typography
-                                align="center"
-                                sx={{ color: "white", my: 8 }}
-                              >
-                                {currentMatch === "Search"
-                                  ? "No search results found"
-                                  : currentMatch
-                                  ? `No ${currentMatch.toLowerCase()} profiles available`
-                                  : "No profiles available"}
-                              </Typography>
-                            </Grid>
-                          )}
-                        </Box>
+                                    </CardContent>
+                                  </Card>
+                                ))
+                              ) : (
+                                <Grid item xs={12}>
+                                  <Typography
+                                    align="center"
+                                    sx={{ color: "white", my: 8 }}
+                                  >
+                                    {currentMatch === "Search"
+                                      ? "No search results found"
+                                      : currentMatch
+                                      ? `No ${currentMatch.toLowerCase()} profiles available`
+                                      : "No profiles available"}
+                                  </Typography>
+                                </Grid>
+                              )}
+                            </Box>
+                          </>
+                        )}
                       </>
                     )}
-                  </>
-                )}
-              </Card>
-            </Box>
-          )}
+                  </Card>
+                </Box>
+              )}
+            </>
+          </Container>
         </Box>
       ) : (
         <Container maxWidth="xl" sx={{ mt: 12, mb: 8 }}>

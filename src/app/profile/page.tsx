@@ -1600,11 +1600,22 @@ const ProfileDetail: React.FC = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ bgcolor: "#121212", minHeight: "100vh" }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          backgroundColor: "#121212",
+        }}
+      >
         <Header />
 
-        <Container maxWidth="lg" sx={{ py: { xs: 1, sm: 2, md: 4 } }}>
-          {/* Profile Header */}
+        <Container
+          maxWidth="md"
+          sx={{
+            pt: { xs: 2, sm: 2, md: 2 },
+            pb: { xs: 8, sm: 9, md: 10 },
+            px: { xs: 1, sm: 2, md: 3 },
+          }}
+        >
           <ProfileHeader sx={{ mb: 4 }}>
             <CoverImageContainer
               sx={{
@@ -1884,8 +1895,6 @@ const ProfileDetail: React.FC = () => {
             </Box>
           </ProfileHeader>
 
-          {/* Content Tabs */}
-          {/* Content Tabs - Improved Mobile Version */}
           <Card sx={{ mb: 3 }}>
             <Tabs
               value={activeTab}
@@ -1925,7 +1934,6 @@ const ProfileDetail: React.FC = () => {
             </Tabs>
           </Card>
 
-          {/* Tab Content */}
           <Box>
             {activeTab === 0 && (
               <Fade in={activeTab === 0}>
@@ -1950,7 +1958,6 @@ const ProfileDetail: React.FC = () => {
           </Box>
         </Container>
 
-        {/* Image Modal */}
         <Dialog
           open={isModalOpen}
           onClose={() => setIsModalOpen(false)}
@@ -2001,7 +2008,6 @@ const ProfileDetail: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Cropper Dialog */}
         {showCropper && (
           <>
             <Dialog open={showCropper} onClose={() => setShowCropper(false)}>
@@ -2050,7 +2056,6 @@ const ProfileDetail: React.FC = () => {
           </>
         )}
 
-        {/* Snackbar */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
