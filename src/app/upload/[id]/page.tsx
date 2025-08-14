@@ -370,8 +370,8 @@ export default function UploadAvatar({ params }: { params: Params }) {
                       fontSize: "0.875rem",
                     }}
                   >
-                    Please upload a classy pic of yourself, the better your
-                    picture the better results you will have.
+                    Look your best! Upload a clear, confident photo of you. A
+                    great pic gest great results.
                   </Typography>
 
                   <Grid item xs={12} sx={{ mt: 4, textAlign: "center" }}>
@@ -379,7 +379,7 @@ export default function UploadAvatar({ params }: { params: Params }) {
                       variant="h6"
                       sx={{ color: "#c2185b", fontWeight: "bold", mb: 2 }}
                     >
-                      POST Avatar
+                      Primary Profile Picture
                     </Typography>
 
                     <Box
@@ -459,9 +459,8 @@ export default function UploadAvatar({ params }: { params: Params }) {
                       fontSize: "0.675rem",
                     }}
                   >
-                    Please refrain from any nudity or vulgar
-                    expressions.Remember, SwingSocial is a community of real
-                    people.No pets, cartoons, or inanimate objects.
+                    No nudity, vulgarity, cartoons, or objects. Real faces only
+                    - this is a community of real people.
                   </Typography>
 
                   <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
@@ -499,7 +498,7 @@ export default function UploadAvatar({ params }: { params: Params }) {
                     </Button>
                   </Grid>
 
-                  <Carousel title="Wild Events and Real Profiles are Waiting!" />
+                  <Carousel title="Exciting Events and Real Connections Start Here!" />
                 </Grid>
               </form>
 
