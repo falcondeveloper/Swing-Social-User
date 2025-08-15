@@ -17,6 +17,8 @@ import {
   useTheme,
   Paper,
   CircularProgress,
+  Avatar,
+  CardMedia,
 } from "@mui/material";
 import FlagIcon from "@mui/icons-material/Flag";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -25,7 +27,6 @@ import UserProfileModal from "@/components/UserProfileModal";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { jwtDecode } from "jwt-decode";
-import Image from "next/image";
 import { toast } from "react-toastify";
 
 interface User {
@@ -38,6 +39,7 @@ interface User {
   PartnerGender?: string;
   Location: string;
   Distance: string;
+  LastOnline: string;
 }
 
 interface ReportOptions {
@@ -342,188 +344,147 @@ export default function Pineapple() {
         ) : (
           <>
             {pineapple.map((user, index) => (
-              <>
-                <Card
+              <Card
+                key={index}
+                sx={{
+                  mb: 3,
+                  borderRadius: 4,
+                  overflow: "hidden",
+                  backgroundColor: "rgba(18, 18, 18, 0.9)",
+                  backdropFilter: "blur(6px)",
+                  boxShadow: "0 6px 20px rgba(0,0,0,0.4)",
+                  transition: "transform 0.25s",
+                  "&:hover": { transform: "scale(1.02)" },
+                }}
+              >
+                {/* Avatar Top */}
+                <CardMedia
+                  component="img"
+                  image={user.Avatar}
+                  alt={user.Username}
                   sx={{
-                    mb: 2,
-                    backgroundColor: "rgba(18, 18, 18, 0.8)",
-                    backdropFilter: "blur(10px)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    transition: "transform 0.2s ease-in-out",
-                    "&:hover": {
-                      transform: "translateY(-2px)",
-                      boxShadow: `0 8px 24px rgba(0, 0, 0, 0.2)`,
-                    },
+                    width: "100%",
+                    height: { xs: 350, sm: 400 },
+                    objectFit: "cover",
+                    objectPosition: "center",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => {
+                    setShowDetail(true);
+                    setSelectedUserId(user.Id);
+                  }}
+                />
+                {/* Info Section */}
+                <CardContent>
+                  {/* Username + Age/Gender */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: "1.2rem",
+                        color: "#fff",
+                      }}
+                    >
+                      {user.Username}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        color: "rgba(255,255,255,0.7)",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      {user?.DateOfBirth &&
+                        `${
+                          new Date().getFullYear() -
+                          new Date(user.DateOfBirth).getFullYear()
+                        }${user?.Gender?.[0] || ""}`}
+                    </Typography>
+                  </Box>
+
+                  {/* Partner Info (if any) */}
+                  {user?.PartnerDateOfBirth && (
+                    <Typography
+                      sx={{
+                        color: "rgba(255,255,255,0.7)",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      Partner:{" "}
+                      {new Date().getFullYear() -
+                        new Date(user.PartnerDateOfBirth).getFullYear()}
+                      {user?.PartnerGender?.[0] || ""}
+                    </Typography>
+                  )}
+
+                  {/* Location + Distance */}
+                  <Typography
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      color: "rgba(255,255,255,0.8)",
+                      fontSize: "0.9rem",
+                      mt: 1,
+                    }}
+                  >
+                    <LocationOnIcon sx={{ fontSize: "1rem" }} />
+                    {user?.Location?.replace(", USA", "")} • {user.Distance}
+                  </Typography>
+
+                  {/* Last Online */}
+                  <Typography
+                    sx={{
+                      mt: 1,
+                      fontSize: "0.8rem",
+                      color: "rgba(0,255,127,0.8)",
+                    }}
+                  >
+                    Last online:{" "}
+                    {user.LastOnline
+                      ? new Date(user.LastOnline).toLocaleString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          day: "numeric",
+                          month: "short",
+                        })
+                      : "Unknown"}
+                  </Typography>
+                </CardContent>
+
+                {/* Action Buttons Bottom */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    px: 2,
+                    pb: 2,
                   }}
                 >
-                  <CardContent>
-                    <Grid container spacing={1} alignItems="center" key={index}>
-                      <Grid item xs={3} sm={2}>
-                        <Box
-                          sx={{
-                            cursor: "pointer",
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            width: "80px",
-                            height: "80px",
-                            borderRadius: "12px",
-                            backgroundImage: `url(${user.Avatar})`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                            backgroundRepeat: "no-repeat",
-                          }}
-                          onClick={() => {
-                            setShowDetail(true);
-                            setSelectedUserId(user.Id);
-                          }}
-                        >
-                          {/* Optionally, you can add overlay or icons here */}
-                        </Box>
-                      </Grid>
-
-                      <Grid item xs={6} sm={7}>
-                        <Box sx={{ pl: { xs: 1, sm: 2 } }}>
-                          <Typography
-                            variant="h6"
-                            sx={{
-                              color: "#e91e63",
-                              fontWeight: 600,
-                              mb: 0.5,
-                              fontSize: { xs: "1rem", sm: "1.25rem" },
-                            }}
-                          >
-                            {user.Username}
-                          </Typography>
-
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              color: "rgba(255, 255, 255, 0.8)",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 0.5,
-                              mb: 0.5,
-                              fontSize: { xs: "0.8rem", sm: "0.875rem" },
-                            }}
-                          >
-                            {user?.DateOfBirth && (
-                              <>
-                                {new Date().getFullYear() -
-                                  new Date(user.DateOfBirth).getFullYear()}
-                                {user?.Gender === "Male"
-                                  ? "M"
-                                  : user?.Gender === "Female"
-                                  ? "F"
-                                  : ""}
-                              </>
-                            )}
-                            {user?.PartnerDateOfBirth && (
-                              <>
-                                {" | "}
-                                {new Date().getFullYear() -
-                                  new Date(
-                                    user.PartnerDateOfBirth
-                                  ).getFullYear()}
-                                {user?.PartnerGender === "Male"
-                                  ? "M"
-                                  : user?.PartnerGender === "Female"
-                                  ? "F"
-                                  : ""}
-                              </>
-                            )}
-                          </Typography>
-
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              flexWrap: "wrap",
-                              gap: { xs: 0.5, sm: 1 },
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                color: "rgba(255, 255, 255, 0.7)",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.5,
-                                fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                              }}
-                            >
-                              <LocationOnIcon
-                                sx={{ fontSize: { xs: "0.9rem", sm: "1rem" } }}
-                              />
-                              {user?.Location?.replace(", USA", "")}
-                            </Typography>
-                            <Typography
-                              component="span"
-                              sx={{
-                                color: "rgba(255, 255, 255, 0.5)",
-                                fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                              }}
-                            >
-                              • {user.Distance}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-
-                      <Grid
-                        item
-                        xs={3}
-                        sm={3}
-                        sx={{
-                          display: "flex",
-                          justifyContent: "flex-end",
-                          alignItems: "center",
-                          gap: { xs: 0.5, sm: 1 },
-                        }}
-                      >
-                        <IconButton
-                          onClick={() => {
-                            setShowDetail(true);
-                            setSelectedUserId(user.Id);
-                          }}
-                          sx={{
-                            p: { xs: 0.5, sm: 1 },
-                            "&:hover": { transform: "scale(1.1)" },
-                          }}
-                        >
-                          <img
-                            src="/icons/pineapple.png"
-                            alt="Pineapple"
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              maxWidth: "40px",
-                              maxHeight: "40px",
-                            }}
-                          />
-                        </IconButton>
-                        <IconButton
-                          onClick={() => handleReportModalToggle(user.Id)}
-                          sx={{
-                            p: { xs: 0.5, sm: 1 },
-                            "&:hover": {
-                              color: theme.palette.error.main,
-                              transform: "scale(1.1)",
-                            },
-                          }}
-                        >
-                          <FlagIcon
-                            sx={{
-                              color: "red",
-                              fontSize: { xs: "1.25rem", sm: "1.5rem" },
-                            }}
-                          />
-                        </IconButton>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </>
+                  <IconButton
+                    onClick={() => {
+                      setShowDetail(true);
+                      setSelectedUserId(user.Id);
+                    }}
+                    sx={{
+                      "&:hover": { transform: "scale(1.1)" },
+                    }}
+                  >
+                    <img
+                      src="/icons/pineapple.png"
+                      alt="pineapple"
+                      width={36}
+                    />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => handleReportModalToggle(user.Id)}
+                    sx={{
+                      "&:hover": { transform: "scale(1.1)", color: "red" },
+                    }}
+                  >
+                    <FlagIcon sx={{ fontSize: "1.5rem", color: "red" }} />
+                  </IconButton>
+                </Box>
+              </Card>
             ))}
           </>
         )}

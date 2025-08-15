@@ -292,47 +292,6 @@ const ParticleField = memo(() => {
   );
 });
 
-const RotatingCard: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [rotation, setRotation] = useState({ x: 0, y: 0 });
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    const onMove = (e: MouseEvent) => {
-      const rect = el.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width - 0.5) * 6;
-      const y = ((e.clientY - rect.top) / rect.height - 0.5) * 6;
-      setRotation({ x: y, y: x });
-    };
-    const reset = () => setRotation({ x: 0, y: 0 });
-    el.addEventListener("mousemove", onMove);
-    el.addEventListener("mouseleave", reset);
-    return () => {
-      el.removeEventListener("mousemove", onMove);
-      el.removeEventListener("mouseleave", reset);
-    };
-  }, []);
-
-  return (
-    <Box
-      ref={cardRef}
-      sx={{ perspective: "1000px", transformStyle: "preserve-3d" }}
-    >
-      <Box
-        sx={{
-          transition: "transform 0.1s ease-out",
-          transform: `rotateX(${-rotation.x}deg) rotateY(${rotation.y}deg)`,
-        }}
-      >
-        {children}
-      </Box>
-    </Box>
-  );
-};
-
 const RegisterPage = () => {
   const router = useRouter();
   const emailRef = useRef<HTMLInputElement | null>(null);
