@@ -3,44 +3,36 @@
 import React, { useEffect, useState } from "react";
 import {
   Box,
-  Container,
   List,
   ListItem,
   ListItemText,
   ListItemAvatar,
-  Avatar,
   Typography,
   IconButton,
   TextField,
   Drawer,
-  Divider,
-  Modal,
   CircularProgress,
   Button,
   useMediaQuery,
-  Tabs,
-  Tab,
-  InputAdornment,
   Dialog,
   DialogTitle,
   DialogContent,
   Badge,
+  Avatar,
 } from "@mui/material";
 import axios from "axios";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import UserBottomNavigation from "@/components/BottomNavigation";
-import Picker from "emoji-picker-react";
 import {
   Send as SendIcon,
   EmojiEmotions as EmojiIcon,
   Image as ImageIcon,
   Delete,
   ArrowBack,
+  Search,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-import { DeleteIcon, Search, SearchIcon } from "lucide-react";
 import io from "socket.io-client";
 import Swal from "sweetalert2";
 import { jwtDecode } from "jwt-decode";
@@ -52,10 +44,6 @@ export default function ChatPage() {
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
 
   const router = useRouter();
-  const [myProfile, setMyProfile] = useState<any>({});
-  const [newMessage, setNewMessage] = useState("");
-  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-  const [mailBoxOpen, setMailbox] = useState(false);
   const [profileId, setProfileId] = useState<any>();
   const [chatOpen, setChat] = useState(false);
   const [userProfiles, setUserProfiles] = useState<any>([]);
@@ -63,57 +51,14 @@ export default function ChatPage() {
   const [page, setPage] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState(0);
-  const [creatingNew, setCreatingNew] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [open, setOpen] = useState(false);
   const [userDeviceToken, setUserDeviceToken] = useState(null);
-  const [membership, setMembership] = useState(0);
-  const [messages, setMessages] = useState<any>([
-    { sender: "user", text: "Hello! How are you?" },
-    { sender: "other", text: "I'm good, thanks! How about you?" },
-  ]);
-  const [chatList, setChatList] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      lastMessage: "See you tomorrow!",
-      avatar: "/path-to-avatar1.jpg",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      lastMessage: "Got it, thanks!",
-      avatar: "/path-to-avatar2.jpg",
-    },
-  ]);
-
-  const [sentMails, setSentMails] = useState([
-    {
-      id: 1,
-      to: "user1@example.com",
-      subject: "Hello",
-      message: "How are you?",
-    },
-    {
-      id: 2,
-      to: "user2@example.com",
-      subject: "Meeting",
-      message: "Let's meet at 4 PM",
-    },
-  ]);
-  const [newMail, setNewMail] = useState({
-    subject: "",
-    message: "",
-  });
+  const [chatList, setChatList] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem("loginInfo");
-    console.log(token);
     if (token) {
       const decodeToken = jwtDecode<any>(token);
-      setMembership(decodeToken?.membership);
-      console.log(decodeToken);
 
       if (decodeToken?.membership == 0) {
         Swal.fire({
@@ -127,7 +72,7 @@ export default function ChatPage() {
           if (result.isConfirmed) {
             router.push("/membership");
           } else if (result.dismiss === Swal.DismissReason.cancel) {
-            router.back();
+            router.push("/home");
           } else {
             router.back();
           }
@@ -141,20 +86,14 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    socket.on("connect", () => {
-      console.log("Connected to WebSocket server");
-    });
+    socket.on("connect", () => {});
 
-    socket.on("disconnect", () => {
-      console.log("Disconnected from WebSocket server");
-    });
+    socket.on("disconnect", () => {});
     socket.on("message", (message) => {
-      // Handle incoming message
       fetchAllChats();
     });
     socket.on("error", (error) => {
       console.error("WebSocket error:", error);
-      // Handle error, e.g., display an error message to the user
     });
 
     return () => {
@@ -164,95 +103,31 @@ export default function ChatPage() {
     };
   }, []);
 
-  const getMyProfile = async (userId: string) => {
-    if (userId) {
-      try {
-        const response = await fetch(`/api/user/sweeping/user?id=${userId}`);
-        if (!response.ok) {
-          console.error(
-            "Failed to fetch advertiser data:",
-            response.statusText
-          );
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const { user: userData } = await response.json();
-        if (!userData) {
-          console.error("Advertiser not found");
-        } else {
-          setMyProfile(userData);
-        }
-      } catch (error: any) {
-        console.error("Error fetching data:", error.message);
-      }
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setProfileId(localStorage.getItem("logged_in_profile"));
     }
-  };
-
-  console.log(chatList, "========================");
-
-  const handleCloseMailBox = () => {
-    setMailbox(!mailBoxOpen);
-  };
+  }, []);
 
   const handleCloseChatBox = () => {
     setChat(!chatOpen);
     setSearchQuery("");
   };
 
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      setMessages([...messages, { sender: "user", text: newMessage }]);
-      setNewMessage("");
-    }
-  };
-
-  const handleEmojiClick = (emoji: any) => {
-    setNewMessage((prev) => prev + emoji.emoji);
-  };
-
-  const handleImageUpload = (event: any) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader: any = new FileReader();
-      reader.onload = () => {
-        setMessages([
-          ...messages,
-          {
-            sender: "user",
-            text: (
-              <img
-                src={reader.result}
-                alt="Uploaded"
-                style={{ maxWidth: "100px", borderRadius: "8px" }}
-              />
-            ),
-          },
-        ]);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setProfileId(localStorage.getItem("logged_in_profile"));
-    }
-  }, []);
   useEffect(() => {
     if (profileId) {
       getCurrentLocation();
       fetchAllChats();
-      getMyProfile(profileId);
     }
   }, [profileId]);
-  // Function to fetch all chats
+
   const fetchAllChats = async () => {
     try {
       let profileid = await localStorage.getItem("logged_in_profile");
       const response = await axios.get(
         `/api/user/messaging?profileid=${profileid}`
       );
-      setChatList(response.data.data); // Assuming the data is in `data.data`
+      setChatList(response.data.data);
     } catch (err: any) {
       console.error("Error fetching chats:", err);
     }
@@ -263,11 +138,7 @@ export default function ChatPage() {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-
-          // Reverse geocoding to get the location name (you may need a third-party service here)
           const locationName = await getLocationName(latitude, longitude);
-
-          // Send the location to your API
           await sendLocationToAPI(locationName, latitude, longitude);
         },
         (error) => {
@@ -280,10 +151,9 @@ export default function ChatPage() {
   };
 
   const getLocationName = async (latitude: number, longitude: number) => {
-    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0"; // Replace with your actual API key
+    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0";
 
     try {
-      // Call the Google Maps Geocoding API
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
       );
@@ -293,10 +163,8 @@ export default function ChatPage() {
       }
 
       const data = await response.json();
-
-      // Extract the location name from the response
       if (data.status === "OK" && data.results.length > 0) {
-        return data.results[0].formatted_address; // Return the formatted address of the first result
+        return data.results[0].formatted_address;
       }
 
       console.error("No results found or status not OK:", data);
@@ -333,7 +201,6 @@ export default function ChatPage() {
 
       const data = await response.json();
       if (response.ok) {
-        // console.log('Location sent successfully:', data);
       } else {
         console.error("Error sending location:", data.message);
       }
@@ -341,6 +208,7 @@ export default function ChatPage() {
       console.error("Error sending location to API:", error);
     }
   };
+
   const debounce = (func: Function, delay: number) => {
     let timer: NodeJS.Timeout;
     return (...args: any[]) => {
@@ -350,10 +218,11 @@ export default function ChatPage() {
   };
 
   const handleSearchChange = debounce((value: string) => {
-    setPage(1); // Reset to first page for new search
-    setHasMore(true); // Reset pagination
+    setPage(1);
+    setHasMore(true);
     setSearchQuery(value);
   }, 300);
+
   useEffect(() => {
     const fetchUserProfiles = async () => {
       if (loading || !hasMore) return;
@@ -385,68 +254,13 @@ export default function ChatPage() {
     fetchUserProfiles();
   }, [page, searchQuery]);
 
-  const handleChange = (event: any, newValue: any) => {
-    setActiveTab(newValue);
-  };
-
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-
   useEffect(() => {
     if (selectedUser) {
       setUserDeviceToken(selectedUser?.Device_Token);
     }
   }, [selectedUser]);
 
-  const handleSendMail = async () => {
-    if (!selectedUser || !newMail.subject || !newMail.message) {
-      alert("Please fill in all fields.");
-      return;
-    }
-    // Send the email
-    const response = await fetch("/api/user/messaging/email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: selectedUser?.Email,
-        htmlBody: newMail.message,
-        subject: newMail.subject,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to send email. Status: ${response.status}`);
-    }
-    sendNotification("Mail From Swing Social");
-    setCreatingNew(false);
-    setSelectedUser("");
-    setNewMail({ subject: "", message: "" });
-    router.push("/mailbox");
-  };
-
-  const sendNotification = async (message: any) => {
-    const response = await fetch("/api/user/notification", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        token: userDeviceToken, // Replace with the recipient's FCM token
-        title: myProfile?.Username,
-        body: message,
-        image: "https://example.com/path/to/image.jpg",
-        clickAction: "https://swing-social-user.vercel.app/",
-      }),
-    });
-
-    const result = await response.json();
-    console.log(result);
-  };
-
   const deleteChat = async (chatId: any) => {
-    // Show confirmation alert
     const result = await Swal.fire({
       title: "Are you sure?",
       text: "This chat will be deleted permanently!",
@@ -457,10 +271,8 @@ export default function ChatPage() {
       confirmButtonText: "Yes, delete it!",
     });
 
-    // If user confirms deletion
     if (result.isConfirmed) {
       try {
-        // console.log(chatId);
         const response = await fetch("/api/user/messaging/chat/delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -470,7 +282,6 @@ export default function ChatPage() {
         if (!response.ok) {
           throw new Error(`Failed to delete chat. Status: ${response.status}`);
         }
-        // Show success alert
         Swal.fire("Deleted!", "The chat has been deleted.", "success");
         fetchAllChats();
       } catch (error) {
@@ -479,6 +290,7 @@ export default function ChatPage() {
       }
     }
   };
+
   return (
     <>
       <Box
@@ -512,15 +324,14 @@ export default function ChatPage() {
               <Typography
                 onClick={() => router.push("/messaging")}
                 sx={{
-                  width: "50%", // Divide width evenly
-                  textAlign: "center", // Center the text
-                  padding: "16px", // Add some padding
-                  // color: "#FF1B6B",
+                  width: "50%",
+                  textAlign: "center",
+                  padding: "16px",
                   cursor: "pointer",
                   fontSize: "24px",
                   fontWeight: "bold",
                   "&:hover": { opacity: 0.8 },
-                  borderBottom: "3px solid #FF1B6B", // Add a divider between buttons
+                  borderBottom: "3px solid #FF1B6B",
                 }}
               >
                 Chat
@@ -528,10 +339,9 @@ export default function ChatPage() {
               <Typography
                 onClick={() => router.push("/mailbox")}
                 sx={{
-                  width: "50%", // Divide width evenly
-                  textAlign: "center", // Center the text
-                  padding: "16px", // Add some padding
-                  // color: "#1E88E5",
+                  width: "50%",
+                  textAlign: "center",
+                  padding: "16px",
                   cursor: "pointer",
                   fontSize: "24px",
                   fontWeight: "bold",
@@ -541,6 +351,7 @@ export default function ChatPage() {
                 Mailbox
               </Typography>
             </Box>
+
             <Box>
               <>
                 <List>
@@ -556,7 +367,6 @@ export default function ChatPage() {
                   )}
 
                   {chatList.map((chat: any, index: number) => {
-                    // Check if Conversation contains an <img> tag
                     const hasImage = /<img.*?src=["'](.*?)["']/.test(
                       chat.Conversation
                     );
@@ -578,7 +388,7 @@ export default function ChatPage() {
                         }}
                         onClick={() =>
                           router.push(`/messaging/${chat?.ToProfileId}`)
-                        } // Redirect when clicking anywhere except the delete button
+                        }
                       >
                         {/* Avatar */}
                         <ListItemAvatar>
@@ -587,7 +397,7 @@ export default function ChatPage() {
                               chat?.NewMessages > 0 ? chat.NewMessages : 0
                             }
                             color="error"
-                            invisible={chat?.NewMessages == 0} // Hide badge if no new messages
+                            invisible={chat?.NewMessages == 0}
                           >
                             <Box
                               sx={{
@@ -624,7 +434,7 @@ export default function ChatPage() {
                             hasImage
                               ? "Sent an Image"
                               : chat.Conversation || "No message yet"
-                          } // Show "Sent an Image" if image is detected
+                          }
                           sx={{ flex: 1, ml: 1 }}
                         />
 
@@ -653,8 +463,8 @@ export default function ChatPage() {
                               },
                             }}
                             onClick={(event) => {
-                              event.stopPropagation(); // Prevent the redirection
-                              deleteChat(chat?.ChatId); // Call the delete function
+                              event.stopPropagation();
+                              deleteChat(chat?.ChatId);
                             }}
                           >
                             <Delete />
@@ -863,7 +673,7 @@ export default function ChatPage() {
                               chat?.NewMessages > 0 ? chat.NewMessages : 0
                             }
                             color="error"
-                            invisible={chat?.NewMessages == 0} // Hide badge if no new messages
+                            invisible={chat?.NewMessages == 0}
                           >
                             <Box
                               sx={{
@@ -999,385 +809,6 @@ export default function ChatPage() {
           </Box>
         )}
 
-        {/* Dialog */}
-        <Dialog
-          open={open}
-          onClose={handleClose}
-          fullWidth
-          maxWidth="xs" // Make the dialog width full on mobile
-          sx={{
-            "& .MuiPaper-root": {
-              backgroundColor: "#121212",
-              color: "white",
-              width: "100%",
-              margin: 1,
-            },
-          }}
-        >
-          {/* Title Row */}
-          <DialogTitle
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              bgcolor: "#000",
-              py: 2,
-              paddingLeft: 0, // Align the back button to the left
-            }}
-          >
-            {/* Back Icon */}
-            <IconButton
-              onClick={handleClose}
-              sx={{
-                color: "white",
-                marginRight: "auto", // Push the back icon to the left
-              }}
-            >
-              <ArrowBack />
-            </IconButton>
-            <Typography
-              variant="h6"
-              sx={{ color: "white", fontWeight: "bold" }}
-            >
-              Sent Mails
-            </Typography>
-            <Button
-              variant="contained"
-              sx={{ backgroundColor: "#FF1B6B" }}
-              onClick={handleClose}
-            >
-              Inbox
-            </Button>
-          </DialogTitle>
-
-          {/* Search Row */}
-          <DialogContent dividers>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-              <TextField
-                fullWidth
-                variant="standard"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  sx: {
-                    backgroundColor: "white",
-                    borderBottom: "2px solid black",
-                    "&:focus-within": { borderBottom: "2px solid #FF1B6B" },
-                    px: 1,
-                  },
-                }}
-              />
-              <Button variant="contained" sx={{ backgroundColor: "#FF1B6B" }}>
-                <Search />
-              </Button>
-            </Box>
-
-            {/* Sent Mails List */}
-            <List>
-              {chatList.length === 0 ? (
-                <Typography
-                  variant="body2"
-                  color="gray"
-                  textAlign="center"
-                  sx={{ py: 2 }}
-                >
-                  No Sent Mails Found
-                </Typography>
-              ) : (
-                chatList.map((chat: any) => (
-                  <ListItem
-                    key={chat.ChatId}
-                    sx={{
-                      px: 2,
-                      py: 1,
-                      bgcolor: "#000",
-                      borderRadius: 2,
-                      cursor: "pointer",
-                      mt: 1,
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      "&:hover": { bgcolor: "rgba(255, 255, 255, 0.1)" },
-                    }}
-                  >
-                    {/* Avatar */}
-                    <ListItemAvatar>
-                      <Box
-                        sx={{
-                          width: 35,
-                          height: 35,
-                          borderRadius: "50%",
-                          border: "2px solid",
-                          borderColor: "#FF1B6B",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <img
-                          src={chat.Avatar || "/noavatar.png"}
-                          alt="Profile"
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      </Box>
-                    </ListItemAvatar>
-
-                    {/* Chat Info */}
-                    <ListItemText
-                      primary={
-                        <Typography
-                          sx={{ color: "#FF1B6B", fontWeight: "bold" }}
-                        >
-                          {chat.Username}
-                        </Typography>
-                      }
-                      secondary={chat.Conversation || "No message yet"}
-                      sx={{ flex: 1, ml: 1 }}
-                    />
-
-                    {/* Last Updated & Delete */}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        gap: 0.5,
-                      }}
-                    >
-                      <Typography
-                        variant="caption"
-                        sx={{ color: "gray", fontSize: "0.75rem" }}
-                      >
-                        {chat.LastUp || "N/A"}
-                      </Typography>
-
-                      <IconButton
-                        sx={{
-                          backgroundColor: "rgba(255, 0, 0, 0.2)",
-                          color: "red",
-                          "&:hover": {
-                            backgroundColor: "rgba(255, 0, 0, 0.4)",
-                          },
-                        }}
-                        onClick={() => deleteChat(chat?.ChatId)}
-                      >
-                        <Delete />
-                      </IconButton>
-                    </Box>
-                  </ListItem>
-                ))
-              )}
-            </List>
-          </DialogContent>
-        </Dialog>
-
-        {/* mailBoxModal */}
-        <Dialog
-          open={mailBoxOpen}
-          onClose={handleCloseMailBox}
-          fullWidth
-          maxWidth="xs"
-          sx={{
-            "& .MuiPaper-root": {
-              backgroundColor: "#121212",
-              color: "white",
-            },
-          }}
-        >
-          {/* Title Row */}
-          <DialogTitle
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              bgcolor: "#000",
-              py: 2,
-              paddingLeft: 0,
-            }}
-          >
-            {/* Back Icon */}
-            <IconButton
-              onClick={handleCloseMailBox}
-              sx={{
-                color: "white",
-                marginRight: "auto",
-              }}
-            >
-              <ArrowBack />
-            </IconButton>
-            <Typography
-              variant="h6"
-              sx={{ color: "white", fontWeight: "bold" }}
-            >
-              Create New Mail
-            </Typography>
-          </DialogTitle>
-
-          {/* Mail Form */}
-          <DialogContent dividers>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-              <TextField
-                fullWidth
-                variant="standard"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  sx: {
-                    backgroundColor: "white",
-                    borderBottom: "2px solid black",
-                    "&:focus-within": { borderBottom: "2px solid #FF1B6B" },
-                    px: 1,
-                  },
-                }}
-              />
-              <Button variant="contained" sx={{ backgroundColor: "#FF1B6B" }}>
-                <Search />
-              </Button>
-            </Box>
-            {searchQuery && (
-              <List>
-                {loading && (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      py: 2,
-                    }}
-                  >
-                    <CircularProgress size={24} />
-                  </Box>
-                )}
-
-                {!selectedUser &&
-                  userProfiles.map((user: any) => (
-                    <ListItem
-                      key={user.id}
-                      onClick={() => setSelectedUser(user)}
-                      sx={{
-                        px: 2,
-                        py: 1,
-                        bgcolor: "#333333",
-                        borderRadius: 2,
-                        cursor: "pointer",
-                        mt: 1,
-                        "&:hover": { bgcolor: "rgba(255, 255, 255, 0.1)" },
-                      }}
-                    >
-                      <ListItemAvatar>
-                        <Box
-                          sx={{
-                            width: 35,
-                            height: 35,
-                            borderRadius: "50%",
-                            overflow: "hidden",
-                          }}
-                        >
-                          <img
-                            src={user.Avatar || "/noavatar.png"}
-                            alt="Avatar"
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                          />
-                        </Box>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primaryTypographyProps={{ color: "white" }}
-                        secondaryTypographyProps={{ color: "gray" }}
-                        primary={user.Username}
-                        secondary={user.Location || "N/A"}
-                      />
-                    </ListItem>
-                  ))}
-              </List>
-            )}
-            <Box sx={{ width: "100%", mt: 2 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Create New Mail
-              </Typography>
-              {selectedUser && (
-                <>
-                  <Typography sx={{ mt: 2, mb: 1 }}>
-                    <strong>From:</strong>
-                  </Typography>
-                  <Typography sx={{ mb: 1 }}>
-                    <strong>To:</strong> {selectedUser?.Username}
-                  </Typography>
-
-                  {/* Subject Field */}
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    placeholder="Subject"
-                    value={newMail.subject}
-                    onChange={(e) =>
-                      setNewMail((prev) => ({
-                        ...prev,
-                        subject: e.target.value,
-                      }))
-                    }
-                    sx={{
-                      mb: 2,
-                      "& .MuiOutlinedInput-root": {
-                        color: "white",
-                        "& fieldset": { borderColor: "gray" },
-                        "&:hover fieldset": { borderColor: "white" },
-                        "&.Mui-focused fieldset": { borderColor: "#FF1B6B" },
-                      },
-                      input: { color: "white" },
-                    }}
-                  />
-
-                  {/* Message Field */}
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    multiline
-                    rows={6}
-                    placeholder="Write your email..."
-                    value={newMail.message}
-                    onChange={(e) =>
-                      setNewMail((prev) => ({
-                        ...prev,
-                        message: e.target.value,
-                      }))
-                    }
-                    sx={{
-                      mb: 2,
-                      "& .MuiOutlinedInput-root": {
-                        color: "white",
-                        "& fieldset": { borderColor: "gray" },
-                        "&:hover fieldset": { borderColor: "white" },
-                        "&.Mui-focused fieldset": { borderColor: "#FF1B6B" },
-                      },
-                      textarea: { color: "white" },
-                    }}
-                  />
-
-                  {/* Send Button */}
-                  <Button
-                    variant="contained"
-                    sx={{
-                      bgcolor: "#FF1B6B",
-                      "&:hover": { bgcolor: "#FF4081" },
-                    }}
-                    onClick={handleSendMail}
-                  >
-                    Send
-                  </Button>
-                </>
-              )}
-            </Box>
-          </DialogContent>
-        </Dialog>
-
         {/* chatBoxModal */}
         <Dialog
           open={chatOpen}
@@ -1388,65 +819,66 @@ export default function ChatPage() {
             "& .MuiPaper-root": {
               backgroundColor: "#121212",
               color: "white",
+              borderRadius: 3,
+              overflow: "hidden",
             },
           }}
         >
-          {/* Title Row */}
+          {/* Header */}
           <DialogTitle
             sx={{
               display: "flex",
-              justifyContent: "space-between",
               alignItems: "center",
-              bgcolor: "#000",
-              py: 2,
-              paddingLeft: 0,
+              gap: 2,
+              bgcolor: "linear-gradient(90deg, #000, #1a1a1a)",
+              py: 1.5,
+              px: 2,
             }}
           >
-            {/* Back Icon */}
-            <IconButton
-              onClick={handleCloseChatBox}
-              sx={{
-                color: "white",
-                marginRight: "auto",
-              }}
-            >
+            <IconButton onClick={handleCloseChatBox} sx={{ color: "white" }}>
               <ArrowBack />
             </IconButton>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: "white" }}>
+              New Chat
+            </Typography>
           </DialogTitle>
 
-          {/* Mail Form */}
-          <DialogContent dividers>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+          {/* Body */}
+          <DialogContent sx={{ p: 2 }}>
+            {/* Search Bar */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                bgcolor: "#1E1E1E",
+                borderRadius: 5,
+                px: 2,
+                py: 0.5,
+                mb: 2,
+              }}
+            >
+              <Search sx={{ color: "gray", mr: 1 }} />
               <TextField
                 fullWidth
                 variant="standard"
-                placeholder="Search..."
+                placeholder="Search users..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 InputProps={{
-                  sx: {
-                    backgroundColor: "white",
-                    borderBottom: "2px solid black",
-                    "&:focus-within": { borderBottom: "2px solid #FF1B6B" },
-                    px: 1,
-                  },
+                  disableUnderline: true,
+                  sx: { color: "white" },
                 }}
               />
-              <Button variant="contained" sx={{ backgroundColor: "#FF1B6B" }}>
-                <Search />
-              </Button>
             </Box>
+
+            {/* Search Results */}
             {searchQuery && (
-              <List>
+              <List disablePadding>
                 {loading && (
                   <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      py: 2,
-                    }}
+                    sx={{ display: "flex", justifyContent: "center", py: 2 }}
                   >
-                    <CircularProgress size={24} />
+                    <CircularProgress size={28} sx={{ color: "#FF1B6B" }} />
                   </Box>
                 )}
 
@@ -1456,40 +888,31 @@ export default function ChatPage() {
                       key={user.Id}
                       onClick={() => router.push("/messaging/" + user?.Id)}
                       sx={{
-                        px: 2,
+                        px: 1.5,
                         py: 1,
-                        bgcolor: "#333333",
                         borderRadius: 2,
                         cursor: "pointer",
-                        mt: 1,
-                        "&:hover": { bgcolor: "rgba(255, 255, 255, 0.1)" },
+                        transition: "0.2s",
+                        "&:hover": {
+                          bgcolor: "rgba(255, 255, 255, 0.08)",
+                        },
+                        mb: 1,
                       }}
                     >
                       <ListItemAvatar>
-                        <Box
-                          sx={{
-                            width: 35,
-                            height: 35,
-                            borderRadius: "50%",
-                            overflow: "hidden",
-                          }}
-                        >
-                          <img
-                            src={user.Avatar || "/noavatar.png"}
-                            alt="Avatar"
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                          />
-                        </Box>
+                        <Avatar
+                          src={user.Avatar || "/noavatar.png"}
+                          sx={{ width: 42, height: 42 }}
+                        />
                       </ListItemAvatar>
                       <ListItemText
-                        primaryTypographyProps={{ color: "white" }}
-                        secondaryTypographyProps={{ color: "gray" }}
                         primary={user.Username}
-                        secondary={user.Location || "N/A"}
+                        secondary={user.Location || "Unknown"}
+                        primaryTypographyProps={{
+                          color: "white",
+                          fontWeight: 500,
+                        }}
+                        secondaryTypographyProps={{ color: "gray" }}
                       />
                     </ListItem>
                   ))}

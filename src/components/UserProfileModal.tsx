@@ -546,15 +546,21 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   </Typography>
                   <Typography
                     variant="subtitle1"
-                    sx={{ color: "white", marginTop: "30px" }}
+                    sx={{
+                      color: "#fff",
+                      marginLeft: "15px",
+                      marginTop: "5px",
+                      marginBottom: "5px",
+                    }}
                   >
                     {advertiser?.BodyType}
                   </Typography>
+
                   <Box
                     sx={{
                       display: "flex",
-                      flexDirection: "row", // Keep in row for all screen sizes
-                      gap: 0.5, // Further reduce the gap between the boxes
+                      flexDirection: "row",
+                      gap: 0.5,
                       borderRadius: 2,
                       marginBottom: 1,
                     }}
@@ -565,7 +571,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                         router.push(`/messaging/${advertiser?.Id}`)
                       }
                       sx={{
-                        flex: 2, // Make the last box wider
+                        flex: 2,
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
@@ -573,8 +579,8 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                         backgroundColor: "#555",
                         color: "white",
                         borderRadius: 1,
-                        padding: 0.5, // Reduce padding inside
-                        minWidth: "80px", // Further reduce box size for the button container
+                        padding: 0.5,
+                        minWidth: "80px",
                       }}
                     >
                       <span style={{ fontWeight: "bold", fontSize: "16px" }}>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -138,6 +138,31 @@ const TicketListComponent: React.FC<TicketListProps> = ({
     }
   };
 
+  const sortedTickets = useMemo(() => {
+    // copy to avoid mutating props/state
+    const copy = [...tickets];
+
+    // 1) Available first, then sold out
+    // 2) (optional) Within each group, sort by price ascending (or name)
+    copy.sort((a, b) => {
+      const aAvail = a.OriginalQuantity > 0 ? 1 : 0;
+      const bAvail = b.OriginalQuantity > 0 ? 1 : 0;
+
+      // Put available first
+      if (aAvail !== bAvail) return bAvail - aAvail;
+
+      // Secondary sort (optional): lower price first
+      // return a.Price - b.Price;
+
+      // Or by name:
+      // return a.Name.localeCompare(b.Name);
+
+      return 0;
+    });
+
+    return copy;
+  }, [tickets]);
+
   return (
     <Box sx={{ mt: 4 }}>
       {/* Header Section */}
@@ -194,7 +219,7 @@ const TicketListComponent: React.FC<TicketListProps> = ({
             },
           }}
         >
-          {tickets.map((ticket, index) => (
+          {sortedTickets.map((ticket, index) => (
             <Fade
               key={ticket.TicketPackageId}
               in={true}

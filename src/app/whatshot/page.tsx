@@ -904,7 +904,7 @@ export default function Whatshot() {
             lg={12}
             md={12}
             sx={{
-              px: { xs: 0, sm: 0 }, // Remove horizontal padding for xs and sm breakpoints
+              px: { xs: 0, sm: 0 },
             }}
           >
             <Card

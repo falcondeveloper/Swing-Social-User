@@ -2067,6 +2067,7 @@ export default function ChatPage() {
             )}
           </DialogContent>
         </Dialog>
+
         <Dialog
           open={openModal}
           onClose={() => setOpenModal(false)}
@@ -2359,6 +2360,7 @@ export default function ChatPage() {
             }}
           />
         </Dialog>
+        
         {/* Image Modal */}
         <Dialog
           open={imageModalOpen}

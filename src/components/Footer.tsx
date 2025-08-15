@@ -23,7 +23,6 @@ import {
 
 const Footer = () => {
   const theme = useTheme();
-  //const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
   const router = useRouter();
   const [value, setValue] = useState(0);
@@ -382,9 +381,6 @@ const Footer = () => {
               }
             />
           </BottomNavigation>
-
-          {/* Spacer to push content above fixed bottom navigation */}
-          {/* <Box sx={{ height: "80px" }} /> */}
         </>
       )}
     </Box>
