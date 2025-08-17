@@ -209,7 +209,7 @@ export default function Pricing({ params }: { params: Params }) {
         "Play Dates",
       ],
       availability: {
-        features: [true, true, true, false, false, false],
+        features: [true, true, true, true, false, false],
         devFeatures: [true, true, true, false, true],
       },
     },

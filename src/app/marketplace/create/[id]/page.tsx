@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useMediaQuery, Input, Button } from "@mui/material";
+import { useMediaQuery, Input, Button, Box, Typography } from "@mui/material";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import CreateProductModal from "../../../../components/CreateProductModal";
 import ChangeImageModal from "../../../../components/ChangeImageModal";
 import { toast } from "react-toastify";
+import { Add } from "@mui/icons-material";
 
 type Params = Promise<{ id: string }>;
 
@@ -154,20 +155,53 @@ export default function ResponsivePage(props: { params: Params }) {
             <ChangeImageModal
               open={openImageModal}
               onClose={() => setOpenImageModal(false)}
-              product={selectedProduct} // Pass selected product to the modal
+              product={selectedProduct}
             />
-            <div style={{ display: "flex" }}>
-              <div
-                style={{ flex: "2", display: "flex", flexDirection: "column" }}
+            <Box
+              sx={{
+                px: 2,
+                py: 2,
+                bgcolor: "#121212",
+                borderRadius: 2,
+                mb: 2,
+              }}
+            >
+              {/* Top bar (mobile) */}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 2,
+                }}
               >
-                <h6 style={{ color: "white" }}>Your Products</h6>
-              </div>
-              <div
-                style={{ flex: "1", display: "flex", flexDirection: "column" }}
-              >
-                <button onClick={() => setOpenModal(true)}>Add +</button>
-              </div>
-            </div>
+                <Typography
+                  variant="h6"
+                  sx={{ color: "#fff", fontWeight: 700, lineHeight: 1.2 }}
+                >
+                  Your Products
+                </Typography>
+
+                <Button
+                  variant="contained"
+                  size="medium"
+                  startIcon={<Add />}
+                  onClick={() => setOpenModal(true)}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    px: 1.5,
+                    py: 0.75,
+                    bgcolor: "#FF1B6B",
+                    "&:hover": { bgcolor: "#e0165b" },
+                    minWidth: 0, // keeps it compact on small screens
+                  }}
+                >
+                  Add
+                </Button>
+              </Box>
+            </Box>
             <div
               style={{
                 display: "flex",

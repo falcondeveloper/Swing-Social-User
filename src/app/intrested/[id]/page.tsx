@@ -126,7 +126,7 @@ export default function ShowInterest({
   const validationSchema = Yup.object({
     selectedOption: Yup.string().required("Please select an option"),
     age: Yup.string().when("selectedOption", {
-      is: (val: string) => ["Man", "Women", "Throuple", "Couple"].includes(val),
+      is: (val: string) => ["Man", "Woman", "Throuple", "Couple"].includes(val),
       then: (schema) => schema.required("Age is required"),
     }),
     gender: Yup.string().when("selectedOption", {
@@ -161,7 +161,7 @@ export default function ShowInterest({
   const handleSubmit = async (values: typeof initialValues) => {
     setLoading(true);
     const isSingle =
-      values.selectedOption === "Women" || values.selectedOption === "Man";
+      values.selectedOption === "Woman" || values.selectedOption === "Man";
 
     const requestBody = isSingle
       ? {
@@ -169,7 +169,7 @@ export default function ShowInterest({
           accounttype: values.selectedOption,
           age: parseInt(values.age, 10),
           orientation1: values.sexualOrientation,
-          gender1: values.selectedOption === "Women" ? "Female" : "Male",
+          gender1: values.selectedOption === "Woman" ? "Female" : "Male",
         }
       : {
           pid: id,
@@ -211,15 +211,20 @@ export default function ShowInterest({
         sx={{
           display: "flex",
           justifyContent: "center",
+          alignItems: "center",
           background:
             "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
           position: "relative",
           overflow: "hidden",
           width: "100%",
+          minHeight: "100vh",
         }}
       >
         <ParticleField />
-        <Container maxWidth="sm" sx={{ p: 0 }}>
+        <Container
+          maxWidth="md"
+          sx={{ px: { xs: 1, sm: 2, md: 3 }, py: { xs: 1.5, sm: 2 } }}
+        >
           <Paper
             elevation={24}
             sx={{
@@ -227,14 +232,7 @@ export default function ShowInterest({
               background: "rgba(255, 255, 255, 0.05)",
               backdropFilter: "blur(20px)",
               border: "1px solid rgba(255, 255, 255, 0.1)",
-              maxHeight: { xs: "85vh", sm: "95vh" },
-              overflowY: { xs: "auto", sm: "auto" },
-              scrollbarWidth: "thin",
-              "&::-webkit-scrollbar": { width: "6px" },
-              "&::-webkit-scrollbar-thumb": {
-                backgroundColor: "rgba(255,255,255,0.3)",
-                borderRadius: "3px",
-              },
+              overflow: "hidden",
             }}
           >
             <Stepper
@@ -338,12 +336,12 @@ export default function ShowInterest({
                         Select your option
                       </MenuItem>
                       <MenuItem value="Man">Man</MenuItem>
-                      <MenuItem value="Women">Woman</MenuItem>
+                      <MenuItem value="Woman">Woman</MenuItem>
                       <MenuItem value="Throuple">Throuple</MenuItem>
                       <MenuItem value="Couple">Couple</MenuItem>
                     </TextField>
 
-                    {["Man", "Women"].includes(values.selectedOption) ? (
+                    {["Man", "Woman"].includes(values.selectedOption) ? (
                       <>
                         <TextField
                           fullWidth

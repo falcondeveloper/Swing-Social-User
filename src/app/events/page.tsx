@@ -468,7 +468,7 @@ export default function CalendarView() {
 
   const handleDateChange = (date: Date) => {
     setSelectedDate(date);
-    setCurrentDate(date); // Update current month when selecting a date from a different month
+    setCurrentDate(date);
   };
 
   useEffect(() => {
@@ -729,10 +729,11 @@ export default function CalendarView() {
       <Header />
 
       <Container
-        maxWidth="md"
+        fixed
         sx={{
-          pb: { xs: 8, sm: 9, md: 10 },
-          px: { xs: 1, sm: 2, md: 3 },
+          px: { xs: 2, md: 0 },
+          pt: { xs: 3, sm: 4, md: 5 },
+          pb: { xs: 3, sm: 4, md: 5 },
         }}
       >
         {isMobile ? (

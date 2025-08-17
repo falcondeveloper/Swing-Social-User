@@ -10,6 +10,8 @@ import {
   Typography,
   Divider,
   Chip,
+  Container,
+  Grid,
 } from "@mui/material";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -245,9 +247,16 @@ export default function ResponsivePage(props: { params: Params }) {
   return (
     <>
       <Header />
-      <PageContainer>
-        <ProductContainer>
-          <ProductGrid>
+      <Container
+        fixed
+        sx={{
+          px: { xs: 2, md: 0 },
+          pt: { xs: 3, sm: 4, md: 5 },
+          pb: { xs: 3, sm: 4, md: 5 },
+        }}
+      >
+        <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
+          <Grid item xs={12} md={6}>
             <Box>
               <ProductImage
                 src={data.CoverImageUrl}
@@ -285,13 +294,24 @@ export default function ResponsivePage(props: { params: Params }) {
                 </Box>
               )}
             </Box>
-
+          </Grid>
+          <Grid item xs={12} md={6}>
             <Box>
               <Typography
-                variant="h3"
                 component="h1"
                 gutterBottom
                 color="#ffffff"
+                sx={{
+                  fontSize: {
+                    xs: "2rem",
+                    sm: "2.5rem",
+                    md: "2.5rem",
+                    lg: "3rem",
+                    xl: "3.5rem",
+                  },
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                }}
               >
                 {data.Title}
               </Typography>
@@ -420,9 +440,10 @@ export default function ResponsivePage(props: { params: Params }) {
                 </Box>
               )}
             </Box>
-          </ProductGrid>
-        </ProductContainer>
-      </PageContainer>
+          </Grid>
+        </Grid>
+      </Container>
+      <Box sx={{ height: { xs: "72px", sm: "80px" } }} />
       <Footer />
     </>
   );

@@ -251,34 +251,45 @@ export default function UploadBanner({ params }: { params: Params }) {
       banner: "",
     },
     validationSchema: Yup.object().shape({
-      banner: Yup.string().required("Please upload your banner"),
+      banner: Yup.string(),
     }),
     onSubmit: async (values) => {
       setIsUploading(true);
       try {
-        const bannerUrl = await uploadImage(values.banner);
+        let bannerUrl = "";
 
-        if (!bannerUrl) {
-          formik.setFieldError("banner", "Image upload failed. Try again.");
-          setIsUploading(false);
-          return;
+        if (values.banner) {
+          bannerUrl = await uploadImage(values.banner);
+
+          if (!bannerUrl) {
+            formik.setFieldError("banner", "Image upload failed. Try again.");
+            setIsUploading(false);
+            return;
+          }
+        } else {
+          const avatar = localStorage.getItem("Avatar");
+          if (avatar) {
+            bannerUrl = avatar;
+          }
         }
 
-        const res = await fetch("/api/user/bannerUpload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            pid: userId,
-            Questionable: 1,
-            banner: bannerUrl,
-          }),
-        });
+        if (bannerUrl) {
+          const res = await fetch("/api/user/bannerUpload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              pid: userId,
+              Questionable: 1,
+              banner: bannerUrl,
+            }),
+          });
 
-        if (!res.ok) {
-          throw new Error("Avatar save failed");
+          if (!res.ok) {
+            throw new Error("Banner save failed");
+          }
         }
-        localStorage.removeItem("avatar");
-        await router.push(`/about/${userId}`);
+
+        await router.push(`/public-photos/${userId}`);
       } catch (err) {
         console.error("Form submit failed:", err);
         setIsUploading(false);
@@ -457,11 +468,6 @@ export default function UploadBanner({ params }: { params: Params }) {
                         )}
                       </label>
                     </Box>
-                    {formik.errors.banner && (
-                      <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-                        {formik.errors.banner}
-                      </Typography>
-                    )}
                   </Grid>
 
                   <Typography

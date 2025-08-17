@@ -73,6 +73,7 @@ const categories = [
   },
 ];
 const socket = io("https://api.nomolive.com/");
+
 const Home = () => {
   const [profileId, setProfileId] = useState<any>(); // Animation direction
   const [profile, setProfile] = useState<any>();
@@ -435,19 +436,17 @@ const Home = () => {
     <>
       <FcmTokenComp />
       {isMobile ? (
-        // Mobile optimized layout
         <Box sx={{ color: "white", padding: "16px", paddingBottom: "80px" }}>
           <Header />
-          {/* Full-Width Heading with Background Image */}
           <Box
             sx={{
               width: "100%",
-              aspectRatio: "4/1", // 800x200 = 4:1 aspect ratio
+              aspectRatio: "4/1",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               backgroundImage: 'url("/images/home-hero-bg.png")',
-              backgroundSize: "contain", // Changed from "cover" to "contain" to show full image
+              backgroundSize: "contain",
               backgroundRepeat: "no-repeat",
               backgroundPosition: "center",
               marginTop: { lg: "98px", md: "90px", sm: "70px", xs: "0px" },
@@ -455,39 +454,6 @@ const Home = () => {
               position: "relative",
             }}
           ></Box>
-
-          {/* Slide Section */}
-          {/* <Box sx={{ marginTop: "10px" }}>
-              <Slider {...sliderSettings}>
-                {[
-                  { img: "/slider/1.jpg", text: "Slide 1 Text" },
-                  { img: "/slider/2.jpg", text: "Slide 2 Text" },
-                  { img: "/slider/3.jpg", text: "Slide 3 Text" },
-                  { img: "/slider/4.jpg", text: "Slide 4 Text" },
-                  { img: "/slider/5.jpg", text: "Slide 5 Text" },
-                  { img: "/slider/6.jpg", text: "Slide 6 Text" },
-                ].map((slide, index) => (
-                  <Box key={index} sx={{ position: "relative" }}>
-                    <img src={slide.img} alt={`Slide ${index + 1}`} style={{ width: "100%", height: "100%" }} />
-                    <Typography
-                      variant="h4"
-                      sx={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        transform: "translate(-50%, -50%)",
-                        color: "white",
-                        background: "rgba(0, 0, 0, 0.5)",
-                        padding: "10px",
-                        borderRadius: "5px",
-                      }}
-                    >
-                      {slide.text}
-                    </Typography>
-                  </Box>
-                ))}
-              </Slider>
-            </Box> */}
 
           {/* Category Card List */}
           <Box
@@ -642,7 +608,6 @@ const Home = () => {
           />
         </Box>
       ) : (
-        // Render the website for non-mobile users
         <Box
           sx={{
             bgcolor: "#121212",
@@ -650,10 +615,8 @@ const Home = () => {
             color: "white",
           }}
         >
-          {/* App Bar */}
           <Header />
-          {/* Remove header spacing for home page desktop view */}
-          <Box sx={{ marginTop: "-80px" }} />
+          <Box sx={{ marginTop: "-90.5px" }} />
 
           {/* Hero Section */}
           <Box
@@ -692,10 +655,11 @@ const Home = () => {
               >
                 Swing Social Community
               </Typography>
+              
               <motion.div
-                initial={{ opacity: 0, scale: 0.9 }} // Initial state
-                animate={{ opacity: 1, scale: 1 }} // Animate to this state
-                transition={{ duration: 1, ease: "easeInOut" }} // Animation settings
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 1, ease: "easeInOut" }}
               >
                 <Typography
                   variant="h5"
@@ -710,18 +674,7 @@ const Home = () => {
                   Welcome back, {currentName}! 👋
                 </Typography>
               </motion.div>
-              {/* <Typography
-                  variant="body1"
-                  align="center"
-                  sx={{
-                    color: 'rgba(255,255,255,0.6)',
-                    maxWidth: 600,
-                    mx: 'auto',
-                    mb: 4
-                  }}
-                >
-                  You have 3 new event invitations and 5 unread messages
-                </Typography> */}
+
               <Box
                 sx={{
                   display: "flex",
@@ -739,12 +692,12 @@ const Home = () => {
                     width: 100,
                     height: 100,
                     cursor: "pointer",
-                    transition: "transform 0.2s ease-in-out", // Smooth transition
+                    transition: "transform 0.2s ease-in-out",
                     "&:hover": {
-                      transform: "scale(1.1)", // Slightly increase size on hover
+                      transform: "scale(1.1)",
                     },
                     "&:active": {
-                      transform: "scale(0.95)", // Slightly shrink on click
+                      transform: "scale(0.95)",
                     },
                   }}
                   onClick={() => router.push("/members")}
@@ -765,12 +718,12 @@ const Home = () => {
                     width: 100,
                     height: 100,
                     cursor: "pointer",
-                    transition: "transform 0.2s ease-in-out", // Smooth transition
+                    transition: "transform 0.2s ease-in-out",
                     "&:hover": {
-                      transform: "scale(1.1)", // Slightly increase size on hover
+                      transform: "scale(1.1)",
                     },
                     "&:active": {
-                      transform: "scale(0.95)", // Slightly shrink on click
+                      transform: "scale(0.95)",
                     },
                   }}
                   onClick={() => router.push("/pineapple")}
@@ -780,9 +733,8 @@ const Home = () => {
                     alt="Pineapple"
                     style={{ height: 60 }}
                   />
-                  {/* <Typography variant="h4" sx={{ color: '#FF1B6B', fontWeight: 'bold', mb: 1 }}>12</Typography> */}
-                  {/* <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Members</Typography> */}
                 </Box>
+
                 <Box
                   sx={{
                     bgcolor: alpha("#FF1B6B", 0.1),
@@ -792,12 +744,12 @@ const Home = () => {
                     width: 100,
                     height: 100,
                     cursor: "pointer",
-                    transition: "transform 0.2s ease-in-out", // Smooth transition
+                    transition: "transform 0.2s ease-in-out",
                     "&:hover": {
-                      transform: "scale(1.1)", // Slightly increase size on hover
+                      transform: "scale(1.1)",
                     },
                     "&:active": {
-                      transform: "scale(0.95)", // Slightly shrink on click
+                      transform: "scale(0.95)",
                     },
                   }}
                   onClick={() => router.push("/matches")}
@@ -807,12 +759,11 @@ const Home = () => {
                     alt="Matches"
                     style={{ height: 60 }}
                   />
-                  {/* <Typography variant="h4" sx={{ color: '#FF1B6B', fontWeight: 'bold', mb: 1 }}>12</Typography> */}
-                  {/* <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Members</Typography> */}
                 </Box>
+
                 <Box
                   sx={{
-                    position: "relative", // Needed for absolute positioning of the indicator
+                    position: "relative",
                     bgcolor: alpha("#FF1B6B", 0.1),
                     padding: "17px 13px 9px 13px",
                     borderRadius: "50%",
@@ -820,12 +771,12 @@ const Home = () => {
                     width: 100,
                     height: 100,
                     cursor: "pointer",
-                    transition: "transform 0.2s ease-in-out", // Smooth transition
+                    transition: "transform 0.2s ease-in-out",
                     "&:hover": {
-                      transform: "scale(1.1)", // Slightly increase size on hover
+                      transform: "scale(1.1)",
                     },
                     "&:active": {
-                      transform: "scale(0.95)", // Slightly shrink on click
+                      transform: "scale(0.95)"
                     },
                   }}
                   onClick={() => {
@@ -863,104 +814,6 @@ const Home = () => {
               </Box>
             </Container>
           </Box>
-
-          {/* Slide Section */}
-          {/* <Box sx={{ py: 8 }}>
-            <Slider {...sliderSettings}>
-              {[
-                { img: "/slider/1.jpg", text: "Slide 1 Text" },
-                { img: "/slider/2.jpg", text: "Slide 2 Text" },
-                { img: "/slider/3.jpg", text: "Slide 3 Text" },
-                { img: "/slider/4.jpg", text: "Slide 4 Text" },
-                { img: "/slider/5.jpg", text: "Slide 5 Text" },
-                { img: "/slider/6.jpg", text: "Slide 6 Text" },
-              ].map((slide, index) => (
-                <Box key={index} sx={{ position: "relative" }}>
-                  <img
-                    src={slide.img}
-                    alt={`Slide ${index + 1}`}
-                    style={{ width: "100%", height: "500px", objectFit: "cover" }}
-                  />
-                  <Typography
-                    variant="h4"
-                    sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      textAlign: "center",
-                      background: "rgba(0, 0, 0, 0.5)", // Optional background overlay
-                      color: "white",
-                      padding: "10px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        width: "100%",
-                      }}
-                    >
-                      <p style={{ fontSize: "1.5em", color: "white", margin: 0, textShadow: "3px 3px 5px rgba(0, 0, 0, 0.5)", fontWeight: "bold" }}>
-                        The best social platform for swingers
-                      </p>
-
-                      <h5 style={{ color: "#df95bc", marginTop: "30px", textShadow: "2px 2px 5px rgba(0, 0, 0, 0.5)" }}>
-                        The fastest growing swinger and kink community
-                      </h5>
-
-                      <h5 style={{ color: "#df95bc", margin: 0, textShadow: "2px 2px 5px rgba(0, 0, 0, 0.5)" }}>
-                        Built by swingers for swingers
-                      </h5>
-                    </div>
-                  </Typography>
-                </Box>
-              ))}
-            </Slider>
-            </Box> */}
-
-          {/* Explain Sections */}
-          {/* <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', padding: "0px 200px 0px 200px"}}>
-              <Grid container spacing={4}>
-                <Grid item xs={12} md={6}>
-                <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}>
-                  <img width={400} height={400} src='/slider/1.jpg' style={{borderRadius: '50%',}} />
-                </Box>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <Typography variant="h5" sx={{ color: "white" }}>
-                      <p style={{padding: "20px 0px", color: "#c3317d"}}><h2>Find local swingers</h2></p>
-                      <p><li>Search couples and singles nearby using precise geographic location...</li></p>
-                      <p><li>Filter by age, gender, kinks, and more...</li></p>
-                      <p><li>View your matches, likes, and who likes you...</li></p>
-                      <p><li>View recently online by location in our Pineapple...</li></p>
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <Typography variant="h5" sx={{ color: "white" }}>
-                      <p style={{padding: "20px 0px", color: "#c3317d"}}><h2>Connect with others near you</h2></p>
-                      <p><li >Send real time message with IM chat</li></p>
-                      <p><li>View and attend local events</li></p>
-                      <p><li>Post media in Whats Hot</li></p>
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                  <img width={400} height={400} src='/slider/2.jpg' style={{borderRadius: '50%', marginBottom: "20px"}} />
-                  </Box>
-                </Grid>
-              </Grid>
-            </div> */}
 
           {/* Category Grid */}
           <Container maxWidth="lg" sx={{ py: 8 }}>

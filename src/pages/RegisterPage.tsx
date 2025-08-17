@@ -680,7 +680,7 @@ const RegisterPage = () => {
                 <TextField
                   fullWidth
                   autoFocus
-                  label="Name"
+                  label="Name (This will never be shared or displayed)"
                   name="userName"
                   placeholder="Your full name"
                   variant="outlined"
@@ -692,21 +692,13 @@ const RegisterPage = () => {
                   error={
                     formik.touched.userName && Boolean(formik.errors.userName)
                   }
-                  helperText={
-                    formik.touched.userName && formik.errors.userName ? (
-                      formik.errors.userName
-                    ) : (
-                      <span style={{ color: "#9fc9c5ff" }}>
-                        Shown on your profile. You can update it anytime
-                      </span>
-                    )
-                  }
+                  helperText={formik.touched.userName && formik.errors.userName}
                   sx={yourTextFieldSx}
                 />
 
                 <TextField
                   fullWidth
-                  label="Username"
+                  label="Username (This will be shown on your profile)"
                   name="user_name"
                   placeholder="Choose a unique handle"
                   variant="outlined"

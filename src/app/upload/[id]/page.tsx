@@ -24,7 +24,6 @@ import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import Cropper from "react-easy-crop";
 import { useRouter } from "next/navigation";
-import * as mobilenet from "@tensorflow-models/mobilenet";
 import "@tensorflow/tfjs";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -226,7 +225,7 @@ export default function UploadAvatar({ params }: { params: Params }) {
     if (!result.blobUrl) {
       throw new Error("Upload failed");
     }
-    localStorage.setItem("avatar", result.blobUrl);
+    localStorage.setItem("Avatar", result?.blobUrl);
     return result.blobUrl;
   };
 
@@ -263,8 +262,6 @@ export default function UploadAvatar({ params }: { params: Params }) {
         }
 
         await router.push(`/bannerupload/${userId}`);
-
-        router.push(`/bannerupload/${userId}`);
       } catch (err) {
         console.error("Form submit failed:", err);
         setIsUploading(false);
@@ -371,7 +368,7 @@ export default function UploadAvatar({ params }: { params: Params }) {
                     }}
                   >
                     Look your best! Upload a clear, confident photo of you. A
-                    great pic gest great results.
+                    great pic gets great results.
                   </Typography>
 
                   <Grid item xs={12} sx={{ mt: 4, textAlign: "center" }}>

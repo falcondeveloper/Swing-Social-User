@@ -314,10 +314,11 @@ const Footer = () => {
             }}
             sx={{
               position: "fixed",
-              bottom: 0,
-              zIndex: 10,
               left: 0,
               right: 0,
+              bottom: 0,
+              zIndex: 10,
+
               bgcolor: alpha("#121212", 0.9),
               backdropFilter: "blur(20px)",
               borderTop: "1px solid",
@@ -328,6 +329,12 @@ const Footer = () => {
                   color: "#FF1B6B",
                 },
               },
+
+              height: {
+                xs: "calc(64px + env(safe-area-inset-bottom))",
+                sm: "calc(72px + env(safe-area-inset-bottom))",
+              },
+              pb: "env(safe-area-inset-bottom)",
             }}
           >
             <BottomNavigationAction

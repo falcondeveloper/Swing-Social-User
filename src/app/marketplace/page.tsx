@@ -27,6 +27,7 @@ import Header from "@/components/Header";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Select from "react-select";
+import { jwtDecode } from "jwt-decode";
 
 interface Product {
   Id: string;
@@ -87,6 +88,18 @@ const Marketplace: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("loginInfo");
+      if (token) {
+        const decodeToken = jwtDecode<any>(token);
+        setProfileId(decodeToken?.profileId);
+      } else {
+        router.push("/login");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     const id = localStorage.getItem("logged_in_profile");
     const urlParams = new URLSearchParams(window.location.search);
     const aff = urlParams.get("aff");
@@ -122,10 +135,6 @@ const Marketplace: React.FC = () => {
           region: ipData?.region,
           country_name: ipData?.country_name,
         };
-
-        if (id) {
-          setProfileId(id);
-        }
 
         fetch("/api/user/tracking", {
           method: "POST",
@@ -256,18 +265,17 @@ const Marketplace: React.FC = () => {
   if (!isClient) return null;
 
   return (
-    <Box
-      sx={{
-        backgroundColor: "#121212",
-        minHeight: "100vh",
-        color: "#f0f0f0",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <>
       <Header />
 
-      <Container maxWidth="xl" sx={{ flex: 1, py: 4 }}>
+      <Container
+        fixed
+        sx={{
+          px: { xs: 2, md: 0 },
+          pt: { xs: 3, sm: 4, md: 5 },
+          pb: { xs: 3, sm: 4, md: 5 },
+        }}
+      >
         <Typography
           variant="h4"
           align="center"
@@ -468,7 +476,7 @@ const Marketplace: React.FC = () => {
                   xs={12}
                   sm={6}
                   md={4}
-                  lg={3}
+                  lg={4}
                   key={index}
                   sx={{
                     transition: "transform 0.2s",
@@ -616,8 +624,10 @@ const Marketplace: React.FC = () => {
         </Box>
       </Container>
 
+      <Box sx={{ height: { xs: "72px", sm: "80px" } }} />
+
       <Footer />
-    </Box>
+    </>
   );
 };
 
