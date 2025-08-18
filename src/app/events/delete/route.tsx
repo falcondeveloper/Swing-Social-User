@@ -7,7 +7,7 @@ const pool = new Pool({
     user: 'clark',
     host: '199.244.49.83',
     database: 'swingsocialdb',
-    password: 'Bmw635csi#',
+    password: 'Bmw740il#$',
     port: 5432,
 });
 
