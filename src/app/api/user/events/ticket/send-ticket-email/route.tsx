@@ -79,7 +79,7 @@ export async function POST(req: any) {
         <p><strong>Event:</strong> ${eventName}</p>
         ${
           eventDescription
-            ? `<p><strong>Description:</strong> ${eventDescription}</p>`
+            ? `<p><strong>Email Description:</strong> ${eventDescription}</p>`
             : ""
         }
         
