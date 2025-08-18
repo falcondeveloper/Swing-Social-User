@@ -24,6 +24,7 @@ type Ticket = {
   Quantity: number;
   EventId: string;
   OriginalQuantity: number;
+  EventName: string;
 };
 
 type TicketListProps = {
@@ -46,6 +47,8 @@ const TicketListComponent: React.FC<TicketListProps> = ({
   onTicketsChange,
   summary,
 }) => {
+  console.log("tickets", tickets);
+  console.log("summary", summary);
   const router = useRouter();
   const [isOpen, setIsOpen] = useState<boolean>(true);
   const [ticketQuantities, setTicketQuantities] = useState<TicketQuantities>(
@@ -57,6 +60,9 @@ const TicketListComponent: React.FC<TicketListProps> = ({
   const [selectedTicketEventDescription, setSelectedTicketEventDescription] =
     useState<string>("");
   const [selectedTicketType, setSelectedTicketType] = useState<string>("");
+  const [selectedEventName, setSelectedEventName] = useState<string>("");
+  const [selectedEventDescription, setSelectedEventDescription] =
+    useState<string>("");
 
   const toggleBox = () => {
     setIsOpen(!isOpen);
@@ -76,7 +82,6 @@ const TicketListComponent: React.FC<TicketListProps> = ({
     }));
   };
 
-  console.log("Ticket event description", selectedTicketEventDescription);
   useEffect(() => {
     const calculateTotals = () => {
       let price = 0;
@@ -84,6 +89,8 @@ const TicketListComponent: React.FC<TicketListProps> = ({
       let ticketName = "";
       let ticketType = "";
       let ticketDescription = "";
+      let eventName = "";
+      let eventDescription = "";
 
       Object.entries(ticketQuantities).forEach(([ticketId, ticketQuantity]) => {
         const ticket = tickets.find((t) => t.TicketPackageId === ticketId);
@@ -94,6 +101,8 @@ const TicketListComponent: React.FC<TicketListProps> = ({
           if (!ticketName) {
             ticketName = ticket.Name;
             ticketType = ticket.Type;
+            eventName = ticket.EventName;
+            eventDescription = ticket.Description;
           }
         }
       });
@@ -101,8 +110,9 @@ const TicketListComponent: React.FC<TicketListProps> = ({
       setTotalPrice(price);
       setTotalQuantity(quantity);
       setSelectedTicketName(ticketName);
-      setSelectedTicketEventDescription(ticketDescription);
       setSelectedTicketType(ticketType);
+      setSelectedEventName(eventName);
+      setSelectedEventDescription(eventDescription);
 
       onTicketsChange(quantity, price, ticketName, ticketType);
     };
@@ -112,14 +122,12 @@ const TicketListComponent: React.FC<TicketListProps> = ({
 
   const handleTicketCheckout = (): void => {
     if (totalQuantity > 0) {
+      localStorage.setItem("event_name", selectedEventName || "");
+      localStorage.setItem("event_description", selectedEventDescription || "");
       localStorage.setItem("ticketPrice", totalPrice.toString());
       localStorage.setItem("ticketQuantity", totalQuantity.toString());
       localStorage.setItem("eventId", tickets[0]?.TicketPackageId || "");
       localStorage.setItem("ticketName", selectedTicketName || "");
-      localStorage.setItem(
-        "ticketEventDescription",
-        selectedTicketEventDescription || ""
-      );
       localStorage.setItem("ticketType", selectedTicketType || "");
 
       const ticketDetails = tickets
@@ -139,24 +147,11 @@ const TicketListComponent: React.FC<TicketListProps> = ({
   };
 
   const sortedTickets = useMemo(() => {
-    // copy to avoid mutating props/state
     const copy = [...tickets];
-
-    // 1) Available first, then sold out
-    // 2) (optional) Within each group, sort by price ascending (or name)
     copy.sort((a, b) => {
       const aAvail = a.OriginalQuantity > 0 ? 1 : 0;
       const bAvail = b.OriginalQuantity > 0 ? 1 : 0;
-
-      // Put available first
       if (aAvail !== bAvail) return bAvail - aAvail;
-
-      // Secondary sort (optional): lower price first
-      // return a.Price - b.Price;
-
-      // Or by name:
-      // return a.Name.localeCompare(b.Name);
-
       return 0;
     });
 

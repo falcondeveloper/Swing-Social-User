@@ -283,7 +283,7 @@ export async function POST(req: any) {
 			},
 			{
 				from: "info@swingsocial.co",
-				to: "smartbigguru@gmail.com",
+				to: "baldhavansh2505@gmail.com",
 				text: "",
 				subject: "Subscription Summary",
 				html: htmlBody,
@@ -314,7 +314,7 @@ export async function POST(req: any) {
 			},
 			{
 				from: "info@swingsocial.co",
-				to: "smartbigguru@gmail.com",
+				to: "baldhavansh2505@gmail.com",
 				text: "",
 				subject: "Subscription Summary",
 				html: failedBody,

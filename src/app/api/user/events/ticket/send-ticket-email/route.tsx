@@ -36,7 +36,6 @@ export async function POST(req: any) {
       ticketType,
       ticketPrice,
       ticketQuantity,
-      title,
       country,
       city,
       streetAddress,
@@ -47,6 +46,16 @@ export async function POST(req: any) {
     const mg = mailgun.client({
       username: "api",
       key: mailgunKey,
+    });
+
+    const now = new Date();
+    const formattedDate = now.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
 
     const template = `
@@ -108,7 +117,10 @@ export async function POST(req: any) {
         <hr style="margin: 30px 0;" />
         <p>If you have any questions, feel free to reply to this email.</p>
         <p>See you at the event!</p>
-        <p style="margin-top: 30px;">— The SwingSocial Team</p>
+        <p style="margin-top: 30px;">The SwingSocial Team</p>
+        <p style="font-size: 12px; color: #777; margin-top: 20px;">
+          Version: ${formattedDate}
+        </p>
       </div>
     `;
 
@@ -129,7 +141,7 @@ export async function POST(req: any) {
       },
       {
         from: "info@swingsocial.co",
-        to: "smartbigguru@gmail.com",
+        to: "baldhavansh2505@gmail.com",
         text: "",
         subject: "Your SwingSocial Ticket Purchase Confirmation 🎉",
         html: template,

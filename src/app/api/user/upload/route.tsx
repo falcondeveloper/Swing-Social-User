@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     await client.access({
       host: '198.12.235.186',
       user: 'clarktrue@truecontractingsolutions.app',
-      password: 'Bmw740il#$Bmw740il#$',
+      password: 'Bmw740il#$Bmw740il#',
       port: 21,
       secure: false
     });

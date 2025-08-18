@@ -77,18 +77,7 @@ const BillingUpgrade: any = () => {
   const [errors, setErrors] = useState<any>({});
   const [phone, setPhone] = useState("");
   const [profileId, setProfileId] = useState<any>(null);
-  const [promoCode, setPromoCode] = useState<any>("");
-  const [promoCodeMessage, setPromocodeMessage] = useState<any>(null);
-  const [promoCodeList, setPromoCodeList] = useState<any>([]);
   const [userName, setUsername] = useState<any>("");
-  const [password, setPassword] = useState<any>("");
-  const [isValidPromoCode, setIsValidPromoCode] = useState<any>(true);
-  const [profileUsername, setProfileUsername] = useState<any>("");
-  const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [page, setPage] = useState<number>(1);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [hasMore, setHasMore] = useState<boolean>(true);
   const [open, setOpen] = useState(false);
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
@@ -210,7 +199,6 @@ const BillingUpgrade: any = () => {
 
   const fetchData = async (userId: string) => {
     if (userId) {
-      setLoading(true);
       try {
         const response = await fetch(`/api/user/sweeping/user?id=${userId}`);
         if (!response.ok) {
@@ -229,8 +217,6 @@ const BillingUpgrade: any = () => {
         }
       } catch (error: any) {
         console.error("Error fetching data:", error.message);
-      } finally {
-        setLoading(false);
       }
     }
   };
@@ -284,14 +270,6 @@ const BillingUpgrade: any = () => {
     const storedEventId = localStorage.getItem("eventId");
     const storedEventDetails = localStorage.getItem("ticketDetails");
 
-    const token = localStorage.getItem("loginInfo");
-    if (token) {
-      const decodeToken = jwtDecode<any>(token);
-      console.log(decodeToken);
-    }
-
-    console.log("profile", localStorage.getItem("loginInfo"));
-
     setUsername(localStorage.getItem("profileUsername"));
     if (storedEventName) setEventName(storedEventName);
     if (ticketQuantity) setTicketQuantity(ticketQuantity);
@@ -303,18 +281,9 @@ const BillingUpgrade: any = () => {
     if (storedEventEmailDescription)
       setEventDescription(storedEventEmailDescription);
     if (storedEventDetails && typeof storedEventDetails === "string") {
-      console.log(JSON.parse(storedEventDetails));
       setEventDetails(JSON.parse(storedEventDetails));
     }
   }, []);
-
-  const debounce = (func: Function, delay: number) => {
-    let timer: NodeJS.Timeout;
-    return (...args: any[]) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => func(...args), delay);
-    };
-  };
 
   const validateForm = () => {
     const newErrors: any = {};
@@ -461,7 +430,7 @@ const BillingUpgrade: any = () => {
               streetAddress: formData?.qstreetAddress,
               phone: formData?.phone,
               zipCode: formData?.qzipCode,
-              username: profileUsername,
+              username: userName,
             }),
           });
 
@@ -487,18 +456,26 @@ const BillingUpgrade: any = () => {
 
               if (addAttendeeResponse.ok) {
                 Swal.fire({
-                  title: `Thank you ${userName}!`,
-                  text: "You have purchased ticket successfully!",
+                  title: `🎉 Thank you, ${userName}!`,
+                  html: `
+                        <p>You have purchased ticket successfully!</p>
+                        <p><strong>Event:</strong> ${localStorage.getItem("event_name")}</p>
+                        <p><strong>Ticket Type:</strong> ${localStorage.getItem("ticketType")}</p>
+                        <p><strong>Quantity:</strong> ${localStorage.getItem("ticketQuantity")}</p>
+                        <p><strong>Total Price:</strong> $${localStorage.getItem("ticketPrice")}</p>
+                        <hr/>
+                        <p>📩 We've sent the full event details to your email. Please check your inbox!</p>
+                        `,
                   icon: "success",
                   confirmButtonText: "OK",
                 });
+
                 await fetch("/api/user/events/ticket/send-ticket-email", {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
                   },
                   body: JSON.stringify({
-                    title: "🎟️ Ticket Confirmation",
                     eventName: eventName || "N/A",
                     eventDescription: eventDescription || "",
                     email: userProfile?.Email,
@@ -560,7 +537,6 @@ const BillingUpgrade: any = () => {
 
   const createTicket = async (storedEventDetails: any) => {
     try {
-
       var ticketDetailsArray = storedEventDetails;
       if (typeof storedEventDetails === "string") {
         ticketDetailsArray = JSON.parse(storedEventDetails);
@@ -570,8 +546,6 @@ const BillingUpgrade: any = () => {
         ...ticket,
         profileId: profileId,
       }));
-
-      console.log("Sending tickets with profileId:", ticketDetailsArray);
 
       // Send POST request to the backend
       const response = await fetch("/api/user/events/ticket", {
@@ -592,8 +566,6 @@ const BillingUpgrade: any = () => {
       // Get the result and log success
       const result = await response.json();
       await handleTicketEmail("1");
-
-      console.log("Ticket created successfully:", result.ticket);
       return { success: true, data: result.ticket };
     } catch (error) {
       await handleTicketEmail("2");
