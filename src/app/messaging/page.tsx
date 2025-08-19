@@ -291,6 +291,14 @@ export default function ChatPage() {
     }
   };
 
+  const messageClick = () => {
+    router.push("/messaging");
+  };
+
+  const mailClick = () => {
+    router.push("/mailbox");
+  };
+
   return (
     <>
       <Box
@@ -308,10 +316,9 @@ export default function ChatPage() {
             sx={{
               display: "flex",
               flexDirection: "column",
-              height: "calc(100vh - 150px)",
               width: "100%",
               backgroundColor: "#2d2d2d",
-              mt: 10,
+              mt: 7.5,
             }}
           >
             {/* Buttons */}
@@ -322,7 +329,7 @@ export default function ChatPage() {
               }}
             >
               <Typography
-                onClick={() => router.push("/messaging")}
+                onClick={messageClick}
                 sx={{
                   width: "50%",
                   textAlign: "center",
@@ -336,8 +343,9 @@ export default function ChatPage() {
               >
                 Chat
               </Typography>
+
               <Typography
-                onClick={() => router.push("/mailbox")}
+                onClick={mailClick}
                 sx={{
                   width: "50%",
                   textAlign: "center",
@@ -481,12 +489,12 @@ export default function ChatPage() {
                     backgroundColor: "#FF1B6B",
                     mt: 2,
                     padding: 2,
-                    bottom: "60px",
+                    bottom: "80px",
                     right: "20px",
                     position: "fixed",
                     display: "flex",
                     alignItems: "center",
-                    borderRadius: "100px 100px 100px",
+                    borderRadius: "50%",
                   }}
                 >
                   <AddIcon />

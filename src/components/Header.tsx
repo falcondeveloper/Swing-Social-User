@@ -270,10 +270,19 @@ const Header = () => {
                   },
                 }}
               >
-                <img
+                {/* <img
                   src={avatar || advertiser?.Avatar}
                   alt="Profile"
                   style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                /> */}
+                <Avatar
+                  src={avatar || advertiser?.Avatar}
+                  alt="Profile"
+                  sx={{
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",

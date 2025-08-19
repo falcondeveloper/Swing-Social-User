@@ -566,13 +566,13 @@ export default function ChatPage(props: { params: Params }) {
     >
       <Header />
       {isMobile ? (
-        <Box sx={{ display: "flex", flex: 1, mt: 5 }}>
+        <Box sx={{ display: "flex", flex: 1 }}>
           <Box
             sx={{
               width: "100%",
               display: "flex",
               flexDirection: "column",
-              height: "calc(100vh - 150px)",
+              // height: "calc(100vh - 60px)",
               bgcolor: "#121212",
               borderRadius: 2,
               overflow: "hidden",
@@ -586,9 +586,7 @@ export default function ChatPage(props: { params: Params }) {
                 alignItems: "center",
                 gap: 2,
                 bgcolor: "#1A1A1A",
-                px: 3,
-                pb: 2,
-                pt: "30px",
+                p: 2,
                 boxShadow: 2,
                 borderBottom: "1px solid #333",
               }}
@@ -980,7 +978,7 @@ export default function ChatPage(props: { params: Params }) {
             <List
               sx={{
                 flex: 1,
-                minHeight: 0, // <-- enables proper flex scrolling
+                minHeight: 0,
                 overflowY: "auto",
                 px: 2,
                 py: 1,
@@ -1097,7 +1095,7 @@ export default function ChatPage(props: { params: Params }) {
         </Box>
       )}
 
-      {isMobile === true ? <Footer /> : <></>}
+      {/* {isMobile === true ? <Footer /> : <></>} */}
 
       <UserProfileModal
         handleGrantAccess={handleGrantAccess}

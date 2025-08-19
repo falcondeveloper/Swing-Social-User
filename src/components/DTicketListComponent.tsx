@@ -22,7 +22,7 @@ interface Ticket {
   Name: string;
   Quantity: number;
   EventName: string;
-  Description: string;
+  EmailDescription: string;
   OriginalQuantity: number;
 }
 
@@ -100,7 +100,7 @@ const TicketList: React.FC<TicketListProps> = ({
             ticketName = ticket.Name;
             ticketType = ticket.Type;
             eventName = ticket.EventName;
-            eventDescription = ticket.Description;
+            eventDescription = ticket.EmailDescription;
           }
         }
       });
@@ -135,7 +135,7 @@ const TicketList: React.FC<TicketListProps> = ({
         .map((ticket) => ({
           id: ticket.TicketPackageId,
           name: ticket.Name,
-          description: ticket.Description,
+          description: ticket.EmailDescription,
           type: ticket.Type,
           price: ticket.Price,
           quantity: ticketQuantities[ticket.TicketPackageId] || 0,

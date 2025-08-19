@@ -18,13 +18,13 @@ import { useRouter } from "next/navigation";
 type Ticket = {
   TicketPackageId: string;
   Name: string;
-  Description: string;
   Type: string;
   Price: number;
   Quantity: number;
   EventId: string;
   OriginalQuantity: number;
   EventName: string;
+  EmailDescription: string;
 };
 
 type TicketListProps = {
@@ -47,8 +47,6 @@ const TicketListComponent: React.FC<TicketListProps> = ({
   onTicketsChange,
   summary,
 }) => {
-  console.log("tickets", tickets);
-  console.log("summary", summary);
   const router = useRouter();
   const [isOpen, setIsOpen] = useState<boolean>(true);
   const [ticketQuantities, setTicketQuantities] = useState<TicketQuantities>(
@@ -57,8 +55,6 @@ const TicketListComponent: React.FC<TicketListProps> = ({
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [totalQuantity, setTotalQuantity] = useState<number>(0);
   const [selectedTicketName, setSelectedTicketName] = useState<string>("");
-  const [selectedTicketEventDescription, setSelectedTicketEventDescription] =
-    useState<string>("");
   const [selectedTicketType, setSelectedTicketType] = useState<string>("");
   const [selectedEventName, setSelectedEventName] = useState<string>("");
   const [selectedEventDescription, setSelectedEventDescription] =
@@ -96,13 +92,13 @@ const TicketListComponent: React.FC<TicketListProps> = ({
         const ticket = tickets.find((t) => t.TicketPackageId === ticketId);
         if (ticket && ticketQuantity > 0) {
           price += ticket.Price * ticketQuantity;
-          ticketDescription = ticket.Description;
+          ticketDescription = ticket.EmailDescription;
           quantity += ticketQuantity;
           if (!ticketName) {
             ticketName = ticket.Name;
             ticketType = ticket.Type;
             eventName = ticket.EventName;
-            eventDescription = ticket.Description;
+            eventDescription = ticket.EmailDescription;
           }
         }
       });
@@ -134,7 +130,7 @@ const TicketListComponent: React.FC<TicketListProps> = ({
         .map((ticket) => ({
           id: ticket.TicketPackageId,
           name: ticket.Name,
-          description: ticket.Description,
+          description: ticket.EmailDescription,
           type: ticket.Type,
           price: ticket.Price,
           quantity: ticketQuantities[ticket.TicketPackageId] || 0,
