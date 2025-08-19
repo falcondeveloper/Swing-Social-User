@@ -36,6 +36,7 @@ type TicketListProps = {
     type?: string
   ) => void;
   summary: any;
+  emailDescriptions: any;
 };
 
 interface TicketQuantities {
@@ -46,6 +47,7 @@ const TicketListComponent: React.FC<TicketListProps> = ({
   tickets,
   onTicketsChange,
   summary,
+  emailDescriptions,
 }) => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState<boolean>(true);
@@ -92,13 +94,13 @@ const TicketListComponent: React.FC<TicketListProps> = ({
         const ticket = tickets.find((t) => t.TicketPackageId === ticketId);
         if (ticket && ticketQuantity > 0) {
           price += ticket.Price * ticketQuantity;
-          ticketDescription = ticket.EmailDescription;
+          ticketDescription = emailDescriptions;
           quantity += ticketQuantity;
           if (!ticketName) {
             ticketName = ticket.Name;
             ticketType = ticket.Type;
             eventName = ticket.EventName;
-            eventDescription = ticket.EmailDescription;
+            eventDescription = emailDescriptions;
           }
         }
       });
@@ -130,7 +132,7 @@ const TicketListComponent: React.FC<TicketListProps> = ({
         .map((ticket) => ({
           id: ticket.TicketPackageId,
           name: ticket.Name,
-          description: ticket.EmailDescription,
+          description: emailDescriptions,
           type: ticket.Type,
           price: ticket.Price,
           quantity: ticketQuantities[ticket.TicketPackageId] || 0,

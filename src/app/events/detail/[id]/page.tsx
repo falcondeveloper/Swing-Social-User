@@ -87,6 +87,7 @@ export default function EventDetail(props: { params: Params }) {
   });
   const [showDetail, setShowDetail] = useState<any>(false);
   const [selectedUserId, setSelectedUserId] = useState<any>(null);
+  const [emailDescriptionData, setEmailDescriptionData] = useState<any>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [errors, setError] = useState<any>(null);
@@ -189,6 +190,7 @@ export default function EventDetail(props: { params: Params }) {
       setRsvp(eventData?.rsvp);
       setAttendees(eventData?.attendees);
       setTicket(eventData?.tickets);
+      setEmailDescriptionData(eventData?.event?.EmailDescription);
     } catch (error) {
       console.error("Error:", error);
     }
@@ -1090,6 +1092,7 @@ export default function EventDetail(props: { params: Params }) {
                       tickets={tickets}
                       onTicketsChange={handleTicketsChange}
                       summary={summary}
+                      emailDescriptions={emailDescriptionData}
                     />
                   </>
                 )}
@@ -1813,6 +1816,7 @@ export default function EventDetail(props: { params: Params }) {
                           >
                             <DTicketListComponent
                               tickets={tickets}
+                              emailDescriptions={emailDescriptionData}
                               onTicketsChange={handleTicketsChange}
                             />
                           </Box>
