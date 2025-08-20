@@ -175,8 +175,6 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const eventId = url.searchParams.get("eventId");
     if (eventId) {
-      console.log("Fetching event with ID:", eventId);
-      // Query the database for event details
       const eventQuery = `SELECT * FROM public.event_get_details($1)`;
       const eventValues = [eventId];
       const eventResult = await pool.query(eventQuery, eventValues);
@@ -189,9 +187,7 @@ export async function GET(req: Request) {
       }
 
       const event = eventResult.rows[0];
-      console.log("Event fetched:", event);
 
-      // Fetch RSVP, attendees, and tickets data
       const rsvpQuery = `SELECT * FROM event_rsvp_attendees($1, 'rsvp')`;
       const attendeesQuery = `SELECT * FROM event_rsvp_attendees($1, 'attendees')`;
       const ticketsQuery = `SELECT * FROM get_event_ticket_packages($1)`;
@@ -217,19 +213,9 @@ export async function GET(req: Request) {
         return acc;
       }, {});
 
-      console.log("Attendee counts by type:", attendeeCountByType);
-      console.log(
-        "Available ticket types:",
-        tickets.map((t) => t.Name)
-      );
-
       const ticketsWithRemainingQty = tickets.map((ticket) => {
         const attendeeCount = attendeeCountByType[ticket.Name] || 0;
         const remainingQuantity = Math.max(0, ticket.Quantity - attendeeCount);
-
-        console.log(
-          `Ticket "${ticket.Name}": Original=${ticket.Quantity}, Sold=${attendeeCount}, Remaining=${remainingQuantity}`
-        );
 
         return {
           ...ticket,

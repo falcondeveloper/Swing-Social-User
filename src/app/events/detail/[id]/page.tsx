@@ -67,14 +67,12 @@ import UserProfileModal from "@/components/UserProfileModal";
 type Params = Promise<{ id: string }>;
 
 export default function EventDetail(props: { params: Params }) {
-  const [id, setId] = useState<string>(""); // State for error messages
+  const [id, setId] = useState<string>("");
   const [expanded, setExpanded] = useState(false);
   const router = useRouter();
   const [showContent, setShowContent] = useState(false);
   const [membership, setMembership] = useState(0);
   const [loginProfileId, setLoginProfileId] = useState<any>("");
-  const [posts, setPosts] = useState<any>([]);
-  const [comment, setComment] = useState<any>(null);
   const [eventDetail, setEventDetail] = useState<any>(null);
   const [rsvp, setRsvp] = useState<any>([]);
   const [attendees, setAttendees] = useState<any>([]);
@@ -110,9 +108,9 @@ export default function EventDetail(props: { params: Params }) {
     attendeeChecked: false,
   });
   const [openSaveRsvp, setOpenSaveRsvp] = useState(false);
-  const [openDownloadModal, setOpenDownloadModal] = useState(false); // Modal visibility state
-  const [downloadAttendee, setDownloadAttendee] = useState(false); // Checkbox for Attendees
-  const [downloadRsvp, setDownloadRsvp] = useState(false); // Checkbox for RSVP
+  const [openDownloadModal, setOpenDownloadModal] = useState(false);
+  const [downloadAttendee, setDownloadAttendee] = useState(false);
+  const [downloadRsvp, setDownloadRsvp] = useState(false);
   const [loadingEmail, setLoadingEmail] = useState(false);
   const [openModalUser, setOpenModalUser] = useState<{
     state: boolean;
@@ -406,6 +404,7 @@ export default function EventDetail(props: { params: Params }) {
     formState.emailSubject = eventDetail?.Name;
     setOpen(true);
   };
+
   const handleCloseHere = () => setOpen(false);
 
   const handleSaveRsvp = async (eventId: any) => {
@@ -1219,6 +1218,7 @@ export default function EventDetail(props: { params: Params }) {
             >
               Back
             </Button>
+
             <UserProfileModal
               handleGrantAccess={handleGrantAccess}
               handleClose={handleClose}
@@ -1452,6 +1452,7 @@ export default function EventDetail(props: { params: Params }) {
                     </Box>
                   </Card>
                 )}
+
                 <Grid
                   sx={{
                     backgroundColor: "#1a1a1a",
@@ -1474,6 +1475,7 @@ export default function EventDetail(props: { params: Params }) {
                     }}
                   />
                 </Grid>
+
                 {/* RSVP & Attendees Lists - Kept as is */}
                 <Grid container spacing={3}>
                   <Grid item xs={12} md={6}>
@@ -1498,40 +1500,56 @@ export default function EventDetail(props: { params: Params }) {
                           }}
                         >
                           {rsvp?.map((person: any, index: any) => (
-                            <Avatar
+                            <Tooltip
                               key={index}
-                              alt={person.Name}
-                              src={person.Avatar || `/api/placeholder/56/56`}
-                              onClick={() => {
-                                setOpenModalUser({
-                                  state: true,
-                                  id: person.ProfileId,
-                                });
-                              }}
-                              // onClick={() => {
-                              //   console.log(person);
-                              //   // router.push(`/members?q=${person.ProfileId}`);
-                              //   // router.push(
-                              //   //   `/attendeeswing?q=${person.ProfileId}&id=${profileId}&eventid=${id}`
-                              //   // );
-                              // }}
-                              sx={{
-                                width: 56,
-                                height: 56,
-                                border: "2px solid #880E4F",
-                                transition: "all 0.3s ease",
-                                bgcolor: person.Avatar
-                                  ? "transparent"
-                                  : "#880E4F",
-                                "&:hover": {
-                                  transform: "scale(1.1)",
-                                  boxShadow: "0 4px 8px rgba(136, 14, 79, 0.4)",
-                                  cursor: "hand",
+                              title={person.Name}
+                              arrow
+                              componentsProps={{
+                                tooltip: {
+                                  sx: {
+                                    bgcolor: "#880E4F",
+                                    color: "white",
+                                    fontSize: "0.9rem",
+                                    borderRadius: "8px",
+                                    boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
+                                  },
+                                },
+                                arrow: {
+                                  sx: {
+                                    color: "#880E4F",
+                                  },
                                 },
                               }}
                             >
-                              {!person.Avatar && person.Name?.charAt(0)}
-                            </Avatar>
+                              <Avatar
+                                key={index}
+                                alt={person.Name}
+                                src={person.Avatar || `/api/placeholder/56/56`}
+                                onClick={() => {
+                                  setOpenModalUser({
+                                    state: true,
+                                    id: person.ProfileId,
+                                  });
+                                }}
+                                sx={{
+                                  width: 56,
+                                  height: 56,
+                                  border: "2px solid #880E4F",
+                                  transition: "all 0.3s ease",
+                                  bgcolor: person.Avatar
+                                    ? "transparent"
+                                    : "#880E4F",
+                                  "&:hover": {
+                                    transform: "scale(1.1)",
+                                    boxShadow:
+                                      "0 4px 8px rgba(136, 14, 79, 0.4)",
+                                    cursor: "hand",
+                                  },
+                                }}
+                              >
+                                {!person.Avatar && person.Name?.charAt(0)}
+                              </Avatar>
+                            </Tooltip>
                           ))}
                           {rsvp?.length === 0 && (
                             <Typography color="grey.500" sx={{ py: 2 }}>
@@ -1564,32 +1582,55 @@ export default function EventDetail(props: { params: Params }) {
                           }}
                         >
                           {attendees?.map((person: any, index: any) => (
-                            <Avatar
+                            <Tooltip
                               key={index}
-                              alt={person.Name}
-                              src={person.Avatar || `/api/placeholder/56/56`}
-                              onClick={() => {
-                                setOpenModalUser({
-                                  state: true,
-                                  id: person.ProfileId,
-                                });
-                              }}
-                              sx={{
-                                width: 56,
-                                height: 56,
-                                border: "2px solid #880E4F",
-                                transition: "all 0.3s ease",
-                                bgcolor: person.Avatar
-                                  ? "transparent"
-                                  : "#880E4F",
-                                "&:hover": {
-                                  transform: "scale(1.1)",
-                                  boxShadow: "0 4px 8px rgba(136, 14, 79, 0.4)",
+                              title={person.Name}
+                              arrow
+                              componentsProps={{
+                                tooltip: {
+                                  sx: {
+                                    bgcolor: "#880E4F",
+                                    color: "white",
+                                    fontSize: "0.9rem",
+                                    borderRadius: "8px",
+                                    boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
+                                  },
+                                },
+                                arrow: {
+                                  sx: {
+                                    color: "#880E4F",
+                                  },
                                 },
                               }}
                             >
-                              {!person.Avatar && person.Name?.charAt(0)}
-                            </Avatar>
+                              <Avatar
+                                key={index}
+                                alt={person.Name}
+                                src={person.Avatar || `/api/placeholder/56/56`}
+                                onClick={() => {
+                                  setOpenModalUser({
+                                    state: true,
+                                    id: person.ProfileId,
+                                  });
+                                }}
+                                sx={{
+                                  width: 56,
+                                  height: 56,
+                                  border: "2px solid #880E4F",
+                                  transition: "all 0.3s ease",
+                                  bgcolor: person.Avatar
+                                    ? "transparent"
+                                    : "#880E4F",
+                                  "&:hover": {
+                                    transform: "scale(1.1)",
+                                    boxShadow:
+                                      "0 4px 8px rgba(136, 14, 79, 0.4)",
+                                  },
+                                }}
+                              >
+                                {!person.Avatar && person.Name?.charAt(0)}
+                              </Avatar>
+                            </Tooltip>
                           ))}
                           {attendees?.length === 0 && (
                             <Typography color="grey.500" sx={{ py: 2 }}>
