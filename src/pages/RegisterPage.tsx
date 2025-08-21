@@ -30,6 +30,8 @@ import {
   Stepper,
   Step,
   StepLabel,
+  Popper,
+  PopperProps,
 } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -466,6 +468,10 @@ const RegisterPage = () => {
     "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.7)" },
   } as const;
 
+  function CustomPopper(props: PopperProps) {
+    return <Popper {...props} placement="top-start" />;
+  }
+
   return (
     <>
       <ThemeProvider theme={theme}>
@@ -805,6 +811,7 @@ const RegisterPage = () => {
                   }}
                   disableClearable
                   disablePortal
+                  PopperComponent={CustomPopper}
                   isOptionEqualToValue={(option, value) =>
                     option.City === value.City
                   }
