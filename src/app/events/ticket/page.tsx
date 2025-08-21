@@ -458,53 +458,51 @@ const BillingUpgrade: any = () => {
                 Swal.fire({
                   title: `🎉 Thank you, ${userName}!`,
                   html: `
-      <p>You have purchased ticket successfully!</p>
-      <p><strong>Event:</strong> ${localStorage.getItem("event_name")}</p>
-      <p><strong>Ticket Type:</strong> ${localStorage.getItem("ticketType")}</p>
-      <p><strong>Quantity:</strong> ${localStorage.getItem(
-        "ticketQuantity"
-      )}</p>
-      <p><strong>Total Price:</strong> $${localStorage.getItem(
-        "ticketPrice"
-      )}</p>
-      <hr/>
-      <p>📩 We've sent the full event details to your email. Please check your inbox!</p>
-    `,
+                        <p>You have purchased ticket successfully!</p>
+                        <p><strong>Event:</strong> ${localStorage.getItem(
+                          "event_name"
+                        )}</p>
+                        <p><strong>Ticket Type:</strong> ${localStorage.getItem(
+                          "ticketType"
+                        )}</p>
+                        <p><strong>Quantity:</strong> ${localStorage.getItem(
+                          "ticketQuantity"
+                        )}</p>
+                        <p><strong>Total Price:</strong> $${localStorage.getItem(
+                          "ticketPrice"
+                        )}</p>
+                        <hr/>
+                        <p>📩 We've sent the full event details to your email. Please check your inbox!</p>
+                        `,
                   icon: "success",
                   confirmButtonText: "OK",
                 });
 
-                // Send email
-                const emailResponse = await fetch(
-                  "/api/user/events/ticket/send-ticket-email",
-                  {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      eventName: eventName || "N/A",
-                      eventDescription: eventDescription || "",
-                      email: userProfile?.Email,
-                      firstName: formData.firstName,
-                      lastName: formData.lastName,
-                      phone: formData.phone,
-                      userName: userName || "",
-                      ticketName: ticketName || "N/A",
-                      ticketType: ticketType || "N/A",
-                      ticketPrice: ticketPrice,
-                      ticketQuantity: ticketQuantity,
-                      country: formData.qcountry || "",
-                      city: formData?.qcity || "",
-                      streetAddress: formData?.qstreetAddress || "",
-                      zipCode: formData?.qzipCode || "",
-                    }),
-                  }
-                );
-
-                await handleTicketEmail("1");
+                await fetch("/api/user/events/ticket/send-ticket-email", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    eventName: eventName || "N/A",
+                    eventDescription: eventDescription || "",
+                    email: userProfile?.Email,
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    phone: formData.phone,
+                    userName: userName || "",
+                    ticketName: ticketName || "N/A",
+                    ticketType: ticketType || "N/A",
+                    ticketPrice: ticketPrice,
+                    ticketQuantity: ticketQuantity,
+                    country: formData.qcountry || "",
+                    city: formData?.qcity || "",
+                    streetAddress: formData?.qstreetAddress || "",
+                    zipCode: formData?.qzipCode || "",
+                  }),
+                });
               } else {
-                throw new Error("Add attendees failed");
+                throw new Error("Add attendees is failed");
               }
 
               router.push("/events");
@@ -547,22 +545,30 @@ const BillingUpgrade: any = () => {
 
   const createTicket = async (storedEventDetails: any) => {
     try {
-      var ticketDetailsArray = storedEventDetails;
+      let ticketDetailsArray = storedEventDetails;
+
       if (typeof storedEventDetails === "string") {
         ticketDetailsArray = JSON.parse(storedEventDetails);
       }
 
-      ticketDetailsArray = ticketDetailsArray.map((ticket: any) => ({
-        ...ticket,
-        profileId: profileId,
-      }));
+      if (
+        !Array.isArray(ticketDetailsArray) ||
+        ticketDetailsArray.length === 0
+      ) {
+        throw new Error("No ticket details found");
+      }
+
+      const ticket = ticketDetailsArray[0];
 
       const response = await fetch("/api/user/events/ticket", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ storedEventDetails: ticketDetailsArray }),
+        body: JSON.stringify({
+          ticketID: ticket.id,
+          ticketQuantity: ticket.quantity,
+        }),
       });
 
       if (!response.ok) {
@@ -572,8 +578,9 @@ const BillingUpgrade: any = () => {
       }
 
       const result = await response.json();
-      return { success: true, data: result.ticket };
+      return { success: true, data: result.data };
     } catch (error) {
+      await handleTicketEmail("2");
       console.error("An error occurred while creating the ticket:", error);
       return { success: false, error: "Internal Error" };
     }
