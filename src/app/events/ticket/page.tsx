@@ -501,11 +501,20 @@ const BillingUpgrade: any = () => {
                     zipCode: formData?.qzipCode || "",
                   }),
                 });
+                [
+                  "event_name",
+                  "event_description",
+                  "ticketPrice",
+                  "ticketQuantity",
+                  "eventId",
+                  "ticketName",
+                  "ticketType",
+                  "ticketDetails",
+                ].forEach((key) => localStorage.removeItem(key));
+                router.push("/events");
               } else {
                 throw new Error("Add attendees is failed");
               }
-
-              router.push("/events");
             } else {
               await handleTicketEmail("2");
               setOpen(false);
