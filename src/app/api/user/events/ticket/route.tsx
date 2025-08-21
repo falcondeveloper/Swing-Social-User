@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       storedEventDetails = JSON.parse(storedEventDetails);
     }
 
-    const insertQuery = `SELECT * FROM public.ticket_insert($1, $2, $3, $4, $5)`;
+    // const insertQuery = `SELECT * FROM public.ticket_insert($1, $2, $3, $4, $5)`;
     const updateQtyQuery = `SELECT * FROM public.event_ticket_updateqty($1, $2)`;
 
     if (Array.isArray(storedEventDetails) && storedEventDetails.length > 0) {
@@ -54,13 +54,13 @@ export async function POST(req: Request) {
             throw new Error(`Invalid quantity: ${quantity}`);
           }
 
-          const result = await client.query(insertQuery, [
-            name,
-            type,
-            price,
-            quantity,
-            eventId,
-          ]);
+          // const result = await client.query(insertQuery, [
+          //   name,
+          //   type,
+          //   price,
+          //   quantity,
+          //   eventId,
+          // ]);
           const updateResult = await client.query(updateQtyQuery, [
             eventId,
             quantity,
@@ -73,7 +73,6 @@ export async function POST(req: Request) {
           }
 
           results.push({
-            ticket: result.rows[0],
             quantityUpdate: updateResult.rows[0],
           });
         }

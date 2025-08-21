@@ -458,51 +458,53 @@ const BillingUpgrade: any = () => {
                 Swal.fire({
                   title: `🎉 Thank you, ${userName}!`,
                   html: `
-                        <p>You have purchased ticket successfully!</p>
-                        <p><strong>Event:</strong> ${localStorage.getItem(
-                          "event_name"
-                        )}</p>
-                        <p><strong>Ticket Type:</strong> ${localStorage.getItem(
-                          "ticketType"
-                        )}</p>
-                        <p><strong>Quantity:</strong> ${localStorage.getItem(
-                          "ticketQuantity"
-                        )}</p>
-                        <p><strong>Total Price:</strong> $${localStorage.getItem(
-                          "ticketPrice"
-                        )}</p>
-                        <hr/>
-                        <p>📩 We've sent the full event details to your email. Please check your inbox!</p>
-                        `,
+      <p>You have purchased ticket successfully!</p>
+      <p><strong>Event:</strong> ${localStorage.getItem("event_name")}</p>
+      <p><strong>Ticket Type:</strong> ${localStorage.getItem("ticketType")}</p>
+      <p><strong>Quantity:</strong> ${localStorage.getItem(
+        "ticketQuantity"
+      )}</p>
+      <p><strong>Total Price:</strong> $${localStorage.getItem(
+        "ticketPrice"
+      )}</p>
+      <hr/>
+      <p>📩 We've sent the full event details to your email. Please check your inbox!</p>
+    `,
                   icon: "success",
                   confirmButtonText: "OK",
                 });
 
-                await fetch("/api/user/events/ticket/send-ticket-email", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    eventName: eventName || "N/A",
-                    eventDescription: eventDescription || "",
-                    email: userProfile?.Email,
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    phone: formData.phone,
-                    userName: userName || "",
-                    ticketName: ticketName || "N/A",
-                    ticketType: ticketType || "N/A",
-                    ticketPrice: ticketPrice,
-                    ticketQuantity: ticketQuantity,
-                    country: formData.qcountry || "",
-                    city: formData?.qcity || "",
-                    streetAddress: formData?.qstreetAddress || "",
-                    zipCode: formData?.qzipCode || "",
-                  }),
-                });
+                // Send email
+                const emailResponse = await fetch(
+                  "/api/user/events/ticket/send-ticket-email",
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      eventName: eventName || "N/A",
+                      eventDescription: eventDescription || "",
+                      email: userProfile?.Email,
+                      firstName: formData.firstName,
+                      lastName: formData.lastName,
+                      phone: formData.phone,
+                      userName: userName || "",
+                      ticketName: ticketName || "N/A",
+                      ticketType: ticketType || "N/A",
+                      ticketPrice: ticketPrice,
+                      ticketQuantity: ticketQuantity,
+                      country: formData.qcountry || "",
+                      city: formData?.qcity || "",
+                      streetAddress: formData?.qstreetAddress || "",
+                      zipCode: formData?.qzipCode || "",
+                    }),
+                  }
+                );
+
+                await handleTicketEmail("1");
               } else {
-                throw new Error("Add attendees is failed");
+                throw new Error("Add attendees failed");
               }
 
               router.push("/events");
@@ -570,10 +572,8 @@ const BillingUpgrade: any = () => {
       }
 
       const result = await response.json();
-      await handleTicketEmail("1");
       return { success: true, data: result.ticket };
     } catch (error) {
-      await handleTicketEmail("2");
       console.error("An error occurred while creating the ticket:", error);
       return { success: false, error: "Internal Error" };
     }
