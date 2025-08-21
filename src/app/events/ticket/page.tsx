@@ -459,10 +459,18 @@ const BillingUpgrade: any = () => {
                   title: `🎉 Thank you, ${userName}!`,
                   html: `
                         <p>You have purchased ticket successfully!</p>
-                        <p><strong>Event:</strong> ${localStorage.getItem("event_name")}</p>
-                        <p><strong>Ticket Type:</strong> ${localStorage.getItem("ticketType")}</p>
-                        <p><strong>Quantity:</strong> ${localStorage.getItem("ticketQuantity")}</p>
-                        <p><strong>Total Price:</strong> $${localStorage.getItem("ticketPrice")}</p>
+                        <p><strong>Event:</strong> ${localStorage.getItem(
+                          "event_name"
+                        )}</p>
+                        <p><strong>Ticket Type:</strong> ${localStorage.getItem(
+                          "ticketType"
+                        )}</p>
+                        <p><strong>Quantity:</strong> ${localStorage.getItem(
+                          "ticketQuantity"
+                        )}</p>
+                        <p><strong>Total Price:</strong> $${localStorage.getItem(
+                          "ticketPrice"
+                        )}</p>
                         <hr/>
                         <p>📩 We've sent the full event details to your email. Please check your inbox!</p>
                         `,
@@ -547,7 +555,6 @@ const BillingUpgrade: any = () => {
         profileId: profileId,
       }));
 
-      // Send POST request to the backend
       const response = await fetch("/api/user/events/ticket", {
         method: "POST",
         headers: {
@@ -556,14 +563,12 @@ const BillingUpgrade: any = () => {
         body: JSON.stringify({ storedEventDetails: ticketDetailsArray }),
       });
 
-      // Check for successful response
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Failed to create ticket:", errorData.error);
         return { success: false, error: errorData.error };
       }
 
-      // Get the result and log success
       const result = await response.json();
       await handleTicketEmail("1");
       return { success: true, data: result.ticket };

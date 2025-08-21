@@ -218,12 +218,6 @@ const page = ({ params }: { params: Params }) => {
         const uploadedUrls: string[] = [];
 
         if (values?.photos?.length > 0) {
-          // for (const f of values?.photos) {
-          //   const url = await uploadImage(f);
-          //   await uploadPrivateImage(url);
-          //   uploadedUrls.push(url);
-          // }
-
           for (let i = 0; i < values?.photos?.length; i++) {
             const f = values.photos[i];
             setUploadProgress(i + 1);
@@ -331,6 +325,7 @@ const page = ({ params }: { params: Params }) => {
     e.preventDefault();
     setDragOver(true);
   };
+  
   const onDragLeave = () => setDragOver(false);
 
   const Tile = ({ i, showAddBadge }: { i: number; showAddBadge?: boolean }) => {

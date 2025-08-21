@@ -139,6 +139,8 @@ const TicketListComponent: React.FC<TicketListProps> = ({
         }))
         .filter((ticket) => ticket.quantity > 0);
 
+      console.log("ticketDetails", ticketDetails);
+
       localStorage.setItem("ticketDetails", JSON.stringify(ticketDetails));
       router.push("/events/ticket");
     }

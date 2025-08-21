@@ -17,7 +17,6 @@ import {
   ThemeProvider,
   Container,
   Paper,
-  Alert,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -26,7 +25,6 @@ import {
   Stack,
   FormControlLabel,
   Checkbox,
-  Tooltip,
   Avatar,
   DialogContentText,
   Stepper,
@@ -39,10 +37,7 @@ import IconButton from "@mui/material/IconButton";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import CloseIcon from "@mui/icons-material/Close";
 import MarkEmailUnreadIcon from "@mui/icons-material/MarkEmailUnread";
 import * as Yup from "yup";
@@ -52,58 +47,17 @@ import Link from "next/link";
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: "#FF2D55",
-      light: "#FF617B",
-      dark: "#CC1439",
-    },
-    secondary: {
-      main: "#7000FF",
-      light: "#9B4DFF",
-      dark: "#5200CC",
-    },
-    success: {
-      main: "#00D179",
-    },
-    background: {
-      default: "#0A0118",
-    },
+    primary: { main: "#FF2D55", light: "#FF617B", dark: "#CC1439" },
+    secondary: { main: "#7000FF", light: "#9B4DFF", dark: "#5200CC" },
+    success: { main: "#00D179" },
+    background: { default: "#0A0118" },
   },
-
-  typography: {
-    fontFamily: '"Poppins", "Roboto", "Arial", sans-serif',
-  },
+  typography: { fontFamily: '"Poppins", "Roboto", "Arial", sans-serif' },
 });
 
 type CityType = {
   id: number;
   City: string;
-};
-
-const SecureHeader = () => {
-  const [host, setHost] = useState<string>("");
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setHost(window.location.host);
-    }
-  }, []);
-
-  return (
-    <Alert
-      icon={<LockOutlinedIcon />}
-      severity="success"
-      sx={{
-        mb: 2,
-        background: "rgba(0, 209, 121, 0.1)",
-        color: "#c8ffdf",
-        border: "1px solid rgba(0,209,121,0.35)",
-        "& .MuiAlert-icon": { color: "#00D179" },
-      }}
-    >
-      <strong>Secure connection:</strong> You are on <code>{host}</code> over
-      HTTPS. Details you share are transmitted securely.
-    </Alert>
-  );
 };
 
 const WhyWeAsk = ({ title, points }: { title: string; points: string[] }) => (
@@ -149,20 +103,6 @@ const PolicyRow = ({ supportEmail }: PolicyRowProps) => (
       px: { xs: 2, sm: 0 },
     }}
   >
-    {/* <Typography
-      component="p"
-      sx={{
-        color: "#aaa",
-        textAlign: "center",
-        maxWidth: 720,
-        fontSize: { xs: 12.5, sm: 14 },
-      }}
-    >
-      We respect privacy and follow industry best-practices (incl. principles of
-      India’s DPDP Act, 2023). Your info is used only to create and secure your
-      account.
-    </Typography> */}
-
     <Stack
       direction={{ xs: "column", sm: "row" }}
       spacing={{ xs: 1, sm: 2 }}
@@ -173,41 +113,11 @@ const PolicyRow = ({ supportEmail }: PolicyRowProps) => (
         width: "100%",
       }}
     >
-      <MUILink
-        href="https://swingsocial.co/privacy/"
-        underline="hover"
-        sx={linkSx}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Privacy Policy
-      </MUILink>
-
       <Divider
         orientation="vertical"
         flexItem
         sx={{
           display: { xs: "none", sm: "block" },
-          borderColor: "rgba(255,255,255,0.2)",
-        }}
-      />
-
-      <MUILink
-        href="https://swingsocial.co/terms-and-conditions/"
-        underline="hover"
-        sx={linkSx}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Terms of Use
-      </MUILink>
-
-      <Divider
-        orientation="vertical"
-        flexItem
-        sx={{
-          display: { xs: "none", sm: "block" },
-          borderColor: "rgba(255,255,255,0.2)",
         }}
       />
 
@@ -568,10 +478,14 @@ const RegisterPage = () => {
             position: "relative",
             overflow: "hidden",
             width: "100%",
+            minHeight: "100vh",
           }}
         >
           <ParticleField />
-          <Container maxWidth="sm" sx={{ p: 0 }}>
+          <Container
+            maxWidth="sm"
+            sx={{ px: { xs: 1, sm: 2, md: 3 }, py: { xs: 1.5, sm: 2 } }}
+          >
             <Paper
               elevation={24}
               sx={{
@@ -579,14 +493,7 @@ const RegisterPage = () => {
                 background: "rgba(255, 255, 255, 0.05)",
                 backdropFilter: "blur(20px)",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
-                maxHeight: { xs: "85vh", sm: "95vh" },
-                overflowY: { xs: "auto", sm: "auto" },
-                scrollbarWidth: "thin",
-                "&::-webkit-scrollbar": { width: "6px" },
-                "&::-webkit-scrollbar-thumb": {
-                  backgroundColor: "rgba(255,255,255,0.3)",
-                  borderRadius: "3px",
-                },
+                overflow: "hidden",
               }}
             >
               <Stepper
@@ -629,7 +536,6 @@ const RegisterPage = () => {
                 ))}
               </Stepper>
 
-              {/* <SecureHeader /> */}
               <Box sx={{ mb: 2, textAlign: "center" }}>
                 <Box sx={{ mb: 2 }}>
                   <img
@@ -898,6 +804,7 @@ const RegisterPage = () => {
                     setOpenCity(false);
                   }}
                   disableClearable
+                  disablePortal
                   isOptionEqualToValue={(option, value) =>
                     option.City === value.City
                   }
@@ -910,7 +817,7 @@ const RegisterPage = () => {
                   inputValue={cityInput}
                   onInputChange={(event, newInputValue) => {
                     if (event?.type === "change" || event?.type === "click") {
-                      setCityInput(newInputValue);
+                      setCityInput(newInputValue.trim());
                     }
                   }}
                   onChange={(event, newValue) => {
