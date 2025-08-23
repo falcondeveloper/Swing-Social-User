@@ -52,42 +52,10 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [userDeviceToken, setUserDeviceToken] = useState(null);
   const [chatList, setChatList] = useState([]);
 
   useEffect(() => {
-    const token = localStorage.getItem("loginInfo");
-    if (token) {
-      const decodeToken = jwtDecode<any>(token);
-
-      if (decodeToken?.membership == 0) {
-        Swal.fire({
-          title: `Upgrade your membership.`,
-          text: `Sorry, to access this page, you need to upgrade your membership`,
-          icon: "error",
-          showCancelButton: true,
-          confirmButtonText: "Upgrade the membership",
-          cancelButtonText: "Continue as the free member",
-        }).then((result) => {
-          if (result.isConfirmed) {
-            router.push("/membership");
-          } else if (result.dismiss === Swal.DismissReason.cancel) {
-            router.push("/home");
-          } else {
-            router.back();
-          }
-        });
-      } else {
-        router.push("/messaging");
-      }
-    } else {
-      router.push("/login");
-    }
-  }, []);
-
-  useEffect(() => {
     socket.on("connect", () => {});
-
     socket.on("disconnect", () => {});
     socket.on("message", (message) => {
       fetchAllChats();
@@ -110,8 +78,34 @@ export default function ChatPage() {
   }, []);
 
   const handleCloseChatBox = () => {
-    setChat(!chatOpen);
-    setSearchQuery("");
+    const token = localStorage.getItem("loginInfo");
+
+    if (token) {
+      const decodeToken = jwtDecode<any>(token);
+      if (decodeToken?.membership == 0) {
+        Swal.fire({
+          title: `Upgrade your membership.`,
+          text: `Sorry, to access this page, you need to upgrade your membership`,
+          icon: "error",
+          showCancelButton: true,
+          confirmButtonText: "Upgrade the membership",
+          cancelButtonText: "Continue as the free member",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            router.push("/membership");
+          } else if (result.dismiss === Swal.DismissReason.cancel) {
+            router.push("/messaging");
+          } else {
+            router.back();
+          }
+        });
+      } else {
+        setChat(!chatOpen);
+        setSearchQuery("");
+      }
+    } else {
+      router.push("/login");
+    }
   };
 
   useEffect(() => {
@@ -254,13 +248,36 @@ export default function ChatPage() {
     fetchUserProfiles();
   }, [page, searchQuery]);
 
-  useEffect(() => {
-    if (selectedUser) {
-      setUserDeviceToken(selectedUser?.Device_Token);
-    }
-  }, [selectedUser]);
-
   const deleteChat = async (chatId: any) => {
+    const token = localStorage.getItem("loginInfo");
+
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const decodeToken = jwtDecode<any>(token);
+
+    if (decodeToken?.membership === 0) {
+      Swal.fire({
+        title: "Upgrade your membership.",
+        text: "Sorry, to delete chats, you need to upgrade your membership",
+        icon: "error",
+        showCancelButton: true,
+        confirmButtonText: "Upgrade the membership",
+        cancelButtonText: "Continue as the free member",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.push("/membership");
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          router.push("/messaging");
+        } else {
+          router.back();
+        }
+      });
+      return;
+    }
+
     const result = await Swal.fire({
       title: "Are you sure?",
       text: "This chat will be deleted permanently!",
@@ -282,6 +299,7 @@ export default function ChatPage() {
         if (!response.ok) {
           throw new Error(`Failed to delete chat. Status: ${response.status}`);
         }
+
         Swal.fire("Deleted!", "The chat has been deleted.", "success");
         fetchAllChats();
       } catch (error) {
@@ -297,6 +315,36 @@ export default function ChatPage() {
 
   const mailClick = () => {
     router.push("/mailbox");
+  };
+
+  const openChatDetails = (chat: any) => {
+    const token = localStorage.getItem("loginInfo");
+
+    if (token) {
+      const decodeToken = jwtDecode<any>(token);
+      if (decodeToken?.membership == 0) {
+        Swal.fire({
+          title: `Upgrade your membership.`,
+          text: `Sorry, to access this page, you need to upgrade your membership`,
+          icon: "error",
+          showCancelButton: true,
+          confirmButtonText: "Upgrade the membership",
+          cancelButtonText: "Continue as the free member",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            router.push("/membership");
+          } else if (result.dismiss === Swal.DismissReason.cancel) {
+            router.push("/messaging");
+          } else {
+            router.back();
+          }
+        });
+      } else {
+        router.push(`/messaging/${chat}`);
+      }
+    } else {
+      router.push("/login");
+    }
   };
 
   return (
@@ -394,9 +442,7 @@ export default function ChatPage() {
                           justifyContent: "space-between",
                           "&:hover": { bgcolor: "rgba(255, 255, 255, 0.1)" },
                         }}
-                        onClick={() =>
-                          router.push(`/messaging/${chat?.ToProfileId}`)
-                        }
+                        onClick={() => openChatDetails(chat?.ToProfileId)}
                       >
                         {/* Avatar */}
                         <ListItemAvatar>
@@ -593,7 +639,7 @@ export default function ChatPage() {
                   {userProfiles.map((user: any) => (
                     <ListItem
                       key={user.id}
-                      onClick={() => router.push(`/messaging/${user.Id}`)}
+                      onClick={() => openChatDetails(user?.Id)}
                       sx={{
                         px: 2,
                         py: 1,
@@ -670,9 +716,7 @@ export default function ChatPage() {
                           justifyContent: "space-between",
                           "&:hover": { bgcolor: "rgba(255, 255, 255, 0.1)" },
                         }}
-                        onClick={() =>
-                          router.push(`/messaging/${chat?.ToProfileId}`)
-                        } // Redirect when clicking anywhere except the delete button
+                        onClick={() => openChatDetails(chat?.ToProfileId)}
                       >
                         {/* Avatar */}
                         <ListItemAvatar>

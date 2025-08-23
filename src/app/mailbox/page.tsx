@@ -90,39 +90,9 @@ export default function ChatPage() {
   const [open, setOpen] = useState(false);
   const [userDeviceToken, setUserDeviceToken] = useState(null);
   const [membership, setMembership] = useState(0);
-  const [messages, setMessages] = useState<any>([
-    { sender: "user", text: "Hello! How are you?" },
-    { sender: "other", text: "I'm good, thanks! How about you?" },
-  ]);
-  const [chatList, setChatList] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      lastMessage: "See you tomorrow!",
-      avatar: "/path-to-avatar1.jpg",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      lastMessage: "Got it, thanks!",
-      avatar: "/path-to-avatar2.jpg",
-    },
-  ]);
+  const [messages, setMessages] = useState<any>([]);
+  const [chatList, setChatList] = useState([]);
 
-  const [sentMails, setSentMails] = useState([
-    {
-      id: 1,
-      to: "user1@example.com",
-      subject: "Hello",
-      message: "How are you?",
-    },
-    {
-      id: 2,
-      to: "user2@example.com",
-      subject: "Meeting",
-      message: "Let's meet at 4 PM",
-    },
-  ]);
   const [newMail, setNewMail] = useState({
     subject: "",
     message: "",
@@ -143,7 +113,35 @@ export default function ChatPage() {
   const [selectedUserId, setSelectedUserId] = useState<any>(null);
 
   const handleMailClick = async (chat: any) => {
-    console.log(chat);
+    const token = localStorage.getItem("loginInfo");
+
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const decodeToken = jwtDecode<any>(token);
+
+    if (decodeToken?.membership === 0) {
+      Swal.fire({
+        title: "Upgrade your membership.",
+        text: "Sorry, to access mails, you need to upgrade your membership",
+        icon: "error",
+        showCancelButton: true,
+        confirmButtonText: "Upgrade the membership",
+        cancelButtonText: "Continue as the free member",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.push("/membership");
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          router.push("/messaging");
+        } else {
+          router.back();
+        }
+      });
+      return;
+    }
+
     setSelectedMail({
       Avatar: chat.Avatar,
       ProfileFromId: chat.ProfileIdFrom,
@@ -159,17 +157,51 @@ export default function ChatPage() {
       image3: chat.Image_3 || null,
       image4: chat.Image_4 || null,
     });
+
     setOpenModal(true);
-    const result = await fetch(
-      `/api/user/mailbox/reply?chatid=${chat.MessageId}`
-    );
-    const mails = await result.json();
-    console.log("mailswithreply", mails.data);
-    setSelectedMailsWithReply(mails.data);
+
+    try {
+      const result = await fetch(
+        `/api/user/mailbox/reply?chatid=${chat.MessageId}`
+      );
+      const mails = await result.json();
+      setSelectedMailsWithReply(mails.data);
+    } catch (error) {
+      console.error("Failed to fetch mail replies:", error);
+      Swal.fire("Error!", "Unable to load mail replies.", "error");
+    }
   };
 
   const handleMailDesktopClick = async (chat: any) => {
-    console.log(chat);
+    const token = localStorage.getItem("loginInfo");
+
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const decodeToken = jwtDecode<any>(token);
+
+    if (decodeToken?.membership === 0) {
+      Swal.fire({
+        title: "Upgrade your membership.",
+        text: "Sorry, to access mails, you need to upgrade your membership",
+        icon: "error",
+        showCancelButton: true,
+        confirmButtonText: "Upgrade the membership",
+        cancelButtonText: "Continue as the free member",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.push("/membership");
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          router.push("/messaging");
+        } else {
+          router.back();
+        }
+      });
+      return;
+    }
+
     setSelectedMail({
       Avatar: chat.Avatar,
       ProfileFromId: chat.ProfileIdFrom,
@@ -185,64 +217,28 @@ export default function ChatPage() {
       image3: chat.Image_3 || null,
       image4: chat.Image_4 || null,
     });
-    const result = await fetch(
-      `/api/user/mailbox/reply?chatid=${chat.MessageId}`
-    );
-    const mails = await result.json();
-    console.log("mailswithreply", mails.data);
-    setSelectedMailsWithReply(mails.data);
+
+    try {
+      const result = await fetch(
+        `/api/user/mailbox/reply?chatid=${chat.MessageId}`
+      );
+      const mails = await result.json();
+      setSelectedMailsWithReply(mails.data);
+    } catch (error) {
+      console.error("Failed to fetch mail replies:", error);
+      Swal.fire("Error!", "Unable to load mail replies.", "error");
+    }
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("loginInfo");
-    console.log(token);
-    if (token) {
-      const decodeToken = jwtDecode<any>(token);
-      setMembership(decodeToken?.membership);
-      console.log(decodeToken);
-
-      if (decodeToken?.membership == 0) {
-        Swal.fire({
-          title: `Upgrade your membership.`,
-          text: `Sorry, to access this page, you need to upgrade your membership`,
-          icon: "error",
-          showCancelButton: true,
-          confirmButtonText: "Upgrade the membership",
-          cancelButtonText: "Continue as the free member",
-        }).then((result) => {
-          if (result.isConfirmed) {
-            router.push("/membership");
-          } else if (result.dismiss === Swal.DismissReason.cancel) {
-            router.back();
-          } else {
-            router.back();
-          }
-        });
-      } else {
-        router.push("/mailbox");
-      }
-    } else {
-      router.push("/login");
-    }
-  }, []);
-
-  useEffect(() => {
-    socket.on("connect", () => {
-      console.log("Connected to WebSocket server");
-    });
-
-    socket.on("disconnect", () => {
-      console.log("Disconnected from WebSocket server");
-    });
+    socket.on("connect", () => {});
+    socket.on("disconnect", () => {});
     socket.on("message", (message) => {
-      // Handle incoming message
       fetchAllChats();
     });
     socket.on("error", (error) => {
       console.error("WebSocket error:", error);
-      // Handle error, e.g., display an error message to the user
     });
-
     return () => {
       socket.off("connect");
       socket.off("disconnect");
@@ -274,26 +270,39 @@ export default function ChatPage() {
     }
   };
 
-  console.log(chatList, "========================");
-
   const handleCloseMailBox = () => {
-    setMailbox(!mailBoxOpen);
+    const token = localStorage.getItem("loginInfo");
+
+    if (token) {
+      const decodeToken = jwtDecode<any>(token);
+      if (decodeToken?.membership == 0) {
+        Swal.fire({
+          title: `Upgrade your membership.`,
+          text: `Sorry, to access this page, you need to upgrade your membership`,
+          icon: "error",
+          showCancelButton: true,
+          confirmButtonText: "Upgrade the membership",
+          cancelButtonText: "Continue as the free member",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            router.push("/membership");
+          } else if (result.dismiss === Swal.DismissReason.cancel) {
+            router.push("/mailbox");
+          } else {
+            router.back();
+          }
+        });
+      } else {
+        setMailbox(!mailBoxOpen);
+      }
+    } else {
+      router.push("/login");
+    }
   };
 
   const handleCloseChatBox = () => {
     setChat(!chatOpen);
     setSearchQuery("");
-  };
-
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      setMessages([...messages, { sender: "user", text: newMessage }]);
-      setNewMessage("");
-    }
-  };
-
-  const handleEmojiClick = (emoji: any) => {
-    setNewMessage((prev) => prev + emoji.emoji);
   };
 
   const handleImageUpload = async (
@@ -306,19 +315,15 @@ export default function ChatPage() {
 
     const processedImages = await Promise.all(
       newImages.map(async (file) => {
-        // Compression options
         const options = {
           maxSizeMB: 1,
           maxWidthOrHeight: 1920,
           useWebWorker: true,
-          fileType: file.type, // Preserve the original file type
+          fileType: file.type,
         };
 
         try {
-          // Always compress the image to ensure consistent handling
           const compressedFile = await imageCompression(file, options);
-
-          // Create a new File instance from the compressed blob
           const processedFile = new File([compressedFile], file.name, {
             type: file.type,
             lastModified: new Date().getTime(),
@@ -352,6 +357,7 @@ export default function ChatPage() {
       setProfileId(localStorage.getItem("logged_in_profile"));
     }
   }, []);
+
   useEffect(() => {
     if (profileId) {
       getCurrentLocation();
@@ -359,14 +365,14 @@ export default function ChatPage() {
       getMyProfile(profileId);
     }
   }, [profileId]);
-  // Function to fetch all chats
+
   const fetchAllChats = async () => {
     try {
       let profileid = await localStorage.getItem("logged_in_profile");
       const response = await axios.get(
         `/api/user/mailbox?profileid=${profileid}&type=received`
       );
-      setChatList(response.data.data); // Assuming the data is in `data.data`
+      setChatList(response.data.data);
     } catch (err: any) {
       console.error("Error fetching chats:", err);
     }
@@ -377,11 +383,7 @@ export default function ChatPage() {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-
-          // Reverse geocoding to get the location name (you may need a third-party service here)
           const locationName = await getLocationName(latitude, longitude);
-
-          // Send the location to your API
           await sendLocationToAPI(locationName, latitude, longitude);
         },
         (error) => {
@@ -394,10 +396,9 @@ export default function ChatPage() {
   };
 
   const getLocationName = async (latitude: number, longitude: number) => {
-    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0"; // Replace with your actual API key
+    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0";
 
     try {
-      // Call the Google Maps Geocoding API
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
       );
@@ -405,12 +406,9 @@ export default function ChatPage() {
       if (!response.ok) {
         throw new Error(`Error: ${response.statusText}`);
       }
-
       const data = await response.json();
-
-      // Extract the location name from the response
       if (data.status === "OK" && data.results.length > 0) {
-        return data.results[0].formatted_address; // Return the formatted address of the first result
+        return data.results[0].formatted_address;
       }
 
       console.error("No results found or status not OK:", data);
@@ -447,7 +445,6 @@ export default function ChatPage() {
 
       const data = await response.json();
       if (response.ok) {
-        // console.log('Location sent successfully:', data);
       } else {
         console.error("Error sending location:", data.message);
       }
@@ -455,19 +452,7 @@ export default function ChatPage() {
       console.error("Error sending location to API:", error);
     }
   };
-  const debounce = (func: Function, delay: number) => {
-    let timer: NodeJS.Timeout;
-    return (...args: any[]) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => func(...args), delay);
-    };
-  };
 
-  const handleSearchChange = debounce((value: string) => {
-    setPage(1); // Reset to first page for new search
-    setHasMore(true); // Reset pagination
-    setSearchQuery(value);
-  }, 300);
   useEffect(() => {
     const fetchUserProfiles = async () => {
       if (loading || !hasMore) return;
@@ -486,7 +471,7 @@ export default function ChatPage() {
             page === 1 ? data.profiles : [...prevProfiles, ...data.profiles]
           );
         } else {
-          setHasMore(false); // No more results
+          setHasMore(false);
         }
 
         setLoading(false);
@@ -498,10 +483,6 @@ export default function ChatPage() {
 
     fetchUserProfiles();
   }, [page, searchQuery]);
-
-  const handleChange = (event: any, newValue: any) => {
-    setActiveTab(newValue);
-  };
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -523,9 +504,7 @@ export default function ChatPage() {
 
       for (const image of uploadedImages) {
         try {
-          console.log("image", image);
           const formData = new FormData();
-          // Create a new blob from the file to ensure a fresh ArrayBuffer
           const blob = new Blob([image.file], { type: image.file.type });
           formData.append("image", blob, image.file.name);
 
@@ -540,19 +519,13 @@ export default function ChatPage() {
 
           const data = await response.json();
           uploadedUrls.push(data.blobUrl);
-
-          // Add a small delay between uploads
           await new Promise((resolve) => setTimeout(resolve, 100));
         } catch (error) {
           console.error("Error uploading image:", error);
-          // Continue with other images even if one fails
           uploadedUrls.push("");
         }
       }
 
-      console.log("uploadurls", uploadedUrls);
-
-      // 2. Send the email with the original mailbox functionality
       const response = await fetch("/api/user/mailbox", {
         method: "POST",
         headers: {
@@ -604,11 +577,9 @@ export default function ChatPage() {
     });
 
     const result = await response.json();
-    console.log(result);
   };
 
   const deleteChat = async (chatId: any) => {
-    // Show confirmation alert
     const result = await Swal.fire({
       title: "Are you sure?",
       text: "This chat will be deleted permanently!",
@@ -622,7 +593,6 @@ export default function ChatPage() {
     // If user confirms deletion
     if (result.isConfirmed) {
       try {
-        // console.log(chatId);
         const response = await fetch("/api/user/mailbox/delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -632,7 +602,7 @@ export default function ChatPage() {
         if (!response.ok) {
           throw new Error(`Failed to delete chat. Status: ${response.status}`);
         }
-        // Show success alert
+
         Swal.fire("Deleted!", "The chat has been deleted.", "success").then(
           () => {
             window.location.reload();
@@ -652,16 +622,6 @@ export default function ChatPage() {
 
   const handleGrantAccess = async () => {
     try {
-      // const checkResponse = await fetch('/api/user/sweeping/grant', {
-      //     method: 'POST',
-      //     headers: {
-      //         'Content-Type': 'application/json',
-      //     },
-      //     body: JSON.stringify({ profileid: profileId, targetid: userProfiles[currentIndex]?.Id }),
-      // });
-
-      // const checkData = await checkResponse.json();
-      const checkData = "121212";
     } catch (error) {
       console.error("Error:", error);
     }
@@ -788,7 +748,6 @@ export default function ChatPage() {
                 )}
 
                 {chatList.map((chat: any, index: number) => {
-                  // Check if Conversation contains an <img> tag
                   const hasImage = /<img.*?src=["'](.*?)["']/.test(
                     chat.Conversation
                   );
@@ -808,7 +767,7 @@ export default function ChatPage() {
                         justifyContent: "space-between",
                         "&:hover": { bgcolor: "rgba(255, 255, 255, 0.1)" },
                       }}
-                      onClick={() => handleMailClick(chat)} // Replace the existing onClick handler
+                      onClick={() => handleMailClick(chat)}
                     >
                       {/* Avatar */}
                       <ListItemAvatar>
@@ -817,7 +776,7 @@ export default function ChatPage() {
                             chat?.NewMessages > 0 ? chat.NewMessages : 0
                           }
                           color="error"
-                          invisible={chat?.NewMessages == 0} // Hide badge if no new messages
+                          invisible={chat?.NewMessages == 0}
                         >
                           <Box
                             sx={{
@@ -2360,7 +2319,7 @@ export default function ChatPage() {
             }}
           />
         </Dialog>
-        
+
         {/* Image Modal */}
         <Dialog
           open={imageModalOpen}

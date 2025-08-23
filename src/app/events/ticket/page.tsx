@@ -94,7 +94,7 @@ const BillingUpgrade: any = () => {
               <h1 style="font-weight: bold; font-size: 18px; margin-bottom: 10px;">${
                 x == "1"
                   ? "Ticket Purchase Successful"
-                  : "Sorry, we were unable to process your card request"
+                  : "Sorry we were am unable to process your card for this event"
               }</h1>
               <p style="margin: 5px 0;"><strong>Event:</strong> ${eventName}</p>
               
@@ -167,7 +167,7 @@ const BillingUpgrade: any = () => {
         title:
           x == "1"
             ? `Ticket Confirmation for : ${eventName}`
-            : "Sorry, we were unable to process your card request",
+            : "Sorry we were am unable to process your card for this event",
         eventName: eventName,
         email: userProfile.Email,
         eventDescription: eventDescription,
