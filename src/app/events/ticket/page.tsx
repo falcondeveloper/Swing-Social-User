@@ -21,36 +21,14 @@ import CreditCardIcon from "@mui/icons-material/CreditCard";
 import { ToastContainer } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { jwtDecode } from "jwt-decode";
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#E91E63", // Setting the main color to #E91E63
+      main: "#E91E63",
     },
   },
 });
-
-// Define the form's data structure using a TypeScript interface
-interface FormData {
-  firstName: string;
-  lastName: string;
-  screenName: string;
-  streetAddress: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  phoneNumber: string;
-  membershipOption: string;
-  cardNumber: string;
-  expDate: string;
-  cvv: string;
-  promoCode: string;
-}
-interface UserProfile {
-  Id: any;
-  Username: any;
-}
 
 const BillingUpgrade: any = () => {
   const router = useRouter();
@@ -575,8 +553,8 @@ const BillingUpgrade: any = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ticketID: ticket.id,
-          ticketQuantity: ticket.quantity,
+          ticketID: ticket?.id,
+          ticketQuantity: ticket?.quantity,
         }),
       });
 

@@ -592,7 +592,7 @@ const RegisterPage = () => {
                 <TextField
                   fullWidth
                   autoFocus
-                  label="Name (This will never be shared or displayed)"
+                  label="Name (Never shared)"
                   name="userName"
                   placeholder="Your full name"
                   variant="outlined"
@@ -610,7 +610,7 @@ const RegisterPage = () => {
 
                 <TextField
                   fullWidth
-                  label="Username (This will be shown on your profile)"
+                  label="Profile Name"
                   name="user_name"
                   placeholder="Choose a unique handle"
                   variant="outlined"
