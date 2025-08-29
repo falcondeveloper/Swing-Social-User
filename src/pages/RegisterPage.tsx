@@ -628,7 +628,7 @@ const RegisterPage = () => {
                   sx={yourTextFieldSx}
                 />
                 <WhyWeAsk
-                  title="username"
+                  title="Profile Name"
                   points={[
                     "Helps friends recognize you and reduces fake profiles",
                     "Shown on your profile. You can update it any time",
