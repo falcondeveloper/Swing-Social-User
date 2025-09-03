@@ -33,7 +33,6 @@ const theme = createTheme({
     background: { default: "#0A0118" },
   },
   typography: { fontFamily: '"Poppins", "Roboto", "Arial", sans-serif' },
-  // shape: { borderRadius: 16 },
 });
 
 const ParticleField = memo(() => {
@@ -201,7 +200,7 @@ const LoginPage = () => {
         email:
           loginMethod === "password"
             ? Yup.string()
-                .transform((val) => normalize(val)) // <-- key line
+                .transform((val) => normalize(val))
                 .required("Email or username is required")
                 .test(
                   "email-or-username",
@@ -209,7 +208,7 @@ const LoginPage = () => {
                   (val) => !!val && (isEmail(val) || isUsername(val))
                 )
             : Yup.string()
-                .transform((val) => normalize(val)) // keep for email-only too
+                .transform((val) => normalize(val))
                 .required("Email is required")
                 .email("Enter a valid email"),
         password:

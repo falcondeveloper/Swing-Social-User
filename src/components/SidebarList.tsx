@@ -11,9 +11,6 @@ import EventIcon from "@mui/icons-material/Event";
 import TravelExploreIcon from "@mui/icons-material/TravelExplore";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import StorefrontIcon from "@mui/icons-material/Storefront";
-import UpcomingIcon from "@mui/icons-material/Upcoming";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import GroupsIcon from "@mui/icons-material/Groups";
 import { useRouter } from "next/navigation";
 
 interface SidebarListItem {
@@ -39,9 +36,6 @@ const SidebarList: React.FC = () => {
       icon: <MenuBookIcon />,
     },
     { label: "Marketplace", route: "/marketplace", icon: <StorefrontIcon /> },
-    { label: "Coming Soon", route: "/coming-soon", icon: <UpcomingIcon /> },
-    { label: "Playdates", route: "/playdates", icon: <FavoriteIcon /> },
-    { label: "Groups", route: "/groups", icon: <GroupsIcon /> },
   ];
 
   const handleNavigation = (route: string) => {

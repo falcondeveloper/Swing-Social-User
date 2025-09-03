@@ -31,6 +31,8 @@ import { Block, Close } from "@mui/icons-material";
 import DialogActions from "@mui/material/DialogActions";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
+import { toast } from "react-toastify";
+import { jwtDecode } from "jwt-decode";
 
 interface UserProfileModalProps {
   handleGrantAccess: () => void;
@@ -119,6 +121,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [scrollTop, setScrollTop] = useState(0);
   const [openImageModal, setOpenImageModal] = useState<boolean>(false);
   const [modalImageSrc, setModalImageSrc] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
     if (!userid) return;
@@ -184,39 +187,51 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
     }
   };
 
-  const handleAddFriend = async () => {
+  useEffect(() => {
+    const token = localStorage.getItem("loginInfo");
+    if (token) {
+      try {
+        const decodeToken = jwtDecode<any>(token);
+        setUserName(decodeToken?.profileName || "User");
+      } catch (error) {
+        console.error("Invalid token:", error);
+        router.push("/login");
+      }
+    } else {
+      router.push("/login");
+    }
+  }, []);
+
+  const handleAddFriend = async (): Promise<void> => {
+    const tid = toast.loading("Sending friend request...");
+
     try {
       const mailResponse = await fetch("/api/user/mailbox", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fromId: profileId,
           toId: userid,
           htmlBody: `
-                        <div style="text-align: center; padding: 20px; font-family: Arial, sans-serif;">
-                            <h2 style="color: #333;">Friend Request</h2>
-                            <p style="color: #666; margin: 15px 0;">You have received a friend request</p>
-                            <div style="margin: 20px 0; display: flex; justify-content: center; gap: 20px;">
-                                <button onclick="fetch('/api/user/profile/friend/accept', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ fromId: '${profileId}', toId: '${userid}' })
-                                })" 
-                                   style="display: inline-block; padding: 10px 20px; 
-                                          background-color: #4CAF50; color: white; text-decoration: none; 
-                                          border-radius: 5px; border: none; cursor: pointer;">Accept</button>
-                                <button onclick="fetch('/api/user/profile/friend/decline', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ fromId: '${profileId}', toId: '${userid}' })
-                                })" 
-                                   style="display: inline-block; padding: 10px 20px;
-                                          background-color: #f44336; color: white; text-decoration: none; 
-                                          border-radius: 5px; border: none; cursor: pointer;">Decline</button>
-                            </div>
-                        </div>`,
+          <div style="text-align: center; padding: 20px; font-family: Arial, sans-serif;">
+            <h2 style="color: #333;">Friend Request</h2>
+            <p style="color: #666; margin: 15px 0;">You have received a friend request</p>
+            <div style="margin: 20px 0; display: flex; justify-content: center; gap: 20px;">
+              <button onclick="fetch('/api/user/profile/friend/accept', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fromId: '${profileId}', toId: '${userid}' })
+              })" 
+              style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; border: none; cursor: pointer;">Accept</button>
+
+              <button onclick="fetch('/api/user/profile/friend/decline', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fromId: '${profileId}', toId: '${userid}' })
+              })" 
+              style="display: inline-block; padding: 10px 20px; background-color: #f44336; color: white; text-decoration: none; border-radius: 5px; border: none; cursor: pointer;">Decline</button>
+            </div>
+          </div>`,
           subject: `Friend Request`,
           image1: "",
           image2: "",
@@ -229,20 +244,40 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
       if (!mailResponse.ok) {
         throw new Error(`Failed to send email. Status: ${mailResponse.status}`);
       }
-      const response = await fetch("/api/user/notification/requestfriend", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: userid,
-          body: "Mail From Swing Social",
-          image: "https://example.com/path/to/image.jpg",
-          url: `https://swing-social-user.vercel.app/mailbox/${userid}`,
-        }),
+
+      const notifyResponse = await fetch(
+        "/api/user/notification/requestfriend",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: userid,
+            title: "New Friend Request!",
+            body: `${userName} sent you a friend request!`,
+            image: "https://example.com/path/to/image.jpg",
+            url: `https://swing-social-user.vercel.app/mailbox/${userid}`,
+          }),
+        }
+      );
+
+      if (!notifyResponse.ok) {
+        throw new Error(`Failed to notify. Status: ${notifyResponse.status}`);
+      }
+
+      toast.update(tid, {
+        render: "Friend request sent 🎉",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error:", error);
+      toast.update(tid, {
+        render: error?.message ?? "Something went wrong",
+        type: "error",
+        isLoading: false,
+        autoClose: 4000,
+      });
     }
   };
 
@@ -260,9 +295,16 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
       });
 
       const checkData = await checkResponse.json();
-      setProfileImages(checkData?.images);
+
+      if (checkResponse.ok) {
+        toast.success("Friend has been blocked successfully!");
+        handleClose();
+      } else {
+        toast.error(checkData.message || "Failed to block friend.");
+      }
     } catch (error) {
       console.error("Error:", error);
+      toast.error("Something went wrong. Please try again.");
     }
   };
 
@@ -617,7 +659,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                       onClick={handleAddFriend}
                       variant="contained"
                       sx={{
-                        flex: 2, // Keep this box wider
+                        flex: 2,
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
@@ -625,8 +667,8 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                         backgroundColor: "#555",
                         color: "white",
                         borderRadius: 1,
-                        padding: 1, // Reduce padding inside the box
-                        minWidth: "80px", // Minimize box size for button container
+                        padding: 1,
+                        minWidth: "80px",
                       }}
                     >
                       <span style={{ fontWeight: "bold", fontSize: "16px" }}>

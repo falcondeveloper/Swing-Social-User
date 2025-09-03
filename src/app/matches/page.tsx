@@ -261,9 +261,7 @@ export default function MatchesPage() {
     { label: "Likes Me", match: "LikesMe" },
     { label: "Friends", match: "Friends" },
     { label: "Denied", match: "Denied" },
-    // { label: "Online", match: "Online" },
     { label: "Search", match: "Search" },
-    // { label: "Blocked", match: "Blocked" },
   ];
 
   const handlePhotosChange = (event: any) => {

@@ -8,8 +8,6 @@ import {
   CardMedia,
   Container,
   Typography,
-  BottomNavigation,
-  BottomNavigationAction,
   Chip,
   useTheme,
   useMediaQuery,
@@ -28,9 +26,6 @@ import app from "../../../firebase";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import { io } from "socket.io-client";
-import Slider from "react-slick"; // Import the react-slick slider
-import "slick-carousel/slick/slick.css"; // Import the slick carousel CSS
-import "slick-carousel/slick/slick-theme.css"; // Import the slick carousel theme CSS
 
 const categories = [
   {
@@ -72,29 +67,24 @@ const categories = [
     url: "https://swingsocial.co/travel/",
   },
 ];
+
 const socket = io("https://api.nomolive.com/");
 
 const Home = () => {
-  const [profileId, setProfileId] = useState<any>(); // Animation direction
-  const [profile, setProfile] = useState<any>();
-  const [location, setLocation] = useState<{
-    name: string;
-    latitude: number;
-    longitude: number;
-  } | null>(null);
-
-  const [value, setValue] = useState(0);
-  const [currentName, setCurrentName] = useState<any>("");
-  const theme = useTheme();
-  //const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
   const { token, notificationPermissionStatus } = useFcmToken();
 
+  const [profileId, setProfileId] = useState<any>();
+  const [profile, setProfile] = useState<any>();
+  const [value, setValue] = useState(0);
+  const [currentName, setCurrentName] = useState<any>("");
+
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("loginInfo");
-      if (token) {
-        const decodeToken = jwtDecode<any>(token);
+      const tokenDevice = localStorage.getItem("loginInfo");
+      if (tokenDevice) {
+        const decodeToken = jwtDecode<any>(tokenDevice);
         setCurrentName(decodeToken?.profileName);
         setProfileId(decodeToken?.profileId);
         setProfile(decodeToken);
@@ -110,18 +100,13 @@ const Home = () => {
   });
 
   useEffect(() => {
-    if (typeof window === "undefined") return; // Prevent errors during SSR
-
-    socket.on("connect", () => {});
-
-    socket.on("disconnect", () => {});
+    if (typeof window === "undefined") return;
 
     socket.on("message", (message) => {
       const profileid = localStorage.getItem("logged_in_profile");
-
       if (message?.from === profileid || message?.to === profileid) {
         setNewMessage(true);
-        localStorage.setItem("isNewMessage", "true"); // Store in localStorage
+        localStorage.setItem("isNewMessage", "true");
       }
     });
 
@@ -130,8 +115,6 @@ const Home = () => {
     });
 
     return () => {
-      socket.off("connect");
-      socket.off("disconnect");
       socket.off("message");
       socket.off("error");
     };
@@ -140,7 +123,7 @@ const Home = () => {
   const resetNewMessage = () => {
     setNewMessage(false);
     if (typeof window !== "undefined") {
-      localStorage.setItem("isNewMessage", "false"); // Reset value
+      localStorage.setItem("isNewMessage", "false");
     }
   };
 
@@ -159,27 +142,13 @@ const Home = () => {
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-
-          // Reverse geocoding to get the location name
           const locationName = await getLocationName(latitude, longitude);
-
-          // Update the location state
-          setLocation({
-            name: locationName,
-            latitude,
-            longitude,
-          });
-
-          // Send the location to your API
           await sendLocationToAPI(locationName, latitude, longitude);
         } catch (error) {
           console.error("Error processing location:", error);
-          //notify.error("Failed to process your location. Please try again.");
         }
       },
-      (error) => {
-        //	handleGeolocationError(error);
-      },
+      (error) => {},
       {
         enableHighAccuracy: true,
         timeout: 10000,
@@ -189,10 +158,9 @@ const Home = () => {
   };
 
   const getLocationName = async (latitude: number, longitude: number) => {
-    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0"; // Replace with your actual API key
+    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0";
 
     try {
-      // Call the Google Maps Geocoding API
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
       );
@@ -202,12 +170,9 @@ const Home = () => {
       }
 
       const data = await response.json();
-
-      // Extract the location name from the response
       if (data.status === "OK" && data.results.length > 0) {
-        return data.results[0].formatted_address; // Return the formatted address of the first result
+        return data.results[0].formatted_address;
       }
-
       console.error("No results found or status not OK:", data);
       return "Unknown Location";
     } catch (error) {
@@ -250,8 +215,6 @@ const Home = () => {
     }
   };
 
-  const router = useRouter();
-
   const handleNavigate = (category: any) => {
     if (category?.isComingSoon) {
       Swal.fire({
@@ -265,46 +228,12 @@ const Home = () => {
 
   useEffect(() => {
     if (profileId && token) {
-      // Prepare the API payload
-      // const handleUpdateDeviceToken = async (token: any, profileId: any) => {
-      //   const payload = {
-      //     token: token,
-      //     profileId: profileId, // Replace with recipient's profile ID
-      //   };
-      //   try {
-      //     // Send the message to the API
-      //     const response = await fetch("/api/user/devicetoken", {
-      //       method: "POST",
-      //       headers: {
-      //         "Content-Type": "application/json",
-      //       },
-      //       body: JSON.stringify(payload),
-      //     });
-
-      //     // Handle the API response
-      //     if (response.ok) {
-      //       const result = await response.json();
-
-      //       // // Optionally update the messages state with a server response
-      //       // setMessages((prevMessages:any) => [
-      //       //     ...prevMessages,
-      //       //     { sender: "user", text: "Message delivered!" }, // Replace with actual server response if needed
-      //       // ]);
-      //     } else {
-      //       const errorData = await response.json();
-      //       console.error("Error sending message:", errorData);
-      //     }
-      //   } catch (error) {
-      //     console.error("Network error while sending message:", error);
-      //   }
-      // }
       const handleUpdateDeviceToken = async (token: any, profileId: any) => {
         const payload = {
           token: token,
-          profile: profile, // Replace with recipient's profile ID
+          profile: profile,
         };
         try {
-          // Send the message to the API
           const response = await fetch("/api/user/devicetoken", {
             method: "POST",
             headers: {
@@ -312,44 +241,30 @@ const Home = () => {
             },
             body: JSON.stringify(payload),
           });
-
-          // Handle the API response
-          if (response.ok) {
-            const result = await response.json();
-
-            // // Optionally update the messages state with a server response
-            // setMessages((prevMessages:any) => [
-            //     ...prevMessages,
-            //     { sender: "user", text: "Message delivered!" }, // Replace with actual server response if needed
-            // ]);
-          } else {
-            const errorData = await response.json();
-            console.error("Error sending message:", errorData);
+          if (!response.ok) {
+            console.error(
+              "❌ Error sending device token:",
+              await response.json()
+            );
           }
         } catch (error) {
-          console.error("Network error while sending message:", error);
+          console.error("❌ Network error while sending device token:", error);
         }
       };
       handleUpdateDeviceToken(token, profileId);
     }
   }, [token, profileId]);
-  // Use the token as needed
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       const messaging = getMessaging(app);
-      const unsubscribe = onMessage(messaging, (payload: any) => {
-        // Handle the received push notification while the app is in the foreground
-        // You can display a notification or update the UI based on the payload
-      });
+      const unsubscribe = onMessage(messaging, (payload: any) => {});
       return () => {
-        unsubscribe(); // Unsubscribe from the onMessage event
+        unsubscribe();
       };
     }
   }, [notificationPermissionStatus]);
 
-  // Service Worker registration moved to useEffect to prevent SSR issues
   useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       navigator.serviceWorker
@@ -361,15 +276,23 @@ const Home = () => {
     }
   }, []);
 
-  const sliderSettings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 3000,
-  };
+  useEffect(() => {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      const messaging = getMessaging(app);
+
+      const unsubscribe = onMessage(messaging, async (payload: any) => {
+        const registration = await navigator.serviceWorker.ready;
+        if (registration.active) {
+          registration.active.postMessage({
+            type: "SHOW_NOTIFICATION",
+            payload,
+          });
+        }
+      });
+
+      return () => unsubscribe();
+    }
+  }, [notificationPermissionStatus]);
 
   useEffect(() => {
     const id = localStorage.getItem("logged_in_profile");
@@ -655,7 +578,7 @@ const Home = () => {
               >
                 Swing Social Community
               </Typography>
-              
+
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -776,7 +699,7 @@ const Home = () => {
                       transform: "scale(1.1)",
                     },
                     "&:active": {
-                      transform: "scale(0.95)"
+                      transform: "scale(0.95)",
                     },
                   }}
                   onClick={() => {

@@ -14,13 +14,14 @@ import {
   Stack,
   Container,
   alpha,
-  useTheme,
   useMediaQuery,
   TextField,
   InputAdornment,
-  Select,
-  MenuItem,
-  SelectChangeEvent,
+  Tabs,
+  Tab,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import {
   ChevronLeft,
@@ -29,108 +30,171 @@ import {
   ViewList,
   CalendarMonth,
   Add,
+  Search,
+  ExpandMore,
 } from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
-import { LocationOn, MyLocation } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import SidebarList from "@/components/SidebarList";
 import Footer from "@/components/Footer";
 import { ArrowLeft } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
-import { Sort as SortIcon } from "@mui/icons-material";
-import Menu from "@mui/material/Menu";
 import Autocomplete from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
 
 const daysOfWeek = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
-interface LocationSearchProps {
-  onLocationChange?: (location: string) => void;
-  onRadiusChange?: (radius: number) => void;
-  defaultRadius?: number;
+interface LoadingScreenProps {
+  logoSrc?: string;
 }
 
-const LocationSearch: React.FC<LocationSearchProps> = ({
-  onLocationChange,
-  onRadiusChange,
-  defaultRadius = 0,
+const shimmerKeyframes = `
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%) skewX(-15deg);
+    }
+    100% {
+      transform: translateX(100%) skewX(-15deg);
+    }
+  }
+`;
+
+const loadingBarKeyframes = `
+  @keyframes loadingBar {
+    0% {
+      left: -30%;
+      width: 30%;
+    }
+    50% {
+      width: 40%;
+    }
+    100% {
+      left: 100%;
+      width: 30%;
+    }
+  }
+`;
+
+const LoadingScreen: React.FC<LoadingScreenProps> = ({
+  logoSrc = "/loading.png",
 }) => {
-  const [location, setLocation] = useState("");
-  const [radius, setRadius] = useState<number>(defaultRadius);
-
-  const handleLocationChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setLocation(value);
-    onLocationChange?.(value);
-  };
-
-  const handleRadiusChange = (event: any) => {
-    const newRadius = event.target.value as number;
-    setRadius(newRadius);
-    onRadiusChange?.(newRadius);
-  };
-
   return (
-    <Stack spacing={2} direction="row" sx={{ width: "100%" }}>
-      <Box sx={{ flexGrow: 1 }}>
-        <TextField
-          fullWidth
-          value={location}
-          onChange={handleLocationChange}
-          placeholder="Enter location"
-          variant="outlined"
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <LocationOn />
-              </InputAdornment>
-            ),
-            sx: {
-              bgcolor: "background.paper",
-              "&:hover": {
-                bgcolor: alpha("#fff", 0.09),
-              },
-            },
-          }}
-        />
-      </Box>
-
-      <Select
-        value={radius}
-        onChange={handleRadiusChange}
-        variant="outlined"
+    <>
+      <style>
+        {shimmerKeyframes}
+        {loadingBarKeyframes}
+      </style>
+      <Box
         sx={{
-          minWidth: 120,
-          bgcolor: "background.paper",
-          "& .MuiOutlinedInput-notchedOutline": {
-            borderColor: alpha("#fff", 0.23),
-          },
-          "&:hover .MuiOutlinedInput-notchedOutline": {
-            borderColor: alpha("#fff", 0.4),
-          },
-          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#f50057",
-          },
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          backgroundColor: "#121212",
+          position: "relative",
         }}
       >
-        <MenuItem value={0}>Any distance</MenuItem>
-        <MenuItem value={5}>5 miles</MenuItem>
-        <MenuItem value={10}>10 miles</MenuItem>
-        <MenuItem value={25}>25 miles</MenuItem>
-        <MenuItem value={50}>50 miles</MenuItem>
-        <MenuItem value={100}>100 miles</MenuItem>
-      </Select>
-    </Stack>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            marginBottom: 1,
+            gap: "12px",
+          }}
+        >
+          <Box
+            component="img"
+            src={logoSrc}
+            alt="Logo"
+            sx={{
+              width: "50px",
+              height: "auto",
+            }}
+          />
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: "32px",
+              letterSpacing: "-0.02em", // Reduced letter spacing
+              fontWeight: "bold",
+              color: "#C2185B",
+              position: "relative",
+              overflow: "hidden",
+              "&::after": {
+                content: '""',
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+              },
+            }}
+          >
+            SWINGSOCIAL
+          </Typography>
+        </Box>
+
+        {/* Loading Bar */}
+        <Box
+          sx={{
+            position: "relative",
+            width: "120px",
+            height: "2px",
+            backgroundColor: "rgba(194,24,91,0.2)",
+            borderRadius: "4px",
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              height: "100%",
+              backgroundColor: "#C2185B",
+              borderRadius: "4px",
+              animation: "loadingBar 1.5s infinite",
+            }}
+          />
+        </Box>
+
+        {/* Subtitle */}
+        <Box sx={{ textAlign: "center", marginTop: 2 }}>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontSize: "14px",
+              letterSpacing: "0.02em",
+              opacity: 0.9,
+              color: "#C2185B",
+              position: "relative",
+              overflow: "hidden",
+              fontWeight: "bold",
+              "&::after": {
+                content: '""',
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+              },
+            }}
+          >
+            The best dating and events platform for Swingers
+          </Typography>
+        </Box>
+      </Box>
+    </>
   );
 };
 
 export default function CalendarView() {
   const router = useRouter();
-  const theme = useTheme();
+  const currentMonthRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
 
-  // Other state declarations
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<any>([]);
   const [profileId, setProfileId] = useState<any>();
@@ -140,135 +204,19 @@ export default function CalendarView() {
     [key: string]: any[];
   }>({});
   const [loading, setLoading] = useState(true);
-  const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
-  const [sortBy, setSortBy] = useState<"recent" | "location">("recent");
   const [sortedEvents, setSortedEvents] = useState<any[]>([]);
   const [cityInput, setCityInput] = useState("");
   const [openCity, setOpenCity] = useState(false);
   const [cityLoading, setCityLoading] = useState(false);
   const [cityOption, setCityOption] = useState<any[]>([]);
   const [searchStatus, setSearchStatus] = useState(false);
-  const [membership, setMembership] = useState(0);
+  const [tabValue, setTabValue] = useState("upcoming");
+  const [searchType, setSearchType] = useState<"none" | "city" | "text">(
+    "none"
+  );
+  const [searchText, setSearchText] = useState("");
+  const [expanded, setExpanded] = useState(false);
 
-  // Add this ref
-  const currentMonthRef = useRef<HTMLDivElement>(null);
-
-  // Add these helper functions at the top level
-  const findClosestEvent = (events: any[]) => {
-    const today = new Date();
-    return events.reduce((closest, event) => {
-      const eventDate = new Date(event.StartTime);
-      const currentClosestDate = new Date(closest.StartTime);
-
-      const diffToToday = Math.abs(eventDate.getTime() - today.getTime());
-      const closestDiffToToday = Math.abs(
-        currentClosestDate.getTime() - today.getTime()
-      );
-
-      return diffToToday < closestDiffToToday ? event : closest;
-    }, events[0]);
-  };
-
-  const scrollToEvent = (eventElement: Element) => {
-    const container = document.querySelector(".events-container");
-    if (!container) return;
-
-    const containerRect = container.getBoundingClientRect();
-    const eventRect = eventElement.getBoundingClientRect();
-
-    // Calculate the relative position within the container
-    const containerTop = container.scrollTop;
-    const elementRelativeTop =
-      eventElement.getBoundingClientRect().top - containerRect.top;
-
-    // Calculate optimal scroll position (35% from the top)
-    const targetPosition =
-      containerTop + elementRelativeTop - containerRect.height * 0.35;
-
-    container.scrollTo({
-      top: targetPosition,
-      behavior: "smooth",
-    });
-  };
-
-  // Update the useEffect for scrolling
-  useEffect(() => {
-    if (!isMobile || loading || !sortedEvents.length) return;
-
-    const closestEvent = findClosestEvent(sortedEvents);
-    const eventElement = document.querySelector(
-      `[data-event-id="${closestEvent.Id}"]`
-    );
-
-    if (eventElement) {
-      // Initial rough positioning
-      eventElement.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-
-      // Fine-tune positioning after a short delay
-      scrollToEvent(eventElement);
-    }
-  }, [isMobile, loading, sortedEvents]);
-
-  const handleSortClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setSortAnchorEl(event.currentTarget);
-  };
-
-  const handleSortClose = () => {
-    setSortAnchorEl(null);
-  };
-
-  const handleSortSelect = (type: "recent" | "location") => {
-    setSortBy(type);
-    setSortAnchorEl(null);
-
-    const sorted = [...events];
-    if (type === "recent") {
-      sorted.sort(
-        (a, b) =>
-          new Date(b.StartTime).getTime() - new Date(a.StartTime).getTime()
-      );
-    } else if (type === "location") {
-      sorted.sort((a, b) => {
-        const venueA = (a.Venue || "").toLowerCase();
-        const venueB = (b.Venue || "").toLowerCase();
-        return venueA.localeCompare(venueB);
-      });
-    }
-    setSortedEvents(sorted);
-  };
-
-  const calculateDistance = (
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number
-  ) => {
-    const R = 6371; // Radius of the earth in km
-    const dLat = deg2rad(lat2 - lat1);
-    const dLon = deg2rad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(deg2rad(lat1)) *
-        Math.cos(deg2rad(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in km
-  };
-
-  const deg2rad = (deg: number) => {
-    return deg * (Math.PI / 180);
-  };
-
-  // Add this useEffect to initialize sortedEvents
-  useEffect(() => {
-    setSortedEvents(events);
-  }, [events]);
-
-  // Add this useEffect to fetch city options when input changes
   useEffect(() => {
     if (!openCity) {
       setCityOption([]);
@@ -301,155 +249,6 @@ export default function CalendarView() {
     fetchData();
   }, [cityInput, openCity]);
 
-  const shimmerKeyframes = `
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%) skewX(-15deg);
-    }
-    100% {
-      transform: translateX(100%) skewX(-15deg);
-    }
-  }
-`;
-
-  const loadingBarKeyframes = `
-  @keyframes loadingBar {
-    0% {
-      left: -30%;
-      width: 30%;
-    }
-    50% {
-      width: 40%;
-    }
-    100% {
-      left: 100%;
-      width: 30%;
-    }
-  }
-`;
-
-  interface LoadingScreenProps {
-    logoSrc?: string;
-  }
-
-  interface LoadingScreenProps {
-    logoSrc?: string;
-  }
-
-  const LoadingScreen: React.FC<LoadingScreenProps> = ({
-    logoSrc = "/loading.png",
-  }) => {
-    return (
-      <>
-        <style>
-          {shimmerKeyframes}
-          {loadingBarKeyframes}
-        </style>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-            backgroundColor: "#121212",
-            position: "relative",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              marginBottom: 1,
-              gap: "12px",
-            }}
-          >
-            <Box
-              component="img"
-              src={logoSrc}
-              alt="Logo"
-              sx={{
-                width: "50px",
-                height: "auto",
-              }}
-            />
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: "32px",
-                letterSpacing: "-0.02em", // Reduced letter spacing
-                fontWeight: "bold",
-                color: "#C2185B",
-                position: "relative",
-                overflow: "hidden",
-                "&::after": {
-                  content: '""',
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                },
-              }}
-            >
-              SWINGSOCIAL
-            </Typography>
-          </Box>
-
-          {/* Loading Bar */}
-          <Box
-            sx={{
-              position: "relative",
-              width: "120px",
-              height: "2px",
-              backgroundColor: "rgba(194,24,91,0.2)",
-              borderRadius: "4px",
-              overflow: "hidden",
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                height: "100%",
-                backgroundColor: "#C2185B",
-                borderRadius: "4px",
-                animation: "loadingBar 1.5s infinite",
-              }}
-            />
-          </Box>
-
-          {/* Subtitle */}
-          <Box sx={{ textAlign: "center", marginTop: 2 }}>
-            <Typography
-              variant="subtitle1"
-              sx={{
-                fontSize: "14px",
-                letterSpacing: "0.02em",
-                opacity: 0.9,
-                color: "#C2185B",
-                position: "relative",
-                overflow: "hidden",
-                fontWeight: "bold",
-                "&::after": {
-                  content: '""',
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                },
-              }}
-            >
-              The best dating and events platform for Swingers
-            </Typography>
-          </Box>
-        </Box>
-      </>
-    );
-  };
-
   const getDateKey = (date: Date) => {
     return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
   };
@@ -472,12 +271,15 @@ export default function CalendarView() {
   };
 
   useEffect(() => {
+    setSortedEvents(events);
+  }, [events]);
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("loginInfo");
       if (token) {
         const decodeToken = jwtDecode<any>(token);
         setProfileId(decodeToken?.profileId);
-        setMembership(decodeToken?.membership);
       } else {
         router.push("/login");
       }
@@ -506,7 +308,6 @@ export default function CalendarView() {
       {}
     );
     setProcessedEvents(groupedEvents);
-    console.log("Initial Processed events:", groupedEvents); // Debug log
   }, [events]);
 
   const handleGetEvents = async (userid: any) => {
@@ -518,7 +319,6 @@ export default function CalendarView() {
         },
       });
       const eventsData = await response.json();
-      console.log("eventsData", eventsData);
       setEvents(eventsData?.events || []);
       setLoading(false);
     } catch (error) {
@@ -533,9 +333,8 @@ export default function CalendarView() {
     const lastDay = new Date(year, month + 1, 0);
 
     const days = [];
-    const firstDayOfWeek = firstDay.getDay() || 7; // Convert Sunday (0) to 7
+    const firstDayOfWeek = firstDay.getDay() || 7;
 
-    // Add previous month's days
     for (let i = firstDayOfWeek - 1; i > 0; i--) {
       const prevDate = new Date(year, month, 1 - i);
       days.push({
@@ -545,7 +344,6 @@ export default function CalendarView() {
       });
     }
 
-    // Add current month's days
     for (let i = 1; i <= lastDay.getDate(); i++) {
       const currentDate = new Date(year, month, i);
       days.push({
@@ -554,8 +352,6 @@ export default function CalendarView() {
         isToday: currentDate.toDateString() === new Date().toDateString(),
       });
     }
-
-    console.log("getDaysInMonth", days);
 
     return days;
   };
@@ -566,7 +362,7 @@ export default function CalendarView() {
       currentDate.getMonth() - 1
     );
     setCurrentDate(newDate);
-    setSelectedDate(null); // Clear selection when changing months
+    setSelectedDate(null);
   };
 
   const handleNextMonth = () => {
@@ -575,7 +371,7 @@ export default function CalendarView() {
       currentDate.getMonth() + 1
     );
     setCurrentDate(newDate);
-    setSelectedDate(null); // Clear selection when changing months
+    setSelectedDate(null);
   };
 
   const formatEventDate = (date: string) => {
@@ -588,15 +384,6 @@ export default function CalendarView() {
       hour12: true,
     }).format(new Date(date));
   };
-
-  const eventsByDate = events.reduce((acc: any, event: any) => {
-    const date = new Date(event.StartTime).getDate();
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(event);
-    return acc;
-  }, {});
 
   const isSameMonth = (date1: any, date2: any) => {
     return (
@@ -624,11 +411,7 @@ export default function CalendarView() {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-
-          // Reverse geocoding to get the location name (you may need a third-party service here)
           const locationName = await getLocationName(latitude, longitude);
-
-          // Send the location to your API
           await sendLocationToAPI(locationName, latitude, longitude);
         },
         (error) => {
@@ -641,10 +424,9 @@ export default function CalendarView() {
   };
 
   const getLocationName = async (latitude: number, longitude: number) => {
-    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0"; // Replace with your actual API key
+    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0";
 
     try {
-      // Call the Google Maps Geocoding API
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
       );
@@ -654,10 +436,8 @@ export default function CalendarView() {
       }
 
       const data = await response.json();
-
-      // Extract the location name from the response
       if (data.status === "OK" && data.results.length > 0) {
-        return data.results[0].formatted_address; // Return the formatted address of the first result
+        return data.results[0].formatted_address;
       }
 
       console.error("No results found or status not OK:", data);
@@ -694,7 +474,6 @@ export default function CalendarView() {
 
       const data = await response.json();
       if (response.ok) {
-        console.log("Location sent successfully:", data);
       } else {
         console.error("Error sending location:", data.message);
       }
@@ -707,15 +486,38 @@ export default function CalendarView() {
     return (
       <Box
         display="flex"
-        justifyContent="center" // Centers horizontally
-        alignItems="center" // Centers vertically
-        height="100vh" // Full viewport height
-        bgcolor="#121212" // Background color
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+        bgcolor="#121212"
       >
         <LoadingScreen logoSrc="/loading.png"></LoadingScreen>
       </Box>
     );
   }
+
+  const now = new Date();
+  const upcomingEvents = [...sortedEvents]
+    .filter((event: any) => new Date(event.StartTime) >= now)
+    .sort(
+      (a, b) =>
+        new Date(a.StartTime).getTime() - new Date(b.StartTime).getTime()
+    );
+
+  const pastEvents = [...sortedEvents]
+    .filter((event: any) => new Date(event.StartTime) < now)
+    .sort(
+      (a, b) =>
+        new Date(b.StartTime).getTime() - new Date(a.StartTime).getTime()
+    );
+
+  const clearFilters = () => {
+    setCityInput("");
+    setSearchText("");
+    setSortedEvents(events);
+    setSearchStatus(false);
+    setSearchType("none");
+  };
 
   return (
     <Box
@@ -723,6 +525,7 @@ export default function CalendarView() {
         bgcolor: "#0A0A0A",
         minHeight: "100vh",
         color: "white",
+        paddingBottom: 1,
         background: "linear-gradient(to bottom, #0A0A0A, #1A1A1A)",
       }}
     >
@@ -731,29 +534,13 @@ export default function CalendarView() {
       <Container
         fixed
         sx={{
-          px: { xs: 2, md: 0 },
-          pt: { xs: 3, sm: 4, md: 5 },
-          pb: { xs: 3, sm: 4, md: 5 },
+          pb: { xs: 8, sm: 9, md: 10 },
+          px: { xs: 1, sm: 2, md: 3 },
         }}
       >
         {isMobile ? (
           <>
-            <Grid spacing={2} sx={{ mt: { xs: 2, sm: 4, md: 8 } }}>
-              {/* Sidebar */}
-              <Grid
-                item
-                xs={12}
-                sm={3}
-                md={2}
-                sx={{
-                  display: { xs: "block", sm: "block" },
-                  mb: { xs: 2, sm: 0 },
-                }}
-              >
-                <SidebarList />
-              </Grid>
-
-              {/* Main Content */}
+            <Grid spacing={2}>
               <Grid item xs={12} sm={12} md={12}>
                 <Card
                   sx={{
@@ -762,212 +549,332 @@ export default function CalendarView() {
                     py: { xs: 2, sm: 3 },
                   }}
                 >
-                  <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
-                    <Typography
-                      variant="h5"
-                      color="white"
-                      textAlign="center"
-                      mb={2}
+                  <Typography
+                    variant="h5"
+                    color="white"
+                    textAlign="center"
+                    mb={2}
+                    sx={{
+                      fontWeight: 700,
+                      background: "linear-gradient(45deg, #e91e63, #9c27b0)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      fontSize: { xs: "1.75rem", sm: "2rem", md: "2.25rem" },
+                    }}
+                  >
+                    Events
+                  </Typography>
+                  <Box
+                    sx={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 1100,
+                      bgcolor: "#0a0a0a",
+                      px: 2,
+                    }}
+                  >
+                    <Accordion
+                      expanded={expanded}
+                      onChange={() => setExpanded(!expanded)}
+                      sx={{
+                        bgcolor: "#1a1a1a",
+                        color: "white",
+                        borderRadius: 2,
+                        mb: 2,
+                      }}
                     >
-                      Events
-                    </Typography>
-
-                    {/* Action Buttons */}
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={2}
-                      alignItems="stretch"
-                      mb={2}
-                    >
-                      <Button
-                        onClick={() => {
-                          const token = localStorage.getItem("loginInfo");
-                          if (token) {
-                            const decodeToken = jwtDecode<any>(token);
-                            if (decodeToken?.membership === 0) {
-                              router.push("/membership");
-                            } else {
-                              router.push("/events/create");
-                            }
-                          } else {
-                            router.push("/login");
-                          }
-                        }}
-                        variant="contained"
-                        color="primary"
-                        startIcon={<Add />}
-                        sx={{
-                          width: "100%",
-                          textTransform: "none",
-                          backgroundColor: "#f50057",
-                          py: 1.5,
-                          fontSize: "16px",
-                          fontWeight: "bold",
-                          "&:hover": {
-                            backgroundColor: "#c51162",
-                          },
-                        }}
+                      <AccordionSummary
+                        expandIcon={<ExpandMore sx={{ color: "white" }} />}
                       >
-                        Create
-                      </Button>
-
-                      <Button
-                        onClick={() => router.push("/events/calendar")}
-                        variant="contained"
-                        endIcon={<CalendarMonth />}
-                        sx={{
-                          width: "100%",
-                          textTransform: "none",
-                          backgroundColor: "#f50057",
-                          py: 1.5,
-                          fontSize: "16px",
-                          fontWeight: "bold",
-                          "&:hover": {
-                            backgroundColor: "#c51162",
-                          },
-                        }}
-                      >
-                        Calendar
-                      </Button>
-                    </Stack>
-
-                    {/* Filter by City */}
-                    <Autocomplete
-                      id="location-autocomplete"
-                      open={openCity}
-                      onOpen={() => setOpenCity(true)}
-                      onClose={() => setOpenCity(false)}
-                      isOptionEqualToValue={(option, value) =>
-                        option.City === value.City
-                      }
-                      getOptionLabel={(option) => option.City || ""}
-                      options={cityOption}
-                      loading={cityLoading}
-                      inputValue={cityInput}
-                      sx={{ mb: 2 }}
-                      noOptionsText={
-                        <Typography sx={{ color: "white" }}>
-                          No options
+                        <Typography variant="h6" fontWeight="bold">
+                          Filters & Actions
                         </Typography>
-                      }
-                      onInputChange={(event, newInputValue) => {
-                        if (event?.type === "change" || event?.type === "click")
-                          setCityInput(newInputValue);
-                      }}
-                      onChange={(event, newValue) => {
-                        if (newValue?.City) {
-                          const filtered = events.filter((event: any) =>
-                            event.Venue?.toLowerCase().includes(
-                              newValue.City.toLowerCase()
-                            )
-                          );
-                          const groupedEvents = filtered.reduce(
-                            (acc: { [key: string]: any[] }, event: any) => {
-                              const eventDate = new Date();
-                              const key = getProcessedDateKey(eventDate);
-                              if (!acc[key]) acc[key] = [];
-                              acc[key].push(event);
-                              return acc;
-                            },
-                            {}
-                          );
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Stack
+                          direction="row"
+                          spacing={2}
+                          alignItems="stretch"
+                          mb={1}
+                        >
+                          <Button
+                            onClick={() => {
+                              const token = localStorage.getItem("loginInfo");
+                              if (token) {
+                                const decodeToken = jwtDecode<any>(token);
+                                if (decodeToken?.membership === 0) {
+                                  router.push("/membership");
+                                } else {
+                                  router.push("/events/create");
+                                }
+                              } else {
+                                router.push("/login");
+                              }
+                              setExpanded(false);
+                            }}
+                            variant="contained"
+                            color="primary"
+                            startIcon={<Add />}
+                            sx={{
+                              flex: 1,
+                              textTransform: "none",
+                              backgroundColor: "#f50057",
+                              fontSize: "16px",
+                              fontWeight: "bold",
+                              "&:hover": {
+                                backgroundColor: "#c51162",
+                              },
+                            }}
+                          >
+                            Create
+                          </Button>
 
-                          setSortedEvents(filtered);
-                          setSearchStatus(true);
-                          setProcessedEvents(groupedEvents);
-                          setViewType("list");
-                        } else {
-                          setSortedEvents(events);
-                          const groupedAll = events.reduce(
-                            (acc: { [key: string]: any[] }, event: any) => {
-                              const date = new Date(event.StartTime);
-                              const dateKey = getProcessedDateKey(date);
-                              if (!acc[dateKey]) acc[dateKey] = [];
-                              acc[dateKey].push(event);
-                              return acc;
-                            },
-                            {}
-                          );
-                          setProcessedEvents(groupedAll);
-                        }
-                      }}
-                      ListboxProps={{
-                        sx: {
-                          backgroundColor: "#2a2a2a",
-                          color: "#fff",
-                          "& .MuiAutocomplete-option": {
-                            "&:hover": {
-                              backgroundColor: "rgba(245,0,87,0.08)",
-                            },
-                            '&[aria-selected="true"]': {
-                              backgroundColor: "rgba(245,0,87,0.16)",
-                            },
-                          },
-                        },
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          placeholder="Filter by city"
-                          InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                              <>
-                                {cityLoading && (
-                                  <CircularProgress color="inherit" size={15} />
-                                )}
-                                {params.InputProps.endAdornment}
-                              </>
-                            ),
-                            sx: {
-                              color: "white",
-                              "& .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "rgba(255,255,255,0.23)",
+                          <Button
+                            onClick={() => router.push("/events/calendar")}
+                            variant="contained"
+                            endIcon={<CalendarMonth />}
+                            sx={{
+                              flex: 1,
+                              textTransform: "none",
+                              backgroundColor: "#f50057",
+                              fontSize: "16px",
+                              fontWeight: "bold",
+                              "&:hover": {
+                                backgroundColor: "#c51162",
                               },
-                              "&:hover .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "rgba(255,255,255,0.4)",
-                              },
-                              "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                {
-                                  borderColor: "#f50057",
+                            }}
+                          >
+                            Calendar
+                          </Button>
+                        </Stack>
+
+                        {/* Filter by City */}
+                        <Autocomplete
+                          id="location-autocomplete"
+                          open={openCity}
+                          onOpen={() => setOpenCity(true)}
+                          onClose={() => setOpenCity(false)}
+                          isOptionEqualToValue={(option, value) =>
+                            option.City === value.City
+                          }
+                          getOptionLabel={(option) => option.City || ""}
+                          options={cityOption}
+                          loading={cityLoading}
+                          inputValue={cityInput}
+                          sx={{ mb: 1 }}
+                          noOptionsText={
+                            <Typography sx={{ color: "white" }}>
+                              No options
+                            </Typography>
+                          }
+                          onInputChange={(event, newInputValue) => {
+                            if (
+                              event?.type === "change" ||
+                              event?.type === "click"
+                            )
+                              setCityInput(newInputValue);
+                          }}
+                          onChange={(event, newValue) => {
+                            if (newValue?.City) {
+                              const filtered = events.filter((event: any) =>
+                                event.Venue?.toLowerCase().includes(
+                                  newValue.City.toLowerCase()
+                                )
+                              );
+                              const groupedEvents = filtered.reduce(
+                                (acc: { [key: string]: any[] }, event: any) => {
+                                  const eventDate = new Date();
+                                  const key = getProcessedDateKey(eventDate);
+                                  if (!acc[key]) acc[key] = [];
+                                  acc[key].push(event);
+                                  return acc;
                                 },
+                                {}
+                              );
+
+                              setSortedEvents(filtered);
+                              setSearchStatus(true);
+                              setProcessedEvents(groupedEvents);
+                              setViewType("list");
+                              setSearchType("city");
+                            } else {
+                              setSortedEvents(events);
+                              const groupedAll = events.reduce(
+                                (acc: { [key: string]: any[] }, event: any) => {
+                                  const date = new Date(event.StartTime);
+                                  const dateKey = getProcessedDateKey(date);
+                                  if (!acc[dateKey]) acc[dateKey] = [];
+                                  acc[dateKey].push(event);
+                                  return acc;
+                                },
+                                {}
+                              );
+                              setProcessedEvents(groupedAll);
+                            }
+                          }}
+                          ListboxProps={{
+                            sx: {
+                              backgroundColor: "#2a2a2a",
+                              color: "#fff",
+                              "& .MuiAutocomplete-option": {
+                                "&:hover": {
+                                  backgroundColor: "rgba(245,0,87,0.08)",
+                                },
+                                '&[aria-selected="true"]': {
+                                  backgroundColor: "rgba(245,0,87,0.16)",
+                                },
+                              },
                             },
                           }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              placeholder="Filter by city"
+                              InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                  <>
+                                    {cityLoading && (
+                                      <CircularProgress
+                                        color="inherit"
+                                        size={15}
+                                      />
+                                    )}
+                                    {params.InputProps.endAdornment}
+                                  </>
+                                ),
+                                sx: {
+                                  color: "white",
+                                  "& .MuiOutlinedInput-notchedOutline": {
+                                    borderColor: "rgba(255,255,255,0.23)",
+                                  },
+                                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                                    borderColor: "rgba(255,255,255,0.4)",
+                                  },
+                                  "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                    {
+                                      borderColor: "#f50057",
+                                    },
+                                },
+                              }}
+                            />
+                          )}
                         />
-                      )}
-                    />
 
+                        <TextField
+                          placeholder="Search events..."
+                          variant="outlined"
+                          fullWidth
+                          value={searchText}
+                          sx={{
+                            mb: 1,
+                            input: { color: "white" },
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "rgba(255,255,255,0.23)",
+                            },
+                            "&:hover .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "rgba(255,255,255,0.4)",
+                            },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "rgba(255,255,255,0.23)",
+                            },
+                          }}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Search sx={{ color: "#f50057" }} />
+                              </InputAdornment>
+                            ),
+                          }}
+                          onChange={(e) => {
+                            const value = e.target.value.toLowerCase();
+                            setSearchText(e.target.value);
+
+                            if (value.trim() === "") {
+                              setSortedEvents(events);
+                              setSearchStatus(false);
+                              setSearchType("none");
+                              return;
+                            }
+
+                            const filtered = events.filter(
+                              (event: any) =>
+                                event.Name?.toLowerCase().includes(value) ||
+                                event.Venue?.toLowerCase().includes(value) ||
+                                event.Description?.toLowerCase().includes(value)
+                            );
+
+                            setSortedEvents(filtered);
+                            setSearchStatus(true);
+                            setSearchType("text");
+                          }}
+                        />
+
+                        <Tabs
+                          value={tabValue}
+                          onChange={(e, newValue) => {
+                            setTabValue(newValue);
+                            setExpanded(false);
+                            window.scroll(0, 0);
+                          }}
+                          variant="fullWidth"
+                          sx={{
+                            mb: 1,
+                            borderRadius: 2,
+                            overflow: "hidden",
+                            bgcolor: "#1a1a1a",
+                            minHeight: "40px",
+                            "& .MuiTabs-indicator": {
+                              display: "none",
+                            },
+                            "& .MuiTab-root": {
+                              color: "white",
+                              textTransform: "none",
+                              fontWeight: "bold",
+                              borderRadius: 2,
+                              mx: 0.5,
+                              transition: "all 0.2s ease-in-out",
+                              bgcolor: "#2a2a2a",
+                              minHeight: "40px",
+                              py: 0.5,
+                              px: 2,
+                              "&:hover": {
+                                bgcolor: "rgba(245,0,87,0.2)",
+                              },
+                            },
+                            "& .Mui-selected": {
+                              color: "white !important",
+                              bgcolor: "#f50057 !important",
+                            },
+                          }}
+                        >
+                          <Tab value="upcoming" label="Upcoming" />
+                          <Tab value="past" label="Past" />
+                        </Tabs>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Box>
+                  <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
                     {/* Events List */}
                     <Box
-                      className="events-container"
                       sx={{
-                        maxHeight: { xs: "auto", md: "700px" },
-                        overflowY: { xs: "visible", md: "auto" },
-                        mt: 2,
+                        maxHeight: "60vh",
+                        overflowY: "auto",
                         scrollBehavior: "smooth",
-                        "&::-webkit-scrollbar": {
-                          width: "8px",
-                        },
-                        "&::-webkit-scrollbar-thumb": {
-                          background: "rgba(194, 24, 91, 0.5)",
-                          borderRadius: "4px",
-                        },
+                        overflowX: "hidden",
                       }}
                     >
-                      {sortedEvents.length > 0 ? (
-                        sortedEvents.map((post: any, index: number) => {
+                      {(tabValue === "upcoming" ? upcomingEvents : pastEvents)
+                        .length > 0 ? (
+                        (tabValue === "upcoming"
+                          ? upcomingEvents
+                          : pastEvents
+                        ).map((post: any) => {
                           const eventDate = new Date(post.StartTime);
-                          const eventMonthYear = `${eventDate.toLocaleString(
-                            "default",
-                            {
-                              month: "long",
-                            }
-                          )} ${eventDate.getFullYear()}`;
                           const isCurrentMonth =
-                            eventMonthYear ===
-                            `${new Date().toLocaleString("default", {
-                              month: "long",
-                            })} ${new Date().getFullYear()}`;
+                            eventDate.getMonth() === currentDate.getMonth() &&
+                            eventDate.getFullYear() ===
+                              currentDate.getFullYear();
 
                           return (
                             <Card
@@ -990,22 +897,18 @@ export default function CalendarView() {
                                 },
                               }}
                             >
-                              <Box
-                                sx={{
-                                  backgroundColor: "#2d2d2d",
-                                  p: 1,
-                                }}
-                              >
+                              <Box sx={{ backgroundColor: "#2d2d2d", p: 1 }}>
                                 <img
-                                  onClick={() =>
-                                    router.push(
-                                      "/whatshot/post/detail/" + post?.Id
-                                    )
-                                  }
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push("/events/detail/" + post?.Id);
+                                  }}
                                   src={post?.CoverImageUrl}
                                   alt="Post Image"
                                   style={{
                                     width: "100%",
+                                    // height: "400px",
+                                    // objectFit: "cover",
                                     borderRadius: "8px",
                                   }}
                                 />
@@ -1061,8 +964,13 @@ export default function CalendarView() {
                               mb: 3,
                             }}
                           >
-                            <CalendarToday
+                            <Search
                               sx={{ width: 48, height: 48, color: "#f50057" }}
+                              style={{
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                              }}
                             />
                           </Box>
                           <Typography
@@ -1071,26 +979,54 @@ export default function CalendarView() {
                               fontWeight: "bold",
                               color: "white",
                               mb: 1,
+                              textAlign: "center",
                               textShadow: "0 2px 4px rgba(0,0,0,0.5)",
                             }}
                           >
-                            No Events
+                            {searchType === "text"
+                              ? "No events found for your search"
+                              : searchType === "city"
+                              ? "No events found in your searched city"
+                              : `No ${
+                                  tabValue === "upcoming" ? "Upcoming" : "Past"
+                                } Events`}
                           </Typography>
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              color: alpha("#fff", 0.7),
-                              textAlign: "center",
-                              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-                            }}
-                          >
-                            There are no events scheduled for{" "}
-                            {currentDate.toLocaleString("default", {
-                              month: "long",
-                              year: "numeric",
-                            })}
-                            . Check back later or try a different month.
-                          </Typography>
+
+                          {searchType !== "none" ? (
+                            <Button
+                              onClick={clearFilters}
+                              variant="outlined"
+                              sx={{
+                                mt: 2,
+                                color: "#f50057",
+                                borderColor: "#f50057",
+                                "&:hover": {
+                                  backgroundColor: "rgba(245, 0, 87, 0.1)",
+                                  borderColor: "#f50057",
+                                },
+                              }}
+                            >
+                              Clear Filters
+                            </Button>
+                          ) : (
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                color: alpha("#fff", 0.7),
+                                textAlign: "center",
+                                textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                              }}
+                            >
+                              There are no{" "}
+                              {tabValue === "upcoming" ? "upcoming" : "past"}{" "}
+                              events scheduled for{" "}
+                              {currentDate.toLocaleString("default", {
+                                month: "long",
+                                year: "numeric",
+                              })}
+                              . Check back later or try a different month.
+                            </Typography>
+                          )}
                         </Paper>
                       )}
                     </Box>
@@ -1162,6 +1098,7 @@ export default function CalendarView() {
                 Events
               </Typography>
             </Box>
+
             <Box
               sx={{
                 display: "flex",
@@ -1258,9 +1195,7 @@ export default function CalendarView() {
                       setCityInput(newInputValue);
                   }}
                   onChange={(event, newValue) => {
-                    console.log("newValue", newValue);
                     if (newValue?.City) {
-                      // Filter events by city
                       const filtered = events.filter((event: any) =>
                         event.Venue?.toLowerCase().includes(
                           newValue.City.toLowerCase()
@@ -1284,15 +1219,9 @@ export default function CalendarView() {
                       setSortedEvents(filtered);
                       setSearchStatus(true);
                       setProcessedEvents(groupedAll);
-                      // Force mobile view when searching
                       setViewType("list");
-
-                      // Log the changed processedEvents
-                      console.log("Filtered processedEvents:", groupedAll);
                     } else {
                       setSortedEvents(events);
-
-                      // Reset to original grouping by event dates
                       const groupedAll = events.reduce(
                         (acc: { [key: string]: any[] }, event: any) => {
                           const date = new Date(event.StartTime);
@@ -1308,9 +1237,6 @@ export default function CalendarView() {
                       );
 
                       setProcessedEvents(groupedAll);
-
-                      // Log the reset processedEvents
-                      console.log("Reset processedEvents:", groupedAll);
                     }
                   }}
                   ListboxProps={{
@@ -1455,7 +1381,6 @@ export default function CalendarView() {
                     const token = localStorage.getItem("loginInfo");
                     if (token) {
                       const decodeToken = jwtDecode<any>(token);
-                      console.log("membership", decodeToken.membership);
                       if (decodeToken?.membership === 0) {
                         router.push("/membership");
                       } else {

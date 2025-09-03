@@ -175,6 +175,7 @@ const Header = () => {
     },
     { icon: Heart, label: "Matches", path: "/matches" },
     { icon: Calendar, label: "Events", path: "/events" },
+    { icon: "/images/dollar_img.png", label: "Earn $$ for Referrals!", path: "/earn-money-referrals" },
   ];
 
   useEffect(() => {
@@ -378,8 +379,7 @@ const Header = () => {
               <Box sx={{ flex: 1, py: 2 }}>
                 <List sx={{ px: 2 }}>
                   {mobileNavItems.map((item, index) => {
-                    const isImage = typeof item.icon === "string";
-                    const Icon = item.icon;
+                    
                     const isActive =
                       typeof window !== "undefined" &&
                       window.location.pathname === item.path;

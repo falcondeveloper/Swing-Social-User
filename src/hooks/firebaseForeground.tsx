@@ -40,7 +40,6 @@ export default function FcmTokenComp() {
               requireInteraction: true,
             });
 
-            // Handle notification click
             notification.onclick = () => {
               if (notificationUrl) {
                 window.open(notificationUrl, "_blank");

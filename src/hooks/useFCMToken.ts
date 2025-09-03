@@ -1,6 +1,6 @@
-'use client'
+'use client';
 import { useEffect, useState } from 'react';
-import { getMessaging, getToken, deleteToken } from 'firebase/messaging';
+import { getMessaging, getToken } from 'firebase/messaging';
 import firebaseApp from '../../firebase';
 
 const useFcmToken = () => {
@@ -13,29 +13,24 @@ const useFcmToken = () => {
         if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
           const messaging = getMessaging(firebaseApp);
 
-          // First, delete any existing token
-          try {
-            await deleteToken(messaging);
-          } catch (e) {
-            console.log('No existing token to delete');
-          }
-
           const permission = await Notification.requestPermission();
           setNotificationPermissionStatus(permission);
 
           if (permission === 'granted') {
             const currentToken = await getToken(messaging, {
-              vapidKey: 'BCbLjHHDUjzyLY0OoZRL-oqpZ8OScEUlcsQ3mq-_yxhljEOKmpQWOmSEUrTM0h4wAK2Xl3ZMOcXXH61vs1CE4fA'
+              vapidKey: 'BA4k_YYfP8FDCcEyIcnxWUqnljPScp8k_IYu6H95_MI3iwDY2JUyVOyzImYkQwfSD8ml3u8pIW3DX4tUx1d-D1U',
+              serviceWorkerRegistration: await navigator.serviceWorker.ready, // ✅ ensure SW is ready
             });
 
             if (currentToken) {
               setToken(currentToken);
-              // Save this new token to your database
+            } else {
+              console.warn("⚠️ No registration token available");
             }
           }
         }
       } catch (error) {
-        console.log('Error retrieving token:', error);
+        console.error('❌ Error retrieving FCM token:', error);
       }
     };
 

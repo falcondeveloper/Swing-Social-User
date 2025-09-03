@@ -10,104 +10,56 @@ const pool = new Pool({
   port: 5432,
 });
 
-export async function POST(req: any, res: any) {
+export async function POST(req: Request) {
   try {
-    const {
-      id,
-      body = "Default Body",
-      image = "https://example.com/path/to/image.jpg",
-      url,
-    } = await req.json();
+    const { id, title, body, url } = await req.json();
+
     const result = await pool.query(
-      "SELECT * FROM public.web_get_devicetoken($1)",
+      "SELECT deviceToken FROM public.web_get_devicetoken($1)",
       [id]
     );
-    if (!result.rows || result.rows.length === 0) {
+
+    if (!result.rows.length) {
       return NextResponse.json(
-        {
-          message: "No device tokens found for the given ID.",
-        },
+        { message: "No device tokens found." },
         { status: 404 }
       );
     }
 
     const responses = [];
-
-    for (const token of result.rows) {
-      if (!token) {
-        console.warn(
-          "Skipping notification for missing or invalid token:",
-          token
-        );
-        responses.push({
-          token: null,
-          status: "error",
-          error: "Invalid token",
-        });
-        continue;
-      }
-
-      const deviceToken = token?.deviceToken;
+    for (const row of result.rows) {
+      const deviceToken = row.devicetoken;
 
       const message = {
         token: deviceToken,
         notification: {
-          title: "Message from SwingSocial",
-          body: body,
+          title: title || "SwingSocial",
+          body: body || "You have a new notification",
         },
         webpush: {
           notification: {
-            icon: "https://swingsocialphotos.blob.core.windows.net/images/1738268455860_icon.png",
-            image:
-              "https://swingsocialphotos.blob.core.windows.net/images/1738268455860_icon.png",
-          },
-        },
-        android: {
-          notification: {
-            sound: "default", // Play default sound on Android
-            image:
-              "https://swingsocialphotos.blob.core.windows.net/images/1738268455860_icon.png",
-          },
-        },
-        apns: {
-          payload: {
-            aps: {
-              "mutable-content": 1,
-            },
-          },
-          fcm_options: {
-            image:
-              "https://swingsocialphotos.blob.core.windows.net/images/1738268455860_icon.png",
+            icon: "/logo.png",
           },
         },
         data: {
-          url,
-          body,
+          url: url || "/",
         },
       };
 
       try {
         const response = await messaging.send(message);
-        responses.push({ token, status: "success", response });
-      } catch (error: any) {
-        console.error("Error sending notification to token:", token, error);
-
-        responses.push({ token, status: "error", error: error.message });
+        responses.push({ token: deviceToken, status: "success", response });
+      } catch (err: any) {
+        responses.push({
+          token: deviceToken,
+          status: "error",
+          error: err.message,
+        });
       }
     }
 
-    return NextResponse.json({
-      message: "Notifications processed.",
-      results: responses,
-    });
-  } catch (error: any) {
-    console.error("Error processing notifications:", error);
-    return NextResponse.json(
-      {
-        message: "Failed to process notifications",
-        error: error.message,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ results: responses });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
