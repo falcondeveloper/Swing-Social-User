@@ -272,11 +272,6 @@ export default function Whatshot() {
     { label: "Groups", route: "/groups" },
   ];
 
-  const handleNavigation = (route: string) => {
-    console.log(route);
-    router.push(route);
-  };
-
   const handleWhatshotPosts = async () => {
     try {
       const userid = localStorage.getItem("logged_in_profile");
@@ -453,8 +448,11 @@ export default function Whatshot() {
   return (
     <Box
       sx={{
+        bgcolor: "#0A0A0A",
         minHeight: "100vh",
-        backgroundColor: "#121212",
+        color: "white",
+        paddingBottom: 1,
+        background: "linear-gradient(to bottom, #0A0A0A, #1A1A1A)",
       }}
     >
       <Header />
