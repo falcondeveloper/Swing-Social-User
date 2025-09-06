@@ -405,6 +405,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
           </Box>
         </Card>
       </Box>
+      
       <Dialog
         open={openImageModal}
         onClose={handleCloseImageModal}

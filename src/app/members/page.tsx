@@ -22,36 +22,32 @@ import {
   DialogContent,
   DialogActions,
   Tooltip,
-  keyframes,
   Container,
   CircularProgress,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { Flag } from "@mui/icons-material";
 import TinderCard from "react-tinder-card";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import InstructionModal from "@/components/InstructionModal";
 import UserProfileModal from "@/components/UserProfileModal";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { toast } from "react-toastify";
 import MobileSweaping from "@/components/MobileSweaping";
-import { useTheme, useMediaQuery } from "@mui/material";
+import { useMediaQuery } from "@mui/material";
 import ProfileCard from "@/components/ProfileCard";
-import { Bold } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 
 export default function Home() {
-  const [userProfiles, setUserProfiles] = useState<any[]>([]); // User profiles fetched from API
-  const [totalUsers, setTotalUsers] = useState<any>(0); // User profiles fetched from API
+  const [userProfiles, setUserProfiles] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true); // Tracks loading state
-  const [swipeDirection, setSwipeDirection] = useState<string | null>(null); // Track swipe direction for animations
+  const [loading, setLoading] = useState(true);
+  const [swipeDirection, setSwipeDirection] = useState<string | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showDetail, setShowDetail] = useState<any>(false);
   const [selectedUserId, setSelectedUserId] = useState<any>(null);
   const [profileId, setProfileId] = useState<any>(null);
-  const [customProfile, setCustomProfile] = useState<any>(null);
   const [showMatchPopup, setShowMatchPopup] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
   const [matchesOpen, setMatchesOpen] = useState(false);
@@ -74,52 +70,15 @@ export default function Home() {
   const [memberalarm, setMemberAlarm] = useState("0");
 
   const router = useRouter();
-  const theme = useTheme();
-  //const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
   const refs = useRef<{ [key: string]: React.RefObject<any> }>({});
   const [idParam, setIdparam] = useState<any>(null);
-
-  const shimmerKeyframes = `
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%) skewX(-15deg);
-    }
-    100% {
-      transform: translateX(100%) skewX(-15deg);
-    }
-  }
-`;
-
-  const loadingBarKeyframes = `
-  @keyframes loadingBar {
-    0% {
-      left: -30%;
-      width: 30%;
-    }
-    50% {
-      width: 40%;
-    }
-    100% {
-      left: 100%;
-      width: 30%;
-    }
-  }
-`;
 
   useEffect(() => {
     if (userProfiles.length > 0) {
       setLoading(false);
     }
   }, [userProfiles]);
-
-  interface LoadingScreenProps {
-    logoSrc?: string;
-  }
-
-  interface LoadingScreenProps {
-    logoSrc?: string;
-  }
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -179,7 +138,6 @@ export default function Home() {
             "Failed to fetch advertiser data:",
             response.statusText
           );
-          setCustomProfile(undefined);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
@@ -198,7 +156,6 @@ export default function Home() {
 
   const fetchCurrentLoginProfileId = async (currentLoginProfileId: string) => {
     if (currentLoginProfileId) {
-      // setLoading(true);
       try {
         const response = await fetch(
           `/api/user/sweeping/user?id=${currentLoginProfileId}`
@@ -208,15 +165,12 @@ export default function Home() {
             "Failed to fetch advertiser data:",
             response.statusText
           );
-          setCustomProfile(undefined);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const { user: advertiserData } = await response.json();
         if (!advertiserData) {
           console.error("Advertiser not found");
-          setCustomProfile(undefined);
         } else {
-          setCustomProfile(advertiserData);
           setSwipeCount(advertiserData?.SwipeCount);
           setDailyLimit(advertiserData?.SwipeMax);
           if (
@@ -245,7 +199,6 @@ export default function Home() {
 
       const data = await response.json();
       setUserProfiles(data?.swipes || []);
-      setTotalUsers(data?.totalRows);
       if (data?.totalRows !== undefined && data.totalRows <= 0) {
         setShowEndPopup(true);
       }
@@ -735,522 +688,514 @@ export default function Home() {
     );
   }
 
-  if (isMobileDevice) {
+  if (isMobile) {
     return <MobileSweaping />;
   }
 
   return (
     <>
-      {isMobile ? (
-        <MobileSweaping />
-      ) : (
-        <>
-          <Header />
-          <Container maxWidth={false} disableGutters>
+      <Header />
+      <Container maxWidth={false} disableGutters>
+        <Box
+          display="flex"
+          height="100vh"
+          position="relative"
+          overflow="hidden"
+          marginTop="30px"
+        >
+          {memberalarm && parseInt(memberalarm) > 2 ? null : (
+            <InstructionModal />
+          )}
+          <Box
+            flex={1}
+            display="flex"
+            sx={{
+              pb: { xs: 1, sm: 2, md: 3 },
+              paddingTop: { xs: "56px", sm: "64px" },
+              backgroundColor: "#121212",
+            }}
+          >
+            <ProfileCard profile={selectedUserProfile} />
+          </Box>
+          <Box
+            flex={1}
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            position="relative"
+          >
             <Box
               display="flex"
-              height="100vh"
-              position="relative"
-              overflow="hidden"
-              marginTop="30px"
+              justifyContent="center"
+              alignItems="center"
+              width="100%"
+              height="100%"
+              sx={{ overflow: "hidden", position: "relative" }}
             >
-              {memberalarm && parseInt(memberalarm) > 2 ? null : (
-                <InstructionModal />
-              )}
-              <Box
-                flex={1}
-                display="flex"
-                sx={{
-                  pb: { xs: 1, sm: 2, md: 3 },
-                  paddingTop: { xs: "56px", sm: "64px" },
-                  backgroundColor: "#121212",
-                }}
-              >
-                <ProfileCard profile={selectedUserProfile} />
-              </Box>
-              <Box
-                flex={1}
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-                justifyContent="center"
-                position="relative"
-              >
-                <Box
-                  display="flex"
-                  justifyContent="center"
-                  alignItems="center"
-                  width="100%"
-                  height="100%"
-                  sx={{ overflow: "hidden", position: "relative" }}
-                >
-                  {idParam && isMobile === false
-                    ? selectedUserProfile && (
-                        <TinderCard
-                          key={selectedUserProfile.Id}
-                          ref={refs.current[selectedUserProfile.Id]}
-                          onSwipe={(dir) => handleSwipe(dir)}
-                          preventSwipe={["up"]}
-                          flickOnSwipe
+              {idParam && isMobile === false
+                ? selectedUserProfile && (
+                    <TinderCard
+                      key={selectedUserProfile.Id}
+                      ref={refs.current[selectedUserProfile.Id]}
+                      onSwipe={(dir) => handleSwipe(dir)}
+                      preventSwipe={["up"]}
+                      flickOnSwipe
+                    >
+                      <Card
+                        sx={{
+                          width: "100%",
+                          height: "100%",
+                          boxShadow: 5,
+                          backgroundColor: "#1e1e1e",
+                          color: "white",
+                          borderRadius: "16px",
+                          overflow: "hidden",
+                          display: "flex",
+                          flexDirection: "column",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: "100%",
+                            height: "400px",
+                            position: "relative",
+                          }}
                         >
-                          <Card
+                          <Avatar
+                            src={selectedUserProfile?.Avatar}
+                            alt={selectedUserProfile?.Username}
                             sx={{
                               width: "100%",
                               height: "100%",
-                              boxShadow: 5,
-                              backgroundColor: "#1e1e1e",
-                              color: "white",
-                              borderRadius: "16px",
-                              overflow: "hidden",
-                              display: "flex",
-                              flexDirection: "column",
+                              objectFit: "cover",
+                              borderRadius: 0,
+                            }}
+                            variant="square"
+                          />
+                          {/* Swipe direction indicators */}
+                          {swipeDirection && (
+                            <Box
+                              position="absolute"
+                              top="50%"
+                              left="50%"
+                              sx={{
+                                transform: "translate(-50%, -50%)",
+                                zIndex: 3,
+                              }}
+                            >
+                              {swipeDirection === "left" && (
+                                <img
+                                  src="/delete.png"
+                                  alt="Dislike"
+                                  style={{
+                                    width: "100px",
+                                    height: "100px",
+                                  }}
+                                />
+                              )}
+                              {swipeDirection === "right" && (
+                                <img
+                                  src="/like.png"
+                                  alt="Like"
+                                  style={{
+                                    width: "100px",
+                                    height: "100px",
+                                  }}
+                                />
+                              )}
+                              {swipeDirection === "down" && (
+                                <img
+                                  src="/maybe.png"
+                                  alt="Maybe"
+                                  style={{
+                                    width: "100px",
+                                    height: "100px",
+                                  }}
+                                />
+                              )}
+                            </Box>
+                          )}
+
+                          {/* Info Button */}
+                          <Tooltip title="Click here if you find this photo offensive">
+                            <Box
+                              position="absolute"
+                              top={8}
+                              right={8}
+                              color="rgba(255, 45, 85, 0.9)" // Changed to match app's primary color (#FF2D55)
+                              p={1}
+                              borderRadius={1}
+                              fontSize={32} // Increased from 16
+                              sx={{ cursor: "pointer", zIndex: 4 }}
+                            >
+                              <InfoIcon
+                                onClick={() => {
+                                  setShowDetail(true);
+                                  setSelectedUserId(selectedUserProfile?.Id);
+                                }}
+                                sx={{ fontSize: 48 }} // Added explicit size control
+                              />
+                            </Box>
+                          </Tooltip>
+
+                          {/* Report Button */}
+                          <Box
+                            position="absolute"
+                            bottom={8}
+                            right={8}
+                            color="white"
+                            p={1}
+                            borderRadius={1}
+                            fontSize={12}
+                            sx={{ cursor: "pointer", zIndex: 4 }}
+                            onClick={handleReportModalToggle}
+                          >
+                            <Flag sx={{ color: "red" }} />
+                          </Box>
+                        </Box>
+
+                        <CardContent>
+                          <Typography variant="h6">
+                            {selectedUserProfile?.Username}
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: "1.0rem",
+                              fontWeight: "bold",
+                              marginTop: "1px",
+                              marginBottom: "5px",
+                            }}
+                            color="#C2185B"
+                          >
+                            {selectedUserProfile?.Location?.replace(
+                              ", USA",
+                              ""
+                            )}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            color="secondary"
+                            dangerouslySetInnerHTML={{
+                              __html: selectedUserProfile?.Tagline,
+                            }}
+                            sx={{
+                              display: "-webkit-box", // Enables a flex container for text truncation
+                              WebkitLineClamp: 3, // Limits the text to 3 lines
+                              WebkitBoxOrient: "vertical", // Establishes vertical orientation for line clamping
+                              overflow: "hidden", // Hides overflowing text
+                              textOverflow: "ellipsis", // Ensures the "..." is visible for truncated text
+                            }}
+                          />
+                        </CardContent>
+                      </Card>
+                    </TinderCard>
+                  )
+                : // Display userProfiles when param is null
+                  userProfiles
+                    .slice(currentIndex, currentIndex + 1)
+                    .map((profile: any, index: number) => {
+                      if (!refs.current[profile.Id]) {
+                        refs.current[profile.Id] = React.createRef();
+                      }
+                      return (
+                        // Your existing TinderCard code for userProfiles
+                        <TinderCard
+                          key={profile.Id}
+                          ref={refs.current[profile.Id]}
+                          onSwipe={(dir) => handleSwipe(dir)}
+                          preventSwipe={["up"]}
+                        >
+                          <Box
+                            position="absolute"
+                            left="50%"
+                            top="50%"
+                            sx={{
+                              transform: "translate(-50%, -50%)",
+                              zIndex: userProfiles.length - index,
                             }}
                           >
-                            <Box
+                            <Card
                               sx={{
-                                width: "100%",
-                                height: "400px",
+                                width: 400,
+                                height: 550,
+                                boxShadow: 5,
+                                backgroundColor: "#1e1e1e",
+                                color: "white",
+                                borderRadius: "16px",
                                 position: "relative",
                               }}
                             >
-                              <Avatar
-                                src={selectedUserProfile?.Avatar}
-                                alt={selectedUserProfile?.Username}
-                                sx={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                  borderRadius: 0,
-                                }}
-                                variant="square"
-                              />
-                              {/* Swipe direction indicators */}
-                              {swipeDirection && (
+                              {/* Card content */}
+                              <Box
+                                position="relative"
+                                width="100%"
+                                height="400px"
+                              >
+                                {/* Swipe gesture overlay */}
                                 <Box
                                   position="absolute"
-                                  top="50%"
-                                  left="50%"
+                                  top={0}
+                                  left={0}
+                                  width="100%"
+                                  height="100%"
+                                  zIndex={2}
+                                  sx={{ cursor: "grab" }}
+                                ></Box>
+
+                                {/* Avatar */}
+                                <Avatar
+                                  src={profile?.Avatar}
+                                  alt={profile?.Username}
                                   sx={{
-                                    transform: "translate(-50%, -50%)",
-                                    zIndex: 3,
-                                  }}
-                                >
-                                  {swipeDirection === "left" && (
-                                    <img
-                                      src="/delete.png"
-                                      alt="Dislike"
-                                      style={{
-                                        width: "100px",
-                                        height: "100px",
-                                      }}
-                                    />
-                                  )}
-                                  {swipeDirection === "right" && (
-                                    <img
-                                      src="/like.png"
-                                      alt="Like"
-                                      style={{
-                                        width: "100px",
-                                        height: "100px",
-                                      }}
-                                    />
-                                  )}
-                                  {swipeDirection === "down" && (
-                                    <img
-                                      src="/maybe.png"
-                                      alt="Maybe"
-                                      style={{
-                                        width: "100px",
-                                        height: "100px",
-                                      }}
-                                    />
-                                  )}
-                                </Box>
-                              )}
-
-                              {/* Info Button */}
-                              <Tooltip title="Click here if you find this photo offensive">
-                                <Box
-                                  position="absolute"
-                                  top={8}
-                                  right={8}
-                                  color="rgba(255, 45, 85, 0.9)" // Changed to match app's primary color (#FF2D55)
-                                  p={1}
-                                  borderRadius={1}
-                                  fontSize={32} // Increased from 16
-                                  sx={{ cursor: "pointer", zIndex: 4 }}
-                                >
-                                  <InfoIcon
-                                    onClick={() => {
-                                      setShowDetail(true);
-                                      setSelectedUserId(
-                                        selectedUserProfile?.Id
-                                      );
-                                    }}
-                                    sx={{ fontSize: 48 }} // Added explicit size control
-                                  />
-                                </Box>
-                              </Tooltip>
-
-                              {/* Report Button */}
-                              <Box
-                                position="absolute"
-                                bottom={8}
-                                right={8}
-                                color="white"
-                                p={1}
-                                borderRadius={1}
-                                fontSize={12}
-                                sx={{ cursor: "pointer", zIndex: 4 }}
-                                onClick={handleReportModalToggle}
-                              >
-                                <Flag sx={{ color: "red" }} />
-                              </Box>
-                            </Box>
-
-                            <CardContent>
-                              <Typography variant="h6">
-                                {selectedUserProfile?.Username}
-                              </Typography>
-                              <Typography
-                                sx={{
-                                  fontSize: "1.0rem",
-                                  fontWeight: "bold",
-                                  marginTop: "1px",
-                                  marginBottom: "5px",
-                                }}
-                                color="#C2185B"
-                              >
-                                {selectedUserProfile?.Location?.replace(
-                                  ", USA",
-                                  ""
-                                )}
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                color="secondary"
-                                dangerouslySetInnerHTML={{
-                                  __html: selectedUserProfile?.Tagline,
-                                }}
-                                sx={{
-                                  display: "-webkit-box", // Enables a flex container for text truncation
-                                  WebkitLineClamp: 3, // Limits the text to 3 lines
-                                  WebkitBoxOrient: "vertical", // Establishes vertical orientation for line clamping
-                                  overflow: "hidden", // Hides overflowing text
-                                  textOverflow: "ellipsis", // Ensures the "..." is visible for truncated text
-                                }}
-                              />
-                            </CardContent>
-                          </Card>
-                        </TinderCard>
-                      )
-                    : // Display userProfiles when param is null
-                      userProfiles
-                        .slice(currentIndex, currentIndex + 1)
-                        .map((profile: any, index: number) => {
-                          if (!refs.current[profile.Id]) {
-                            refs.current[profile.Id] = React.createRef();
-                          }
-                          return (
-                            // Your existing TinderCard code for userProfiles
-                            <TinderCard
-                              key={profile.Id}
-                              ref={refs.current[profile.Id]}
-                              onSwipe={(dir) => handleSwipe(dir)}
-                              preventSwipe={["up"]}
-                            >
-                              <Box
-                                position="absolute"
-                                left="50%"
-                                top="50%"
-                                sx={{
-                                  transform: "translate(-50%, -50%)",
-                                  zIndex: userProfiles.length - index,
-                                }}
-                              >
-                                <Card
-                                  sx={{
-                                    width: 400,
-                                    height: 550,
-                                    boxShadow: 5,
-                                    backgroundColor: "#1e1e1e",
-                                    color: "white",
-                                    borderRadius: "16px",
                                     position: "relative",
+                                    zIndex: 1,
+                                    width: "100%",
+                                    height: "100%",
+                                    borderTopLeftRadius: "0px",
+                                    borderTopRightRadius: "0px",
+                                    borderBottomLeftRadius: "0px",
+                                    borderBottomRightRadius: "0px",
                                   }}
-                                >
-                                  {/* Card content */}
+                                />
+
+                                {/* Swipe direction indicators */}
+                                {swipeDirection && (
                                   <Box
-                                    position="relative"
-                                    width="100%"
-                                    height="400px"
+                                    position="absolute"
+                                    top="50%"
+                                    left="50%"
+                                    sx={{
+                                      transform: "translate(-50%, -50%)",
+                                      zIndex: 3,
+                                    }}
                                   >
-                                    {/* Swipe gesture overlay */}
-                                    <Box
-                                      position="absolute"
-                                      top={0}
-                                      left={0}
-                                      width="100%"
-                                      height="100%"
-                                      zIndex={2}
-                                      sx={{ cursor: "grab" }}
-                                    ></Box>
-
-                                    {/* Avatar */}
-                                    <Avatar
-                                      src={profile?.Avatar}
-                                      alt={profile?.Username}
-                                      sx={{
-                                        position: "relative",
-                                        zIndex: 1,
-                                        width: "100%",
-                                        height: "100%",
-                                        borderTopLeftRadius: "0px",
-                                        borderTopRightRadius: "0px",
-                                        borderBottomLeftRadius: "0px",
-                                        borderBottomRightRadius: "0px",
-                                      }}
-                                    />
-
-                                    {/* Swipe direction indicators */}
-                                    {swipeDirection && (
-                                      <Box
-                                        position="absolute"
-                                        top="50%"
-                                        left="50%"
-                                        sx={{
-                                          transform: "translate(-50%, -50%)",
-                                          zIndex: 3,
+                                    {swipeDirection === "left" && (
+                                      <img
+                                        src="/delete.png"
+                                        alt="Dislike"
+                                        style={{
+                                          width: "100px",
+                                          height: "100px",
                                         }}
-                                      >
-                                        {swipeDirection === "left" && (
-                                          <img
-                                            src="/delete.png"
-                                            alt="Dislike"
-                                            style={{
-                                              width: "100px",
-                                              height: "100px",
-                                            }}
-                                          />
-                                        )}
-                                        {swipeDirection === "right" && (
-                                          <img
-                                            src="/like.png"
-                                            alt="Like"
-                                            style={{
-                                              width: "100px",
-                                              height: "100px",
-                                            }}
-                                          />
-                                        )}
-                                        {swipeDirection === "down" && (
-                                          <img
-                                            src="/maybe.png"
-                                            alt="Maybe"
-                                            style={{
-                                              width: "100px",
-                                              height: "100px",
-                                            }}
-                                          />
-                                        )}
-                                      </Box>
+                                      />
                                     )}
-
-                                    {/* Info Button */}
-                                    <Tooltip title="Click here if you find this photo offensive">
-                                      <Box
-                                        position="absolute"
-                                        top={8}
-                                        right={8}
-                                        color="rgba(255, 45, 85, 0.9)" // Changed to match app's primary color (#FF2D55)
-                                        p={1}
-                                        borderRadius={1}
-                                        fontSize={32} // Increased from 16
-                                        sx={{ cursor: "pointer", zIndex: 4 }}
-                                      >
-                                        <InfoIcon
-                                          onClick={() => {
-                                            setShowDetail(true);
-                                            setSelectedUserId(profile?.Id);
-                                          }}
-                                          sx={{ fontSize: 48 }} // Added explicit size control
-                                        />
-                                      </Box>
-                                    </Tooltip>
-
-                                    {/* Report Button */}
-                                    <Tooltip title="Click here if you would like to report this user">
-                                      <Box
-                                        position="absolute"
-                                        bottom={8}
-                                        right={8}
-                                        color="white"
-                                        p={1}
-                                        borderRadius={1}
-                                        fontSize={12}
-                                        sx={{ cursor: "pointer", zIndex: 4 }}
-                                        onClick={handleReportModalToggle}
-                                      >
-                                        <Flag sx={{ color: "red" }} />
-                                      </Box>
-                                    </Tooltip>
+                                    {swipeDirection === "right" && (
+                                      <img
+                                        src="/like.png"
+                                        alt="Like"
+                                        style={{
+                                          width: "100px",
+                                          height: "100px",
+                                        }}
+                                      />
+                                    )}
+                                    {swipeDirection === "down" && (
+                                      <img
+                                        src="/maybe.png"
+                                        alt="Maybe"
+                                        style={{
+                                          width: "100px",
+                                          height: "100px",
+                                        }}
+                                      />
+                                    )}
                                   </Box>
+                                )}
 
-                                  {/* Card Content */}
-                                  <CardContent>
-                                    <Typography variant="h6">
-                                      {profile?.Username}
-                                    </Typography>
-                                    <Typography
-                                      sx={{
-                                        fontSize: "1.0rem",
-                                        fontWeight: "bold",
-                                        marginTop: "1px",
-                                        marginBottom: "5px",
+                                {/* Info Button */}
+                                <Tooltip title="Click here if you find this photo offensive">
+                                  <Box
+                                    position="absolute"
+                                    top={8}
+                                    right={8}
+                                    color="rgba(255, 45, 85, 0.9)" // Changed to match app's primary color (#FF2D55)
+                                    p={1}
+                                    borderRadius={1}
+                                    fontSize={32} // Increased from 16
+                                    sx={{ cursor: "pointer", zIndex: 4 }}
+                                  >
+                                    <InfoIcon
+                                      onClick={() => {
+                                        setShowDetail(true);
+                                        setSelectedUserId(profile?.Id);
                                       }}
-                                      color="#C2185B"
-                                    >
-                                      {profile?.Location?.replace(", USA", "")}
-                                    </Typography>
-                                    <Typography
-                                      variant="body2"
-                                      color="secondary"
-                                      dangerouslySetInnerHTML={{
-                                        __html: profile?.Tagline,
-                                      }}
-                                      sx={{
-                                        display: "-webkit-box", // Enables a flex container for text truncation
-                                        WebkitLineClamp: 3, // Limits the text to 3 lines
-                                        WebkitBoxOrient: "vertical", // Establishes vertical orientation for line clamping
-                                        overflow: "hidden", // Hides overflowing text
-                                        textOverflow: "ellipsis", // Ensures the "..." is visible for truncated text
-                                      }}
+                                      sx={{ fontSize: 48 }} // Added explicit size control
                                     />
-                                  </CardContent>
-                                </Card>
+                                  </Box>
+                                </Tooltip>
+
+                                {/* Report Button */}
+                                <Tooltip title="Click here if you would like to report this user">
+                                  <Box
+                                    position="absolute"
+                                    bottom={8}
+                                    right={8}
+                                    color="white"
+                                    p={1}
+                                    borderRadius={1}
+                                    fontSize={12}
+                                    sx={{ cursor: "pointer", zIndex: 4 }}
+                                    onClick={handleReportModalToggle}
+                                  >
+                                    <Flag sx={{ color: "red" }} />
+                                  </Box>
+                                </Tooltip>
                               </Box>
-                            </TinderCard>
-                          );
-                        })}
-                </Box>
-                <Box
-                  sx={{
-                    position: "absolute",
-                    bottom: { xs: "20px", sm: "50px" },
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    display: "flex",
-                    gap: { xs: "1rem", sm: "2rem" },
-                    zIndex: 1000,
-                    "@media (max-height: 700px)": {
-                      // Add responsive styling for small heights
-                      bottom: "10px",
-                      "& .MuiButton-root": {
-                        // Target all buttons
-                        width: "60px",
-                        height: "60px",
-                        "& img": {
-                          // Target the images inside buttons
-                          width: "30px",
-                          height: "30px",
-                        },
-                      },
-                    },
-                  }}
-                >
-                  <Button
-                    onClick={() => handleButtonSwipe("left")}
-                    sx={{
-                      width: { xs: "70px", sm: "90px" },
-                      height: { xs: "70px", sm: "90px" },
-                      borderRadius: "50%",
-                      backgroundColor: "white",
-                      border: "5px solid #C2185B",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      transition: "transform 0.2s ease",
-                      "&:hover": {
-                        backgroundColor: "#C2185B",
-                        transform: "scale(1.1)",
-                      },
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src="/delete.png"
-                      alt="Dislike"
-                      sx={{
-                        width: { xs: "35px", sm: "50px" },
-                        height: { xs: "35px", sm: "50px" },
-                      }}
-                    />
-                  </Button>
 
-                  <Button
-                    onClick={() => handleButtonSwipe("down")}
-                    sx={{
-                      width: { xs: "70px", sm: "90px" },
-                      height: { xs: "70px", sm: "90px" },
-                      borderRadius: "50%",
-                      backgroundColor: "white",
-                      border: "5px solid #C2185B",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      transition: "transform 0.2s ease",
-                      "&:hover": {
-                        backgroundColor: "#C2185B",
-                        transform: "scale(1.1)",
-                      },
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src="/maybe.png"
-                      alt="Maybe"
-                      sx={{
-                        width: { xs: "35px", sm: "50px" },
-                        height: { xs: "35px", sm: "50px" },
-                      }}
-                    />
-                  </Button>
-
-                  <Button
-                    onClick={() => handleButtonSwipe("right")}
-                    sx={{
-                      width: { xs: "70px", sm: "90px" },
-                      height: { xs: "70px", sm: "90px" },
-                      borderRadius: "50%",
-                      backgroundColor: "white",
-                      border: "5px solid #C2185B",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      transition: "transform 0.2s ease",
-                      "&:hover": {
-                        backgroundColor: "#C2185B",
-                        transform: "scale(1.1)",
-                      },
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src="/like.png"
-                      alt="Like"
-                      sx={{
-                        width: { xs: "35px", sm: "50px" },
-                        height: { xs: "35px", sm: "50px" },
-                      }}
-                    />
-                  </Button>
-                </Box>
-              </Box>
+                              {/* Card Content */}
+                              <CardContent>
+                                <Typography variant="h6">
+                                  {profile?.Username}
+                                </Typography>
+                                <Typography
+                                  sx={{
+                                    fontSize: "1.0rem",
+                                    fontWeight: "bold",
+                                    marginTop: "1px",
+                                    marginBottom: "5px",
+                                  }}
+                                  color="#C2185B"
+                                >
+                                  {profile?.Location?.replace(", USA", "")}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="secondary"
+                                  dangerouslySetInnerHTML={{
+                                    __html: profile?.Tagline,
+                                  }}
+                                  sx={{
+                                    display: "-webkit-box", // Enables a flex container for text truncation
+                                    WebkitLineClamp: 3, // Limits the text to 3 lines
+                                    WebkitBoxOrient: "vertical", // Establishes vertical orientation for line clamping
+                                    overflow: "hidden", // Hides overflowing text
+                                    textOverflow: "ellipsis", // Ensures the "..." is visible for truncated text
+                                  }}
+                                />
+                              </CardContent>
+                            </Card>
+                          </Box>
+                        </TinderCard>
+                      );
+                    })}
             </Box>
-          </Container>
-          <Footer />
-        </>
-      )}
+            <Box
+              sx={{
+                position: "absolute",
+                bottom: { xs: "20px", sm: "50px" },
+                left: "50%",
+                transform: "translateX(-50%)",
+                display: "flex",
+                gap: { xs: "1rem", sm: "2rem" },
+                zIndex: 1000,
+                "@media (max-height: 700px)": {
+                  // Add responsive styling for small heights
+                  bottom: "10px",
+                  "& .MuiButton-root": {
+                    // Target all buttons
+                    width: "60px",
+                    height: "60px",
+                    "& img": {
+                      // Target the images inside buttons
+                      width: "30px",
+                      height: "30px",
+                    },
+                  },
+                },
+              }}
+            >
+              <Button
+                onClick={() => handleButtonSwipe("left")}
+                sx={{
+                  width: { xs: "70px", sm: "90px" },
+                  height: { xs: "70px", sm: "90px" },
+                  borderRadius: "50%",
+                  backgroundColor: "white",
+                  border: "5px solid #C2185B",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  transition: "transform 0.2s ease",
+                  "&:hover": {
+                    backgroundColor: "#C2185B",
+                    transform: "scale(1.1)",
+                  },
+                }}
+              >
+                <Box
+                  component="img"
+                  src="/delete.png"
+                  alt="Dislike"
+                  sx={{
+                    width: { xs: "35px", sm: "50px" },
+                    height: { xs: "35px", sm: "50px" },
+                  }}
+                />
+              </Button>
+
+              <Button
+                onClick={() => handleButtonSwipe("down")}
+                sx={{
+                  width: { xs: "70px", sm: "90px" },
+                  height: { xs: "70px", sm: "90px" },
+                  borderRadius: "50%",
+                  backgroundColor: "white",
+                  border: "5px solid #C2185B",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  transition: "transform 0.2s ease",
+                  "&:hover": {
+                    backgroundColor: "#C2185B",
+                    transform: "scale(1.1)",
+                  },
+                }}
+              >
+                <Box
+                  component="img"
+                  src="/maybe.png"
+                  alt="Maybe"
+                  sx={{
+                    width: { xs: "35px", sm: "50px" },
+                    height: { xs: "35px", sm: "50px" },
+                  }}
+                />
+              </Button>
+
+              <Button
+                onClick={() => handleButtonSwipe("right")}
+                sx={{
+                  width: { xs: "70px", sm: "90px" },
+                  height: { xs: "70px", sm: "90px" },
+                  borderRadius: "50%",
+                  backgroundColor: "white",
+                  border: "5px solid #C2185B",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  transition: "transform 0.2s ease",
+                  "&:hover": {
+                    backgroundColor: "#C2185B",
+                    transform: "scale(1.1)",
+                  },
+                }}
+              >
+                <Box
+                  component="img"
+                  src="/like.png"
+                  alt="Like"
+                  sx={{
+                    width: { xs: "35px", sm: "50px" },
+                    height: { xs: "35px", sm: "50px" },
+                  }}
+                />
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Container>
+      <Footer />
       <UserProfileModal
         handleGrantAccess={handleGrantAccess}
         handleClose={handleClose}

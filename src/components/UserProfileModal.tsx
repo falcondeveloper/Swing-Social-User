@@ -203,7 +203,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
   }, []);
 
   const handleAddFriend = async (): Promise<void> => {
-    const tid = toast.loading("Sending friend request...");
+    // const tid = toast.loading("Sending friend request...");
 
     try {
       const mailResponse = await fetch("/api/user/mailbox", {
@@ -264,18 +264,12 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
         throw new Error(`Failed to notify. Status: ${notifyResponse.status}`);
       }
 
-      toast.update(tid, {
-        render: "Friend request sent 🎉",
-        type: "success",
-        isLoading: false,
-        autoClose: 3000,
+      toast.success("Friend request sent 🎉", {
+        autoClose: 2000,
       });
     } catch (error: any) {
       console.error("Error:", error);
-      toast.update(tid, {
-        render: error?.message ?? "Something went wrong",
-        type: "error",
-        isLoading: false,
+      toast.error(error?.message ?? "Something went wrong", {
         autoClose: 4000,
       });
     }
@@ -634,22 +628,22 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   <Box
                     sx={{
                       display: "flex",
-                      gap: 1, // Reduce gap between boxes
+                      gap: 1,
                       borderRadius: 2,
                     }}
                   >
                     <Button
                       onClick={handleBlockFriend}
                       sx={{
-                        flex: 1, // Make box flexible
+                        flex: 1,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         backgroundColor: "#555",
                         color: "white",
                         borderRadius: 1,
-                        padding: 1, // Reduce padding inside the box
-                        minWidth: "50px", // Minimize box size
+                        padding: 1,
+                        minWidth: "50px",
                       }}
                     >
                       <Block fontSize="small" />
@@ -679,7 +673,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     <Button
                       variant="contained"
                       sx={{
-                        flex: 2, // Keep this box wider
+                        flex: 2,
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
@@ -687,8 +681,8 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                         backgroundColor: "#555",
                         color: "white",
                         borderRadius: 1,
-                        padding: 1, // Reduce padding inside the box
-                        minWidth: "80px", // Minimize box size for button container
+                        padding: 1,
+                        minWidth: "80px",
                       }}
                     >
                       <span style={{ fontWeight: "bold", fontSize: "16px" }}>

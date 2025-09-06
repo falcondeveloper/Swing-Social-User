@@ -18,8 +18,8 @@ const useFcmToken = () => {
 
           if (permission === 'granted') {
             const currentToken = await getToken(messaging, {
-              vapidKey: 'BA4k_YYfP8FDCcEyIcnxWUqnljPScp8k_IYu6H95_MI3iwDY2JUyVOyzImYkQwfSD8ml3u8pIW3DX4tUx1d-D1U',
-              serviceWorkerRegistration: await navigator.serviceWorker.ready, // ✅ ensure SW is ready
+              vapidKey: 'BMQCJxFYGoZrPS4GNe-LBcXGBl_9T6xYGBU8SZBoq8LAKc1fRiiIZEhZAomThQdeEC9GFz4ZDwQE1Nru7ykS5fE',
+              serviceWorkerRegistration: await navigator.serviceWorker.ready,
             });
 
             if (currentToken) {
