@@ -911,6 +911,7 @@ export default function CalendarView() {
               onClick={() => router.back()}
               startIcon={<ArrowLeft />}
               sx={{
+                display: { xs: "none", sm: "none", md: "inline-flex" },
                 textTransform: "none",
                 color: "rgba(255, 255, 255, 0.7)",
                 textAlign: "center",
@@ -972,78 +973,133 @@ export default function CalendarView() {
             <Box
               sx={{
                 display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                mb: 6,
-                mt: 4,
+                flexDirection: { xs: "column", sm: "column", md: "row" },
+                gap: { xs: 2, sm: 2, md: 3 },
+                alignItems: { xs: "stretch", md: "center" },
               }}
             >
               <Box
                 sx={{
                   display: "flex",
+                  flexDirection: { xs: "row", md: "row" },
+                  justifyContent: "space-between",
                   alignItems: "center",
-                  gap: 3,
-                  background:
-                    "linear-gradient(135deg, #f50057 0%, #ff4081 100%)",
-                  p: "2px",
-                  borderRadius: 2,
+                  gap: 2,
+                  flexWrap: { xs: "wrap", md: "nowrap" },
+                  mt: { xs: 3, md: 0 },
                 }}
               >
                 <Box
                   sx={{
-                    bgcolor: "#0A0A0A",
-                    px: 1,
-                    borderRadius: 1.5,
                     display: "flex",
                     alignItems: "center",
-                    gap: 2,
+                    gap: 3,
+                    background:
+                      "linear-gradient(135deg, #f50057 0%, #ff4081 100%)",
+                    p: "2px",
+                    borderRadius: 2,
                   }}
                 >
-                  <Typography
-                    variant="h6"
-                    component="h1"
+                  <Box
                     sx={{
-                      background:
-                        "linear-gradient(135deg, #f50057 0%, #ff4081 100%)",
-                      backgroundClip: "text",
-                      WebkitBackgroundClip: "text",
-                      color: "transparent",
-                      fontWeight: "bold",
+                      bgcolor: "#0A0A0A",
+                      px: 1,
+                      borderRadius: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
                     }}
                   >
-                    {currentDate.toLocaleString("default", {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </Typography>
-                  <Box sx={{ display: "flex", gap: 1 }}>
-                    <IconButton
-                      onClick={handlePreviousMonth}
+                    <Typography
+                      variant="h6"
+                      component="h1"
                       sx={{
-                        color: "#f50057",
-                        "&:hover": {
-                          bgcolor: alpha("#f50057", 0.1),
-                        },
+                        background:
+                          "linear-gradient(135deg, #f50057 0%, #ff4081 100%)",
+                        backgroundClip: "text",
+                        WebkitBackgroundClip: "text",
+                        color: "transparent",
+                        fontWeight: "bold",
                       }}
                     >
-                      <ChevronLeft />
-                    </IconButton>
-                    <IconButton
-                      onClick={handleNextMonth}
-                      sx={{
-                        color: "#f50057",
-                        "&:hover": {
-                          bgcolor: alpha("#f50057", 0.1),
-                        },
-                      }}
-                    >
-                      <ChevronRight />
-                    </IconButton>
+                      {currentDate.toLocaleString("default", {
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <IconButton
+                        onClick={handlePreviousMonth}
+                        sx={{
+                          color: "#f50057",
+                          "&:hover": {
+                            bgcolor: alpha("#f50057", 0.1),
+                          },
+                        }}
+                      >
+                        <ChevronLeft />
+                      </IconButton>
+                      <IconButton
+                        onClick={handleNextMonth}
+                        sx={{
+                          color: "#f50057",
+                          "&:hover": {
+                            bgcolor: alpha("#f50057", 0.1),
+                          },
+                        }}
+                      >
+                        <ChevronRight />
+                      </IconButton>
+                    </Box>
                   </Box>
                 </Box>
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={() => {
+                    const token = localStorage.getItem("loginInfo");
+                    if (token) {
+                      const decodeToken = jwtDecode<any>(token);
+                      if (decodeToken?.membership === 0) {
+                        router.push("/membership");
+                      } else {
+                        router.push("/events/create");
+                      }
+                    } else {
+                      router.push("/login");
+                    }
+                  }}
+                  sx={{
+                    display: {
+                      xs: "inline-flex",
+                      sm: "inline-flex",
+                      md: "none",
+                    },
+                    color: viewType === "calendar" ? "white" : "#f50057",
+                    bgcolor:
+                      viewType === "calendar"
+                        ? "#f50057"
+                        : "rgba(255, 255, 255, 0.05)",
+                    "&:hover": {
+                      bgcolor:
+                        viewType === "calendar"
+                          ? "#c51162"
+                          : "rgba(255, 255, 255, 0.1)",
+                    },
+                    borderRadius: 2,
+                    px: 3,
+                    py: 1,
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  Create
+                </Button>
               </Box>
 
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2}
+                sx={{ width: { xs: "100%", sm: "100%", md: "auto" } }}
+              >
                 <Autocomplete
                   id="location-autocomplete"
                   open={openCity}
@@ -1057,7 +1113,7 @@ export default function CalendarView() {
                   loading={cityLoading}
                   inputValue={cityInput}
                   size="small"
-                  sx={{ width: 220 }}
+                  sx={{ width: { xs: "100%", sm: 200, md: 220 } }}
                   noOptionsText={
                     <Typography sx={{ color: "white" }}>No options</Typography>
                   }
@@ -1170,7 +1226,7 @@ export default function CalendarView() {
                     setSearchType("text");
                   }}
                   sx={{
-                    width: 220,
+                    width: { xs: "100%", sm: 200, md: 220 },
                     input: { color: "white" },
                     "& .MuiOutlinedInput-notchedOutline": {
                       borderColor: "rgba(255,255,255,0.23)",
@@ -1190,10 +1246,12 @@ export default function CalendarView() {
                     ),
                   }}
                 />
+
                 <Button
                   startIcon={<CalendarToday />}
                   onClick={() => setViewType("calendar")}
                   sx={{
+                    display: { xs: "none", sm: "none", md: "inline-flex" },
                     color: viewType === "calendar" ? "white" : "#f50057",
                     bgcolor:
                       viewType === "calendar"
@@ -1218,6 +1276,7 @@ export default function CalendarView() {
                   startIcon={<ViewList />}
                   onClick={() => setViewType("list")}
                   sx={{
+                    display: { xs: "none", sm: "none", md: "inline-flex" },
                     color: viewType === "list" ? "white" : "#f50057",
                     bgcolor:
                       viewType === "list"
@@ -1254,6 +1313,11 @@ export default function CalendarView() {
                     }
                   }}
                   sx={{
+                    display: {
+                      xs: "none",
+                      sm: "none",
+                      md: "inline-flex",
+                    },
                     color: viewType === "calendar" ? "white" : "#f50057",
                     bgcolor:
                       viewType === "calendar"
@@ -1281,6 +1345,7 @@ export default function CalendarView() {
                   setTabValue(newValue);
                   window.scroll(0, 0);
                 }}
+                variant="scrollable"
                 sx={{
                   mt: 3,
                   mb: 4,
@@ -1593,6 +1658,7 @@ export default function CalendarView() {
                     <Paper
                       elevation={24}
                       sx={{
+                        display: { xs: "none", sm: "none", md: "inline-flex" },
                         p: 3,
                         bgcolor: "#1E1E1E",
                         borderRadius: 2,
