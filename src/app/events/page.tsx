@@ -518,7 +518,7 @@ export default function CalendarView() {
                           </Button>
                         </Stack>
 
-                        {/* Filter by City */}
+                        {/* Filter by State */}
                         <Autocomplete
                           id="location-autocomplete"
                           open={openCity}
@@ -599,7 +599,7 @@ export default function CalendarView() {
                           renderInput={(params) => (
                             <TextField
                               {...params}
-                              placeholder="Filter by city"
+                              placeholder="Search by state"
                               InputProps={{
                                 ...params.InputProps,
                                 endAdornment: (
@@ -1162,7 +1162,7 @@ export default function CalendarView() {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      placeholder="Filter by city"
+                      placeholder="Search by state"
                       size="small"
                       InputProps={{
                         ...params.InputProps,
