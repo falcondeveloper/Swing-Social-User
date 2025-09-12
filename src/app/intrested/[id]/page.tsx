@@ -246,7 +246,7 @@ export default function ShowInterest({
             >
               {[
                 "Profile Info",
-                "Verify Email",
+                "Verify Phone",
                 "Preferences",
                 "Avatar & Banner",
                 "About",

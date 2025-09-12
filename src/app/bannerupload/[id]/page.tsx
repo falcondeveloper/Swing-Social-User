@@ -342,7 +342,7 @@ export default function UploadBanner({ params }: { params: Params }) {
                 >
                   {[
                     "Profile Info",
-                    "Verify Email",
+                    "Verify Phone",
                     "Preferences",
                     "Avatar & Banner",
                     "About",

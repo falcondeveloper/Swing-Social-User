@@ -32,6 +32,11 @@ import {
   StepLabel,
   Popper,
   PopperProps,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
 } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -41,11 +46,14 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
 import CloseIcon from "@mui/icons-material/Close";
+import PhoneAndroidIcon from "@mui/icons-material/PhoneAndroid";
 import MarkEmailUnreadIcon from "@mui/icons-material/MarkEmailUnread";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import Link from "next/link";
+import PhoneInput, { CountryData } from "react-phone-input-2";
+import "react-phone-input-2/lib/material.css";
 
 const theme = createTheme({
   palette: {
@@ -249,11 +257,6 @@ const RegisterPage = () => {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  const handleContinue = async () => {
-    await router.push(`/otp/${profileId}`);
-    handleClose();
-  };
-
   useEffect(() => {
     if (!openCity) setCityOption([]);
   }, [openCity]);
@@ -318,6 +321,7 @@ const RegisterPage = () => {
       userName: "",
       email: "",
       phone: "",
+      countryCode: "",
       password: "",
       repeatPassword: "",
       city: "",
@@ -443,6 +447,7 @@ const RegisterPage = () => {
           localStorage.setItem("password", values.password);
           localStorage.setItem("logged_in_profile", data.profileId);
           localStorage.setItem("userName", values.user_name);
+          localStorage.setItem("phone", values.phone);
           setProfileId(data.profileId);
           setIsUploading(false);
           handleOpen();
@@ -455,6 +460,12 @@ const RegisterPage = () => {
       }
     },
   });
+
+  const handleContinue = async () => {
+    const countryCode = formik.values.countryCode.replace("+", "");
+    await router.push(`/otp/${profileId}/${countryCode}`);
+    handleClose();
+  };
 
   const yourTextFieldSx = {
     mb: 2,
@@ -513,7 +524,7 @@ const RegisterPage = () => {
               >
                 {[
                   "Profile Info",
-                  "Verify Email",
+                  "Verify Phone",
                   "Preferences",
                   "Avatar & Banner",
                   "About",
@@ -777,7 +788,7 @@ const RegisterPage = () => {
                 />
 
                 {/* PHONE */}
-                <TextField
+                {/* <TextField
                   fullWidth
                   label="Phone"
                   variant="outlined"
@@ -798,7 +809,57 @@ const RegisterPage = () => {
                     pattern: "[0-9]*",
                     maxLength: 10,
                   }}
-                />
+                /> */}
+
+                <Box
+                  sx={{
+                    mb: 2,
+                    "& .MuiOutlinedInput-root": {
+                      color: "white",
+                      backgroundColor: "rgba(255,255,255,0.05)",
+                      borderRadius: "12px",
+                      "& fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                      "&:hover fieldset": {
+                        borderColor: "rgba(255,255,255,0.4)",
+                      },
+                    },
+                    "& .MuiInputLabel-root": { display: "none" },
+                    "& .react-tel-input .form-control": {
+                      width: "100%",
+                      height: "56px",
+                      backgroundColor: "rgba(255,255,255,0.05)",
+                      color: "white",
+                      borderRadius: "12px",
+                      border: "1px solid rgba(255,255,255,0.2)",
+                    },
+                    "& .react-tel-input .flag-dropdown": {
+                      border: "none",
+                      backgroundColor: "transparent",
+                    },
+                  }}
+                >
+                  <PhoneInput
+                    country={"us"}
+                    value={formik.values.countryCode + formik.values.phone}
+                    onChange={(value, country) => {
+                      const c = country as CountryData;
+                      formik.setFieldValue("countryCode", `+${c.dialCode}`);
+                      const numberWithoutCode = value.replace(c.dialCode, "");
+                      formik.setFieldValue("phone", numberWithoutCode);
+                    }}
+                    onBlur={formik.handleBlur}
+                    inputProps={{
+                      name: "phone",
+                      required: true,
+                    }}
+                    specialLabel=""
+                  />
+                  {formik.touched.phone && formik.errors.phone && (
+                    <FormHelperText sx={{ color: "red" }}>
+                      {formik.errors.phone}
+                    </FormHelperText>
+                  )}
+                </Box>
 
                 {/* CITY */}
                 <Autocomplete
@@ -992,7 +1053,7 @@ const RegisterPage = () => {
       </ThemeProvider>
 
       {/* Dialog Component */}
-      <Dialog
+      {/* <Dialog
         open={open}
         onClose={handleClose}
         aria-labelledby="email-verification-title"
@@ -1065,6 +1126,130 @@ const RegisterPage = () => {
               sx={{ color: "#6b6b6b", maxWidth: 360 }}
             >
               Don’t see it? Check your Spam folder.
+            </Typography>
+          </Stack>
+        </DialogContent>
+
+        <DialogActions
+          sx={{
+            mt: 1.5,
+            gap: 1,
+            px: { xs: 2, sm: 3 },
+            pb: { xs: 2, sm: 3 },
+            justifyContent: "center",
+            flexDirection: "row",
+            flexWrap: "nowrap",
+          }}
+        >
+          <Button
+            onClick={handleClose}
+            variant="outlined"
+            sx={{
+              borderColor: "#c2185b",
+              color: "#c2185b",
+              fontWeight: 700,
+              px: 3,
+              py: 1.1,
+              minWidth: 120,
+              "&:hover": {
+                borderColor: "#ad1457",
+                backgroundColor: "rgba(194,24,91,0.06)",
+              },
+            }}
+          >
+            Back
+          </Button>
+          <Button
+            onClick={handleContinue}
+            sx={{
+              backgroundColor: "#c2185b",
+              color: "#fff",
+              fontWeight: 700,
+              px: 3,
+              py: 1.1,
+              minWidth: 120,
+              "&:hover": { backgroundColor: "#ad1457" },
+            }}
+          >
+            Continue
+          </Button>
+        </DialogActions>
+      </Dialog> */}
+
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="phone-verification-title"
+        aria-describedby="phone-verification-desc"
+        PaperProps={{
+          sx: {
+            width: "100%",
+            maxWidth: 480,
+            mx: { xs: 1.5, sm: "auto" },
+            borderRadius: { xs: 2, sm: 3 },
+            p: { xs: 2, sm: 3 },
+            background: "linear-gradient(180deg, #ffffff 0%, #faf7fa 100%)",
+            border: "1px solid rgba(194,24,91,0.12)",
+            boxShadow:
+              "0 10px 30px rgba(194,24,91,0.15), 0 2px 8px rgba(0,0,0,0.06)",
+          },
+        }}
+      >
+        <DialogTitle
+          id="phone-verification-title"
+          sx={{
+            fontWeight: 800,
+            pr: 6,
+            textAlign: "center",
+            color: "#1a1a1a",
+          }}
+        >
+          Phone Verification
+          <IconButton
+            onClick={handleClose}
+            aria-label="Close"
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: 8,
+              color: "rgba(0,0,0,0.54)",
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ pt: 1 }}>
+          <Stack spacing={1.5} alignItems="center" textAlign="center">
+            <Avatar
+              sx={{
+                bgcolor: "#c2185b",
+                width: 48,
+                height: 48,
+                boxShadow: "0 6px 14px rgba(194,24,91,0.35)",
+              }}
+            >
+              <PhoneAndroidIcon />
+            </Avatar>
+
+            <DialogContentText
+              id="phone-verification-desc"
+              sx={{
+                color: "#333",
+                fontSize: { xs: "0.95rem", sm: "1rem" },
+                lineHeight: 1.6,
+                maxWidth: 360,
+              }}
+            >
+              We’ve sent a one-time code to your phone number via SMS.
+            </DialogContentText>
+
+            <Typography
+              variant="body2"
+              sx={{ color: "#6b6b6b", maxWidth: 360 }}
+            >
+              Didn’t receive it? Try resending the code or check your network
+              signal.
             </Typography>
           </Stack>
         </DialogContent>

@@ -314,7 +314,7 @@ export default function UploadAvatar({ params }: { params: Params }) {
                 >
                   {[
                     "Profile Info",
-                    "Verify Email",
+                    "Verify Phone",
                     "Preferences",
                     "Avatar & Banner",
                     "About",
