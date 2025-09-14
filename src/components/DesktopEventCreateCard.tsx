@@ -160,11 +160,48 @@ const DesktopEventCreateCard = () => {
     }
   };
 
+  const compressImage = async (file: File, quality = 0.7): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        if (!event.target?.result) return reject("File could not be read");
+
+        img.src = event.target.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+
+          // keep original dimensions
+          canvas.width = img.width;
+          canvas.height = img.height;
+
+          ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          // compress to JPEG
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) return reject("Compression failed");
+              resolve(new File([blob], file.name, { type: "image/jpeg" }));
+            },
+            "image/jpeg",
+            quality // adjust 0–1 (lower = smaller file)
+          );
+        };
+        img.onerror = reject;
+      };
+    });
+  };
+
   const uploadCoverImage = async (file: File): Promise<string | null> => {
     setIsUploading(true);
     try {
+      const compressedFile = await compressImage(file, 0.7);
+
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("image", compressedFile);
 
       const response = await fetch("/api/user/upload", {
         method: "POST",
@@ -228,9 +265,7 @@ const DesktopEventCreateCard = () => {
         .required("Event name is required")
         .max(100, "Event name must be less than 100 characters"),
       venue: Yup.string().required("Venue is required"),
-      description: Yup.string()
-        .required("Description is required")
-        .max(1000, "Description must be less than 1000 characters"),
+      description: Yup.string().required("Description is required"),
       hideVenue: Yup.number().oneOf([0, 1]),
       category: Yup.string().required("Category is required"),
 
@@ -269,35 +304,9 @@ const DesktopEventCreateCard = () => {
 
       coverPhoto: Yup.mixed<File>()
         .nullable()
-        .required("Cover photo is required")
-        .test("fileType", "Unsupported file format", (value) => {
-          if (!value) return false;
-          return ["image/jpeg", "image/jpg", "image/png", "image/gif"].includes(
-            value.type
-          );
-        })
-        .test("fileSize", "File too large (max 5MB)", (value) => {
-          if (!value) return false;
-          return value.size <= 5 * 1024 * 1024;
-        }),
+        .required("Cover photo is required"),
 
       images: Yup.array()
-        .of(
-          Yup.mixed<File>()
-            .test("fileType", "Unsupported file format", (file) =>
-              file
-                ? [
-                    "image/jpeg",
-                    "image/jpg",
-                    "image/png",
-                    "image/gif",
-                  ].includes(file.type)
-                : false
-            )
-            .test("fileSize", "File too large (max 5MB)", (file) =>
-              file ? file.size <= 5 * 1024 * 1024 : false
-            )
-        )
         .min(1, "Please upload at least one image")
         .max(5, "You can upload up to 5 images only"),
     }),
@@ -695,7 +704,7 @@ const DesktopEventCreateCard = () => {
                         id="coverPhotoInput"
                         type="file"
                         hidden
-                        accept="image/png,image/jpeg,image/jpg,image/gif"
+                        accept="image/*"
                         onChange={(event) => {
                           const file = event.currentTarget.files?.[0] || null;
 
@@ -760,7 +769,7 @@ const DesktopEventCreateCard = () => {
                         type="file"
                         hidden
                         multiple
-                        accept="image/png,image/jpeg,image/jpg,image/gif"
+                        accept="image/*"
                         onChange={(event) => {
                           const files = Array.from(
                             event.currentTarget.files || []
