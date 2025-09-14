@@ -365,7 +365,7 @@ const LoginPage = () => {
                 <TextField
                   fullWidth
                   label={
-                    loginMethod === "password" ? "Email or Username" : "Email"
+                    loginMethod === "password" ? "Email or Username or Phone" : "Email"
                   }
                   name="email"
                   value={formik.values.email}
