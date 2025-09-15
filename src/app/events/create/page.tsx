@@ -542,7 +542,7 @@ const EventForm: React.FC = () => {
   };
 
   const getLatLngByLocationName = async (locationName: string) => {
-    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0"; // Replace with your actual API key
+    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0";
 
     try {
       const response = await fetch(
