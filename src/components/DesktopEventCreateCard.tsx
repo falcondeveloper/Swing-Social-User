@@ -707,10 +707,11 @@ const DesktopEventCreateCard = () => {
                         accept="image/*"
                         onChange={(event) => {
                           const file = event.currentTarget.files?.[0] || null;
-
                           formik.setFieldValue("coverPhoto", file);
                           formik.setFieldTouched("coverPhoto", true, false);
                           formik.validateField("coverPhoto");
+
+                          event.currentTarget.value = "";
                         }}
                       />
 
@@ -774,25 +775,16 @@ const DesktopEventCreateCard = () => {
                           const files = Array.from(
                             event.currentTarget.files || []
                           );
-                          const validFiles = files.filter(
-                            (file) =>
-                              [
-                                "image/jpeg",
-                                "image/jpg",
-                                "image/png",
-                                "image/gif",
-                              ].includes(file.type) &&
-                              file.size <= 5 * 1024 * 1024
-                          );
-
                           const newFiles = [
                             ...formik.values.images,
-                            ...validFiles,
+                            ...files,
                           ].slice(0, 5);
 
                           formik.setFieldValue("images", newFiles);
                           formik.setFieldTouched("images", true, false);
                           formik.validateField("images");
+
+                          event.currentTarget.value = "";
                         }}
                       />
 
@@ -831,6 +823,11 @@ const DesktopEventCreateCard = () => {
                                 const updated = [...formik.values.images];
                                 updated.splice(index, 1);
                                 formik.setFieldValue("images", updated);
+
+                                const input = document.getElementById(
+                                  "photosInput"
+                                ) as HTMLInputElement;
+                                if (input) input.value = "";
                               }}
                             >
                               <DeleteIcon fontSize="small" />
