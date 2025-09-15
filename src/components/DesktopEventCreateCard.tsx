@@ -161,6 +161,8 @@ const DesktopEventCreateCard = () => {
   };
 
   const compressImage = async (file: File, quality = 0.7): Promise<File> => {
+    console.log(`Original size: ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
+
     return new Promise((resolve, reject) => {
       const img = new Image();
       const reader = new FileReader();
@@ -174,20 +176,30 @@ const DesktopEventCreateCard = () => {
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
 
-          // keep original dimensions
           canvas.width = img.width;
           canvas.height = img.height;
 
           ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-          // compress to JPEG
           canvas.toBlob(
             (blob) => {
               if (!blob) return reject("Compression failed");
-              resolve(new File([blob], file.name, { type: "image/jpeg" }));
+
+              const compressedFile = new File([blob], file.name, {
+                type: "image/jpeg",
+              });
+
+              console.log(
+                `Compressed size: ${(
+                  compressedFile.size /
+                  (1024 * 1024)
+                ).toFixed(2)} MB`
+              );
+
+              resolve(compressedFile);
             },
             "image/jpeg",
-            quality // adjust 0–1 (lower = smaller file)
+            quality
           );
         };
         img.onerror = reject;
@@ -226,11 +238,11 @@ const DesktopEventCreateCard = () => {
       setMessage("Image upload failed. Please try again.");
       setOpen(true);
 
-      await fetch("/api/user/sendErrorEmail", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ errorMessage, stack }),
-      });
+      // await fetch("/api/user/sendErrorEmail", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ errorMessage, stack }),
+      // });
 
       return null;
     } finally {
