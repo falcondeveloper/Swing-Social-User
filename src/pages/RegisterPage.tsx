@@ -332,7 +332,7 @@ const RegisterPage = () => {
     onSubmit: async (values, { setSubmitting, setErrors }) => {
       const urlParams = new URLSearchParams(window.location.search);
       const aff = urlParams.get("aff");
-      const refer = urlParams.get("refer");
+      const src = urlParams.get("src");
 
       const getOS = () => {
         const userAgent = window.navigator.userAgent;
@@ -358,7 +358,7 @@ const RegisterPage = () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               affiliate: aff,
-              referral: refer,
+              referral: src,
               OS: getOS(),
               page: "Register",
               url: window.location.href,
@@ -787,30 +787,6 @@ const RegisterPage = () => {
                   sx={yourTextFieldSx}
                 />
 
-                {/* PHONE */}
-                {/* <TextField
-                  fullWidth
-                  label="Phone"
-                  variant="outlined"
-                  name="phone"
-                  type="tel"
-                  autoComplete="tel"
-                  sx={yourTextFieldSx}
-                  value={formik.values.phone}
-                  onChange={(e) => {
-                    const onlyNums = e.target.value.replace(/[^0-9]/g, "");
-                    formik.setFieldValue("phone", onlyNums);
-                  }}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.phone && Boolean(formik.errors.phone)}
-                  helperText={formik.touched.phone && formik.errors.phone}
-                  inputProps={{
-                    inputMode: "numeric",
-                    pattern: "[0-9]*",
-                    maxLength: 10,
-                  }}
-                /> */}
-
                 <Box
                   sx={{
                     mb: 2,
@@ -1051,130 +1027,6 @@ const RegisterPage = () => {
           </Container>
         </Box>
       </ThemeProvider>
-
-      {/* Dialog Component */}
-      {/* <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="email-verification-title"
-        aria-describedby="email-verification-desc"
-        PaperProps={{
-          sx: {
-            width: "100%",
-            maxWidth: 480,
-            mx: { xs: 1.5, sm: "auto" },
-            borderRadius: { xs: 2, sm: 3 },
-            p: { xs: 2, sm: 3 },
-            background: "linear-gradient(180deg, #ffffff 0%, #faf7fa 100%)",
-            border: "1px solid rgba(194,24,91,0.12)",
-            boxShadow:
-              "0 10px 30px rgba(194,24,91,0.15), 0 2px 8px rgba(0,0,0,0.06)",
-          },
-        }}
-      >
-        <DialogTitle
-          id="email-verification-title"
-          sx={{
-            fontWeight: 800,
-            pr: 6,
-            textAlign: "center",
-            color: "#1a1a1a",
-          }}
-        >
-          Email Verification
-          <IconButton
-            onClick={handleClose}
-            aria-label="Close"
-            sx={{
-              position: "absolute",
-              right: 8,
-              top: 8,
-              color: "rgba(0,0,0,0.54)",
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent sx={{ pt: 1 }}>
-          <Stack spacing={1.5} alignItems="center" textAlign="center">
-            <Avatar
-              sx={{
-                bgcolor: "#c2185b",
-                width: 48,
-                height: 48,
-                boxShadow: "0 6px 14px rgba(194,24,91,0.35)",
-              }}
-            >
-              <MarkEmailUnreadIcon />
-            </Avatar>
-
-            <DialogContentText
-              id="email-verification-desc"
-              sx={{
-                color: "#333",
-                fontSize: { xs: "0.95rem", sm: "1rem" },
-                lineHeight: 1.6,
-                maxWidth: 360,
-              }}
-            >
-              We’ve sent a one-time code to your email to confirm it’s you.
-            </DialogContentText>
-
-            <Typography
-              variant="body2"
-              sx={{ color: "#6b6b6b", maxWidth: 360 }}
-            >
-              Don’t see it? Check your Spam folder.
-            </Typography>
-          </Stack>
-        </DialogContent>
-
-        <DialogActions
-          sx={{
-            mt: 1.5,
-            gap: 1,
-            px: { xs: 2, sm: 3 },
-            pb: { xs: 2, sm: 3 },
-            justifyContent: "center",
-            flexDirection: "row",
-            flexWrap: "nowrap",
-          }}
-        >
-          <Button
-            onClick={handleClose}
-            variant="outlined"
-            sx={{
-              borderColor: "#c2185b",
-              color: "#c2185b",
-              fontWeight: 700,
-              px: 3,
-              py: 1.1,
-              minWidth: 120,
-              "&:hover": {
-                borderColor: "#ad1457",
-                backgroundColor: "rgba(194,24,91,0.06)",
-              },
-            }}
-          >
-            Back
-          </Button>
-          <Button
-            onClick={handleContinue}
-            sx={{
-              backgroundColor: "#c2185b",
-              color: "#fff",
-              fontWeight: 700,
-              px: 3,
-              py: 1.1,
-              minWidth: 120,
-              "&:hover": { backgroundColor: "#ad1457" },
-            }}
-          >
-            Continue
-          </Button>
-        </DialogActions>
-      </Dialog> */}
 
       <Dialog
         open={open}

@@ -15,6 +15,11 @@ import {
   Alert,
   CircularProgress,
   useMediaQuery,
+  FormControl,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
+  FormHelperText,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
@@ -23,7 +28,10 @@ import Swal from "sweetalert2";
 import Link from "next/link";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { toast } from "react-toastify";
+import PhoneInput, { CountryData } from "react-phone-input-2";
+import "react-phone-input-2/lib/material.css";
+import EmailIcon from "@mui/icons-material/Email";
+import PhoneIcon from "@mui/icons-material/Phone";
 
 const theme = createTheme({
   palette: {
@@ -34,6 +42,18 @@ const theme = createTheme({
   },
   typography: { fontFamily: '"Poppins", "Roboto", "Arial", sans-serif' },
 });
+
+const fieldSx = {
+  mb: 2,
+  "& .MuiOutlinedInput-root": {
+    color: "white",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: "12px",
+    "& fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.4)" },
+  },
+  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.7)" },
+} as const;
 
 const ParticleField = memo(() => {
   const isMobile = useMediaQuery("(max-width:600px)");
@@ -150,6 +170,7 @@ const trackHit = async ({
 const LoginPage = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [mode, setMode] = useState<"email" | "phone">("email");
   const [loginMethod, setLoginMethod] = useState<"password" | "otp">(
     "password"
   );
@@ -201,26 +222,32 @@ const LoginPage = () => {
           loginMethod === "password"
             ? Yup.string()
                 .transform((val) => normalize(val))
-                .required("Email or username is required")
-                .test(
-                  "email-or-username",
-                  "Enter a valid email or username",
-                  (val) => !!val && (isEmail(val) || isUsername(val))
-                )
-            : Yup.string()
+                .required("Email, phone or username is required")
+            : mode === "email"
+            ? Yup.string()
                 .transform((val) => normalize(val))
                 .required("Email is required")
-                .email("Enter a valid email"),
+                .email("Enter a valid email")
+            : Yup.string().when("phone", {
+                is: (val: string) => !val || val.trim() === "",
+                then: () => Yup.string().required("Phone number is required"),
+              }),
+        phone:
+          loginMethod === "otp" && mode === "phone"
+            ? Yup.string()
+                .required("Phone number is required")
+                .min(6, "Phone number too short")
+            : Yup.string().notRequired(),
         password:
           loginMethod === "password"
             ? Yup.string().required("Please enter a password")
             : Yup.string().notRequired(),
       }),
-    [loginMethod]
+    [loginMethod, mode]
   );
 
   const formik = useFormik({
-    initialValues: { email: "", password: "" },
+    initialValues: { email: "", countryCode: "", phone: "", password: "" },
     validationSchema,
     onSubmit: async (values) => {
       setLoading(true);
@@ -231,6 +258,7 @@ const LoginPage = () => {
 
       try {
         if (loginMethod === "password") {
+          // 🔑 Password login
           const res = await fetch("/api/user/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -243,7 +271,6 @@ const LoginPage = () => {
           const data = await res.json();
 
           await new Promise((r) => setTimeout(r, 800));
-
           setSnack({ open: true, message: data.message ?? "Welcome!" });
 
           if (data.status === 404 || data.status === 500) return;
@@ -258,7 +285,8 @@ const LoginPage = () => {
           localStorage.setItem("memberalarm", data.memberAlarm);
           localStorage.setItem("memberShip", data.memberShip);
           router.push("/home");
-        } else {
+        } else if (mode === "email") {
+          // 🔑 Email login (code)
           const code = Math.floor(1000 + Math.random() * 9000);
           const res = await fetch("/api/user/resetLoginCodeEmail", {
             method: "POST",
@@ -271,21 +299,54 @@ const LoginPage = () => {
           });
           const data = await res.json();
           if (data?.success === "false" || data?.success === false) {
-            setSnack({ open: true, message: data.message ?? "Welcome!" });
+            setSnack({
+              open: true,
+              message: data.message ?? "Error sending code",
+            });
             return;
           } else {
             await Swal.fire({
               title: "Login Code Sent!",
-              text: "We’ve emailed you a 4-digit one-time login code. Enter this code to access your account.",
+              text: "We’ve emailed you a 4-digit login code. Enter this to continue.",
               icon: "success",
               confirmButtonText: "OK",
             });
-
             sessionStorage.setItem("loginOtp", String(code));
             router.push(
               `/verify-code?email=${encodeURIComponent(values.email.trim())}`
             );
             setLoginMethod("password");
+          }
+        } else if (mode === "phone") {
+          // 🔑 Phone login (OTP)
+          const cleanedCode = values.countryCode.replace(/^\+/, "");
+          const res = await fetch("/api/user/loginwithphonecode", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phone: values.phone.trim(),
+              countryCode: cleanedCode,
+              hitid: hitId,
+            }),
+          });
+          const data = await res.json();
+
+          if (data.status === 200) {
+            await Swal.fire({
+              title: "Login Code Sent!",
+              text: "We’ve sent a 4-digit login code to your phone. Enter this to continue.",
+              icon: "success",
+              confirmButtonText: "OK",
+            });
+            router.push(`/otp-login/${values.phone}/${cleanedCode}`);
+          } else {
+            console.error(data.message);
+
+            setSnack({
+              open: true,
+              message: data.message ?? "Error sending code",
+            });
+            return;
           }
         }
       } catch (e) {
@@ -360,36 +421,127 @@ const LoginPage = () => {
                   </Typography>
                 </Box>
               </Box>
-
               <Box component="form" noValidate onSubmit={formik.handleSubmit}>
-                <TextField
-                  fullWidth
-                  label={
-                    loginMethod === "password" ? "Email or Username or Phone" : "Email"
-                  }
-                  name="email"
-                  value={formik.values.email}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.email && Boolean(formik.errors.email)}
-                  helperText={formik.touched.email && formik.errors.email}
-                  sx={{
-                    mb: 2,
-                    "& .MuiOutlinedInput-root": {
-                      color: "white",
-                      backgroundColor: "rgba(255,255,255,0.05)",
-                      "& fieldset": {
-                        borderColor: "rgba(255,255,255,0.2)",
-                        borderRadius: "12px",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "rgba(255,255,255,0.4)",
-                      },
-                    },
-                    "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.7)" },
-                  }}
-                />
+                {loginMethod === "password" ? (
+                  <TextField
+                    fullWidth
+                    label="Username or Email or Phone"
+                    name="email"
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.email && Boolean(formik.errors.email)}
+                    helperText={formik.touched.email && formik.errors.email}
+                    sx={fieldSx}
+                  />
+                ) : (
+                  <>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{
+                        color: "#fff",
+                        textAlign: "center",
+                        mb: 1,
+                        fontSize: { xs: "1rem", sm: "1.1rem" },
+                        fontWeight: 500,
+                      }}
+                    >
+                      Send login code to:
+                    </Typography>
+                    <RadioGroup
+                      row
+                      value={mode}
+                      onChange={(e) =>
+                        setMode(e.target.value as "email" | "phone")
+                      }
+                      sx={{ justifyContent: "center", mb: 2 }}
+                    >
+                      <FormControlLabel
+                        value="phone"
+                        control={<Radio sx={{ color: "#fff" }} />}
+                        label={
+                          <Typography sx={{ color: "#fff" }}>Phone</Typography>
+                        }
+                      />
+                      <FormControlLabel
+                        value="email"
+                        control={<Radio sx={{ color: "#fff" }} />}
+                        label={
+                          <Typography sx={{ color: "#fff" }}>Email</Typography>
+                        }
+                      />
+                    </RadioGroup>
 
+                    {/* 📱 Phone field */}
+                    {mode === "phone" && (
+                      <FormControl
+                        fullWidth
+                        error={
+                          formik.touched.phone && Boolean(formik.errors.phone)
+                        }
+                        sx={{ mb: 2 }}
+                      >
+                        <PhoneInput
+                          country={"us"}
+                          specialLabel=""
+                          value={
+                            formik.values.countryCode + formik.values.phone
+                          }
+                          onChange={(value, country) => {
+                            const c = country as CountryData;
+                            formik.setFieldValue(
+                              "countryCode",
+                              `+${c.dialCode}`
+                            );
+                            const numberWithoutCode = value.replace(
+                              c.dialCode,
+                              ""
+                            );
+                            formik.setFieldValue("phone", numberWithoutCode);
+                          }}
+                          onBlur={() => formik.setFieldTouched("phone", true)}
+                          inputStyle={{
+                            width: "100%",
+                            height: "56px",
+                            borderRadius: "12px",
+                            backgroundColor: "rgba(255,255,255,0.05)",
+                            color: "white",
+                            border: "none",
+                          }}
+                          containerStyle={{
+                            width: "100%",
+                            border:
+                              formik.touched.phone && formik.errors.phone
+                                ? "1px solid #f44336"
+                                : "1px solid rgba(255,255,255,0.2)",
+                            borderRadius: "12px",
+                          }}
+                        />
+                        {formik.touched.phone && formik.errors.phone && (
+                          <FormHelperText>{formik.errors.phone}</FormHelperText>
+                        )}
+                      </FormControl>
+                    )}
+
+                    {/* 📧 Email field */}
+                    {mode === "email" && (
+                      <TextField
+                        fullWidth
+                        label="Email"
+                        name="email"
+                        value={formik.values.email}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        error={
+                          formik.touched.email && Boolean(formik.errors.email)
+                        }
+                        helperText={formik.touched.email && formik.errors.email}
+                        sx={fieldSx}
+                      />
+                    )}
+                  </>
+                )}
+                {/* 🔑 Password field only for password login */}
                 {loginMethod === "password" && (
                   <TextField
                     fullWidth
@@ -418,26 +570,10 @@ const LoginPage = () => {
                         </InputAdornment>
                       ),
                     }}
-                    sx={{
-                      mb: 2,
-                      "& .MuiOutlinedInput-root": {
-                        color: "white",
-                        backgroundColor: "rgba(255,255,255,0.05)",
-                        "& fieldset": {
-                          borderColor: "rgba(255,255,255,0.2)",
-                          borderRadius: "12px",
-                        },
-                        "&:hover fieldset": {
-                          borderColor: "rgba(255,255,255,0.4)",
-                        },
-                      },
-                      "& .MuiInputLabel-root": {
-                        color: "rgba(255,255,255,0.7)",
-                      },
-                    }}
+                    sx={fieldSx}
                   />
                 )}
-
+                {/* Submit Button stays same */}
                 <Button
                   fullWidth
                   type="submit"
@@ -463,14 +599,18 @@ const LoginPage = () => {
                     "@keyframes shine": { "100%": { left: "100%" } },
                   }}
                 >
+                  {" "}
                   {loading ? (
                     <CircularProgress size={24} color="inherit" />
                   ) : loginMethod === "password" ? (
                     "SIGN IN"
-                  ) : (
+                  ) : mode === "email" ? (
                     "Send Email Code"
-                  )}
+                  ) : (
+                    "Send Phone Code"
+                  )}{" "}
                 </Button>
+
                 <Typography
                   onClick={() => router.push("/forgot-password")}
                   sx={{
@@ -481,63 +621,97 @@ const LoginPage = () => {
                     marginTop: "2px",
                   }}
                 >
-                  <Link href="forgot-password">Lost your password?</Link>
-                </Typography>
+                  {" "}
+                  <Link href="forgot-password">Lost your password?</Link>{" "}
+                </Typography>{" "}
 
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Box sx={{ flexGrow: 1, bgcolor: "rgba(255,255,255,0.2)" }} />
+                  {" "}
+                  <Box
+                    sx={{ flexGrow: 1, bgcolor: "rgba(255,255,255,0.2)" }}
+                  />{" "}
                   <Typography
                     sx={{
                       color: "rgba(255,255,255,0.6)",
                       fontSize: "0.9rem",
                       px: 2,
+                      mb: 2,
                     }}
                   >
-                    OR
-                  </Typography>
+                    {" "}
+                    OR{" "}
+                  </Typography>{" "}
                   <Box
                     sx={{
                       flexGrow: 1,
                       height: 1,
                       bgcolor: "rgba(255,255,255,0.2)",
                     }}
-                  />
-                </Box>
+                  />{" "}
+                </Box>{" "}
 
                 {loginMethod === "password" ? (
-                  <Typography
+                  <Button
+                    fullWidth
+                    variant="outlined"
                     onClick={() => setLoginMethod("otp")}
                     sx={{
-                      cursor: "pointer",
-                      py: 1.2,
+                      py: 0.8,
                       mb: 1,
-                      color: "#fff",
+                      borderRadius: "12px",
                       fontWeight: 500,
-                      textAlign: "center",
-                      letterSpacing: { xs: 0.4, sm: 1 },
-                      fontSize: { xs: "0.85rem", sm: "1rem" },
+                      fontSize: { xs: "0.9rem", sm: "1rem" },
+                      color: "#fff",
+                      bgcolor: "#c51162",
+                      borderColor: "rgba(255,255,255,0.4)",
+                      textTransform: "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      "&:hover": {
+                        borderColor: "#FF2D55",
+                        bgcolor: "#c51162",
+                      },
                     }}
                   >
-                    Login w/Email Code (no password needed)
-                  </Typography>
+                    <Typography component="div" sx={{ fontWeight: 600 }}>
+                      Login with Email or Phone Code
+                    </Typography>
+                    <Typography
+                      component="div"
+                      sx={{ fontSize: "0.8rem", opacity: 0.8 }}
+                    >
+                      (no password needed)
+                    </Typography>
+                  </Button>
                 ) : (
-                  <Typography
+                  <Button
+                    fullWidth
+                    variant="outlined"
                     onClick={() => setLoginMethod("password")}
                     sx={{
-                      cursor: "pointer",
-                      py: 1.2,
+                      py: 0.8,
                       mb: 1,
+                      borderRadius: "8px",
+                      fontWeight: 600,
+                      fontSize: { xs: "0.9rem", sm: "1rem" },
                       color: "#fff",
-                      fontWeight: 500,
-                      textAlign: "center",
-                      letterSpacing: { xs: 0.4, sm: 1 },
-                      fontSize: { xs: "0.85rem", sm: "1rem" },
+                      bgcolor: "#c51162",
+                      borderColor: "rgba(255,255,255,0.4)",
+                      textTransform: "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      "&:hover": {
+                        borderColor: "#FF2D55",
+                        bgcolor: "#c51162",
+                      },
                     }}
                   >
-                    Login w/password
-                  </Typography>
+                    Login with Password
+                  </Button>
                 )}
-
+                
                 <Typography
                   sx={{
                     mt: 3,
@@ -566,13 +740,14 @@ const LoginPage = () => {
                     },
                   }}
                 >
+                  {" "}
                   New to Swing Social?{" "}
-                  <Link href="/register">Create an account</Link>
-                </Typography>
-              </Box>
-            </Paper>
-          </RotatingCard>
-        </Container>
+                  <Link href="/register">Create an account</Link>{" "}
+                </Typography>{" "}
+              </Box>{" "}
+            </Paper>{" "}
+          </RotatingCard>{" "}
+        </Container>{" "}
       </Box>
 
       <Snackbar

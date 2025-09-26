@@ -16,6 +16,9 @@ import {
   useMediaQuery,
   Container,
   Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
@@ -118,17 +121,18 @@ const validationSchema = Yup.object({
     .max(4, "Must be 4 digits"),
 });
 
-export default function Otp({
+const Page = ({
   params,
 }: {
-  params: Promise<{ idEmail: string; countryCode?: string }>;
-}) {
-  const { idEmail, countryCode } = React.use(params);
+  params: Promise<{ phone: string; countryCode?: string }>;
+}) => {
+  const { phone, countryCode } = React.use(params);
+
   const router = useRouter();
-  const [id, setId] = useState<string>("");
-  const [phone, setPhone] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
   const [otpData, setOtpData] = useState<{
     verificationId: string;
     mobileNumber: string;
@@ -143,11 +147,6 @@ export default function Otp({
       handleVerificationPhone(phone);
     }
   }, [phone]);
-
-  useEffect(() => {
-    setPhone(localStorage.getItem("phone"));
-    setId(localStorage.getItem("logged_in_profile") || idEmail);
-  }, [idEmail, countryCode]);
 
   const formik = useFormik({
     initialValues: { otp: ["", "", "", ""] },
@@ -169,14 +168,25 @@ export default function Otp({
           data?.message === "SUCCESS" &&
           data?.data?.verificationStatus === "VERIFICATION_COMPLETED"
         ) {
-          await fetch("/api/user/savestatus", {
+          const res = await fetch("/api/user/loginwithphonecode", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, status: 1 }),
+            body: JSON.stringify({ phone }),
           });
-          toast.success("OTP Verified Successfully");
-          router.push(`/intrested/${id}`);
-          localStorage.removeItem("phone");
+          const data = await res.json();
+          if (data.status === 200) {
+            sessionStorage.removeItem("loginOtp");
+            localStorage.setItem("loginInfo", data.jwtToken);
+            localStorage.setItem("logged_in_profile", data.currentProfileId);
+            localStorage.setItem("profileUsername", data.currentuserName);
+            localStorage.setItem("memberalarm", data.memberAlarm);
+            localStorage.setItem("memberShip", data.memberShip);
+            router.push("/home");
+          } else {
+            console.error(data.message);
+            setDialogMessage(data.message);
+            setDialogOpen(true);
+          }
         } else {
           setError(true);
           setTimeout(() => {
@@ -187,6 +197,8 @@ export default function Otp({
       } catch (error) {
         console.error("OTP verification failed:", error);
         setError(true);
+        setDialogMessage("Something went wrong. Please try again.");
+        setDialogOpen(true);
       }
       setLoading(false);
     },
@@ -266,45 +278,6 @@ export default function Otp({
                 border: "1px solid rgba(255, 255, 255, 0.1)",
               }}
             >
-              <Stepper
-                activeStep={1}
-                alternativeLabel
-                sx={{
-                  background: "transparent",
-                  width: "100%",
-                  margin: "0 auto 16px auto",
-                }}
-              >
-                {[
-                  "Profile Info",
-                  "Verify Phone",
-                  "Preferences",
-                  "Avatar & Banner",
-                  "About",
-                ].map((label) => (
-                  <Step key={label}>
-                    <StepLabel
-                      sx={{
-                        "& .MuiStepLabel-label": {
-                          color: "#fff !important",
-                          fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                        },
-                        "& .MuiStepIcon-root": {
-                          color: "rgba(255,255,255,0.3)",
-                        },
-                        "& .MuiStepIcon-root.Mui-active": {
-                          color: "#c2185b",
-                        },
-                        "& .MuiStepIcon-root.Mui-completed": {
-                          color: "#c2185b",
-                        },
-                      }}
-                    >
-                      {/* {label} */}
-                    </StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
               <Box
                 sx={{
                   display: "flex",
@@ -387,20 +360,20 @@ export default function Otp({
                             },
                           }}
                           sx={{
-                            backgroundColor: "#2a2a2a",
                             width: "50px",
                             "& .MuiOutlinedInput-root": {
-                              borderRadius: "8px",
+                              color: "white",
+                              backgroundColor: "rgba(255,255,255,0.05)",
+                              borderRadius: "12px",
                               "& fieldset": {
-                                borderColor: "rgba(255,255,255,0.3)",
+                                borderColor: "rgba(255,255,255,0.2)",
                               },
                               "&:hover fieldset": {
-                                borderColor: "#c2185b",
+                                borderColor: "rgba(255,255,255,0.4)",
                               },
-                              "&.Mui-focused fieldset": {
-                                borderColor: "#c2185b",
-                                borderWidth: "2px",
-                              },
+                            },
+                            "& .MuiInputLabel-root": {
+                              color: "rgba(255,255,255,0.7)",
                             },
                           }}
                         />
@@ -418,6 +391,16 @@ export default function Otp({
                       Please input the correct verification code
                     </Typography>
                   )}
+
+                  <Dialog
+                    open={dialogOpen}
+                    onClose={() => setDialogOpen(false)}
+                  >
+                    <DialogTitle>Login Failed</DialogTitle>
+                    <DialogContent>
+                      <Typography>{dialogMessage}</Typography>
+                    </DialogContent>
+                  </Dialog>
 
                   {/* Helper text */}
                   <Grid item xs={12} sx={{ textAlign: "center", mb: 2 }}>
@@ -493,13 +476,6 @@ export default function Otp({
                       )}
                     </Button>
                   </Grid>
-
-                  {/* Footer */}
-                  <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
-                    <Typography sx={{ color: "#c2185b", fontWeight: "bold" }}>
-                      Come party with us
-                    </Typography>
-                  </Grid>
                 </Grid>
               </Box>
             </Paper>
@@ -508,4 +484,6 @@ export default function Otp({
       </ThemeProvider>
     </>
   );
-}
+};
+
+export default Page;

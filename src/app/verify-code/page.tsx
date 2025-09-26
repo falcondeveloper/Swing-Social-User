@@ -15,7 +15,6 @@ import {
 } from "@mui/material";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Password } from "@mui/icons-material";
-import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 
 const OtpLoginContent = () => {

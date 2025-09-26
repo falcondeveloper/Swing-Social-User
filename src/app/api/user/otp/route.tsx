@@ -4,8 +4,6 @@ export async function POST(req: Request) {
   try {
     const { phone, countryCode } = await req.json();
 
-    console.log("Received phone and code:", phone, countryCode);
-
     const url = `https://cpaas.messagecentral.com/verification/v3/send?countryCode=${countryCode}&customerId=C-1D4F8A32EDDC472&flowType=SMS&mobileNumber=${phone}`;
 
     const response = await fetch(url, {

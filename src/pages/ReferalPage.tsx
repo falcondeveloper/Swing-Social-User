@@ -17,6 +17,11 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import ShareIcon from "@mui/icons-material/Share";
 import StarIcon from "@mui/icons-material/Star";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import QRCode from "react-qr-code";
+
+const userAffiliateCode = "3422";
+const affiliateLink = `https://swingsocial.co/?aff=${userAffiliateCode}`;
 
 const theme = createTheme({
   palette: {
@@ -301,6 +306,44 @@ const ReferalPage = () => {
             }}
           >
             Sign up today!
+          </Button>
+        </Box>
+
+        {/* QR Code Section */}
+        <Box
+          sx={{
+            textAlign: "center",
+            mt: 10,
+            mb: 8,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h5" fontWeight="bold" gutterBottom>
+            Share Your QR Code
+          </Typography>
+
+          <QRCode
+            value={affiliateLink}
+            size={180}
+            bgColor="#ffffff"
+            fgColor="#000000"
+          />
+
+          <Typography variant="body2" mt={2}>
+            New users can scan this QR code to sign up with your affiliate link.
+          </Typography>
+
+          <Button
+            startIcon={<ContentCopyIcon />}
+            sx={{ mt: 2 }}
+            variant="outlined"
+            onClick={() => {
+              navigator.clipboard.writeText(affiliateLink);
+            }}
+          >
+            Copy Link
           </Button>
         </Box>
       </Box>
