@@ -421,7 +421,7 @@ export default function CalendarView() {
 
   return (
     <>
-      <Dialog
+      {/* <Dialog
         open={locationDialogOpen}
         onClose={() => setLocationDialogOpen(false)}
       >
@@ -446,7 +446,7 @@ export default function CalendarView() {
             Enable Location
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
 
       <Box
         sx={{
