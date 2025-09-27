@@ -408,20 +408,20 @@ export default function EventDetail(props: { params: Params }) {
   const handleCloseHere = () => setOpen(false);
 
   const handleSaveRsvp = async (eventId: any) => {
-    if (membership == 0) {
-      return Swal.fire({
-        title: `Upgrade your membership.`,
-        text: `Sorry, you need to upgrade your membership.`,
-        icon: "error",
-        showCancelButton: true,
-        confirmButtonText: "Upgrade the membership",
-        cancelButtonText: "Continue as the free member",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          router.push("/membership");
-        }
-      });
-    }
+    // if (membership == 0) {
+    //   return Swal.fire({
+    //     title: `Upgrade your membership.`,
+    //     text: `Sorry, you need to upgrade your membership.`,
+    //     icon: "error",
+    //     showCancelButton: true,
+    //     confirmButtonText: "Upgrade the membership",
+    //     cancelButtonText: "Continue as the free member",
+    //   }).then((result) => {
+    //     if (result.isConfirmed) {
+    //       router.push("/membership");
+    //     }
+    //   });
+    // }
 
     const response = await fetch("/api/user/events/rsvp/", {
       method: "POST",
@@ -1749,7 +1749,6 @@ export default function EventDetail(props: { params: Params }) {
                     </TableBody>
                   </Table>
                 </Paper>
-                {/* Join the Fun Card */}
                 <Card
                   sx={{
                     mb: 4,
