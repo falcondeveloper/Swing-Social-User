@@ -20,14 +20,18 @@ import {
   Drawer,
   IconButton,
   Divider,
+  Autocomplete,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import { CalendarMonth, Add, Search, ExpandMore } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { jwtDecode } from "jwt-decode";
-import Autocomplete from "@mui/material/Autocomplete";
-import CircularProgress from "@mui/material/CircularProgress";
 import Loader from "@/commonPage/Loader";
 import EventDesktopList from "@/components/EventDesktopList";
 import FilterListIcon from "@mui/icons-material/FilterList";
@@ -41,7 +45,7 @@ export default function CalendarView() {
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
 
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<any>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [profileId, setProfileId] = useState<any>();
 
   const [loading, setLoading] = useState(true);
@@ -50,13 +54,11 @@ export default function CalendarView() {
   const [openCity, setOpenCity] = useState(false);
   const [cityLoading, setCityLoading] = useState(false);
   const [cityOption, setCityOption] = useState<any[]>([]);
-  const [searchStatus, setSearchStatus] = useState(false);
   const [tabValue, setTabValue] = useState("upcoming");
   const [searchType, setSearchType] = useState<"none" | "city" | "text">(
     "none"
   );
   const [searchText, setSearchText] = useState("");
-  const [expanded, setExpanded] = useState(false);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [advertiserDataLat, setAdvertiserDataLat] = useState<number | null>(
@@ -68,11 +70,48 @@ export default function CalendarView() {
   const [eventsWithCoords, setEventsWithCoords] = useState<any[]>([]);
   const [openFilter, setOpenFilter] = useState(false);
 
+  const [locationDialogOpen, setLocationDialogOpen] = useState(false);
+  const [locationDialogMessage, setLocationDialogMessage] = useState("");
+
+  const [isNationwideFallback, setIsNationwideFallback] = useState(false);
+
   const toggleFilter = (state: boolean) => () => {
     setOpenFilter(state);
   };
 
   useGeolocationWithAPI(profileId);
+
+  useEffect(() => {
+    if (
+      latitude !== null ||
+      longitude !== null ||
+      advertiserDataLat !== null ||
+      advertiserDataLng !== null
+    )
+      return;
+
+    if (typeof navigator !== "undefined" && "geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLatitude(pos.coords.latitude);
+          setLongitude(pos.coords.longitude);
+        },
+        (err) => {
+          console.warn("Initial geolocation failed:", err);
+          setLocationDialogMessage(
+            "Would you like to enable location so we can show events near you?"
+          );
+          setLocationDialogOpen(true);
+        },
+        { enableHighAccuracy: true, timeout: 3000, maximumAge: 60000 }
+      );
+    } else {
+      setLocationDialogMessage(
+        "Would you like to enable location so we can show events near you?"
+      );
+      setLocationDialogOpen(true);
+    }
+  }, []);
 
   const getDistanceInMiles = (
     lat1: number,
@@ -81,7 +120,7 @@ export default function CalendarView() {
     lon2: number
   ) => {
     const toRad = (value: number) => (value * Math.PI) / 180;
-    const R = 3958.8; // Earth radius in miles
+    const R = 3958.8;
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
     const a =
@@ -134,8 +173,13 @@ export default function CalendarView() {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("loginInfo");
       if (token) {
-        const decodeToken = jwtDecode<any>(token);
-        setProfileId(decodeToken?.profileId);
+        try {
+          const decodeToken = jwtDecode<any>(token);
+          setProfileId(decodeToken?.profileId || null);
+        } catch (e) {
+          console.warn("Failed to decode token", e);
+          setProfileId(null);
+        }
       } else {
         router.push("/login");
       }
@@ -145,10 +189,11 @@ export default function CalendarView() {
   useEffect(() => {
     if (profileId) {
       handleGetEvents(profileId);
+      fetchData(profileId);
     } else {
       handleGetEvents("a0cf00e0-6245-4d03-9d07-48d6626f4f57");
     }
-  }, []);
+  }, [profileId]);
 
   const handleGetEvents = async (userid: any) => {
     try {
@@ -180,6 +225,7 @@ export default function CalendarView() {
       setLoading(false);
     } catch (error) {
       console.error("Error:", error);
+      setLoading(false);
     }
   };
 
@@ -203,7 +249,7 @@ export default function CalendarView() {
         const { lat, lng } = data.results[0].geometry.location;
         return { latitude: lat, longitude: lng };
       } else {
-        throw new Error(`Geocoding failed: ${data.status}`);
+        return null;
       }
     } catch (error) {
       console.error("Error fetching coordinates:", error);
@@ -232,13 +278,6 @@ export default function CalendarView() {
   };
 
   useEffect(() => {
-    if (profileId) {
-      handleGetEvents(profileId);
-      fetchData(profileId);
-    }
-  }, [profileId]);
-
-  useEffect(() => {
     if (!eventsWithCoords.length) return;
 
     let referenceLat: number | null = null;
@@ -253,15 +292,17 @@ export default function CalendarView() {
     }
 
     if (referenceLat === null || referenceLng === null) {
+      // No location → show all events
       setSortedEvents(eventsWithCoords);
+      setIsNationwideFallback(false);
       return;
     }
 
     const filteredEvents = eventsWithCoords.filter((event: any) => {
       if (event.latitude && event.longitude) {
         const distance = getDistanceInMiles(
-          referenceLat,
-          referenceLng,
+          referenceLat as number,
+          referenceLng as number,
           event.latitude,
           event.longitude
         );
@@ -270,7 +311,14 @@ export default function CalendarView() {
       return false;
     });
 
-    setSortedEvents(filteredEvents);
+    if (filteredEvents.length > 0) {
+      setSortedEvents(filteredEvents);
+      setIsNationwideFallback(false);
+    } else {
+      // Fallback to nationwide if no local events
+      setSortedEvents(eventsWithCoords);
+      setIsNationwideFallback(true);
+    }
   }, [
     latitude,
     longitude,
@@ -278,6 +326,72 @@ export default function CalendarView() {
     advertiserDataLng,
     eventsWithCoords,
   ]);
+
+  useEffect(() => {
+    const shouldAskForLocation = () => {
+      return (
+        latitude === null &&
+        longitude === null &&
+        advertiserDataLat === null &&
+        advertiserDataLng === null
+      );
+    };
+
+    if (!shouldAskForLocation()) return;
+
+    if (typeof navigator !== "undefined" && "geolocation" in navigator) {
+      const permissions = (navigator as any).permissions;
+      if (permissions && permissions.query) {
+        permissions
+          .query({ name: "geolocation" })
+          .then((status: any) => {
+            if (status.state === "granted") {
+              requestCurrentLocation();
+            } else if (status.state === "prompt") {
+              setLocationDialogMessage(
+                "Would you like to enable location so we can show events near you?"
+              );
+              setLocationDialogOpen(true);
+            } else if (status.state === "denied") {
+              setLocationDialogMessage(
+                "Your browser has denied location access. Would you like to try enabling it now?"
+              );
+              setLocationDialogOpen(true);
+            }
+          })
+          .catch(() => {
+            setLocationDialogMessage(
+              "Would you like to enable location so we can show events near you?"
+            );
+            setLocationDialogOpen(true);
+          });
+      } else {
+        setLocationDialogMessage(
+          "Would you like to enable location so we can show events near you?"
+        );
+        setLocationDialogOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [advertiserDataLat, advertiserDataLng, latitude, longitude]);
+
+  const requestCurrentLocation = () => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator))
+      return;
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLatitude(pos.coords.latitude);
+        setLongitude(pos.coords.longitude);
+        setLocationDialogOpen(false);
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+        setLocationDialogOpen(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const now = new Date();
   const upcomingEvents = [...sortedEvents]
@@ -297,16 +411,8 @@ export default function CalendarView() {
   const clearFilters = () => {
     setCityInput("");
     setSearchText("");
-    setSearchStatus(false);
     setSearchType("none");
-
-    // Reapply location-based filter automatically
-    if (latitude !== null || advertiserDataLat !== null) {
-      // let the location useEffect run again
-      setEventsWithCoords([...eventsWithCoords]);
-    } else {
-      setSortedEvents(events);
-    }
+    setEventsWithCoords([...eventsWithCoords]);
   };
 
   if (loading) {
@@ -315,6 +421,33 @@ export default function CalendarView() {
 
   return (
     <>
+      <Dialog
+        open={locationDialogOpen}
+        onClose={() => setLocationDialogOpen(false)}
+      >
+        <DialogTitle>Enable Location?</DialogTitle>
+        <DialogContent>
+          <Typography>{locationDialogMessage}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setLocationDialogOpen(false);
+            }}
+          >
+            No thanks
+          </Button>
+          <Button
+            onClick={() => {
+              requestCurrentLocation();
+            }}
+            variant="contained"
+          >
+            Enable Location
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Box
         sx={{
           bgcolor: "#0A0A0A",
@@ -327,8 +460,8 @@ export default function CalendarView() {
         <Container
           maxWidth="xl"
           sx={{
-            pb: { xs: 8, sm: 9, md: 10 },
             px: { xs: 1, sm: 2, md: 3 },
+            pb: { xs: 8 },
           }}
         >
           {isMobile ? (
@@ -339,6 +472,7 @@ export default function CalendarView() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   mb: 2,
+                  px: 2,
                 }}
               >
                 <Typography
@@ -375,8 +509,6 @@ export default function CalendarView() {
                 onClose={toggleFilter(false)}
                 PaperProps={{
                   sx: {
-                    // borderTopLeftRadius: "16px",
-                    // borderTopRightRadius: "16px",
                     bgcolor: "#1a1a1a",
                     color: "white",
                     maxHeight: "100vh",
@@ -410,10 +542,14 @@ export default function CalendarView() {
                       onClick={() => {
                         const token = localStorage.getItem("loginInfo");
                         if (token) {
-                          const decodeToken = jwtDecode<any>(token);
-                          if (decodeToken?.membership === 0) {
-                            router.push("/membership");
-                          } else {
+                          try {
+                            const decodeToken = jwtDecode<any>(token);
+                            if (decodeToken?.membership === 0) {
+                              router.push("/membership");
+                            } else {
+                              router.push("/events/create");
+                            }
+                          } catch (e) {
                             router.push("/events/create");
                           }
                         } else {
@@ -490,7 +626,6 @@ export default function CalendarView() {
                           )
                         );
                         setSortedEvents(filtered);
-                        setSearchStatus(true);
                         setSearchType("city");
                       } else {
                         clearFilters();
@@ -519,12 +654,10 @@ export default function CalendarView() {
                           ...params.InputProps,
                           endAdornment: (
                             <>
-                              {/* ✅ Show loader */}
                               {cityLoading && (
                                 <CircularProgress color="inherit" size={15} />
                               )}
 
-                              {/* ✅ Clear button */}
                               {cityInput && (
                                 <IconButton
                                   size="small"
@@ -587,7 +720,6 @@ export default function CalendarView() {
                             )
                         );
                         setSortedEvents(filtered);
-                        setSearchStatus(true);
                         setSearchType("text");
                       }
                     }}
@@ -599,7 +731,6 @@ export default function CalendarView() {
                       ),
                       endAdornment: (
                         <>
-                          {/* ✅ Clear button */}
                           {searchText && (
                             <IconButton
                               size="small"
@@ -711,19 +842,36 @@ export default function CalendarView() {
               </Drawer>
 
               <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
+                {isNationwideFallback && (
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      textAlign: "center",
+                      color: "#f50057",
+                      fontWeight: "bold",
+                      mt: 2,
+                    }}
+                  >
+                    Showing nationwide events
+                  </Typography>
+                )}
+
                 {/* Events List */}
                 <Box
                   sx={{
-                    maxHeight: "60vh",
-                    overflowY: "auto",
-                    scrollBehavior: "smooth",
-                    overflowX: "hidden",
+                    maxHeight: { xs: "unset", sm: "60vh" }, // no limit on mobile
+                    overflowY: { xs: "visible", sm: "auto" },
+                    px: { xs: 1, sm: 2 },
+                    py: 1,
                   }}
                 >
                   {(tabValue === "upcoming" ? upcomingEvents : pastEvents)
                     .length > 0 ? (
-                    (tabValue === "upcoming" ? upcomingEvents : pastEvents).map(
-                      (post: any) => {
+                    <Stack spacing={2}>
+                      {(tabValue === "upcoming"
+                        ? upcomingEvents
+                        : pastEvents
+                      ).map((post: any) => {
                         const eventDate = new Date(post.StartTime);
                         const isCurrentMonth =
                           eventDate.getMonth() === currentDate.getMonth() &&
@@ -738,74 +886,87 @@ export default function CalendarView() {
                               router.push("/events/detail/" + post?.Id)
                             }
                             sx={{
-                              borderRadius: 2,
-                              my: 2,
-                              backgroundColor: "#f50057",
+                              borderRadius: 3,
+                              overflow: "hidden",
+                              bgcolor: "#1e1e1e",
+                              color: "white",
                               border: isCurrentMonth
                                 ? `2px solid ${alpha("#f50057", 0.8)}`
-                                : "none",
-                              transition: "transform 0.2s ease-in-out",
-                              "&:hover": {
-                                transform: "scale(1.02)",
-                              },
+                                : "1px solid rgba(255,255,255,0.1)",
+                              boxShadow: "0 4px 10px rgba(0,0,0,0.4)",
+                              transition: "all 0.2s ease-in-out",
+                              "&:hover": { transform: "scale(1.01)" },
                             }}
                           >
-                            <Box sx={{ backgroundColor: "#2d2d2d", p: 1 }}>
+                            {/* Image */}
+                            <Box sx={{ position: "relative" }}>
                               <img
+                                src={post?.CoverImageUrl}
+                                alt="Event Cover"
+                                style={{
+                                  width: "100%",
+                                  height: "auto",
+                                  maxHeight: "200px",
+                                  objectFit: "cover",
+                                }}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   router.push("/events/detail/" + post?.Id);
                                 }}
-                                src={post?.CoverImageUrl}
-                                alt="Post Image"
-                                style={{
-                                  width: "100%",
-                                  // height: "400px",
-                                  // objectFit: "cover",
-                                  borderRadius: "8px",
-                                }}
                               />
                             </Box>
 
+                            {/* Content */}
                             <CardContent
                               sx={{
-                                background: "#f50057",
-                                color: "white",
-                                textAlign: "center",
-                                px: 2,
-                                pb: 2,
+                                p: { xs: 2, sm: 3 },
+                                bgcolor: "rgb(245, 0, 87)",
                               }}
                             >
-                              <Typography variant="h6">{post.Name}</Typography>
+                              <Typography
+                                variant="h6"
+                                sx={{
+                                  fontSize: { xs: "1rem", sm: "1.1rem" },
+                                  fontWeight: "bold",
+                                  mb: 1,
+                                  lineHeight: 1.3,
+                                }}
+                              >
+                                {post.Name}
+                              </Typography>
+
                               <Typography
                                 variant="body2"
-                                sx={{ mt: 1, color: "white" }}
+                                sx={{ color: "rgba(255,255,255,0.8)" }}
                               >
-                                <strong>Start at:</strong>{" "}
+                                <strong>Starts:</strong>{" "}
                                 {new Intl.DateTimeFormat("en-US", {
                                   month: "short",
                                   day: "2-digit",
                                   year: "2-digit",
                                   hour: "2-digit",
+                                  minute: "2-digit",
                                   hour12: true,
-                                }).format(new Date(post.StartTime))}
+                                }).format(eventDate)}
                               </Typography>
                             </CardContent>
                           </Card>
                         );
-                      }
-                    )
+                      })}
+                    </Stack>
                   ) : (
+                    // Empty State
                     <Paper
-                      elevation={24}
+                      elevation={0}
                       sx={{
-                        p: 6,
+                        p: { xs: 4, sm: 6 },
                         bgcolor: "#121212",
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
                         mt: 4,
+                        borderRadius: 3,
                       }}
                     >
                       <Box
@@ -817,42 +978,38 @@ export default function CalendarView() {
                         }}
                       >
                         <Search
-                          sx={{ width: 48, height: 48, color: "#f50057" }}
-                          style={{
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                          }}
+                          sx={{ width: 40, height: 40, color: "#f50057" }}
                         />
                       </Box>
 
-                      {/* Message */}
                       <Typography
-                        variant="h5"
+                        variant="h6"
                         sx={{
                           fontWeight: "bold",
                           color: "white",
                           mb: 1,
                           textAlign: "center",
-                          textShadow: "0 2px 4px rgba(0,0,0,0.5)",
                         }}
                       >
                         {searchType === "text" &&
                           "No events found matching your search."}
                         {searchType === "city" &&
                           "No events found in this state/city."}
-                        {searchType === "none" &&
-                          (tabValue === "upcoming"
-                            ? "No upcoming events near you."
-                            : "No past events available.")}
+                        {searchType === "none" && "No events available."}
                       </Typography>
 
-                      {/* Action Buttons */}
-                      <Stack direction="row" spacing={2} mt={3}>
-                        {/* Clear Filters (only shows if search/city filter is active) */}
+                      {/* Actions */}
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        spacing={2}
+                        mt={3}
+                        width="100%"
+                        maxWidth={300}
+                      >
                         {searchType !== "none" && (
                           <Button
                             onClick={clearFilters}
+                            fullWidth
                             variant="outlined"
                             sx={{
                               color: "#f50057",
@@ -866,6 +1023,21 @@ export default function CalendarView() {
                             Clear Filters
                           </Button>
                         )}
+                        {searchType === "none" &&
+                          latitude === null &&
+                          advertiserDataLat === null && (
+                            <Button
+                              onClick={() => setLocationDialogOpen(true)}
+                              fullWidth
+                              variant="contained"
+                              sx={{
+                                bgcolor: "#f50057",
+                                "&:hover": { bgcolor: "#c51162" },
+                              }}
+                            >
+                              Enable Location
+                            </Button>
+                          )}
                       </Stack>
                     </Paper>
                   )}
