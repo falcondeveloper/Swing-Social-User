@@ -45,6 +45,7 @@ interface FormValues {
   venue: string;
   description: string;
   allowFreeUsers: boolean;
+  hideTicketOption: any;
   hideVenue: number;
   category: string;
   startTime: Moment;
@@ -257,6 +258,7 @@ const DesktopEventCreateCard = () => {
       description: "",
       allowFreeUsers: false,
       hideVenue: 0,
+      hideTicketOption: 0,
       category: "",
       startTime: moment(),
       endTime: moment().add(6, "hours"),
@@ -279,6 +281,7 @@ const DesktopEventCreateCard = () => {
       venue: Yup.string().required("Venue is required"),
       description: Yup.string().required("Description is required"),
       hideVenue: Yup.number().oneOf([0, 1]),
+      hideTicketOption: Yup.number().oneOf([0, 1]),
       category: Yup.string().required("Category is required"),
 
       startTime: Yup.mixed()
@@ -368,6 +371,7 @@ const DesktopEventCreateCard = () => {
             endTime: values.endTime,
             venue: values.venue,
             isVenueHidden: values.hideVenue,
+            hideTicketOption: values?.hideTicketOption,
             category: values.category,
             description: values.description,
             emailDescription: "test",
@@ -560,6 +564,49 @@ const DesktopEventCreateCard = () => {
                           <Typography>Hide Address</Typography>
                           <Tooltip
                             title="Hide the specific address from members"
+                            arrow
+                          >
+                            <InfoIcon fontSize="small" />
+                          </Tooltip>
+                        </Box>
+                      }
+                    />
+
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={formik.values.hideTicketOption === 1}
+                          onChange={(e) =>
+                            formik.setFieldValue(
+                              "hideTicketOption",
+                              e.target.checked ? 1 : 0
+                            )
+                          }
+                          sx={{
+                            color: "white",
+                            "&.Mui-checked": {
+                              color: "#ff1493",
+                            },
+                            "& .MuiSvgIcon-root": {
+                              fontSize: 28,
+                              transition: "all 0.2s ease",
+                            },
+                            "&:hover": {
+                              "& .MuiSvgIcon-root": {
+                                transform: "scale(1.1)",
+                              },
+                            },
+                            borderRadius: "8px",
+                          }}
+                        />
+                      }
+                      label={
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Typography>Hide Ticket Purchase Option</Typography>
+                          <Tooltip
+                            title="Prevent members from seeing event ticket prices"
                             arrow
                           >
                             <InfoIcon fontSize="small" />
