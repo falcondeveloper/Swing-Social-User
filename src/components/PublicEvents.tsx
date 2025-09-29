@@ -182,7 +182,6 @@ const PublicEvents: React.FC = () => {
           bgcolor: "#0A0A0A",
           mt: 2,
           color: "white",
-          background: "linear-gradient(to bottom,#0A0A0A,#1A1A1A)",
         }}
       >
         <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 }, pb: { xs: 8 } }}>

@@ -1877,7 +1877,7 @@ export default function EventDesktopList() {
 
   const handleCityChange = async (_: any, v: any) => {
     if (v?.City) {
-      const place = String(v.City); // e.g., "Arlington, VA"
+      const place = String(v.City);
       setBasePlace(place);
       setBaseState(parseStateFromPlace(place));
       try {
@@ -1889,7 +1889,6 @@ export default function EventDesktopList() {
       }
       setViewType("list");
     } else {
-      // cleared: fall back to geo or signup
       if (!geoAllowed && userLocation) {
         const place = String(userLocation);
         setBasePlace(place);
