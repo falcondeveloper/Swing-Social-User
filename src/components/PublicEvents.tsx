@@ -111,7 +111,7 @@ const PublicEvents: React.FC = () => {
         "Thanks — we saved your spot! Check your email to complete signup."
       );
       setLeadEmail("");
-      router.push("/signup");
+      router.push("/register");
     } catch (e) {
       console.error(e);
       alert("Something went wrong — please try again.");
@@ -239,7 +239,7 @@ const PublicEvents: React.FC = () => {
                   <Button
                     color="secondary"
                     variant="contained"
-                    onClick={() => router.push("/signup")}
+                    onClick={() => router.push("/register")}
                     aria-label="Create account"
                     sx={{
                       textTransform: "none",
