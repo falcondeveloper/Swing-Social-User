@@ -1057,42 +1057,50 @@ export default function EventDetail(props: { params: Params }) {
                   </Box>
                 </Box>
 
-                {membership === 0 ? (
+                {Number(eventDetail?.HideTicketOption) === 0 && (
                   <>
-                    <Card
-                      sx={{
-                        mb: 4,
-                        mt: 4,
-                        bgcolor: "#1a1a1a",
-                        borderRadius: 2,
-                        border: "0.0625rem solid rgb(55, 58, 64)",
-                      }}
-                    >
-                      <CardContent sx={{ textAlign: "center", py: 3 }}>
-                        <Typography variant="h6" color="white" sx={{ mb: 2 }}>
-                          Premium membership required to purchase
-                        </Typography>
-                        <Button
-                          variant="contained"
-                          onClick={handleUpgrade}
+                    {membership === 0 ? (
+                      <>
+                        <Card
                           sx={{
-                            bgcolor: "#880E4F",
-                            "&:hover": { bgcolor: "#560027" },
+                            mb: 4,
+                            mt: 4,
+                            bgcolor: "#1a1a1a",
+                            borderRadius: 2,
+                            border: "0.0625rem solid rgb(55, 58, 64)",
                           }}
                         >
-                          Upgrade
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </>
-                ) : (
-                  <>
-                    <MTicketListComponent
-                      tickets={tickets}
-                      onTicketsChange={handleTicketsChange}
-                      summary={summary}
-                      emailDescriptions={emailDescriptionData}
-                    />
+                          <CardContent sx={{ textAlign: "center", py: 3 }}>
+                            <Typography
+                              variant="h6"
+                              color="white"
+                              sx={{ mb: 2 }}
+                            >
+                              Premium membership required to purchase
+                            </Typography>
+                            <Button
+                              variant="contained"
+                              onClick={handleUpgrade}
+                              sx={{
+                                bgcolor: "#880E4F",
+                                "&:hover": { bgcolor: "#560027" },
+                              }}
+                            >
+                              Upgrade
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </>
+                    ) : (
+                      <>
+                        <MTicketListComponent
+                          tickets={tickets}
+                          onTicketsChange={handleTicketsChange}
+                          summary={summary}
+                          emailDescriptions={emailDescriptionData}
+                        />
+                      </>
+                    )}
                   </>
                 )}
 
@@ -1781,88 +1789,99 @@ export default function EventDetail(props: { params: Params }) {
                 </Card>
 
                 {/* Tickets Section */}
-                {membership === 0 ? (
+                {Number(eventDetail?.HideTicketOption) === 0 && (
                   <>
-                    <Card
-                      sx={{
-                        mb: 4,
-                        mt: 4,
-                        bgcolor: "#1a1a1a",
-                        borderRadius: 2,
-                        border: "0.0625rem solid rgb(55, 58, 64)",
-                      }}
-                    >
-                      <CardContent sx={{ textAlign: "center", py: 3 }}>
-                        <Typography variant="h6" color="white" sx={{ mb: 2 }}>
-                          Premium membership required to purchase
-                        </Typography>
-                        <Button
-                          variant="contained"
-                          onClick={handleUpgrade}
+                    {membership === 0 ? (
+                      <>
+                        <Card
                           sx={{
-                            bgcolor: "#880E4F",
-                            "&:hover": { bgcolor: "#560027" },
+                            mb: 4,
+                            mt: 4,
+                            bgcolor: "#1a1a1a",
+                            borderRadius: 2,
+                            border: "0.0625rem solid rgb(55, 58, 64)",
                           }}
                         >
-                          Upgrade
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </>
-                ) : (
-                  <>
-                    <Card
-                      sx={{
-                        mb: 4,
-                        bgcolor: "#1a1a1a",
-                        borderRadius: 2,
-                        border: "0.0625rem solid rgb(55, 58, 64)",
-                      }}
-                    >
-                      <CardContent>
-                        <Box
+                          <CardContent sx={{ textAlign: "center", py: 3 }}>
+                            <Typography
+                              variant="h6"
+                              color="white"
+                              sx={{ mb: 2 }}
+                            >
+                              Premium membership required to purchase
+                            </Typography>
+                            <Button
+                              variant="contained"
+                              onClick={handleUpgrade}
+                              sx={{
+                                bgcolor: "#880E4F",
+                                "&:hover": { bgcolor: "#560027" },
+                              }}
+                            >
+                              Upgrade
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </>
+                    ) : (
+                      <>
+                        <Card
                           sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            mb: 2,
-                            px: 4,
-                            pt: 2,
+                            mb: 4,
+                            bgcolor: "#1a1a1a",
+                            borderRadius: 2,
+                            border: "0.0625rem solid rgb(55, 58, 64)",
                           }}
                         >
-                          <Typography
-                            variant="h5"
-                            sx={{ fontWeight: "bold", color: "white" }}
-                          >
-                            Available Tickets
-                          </Typography>
-                          <IconButton
-                            disabled={membership === 0 ? true : false}
-                            onClick={() => setExpanded(!expanded)}
-                            sx={{
-                              color: "white",
-                              transition: "transform 0.3s ease",
-                              transform: expanded
-                                ? "rotate(45deg)"
-                                : "rotate(0deg)",
-                            }}
-                          >
-                            <AddIcon />
-                          </IconButton>
-                        </Box>
-                        <Grow in={expanded} timeout={500}>
-                          <Box
-                            sx={{ display: expanded ? "block" : "none", px: 5 }}
-                          >
-                            <DTicketListComponent
-                              tickets={tickets}
-                              emailDescriptions={emailDescriptionData}
-                              onTicketsChange={handleTicketsChange}
-                            />
-                          </Box>
-                        </Grow>
-                      </CardContent>
-                    </Card>
+                          <CardContent>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                mb: 2,
+                                px: 4,
+                                pt: 2,
+                              }}
+                            >
+                              <Typography
+                                variant="h5"
+                                sx={{ fontWeight: "bold", color: "white" }}
+                              >
+                                Available Tickets
+                              </Typography>
+                              <IconButton
+                                disabled={membership === 0 ? true : false}
+                                onClick={() => setExpanded(!expanded)}
+                                sx={{
+                                  color: "white",
+                                  transition: "transform 0.3s ease",
+                                  transform: expanded
+                                    ? "rotate(45deg)"
+                                    : "rotate(0deg)",
+                                }}
+                              >
+                                <AddIcon />
+                              </IconButton>
+                            </Box>
+                            <Grow in={expanded} timeout={500}>
+                              <Box
+                                sx={{
+                                  display: expanded ? "block" : "none",
+                                  px: 5,
+                                }}
+                              >
+                                <DTicketListComponent
+                                  tickets={tickets}
+                                  emailDescriptions={emailDescriptionData}
+                                  onTicketsChange={handleTicketsChange}
+                                />
+                              </Box>
+                            </Grow>
+                          </CardContent>
+                        </Card>
+                      </>
+                    )}
                   </>
                 )}
 

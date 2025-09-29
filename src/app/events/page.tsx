@@ -472,7 +472,7 @@ export default function CalendarView() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   mb: 2,
-                  px: 2,
+                  px: 1,
                 }}
               >
                 <Typography
@@ -859,9 +859,8 @@ export default function CalendarView() {
                 {/* Events List */}
                 <Box
                   sx={{
-                    maxHeight: { xs: "unset", sm: "60vh" }, // no limit on mobile
+                    maxHeight: { xs: "unset", sm: "60vh" },
                     overflowY: { xs: "visible", sm: "auto" },
-                    px: { xs: 1, sm: 2 },
                     py: 1,
                   }}
                 >

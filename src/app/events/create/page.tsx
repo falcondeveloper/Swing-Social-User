@@ -7,18 +7,14 @@ import {
   Button,
   Box,
   Autocomplete,
-  FormControlLabel,
   Checkbox,
-  Tooltip,
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
   Paper,
   FormHelperText,
   Typography,
   CircularProgress,
-  Stack,
   useTheme,
   useMediaQuery,
   IconButton,
@@ -28,22 +24,14 @@ import {
   Container,
 } from "@mui/material";
 import { Editor } from "@tinymce/tinymce-react";
-import PublishIcon from "@mui/icons-material/Upload";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CollectionsIcon from "@mui/icons-material/Collections";
-import InfoIcon from "@mui/icons-material/Info";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import {
-  LocalizationProvider,
-  DatePicker,
-  DateTimePicker,
-} from "@mui/x-date-pickers";
+import { LocalizationProvider, DateTimePicker } from "@mui/x-date-pickers";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import moment, { Moment } from "moment";
-import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { jwtDecode } from "jwt-decode";
 import { SnackbarCloseReason } from "@mui/material/Snackbar";
@@ -281,6 +269,7 @@ interface FormData {
   tags: string[];
   allowFreeUsers: boolean;
   hideVenue: any;
+  hideTicketOption: any;
   repeats: {
     type: "none" | "daily" | "weekly" | "monthly";
     interval: number;
@@ -304,8 +293,6 @@ interface FormErrors {
   tags?: string;
 }
 
-const categories: string[] = ["Meet & Greet", "Hotel Takeover", "House Party"];
-
 const EventForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -320,6 +307,7 @@ const EventForm: React.FC = () => {
     tags: [],
     allowFreeUsers: false,
     hideVenue: 0,
+    hideTicketOption: 0,
     repeats: {
       type: "none",
       interval: 1,
@@ -345,7 +333,6 @@ const EventForm: React.FC = () => {
 
   const router = useRouter();
 
-  const theme = useTheme();
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
 
   useEffect(() => {
@@ -453,22 +440,18 @@ const EventForm: React.FC = () => {
   };
 
   const handleChange = (fieldName: string, value: any) => {
-    if (fieldName === "hideVenue") {
-      if (value) {
-        setFormData({ ...formData, [fieldName]: 1 });
-      } else {
-        setFormData({ ...formData, [fieldName]: 0 });
-      }
+    if (fieldName === "hideVenue" || fieldName === "hideTicketOption") {
+      setFormData({ ...formData, [fieldName]: value ? 1 : 0 });
     } else {
       setFormData({ ...formData, [fieldName]: value });
     }
 
     if (fieldName === "coverPhoto") {
-      console.log("cover");
       const reader = new FileReader();
       reader.onload = () => {
         setEventCoverImage(reader.result as string);
       };
+      reader.readAsDataURL(value);
     }
 
     if (touched[fieldName]) {
@@ -627,6 +610,7 @@ const EventForm: React.FC = () => {
             endTime: formData?.endTime,
             venue: formData?.venue,
             isVenueHidden: formData?.hideVenue,
+            hideTicketOption: formData?.hideTicketOption, 
             category: formData?.category,
             description: formData?.description,
             emailDescription: "test",
@@ -819,7 +803,7 @@ const EventForm: React.FC = () => {
                     }}
                   >
                     <MenuItem value="House Party">House Party</MenuItem>
-                    <MenuItem value="Meet Greet">Meet Greet</MenuItem>
+                    <MenuItem value="Meet & Greet">Meet & Greet</MenuItem>
                     <MenuItem value="Hotel Takeover">Hotel Takeover</MenuItem>
                   </Select>
 
@@ -960,6 +944,33 @@ const EventForm: React.FC = () => {
                       sx={{ marginTop: "5px", color: "gray", marginBottom: 2 }}
                     >
                       Hide Address from members
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Checkbox
+                    color="primary"
+                    sx={{
+                      color: "white",
+                      "&.Mui-checked": {
+                        color: "#f50057",
+                      },
+                    }}
+                    checked={formData.hideTicketOption == 1 ? true : false}
+                    onChange={(e) =>
+                      handleChange("hideTicketOption", e.target.checked)
+                    }
+                  />
+                  <Box>
+                    <Typography variant="h6">
+                      Hide Ticket Purchase Option
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ marginTop: "5px", color: "gray", marginBottom: 2 }}
+                    >
+                      Prevent members from seeing event ticket prices
                     </Typography>
                   </Box>
                 </Box>

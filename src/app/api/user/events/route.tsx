@@ -108,6 +108,7 @@ export async function POST(req: Request) {
       longitude,
       latitude,
       repeats,
+      hideTicketOption,
     } = await req.json();
 
     if (
@@ -130,7 +131,7 @@ export async function POST(req: Request) {
     const eventDates = generateEventDates(startTime, endTime, repeats);
     const imagesArray = images.map((url: string) => url).join(",");
 
-    const insertQuery = `SELECT * FROM public.event_insert($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`;
+    const insertQuery = `SELECT * FROM public.event_insert($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`;
     const insertValues = [
       profileId,
       startTime,
@@ -145,6 +146,7 @@ export async function POST(req: Request) {
       imagesArray,
       latitude,
       longitude,
+      hideTicketOption,
     ];
 
     const result = await pool.query(insertQuery, insertValues);
@@ -154,8 +156,6 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
-
-    const newEvent = result.rows[0];
 
     return NextResponse.json({
       message: "Your event is created successfully!",
