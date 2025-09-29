@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Head from "next/head";
 import {
   Grid,
   Card,
@@ -10,19 +11,26 @@ import {
   useMediaQuery,
   Stack,
   Tabs,
-  alpha,
   Tab,
   Drawer,
   IconButton,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  alpha,
+  Chip,
+  Avatar,
 } from "@mui/material";
 import Loader from "@/commonPage/Loader";
-import { CalendarMonth, ExpandMore } from "@mui/icons-material";
+import {
+  FilterList as FilterListIcon,
+  Close as CloseIcon,
+  CalendarMonth,
+} from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import PublicEventsDesktop from "./PublicEventsDesktop";
-import { FilterList } from "@mui/icons-material";
-import CloseIcon from "@mui/icons-material/Close";
-import FilterListIcon from "@mui/icons-material/FilterList";
 
 type EventItem = {
   Id: string | number;
@@ -41,13 +49,16 @@ const PublicEvents: React.FC = () => {
   const currentMonthRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
 
   const [tabValue, setTabValue] = useState<"upcoming" | "past">("upcoming");
   const [sortedEvents, setSortedEvents] = useState<EventItem[]>([]);
-  const [expanded, setExpanded] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const [openEvent, setOpenEvent] = useState<EventItem | null>(null);
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadSubmitting, setLeadSubmitting] = useState(false);
 
   const now = useMemo(() => new Date(), []);
 
@@ -65,10 +76,6 @@ const PublicEvents: React.FC = () => {
         new Date(b.StartTime).getTime() - new Date(a.StartTime).getTime()
     );
 
-  const handleSearch = (val: string) => {};
-
-  const handleCityChange = async (_: any, v: any) => {};
-
   useEffect(() => {
     (async () => {
       try {
@@ -82,31 +89,177 @@ const PublicEvents: React.FC = () => {
         setLoading(false);
       }
     })();
-  }, [currentDate]);
+  }, []);
 
-  if (loading) {
-    return <Loader />;
-  }
+  const submitLead = async (eventId?: string | number) => {
+    if (!leadEmail || !/\S+@\S+\.\S+/.test(leadEmail)) {
+      alert("Please enter a valid email.");
+      return;
+    }
+    setLeadSubmitting(true);
+    try {
+      await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: leadEmail,
+          source: "events-seo",
+          eventId: eventId || null,
+        }),
+      });
+      alert(
+        "Thanks — we saved your spot! Check your email to complete signup."
+      );
+      setLeadEmail("");
+      router.push("/signup");
+    } catch (e) {
+      console.error(e);
+      alert("Something went wrong — please try again.");
+    } finally {
+      setLeadSubmitting(false);
+      setOpenEvent(null);
+    }
+  };
+
+  const ldJson = {
+    "@context": "https://schema.org",
+    "@graph": (upcomingEvents.slice(0, 5) || []).map((ev) => ({
+      "@type": "Event",
+      "@id": `${process.env.NEXT_PUBLIC_SITE_URL || ""}/events/${ev.Id}`,
+      name: ev.Name,
+      startDate: new Date(ev.StartTime).toISOString(),
+      location: ev.Venue || { "@type": "Place", name: "Online / Venue TBA" },
+      description: ev.Description || "",
+      image:
+        ev.CoverImageUrl ||
+        `${
+          process.env.NEXT_PUBLIC_SITE_URL || ""
+        }/images/event-placeholder-mobile.jpg`,
+      eventStatus: "https://schema.org/EventScheduled",
+      url: `${process.env.NEXT_PUBLIC_SITE_URL || ""}/events/detail/${ev.Id}`,
+      performer: { "@type": "PerformingGroup", name: ev.Category || "Event" },
+    })),
+  };
+
+  if (loading) return <Loader />;
+
+  const parseSafeDate = (dateLike?: string | null) => {
+    if (!dateLike) return null;
+    const d = new Date(dateLike);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const formatDateShort = (dateStr?: string | null) => {
+    const d = parseSafeDate(dateStr);
+    if (!d) return "TBA";
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }).format(d);
+  };
 
   return (
     <>
+      {/* SEO head + JSON-LD */}
+      <Head>
+        <title>Events · Discover local events near you — [YourSiteName]</title>
+        <meta
+          name="description"
+          content="Discover local events and RSVP. Create a free account to save events, get reminders, and unlock exclusive content."
+        />
+        <meta name="robots" content="index,follow" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(ldJson) }}
+        />
+      </Head>
+
       <Box
         sx={{
           bgcolor: "#0A0A0A",
           mt: 2,
           color: "white",
-          background: "linear-gradient(to bottom, #0A0A0A, #1A1A1A)",
+          background: "linear-gradient(to bottom,#0A0A0A,#1A1A1A)",
         }}
       >
-        <Container
-          maxWidth="xl"
-          sx={{
-            px: { xs: 1, sm: 2, md: 3 },
-            pb: { xs: 8 },
-          }}
-        >
+        <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 }, pb: { xs: 8 } }}>
           {isMobile ? (
             <>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  alignItems: { xs: "flex-start", sm: "center" },
+                  justifyContent: "space-between",
+                  gap: 2,
+                  mb: 2,
+                  px: { xs: 0.5, sm: 0 },
+                }}
+              >
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 800,
+                      fontSize: { xs: "1rem", sm: "1.15rem", md: "1.25rem" },
+                      lineHeight: 1.1,
+                      color: "white",
+                      whiteSpace: "normal",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    Discover Events Near You
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mt: 0.5,
+                      color: "rgba(255,255,255,0.78)",
+                      fontSize: { xs: "0.78rem", sm: "0.85rem" },
+                      maxWidth: { xs: "100%", sm: "520px" },
+                    }}
+                  >
+                    Sign up free to RSVP, save events, and get reminders.
+                  </Typography>
+                </Box>
+
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  sx={{
+                    mt: { xs: 1, sm: 0 },
+                    alignItems: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Button
+                    color="secondary"
+                    variant="contained"
+                    onClick={() => router.push("/signup")}
+                    aria-label="Create account"
+                    sx={{
+                      textTransform: "none",
+                      bgcolor: "#f50057",
+                      px: { xs: 2, sm: 2.5 },
+                      py: { xs: 1, sm: 0.8 },
+                      fontWeight: 700,
+                      width: { xs: "100%", sm: "auto" },
+                      boxShadow: {
+                        xs: "none",
+                        sm: "0 6px 16px rgba(245,0,87,0.18)",
+                      },
+                      "&:hover": { bgcolor: "#ff2d78" },
+                    }}
+                  >
+                    Create account
+                  </Button>
+                </Stack>
+              </Box>
+
               <Box
                 sx={{
                   display: "flex",
@@ -175,9 +328,7 @@ const PublicEvents: React.FC = () => {
                       <CloseIcon />
                     </IconButton>
                   </Box>
-
-                  <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)", my: 2 }} />
-
+                  <Divider sx={{ bgcolor: "rgba(255,255,255,0.12)", my: 1 }} />
                   <Tabs
                     value={tabValue}
                     onChange={(e, newValue) => {
@@ -219,9 +370,11 @@ const PublicEvents: React.FC = () => {
                     <Tab value="upcoming" label="Upcoming" />
                     <Tab value="past" label="Past" />
                   </Tabs>
+                  {/* Add more filters here: city, category, free/paid, online/local */}
                 </Box>
               </Drawer>
 
+              {/* Event List */}
               <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
                 <Box
                   sx={{
@@ -238,18 +391,16 @@ const PublicEvents: React.FC = () => {
                         : pastEvents
                       ).map((post: any) => {
                         const eventDate = new Date(post.StartTime);
-                        const isCurrentMonth =
-                          eventDate.getMonth() === currentDate.getMonth() &&
-                          eventDate.getFullYear() === currentDate.getFullYear();
+                        const isCurrentMonth = sameMonth(
+                          eventDate,
+                          currentDate
+                        );
 
                         return (
                           <Card
                             key={post.Id}
                             data-event-id={post.Id}
                             ref={isCurrentMonth ? currentMonthRef : null}
-                            // onClick={() =>
-                            //   router.push("/events/detail/" + post?.Id)
-                            // }
                             sx={{
                               borderRadius: 3,
                               overflow: "hidden",
@@ -263,7 +414,6 @@ const PublicEvents: React.FC = () => {
                               "&:hover": { transform: "scale(1.01)" },
                             }}
                           >
-                            {/* Image */}
                             <Box sx={{ position: "relative" }}>
                               <img
                                 src={post?.CoverImageUrl}
@@ -274,14 +424,9 @@ const PublicEvents: React.FC = () => {
                                   maxHeight: "200px",
                                   objectFit: "cover",
                                 }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  router.push("/events/detail/" + post?.Id);
-                                }}
                               />
                             </Box>
 
-                            {/* Content */}
                             <CardContent
                               sx={{
                                 p: { xs: 2, sm: 3 },
@@ -314,21 +459,245 @@ const PublicEvents: React.FC = () => {
                                   hour12: true,
                                 }).format(eventDate)}
                               </Typography>
+
+                              {/* Right-aligned action button (drop-in replacement) */}
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "flex-end",
+                                  alignItems: "center",
+                                  mt: 1.5,
+                                }}
+                              >
+                                <Button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenEvent(post);
+                                  }}
+                                  variant="contained"
+                                  aria-label={`Details for ${post.Name}`}
+                                  sx={{
+                                    textTransform: "none",
+                                    fontWeight: 700,
+                                    fontSize: "1rem",
+                                    minWidth: { xs: 92, sm: 110 },
+                                    px: { xs: 1.5, sm: 2.5 },
+                                    py: { xs: 0.9, sm: 0.7 },
+                                    borderRadius: 2.5,
+                                    bgcolor: "#ffffff",
+                                    color: "rgb(245, 0, 87)",
+                                    "&:hover": {
+                                      bgcolor: "rgba(255,255,255,0.9)",
+                                    },
+                                    width: { xs: "100%", sm: "auto" },
+                                  }}
+                                >
+                                  Details
+                                </Button>
+                              </Box>
                             </CardContent>
                           </Card>
                         );
                       })}
                     </Stack>
                   ) : (
-                    <></>
+                    <Box
+                      sx={{
+                        py: 10,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Typography color="rgba(255,255,255,0.7)">
+                        No events yet. Check back soon or create an account to
+                        get notified.
+                      </Typography>
+                    </Box>
                   )}
                 </Box>
               </CardContent>
+
+              <Dialog
+                open={Boolean(openEvent)}
+                onClose={() => setOpenEvent(null)}
+                fullWidth
+                maxWidth="sm"
+                BackdropProps={{
+                  sx: {
+                    backdropFilter: "blur(6px) saturate(120%)",
+                    WebkitBackdropFilter: "blur(6px) saturate(120%)",
+                    backgroundColor: "rgba(0,0,0,0.48)",
+                    transition:
+                      "backdrop-filter 240ms ease, background-color 240ms ease",
+                    "@media (max-width:600px)": {
+                      backgroundColor: "rgba(0,0,0,0.56)",
+                    },
+                  },
+                }}
+                PaperProps={{
+                  sx: {
+                    bgcolor: "#0f0f0f",
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    boxShadow: "0 16px 40px rgba(0,0,0,0.6)",
+                  },
+                }}
+                aria-labelledby="event-signup-title"
+              >
+                <DialogTitle
+                  id="event-signup-title"
+                  sx={{
+                    bgcolor: "#111",
+                    color: "white",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    pr: 1,
+                  }}
+                >
+                  <Typography
+                    component="span"
+                    sx={{ fontWeight: 800, fontSize: "1rem" }}
+                  >
+                    {openEvent?.Name}
+                  </Typography>
+
+                  <IconButton
+                    onClick={() => setOpenEvent(null)}
+                    sx={{ color: "white" }}
+                    aria-label="Close"
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </DialogTitle>
+
+                <DialogContent
+                  sx={{ bgcolor: "#0d0d0d", color: "white", px: 2, pt: 2 }}
+                >
+                  {/* Big hero image (tapable) */}
+                  {openEvent?.CoverImageUrl && (
+                    <Box sx={{ mb: 2, borderRadius: 1, overflow: "hidden" }}>
+                      <img
+                        src={openEvent.CoverImageUrl}
+                        alt={openEvent.Name}
+                        style={{
+                          width: "100%",
+                          height: "auto",
+                          display: "block",
+                          objectFit: "cover",
+                        }}
+                        loading="lazy"
+                      />
+                    </Box>
+                  )}
+
+                  {/* Key info */}
+                  <Stack spacing={0.5}>
+                    <Chip
+                      label={
+                        openEvent
+                          ? new Intl.DateTimeFormat("en-US", {
+                              month: "short",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: true,
+                            }).format(new Date(openEvent.StartTime || ""))
+                          : "TBA"
+                      }
+                      size="small"
+                      sx={{
+                        bgcolor: "rgba(245,0,87,0.95)",
+                        color: "white",
+                        fontWeight: 700,
+                        width: "fit-content",
+                      }}
+                    />
+
+                    {openEvent?.Venue && (
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "rgba(255,255,255,0.85)" }}
+                      >
+                        {openEvent.Venue}
+                      </Typography>
+                    )}
+
+                    {/* Short irresistible benefit lines — keep these punchy */}
+                    <Box sx={{ mt: 1 }}>
+                      <Typography
+                        sx={{ fontWeight: 700, fontSize: "0.95rem", mb: 0.5 }}
+                      >
+                        Why sign up?
+                      </Typography>
+
+                      <Stack spacing={0.5}>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "rgba(255,255,255,0.85)" }}
+                        >
+                          • Save this event to your profile and get reminders.
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "rgba(255,255,255,0.85)" }}
+                        >
+                          • Access members-only discounts & faster RSVP.
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "rgba(255,255,255,0.85)" }}
+                        >
+                          • See who’s going and connect with attendees.
+                        </Typography>
+                      </Stack>
+                    </Box>
+                  </Stack>
+                </DialogContent>
+
+                <DialogActions
+                  sx={{
+                    bgcolor: "#111",
+                    p: 2,
+                    display: "flex",
+                    gap: 1,
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Button
+                    onClick={() => setOpenEvent(null)}
+                    sx={{ color: "white", textTransform: "none" }}
+                    aria-label="Close dialog"
+                  >
+                    Not now
+                  </Button>
+
+                  {/* Primary CTA: clear, high-contrast signup — drives to signup page */}
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      setOpenEvent(null);
+                      router.push("/register");
+                    }}
+                    sx={{
+                      textTransform: "none",
+                      bgcolor: "#f50057",
+                      px: 2,
+                      py: 0.8,
+                      fontWeight: 700,
+                      boxShadow: "0 8px 20px rgba(245,0,87,0.18)",
+                      "&:hover": { bgcolor: "#ff2d78" },
+                    }}
+                    aria-label="Sign up to RSVP"
+                  >
+                    Sign up to RSVP
+                  </Button>
+                </DialogActions>
+              </Dialog>
             </>
           ) : (
-            <>
-              <PublicEventsDesktop />
-            </>
+            <PublicEventsDesktop />
           )}
         </Container>
       </Box>
