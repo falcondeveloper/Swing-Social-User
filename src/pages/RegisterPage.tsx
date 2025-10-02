@@ -236,6 +236,12 @@ const RegisterPage = () => {
     if (typeof window !== "undefined") {
       const host = window.location.host.replace(/^www\./, "");
       setSupportEmail(`support@${host}`);
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const aff = urlParams.get("aff");
+      if (aff) {
+        localStorage.setItem("affiliate_code", aff);
+      }
     }
   }, []);
 
@@ -327,12 +333,13 @@ const RegisterPage = () => {
       city: "",
       user_name: "",
       consent: false,
+      referral_code: "",
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting, setErrors }) => {
       const urlParams = new URLSearchParams(window.location.search);
-      const aff = urlParams.get("aff");
       const src = urlParams.get("src");
+      const aff = urlParams.get("aff");
 
       const getOS = () => {
         const userAgent = window.navigator.userAgent;
@@ -448,7 +455,9 @@ const RegisterPage = () => {
           localStorage.setItem("logged_in_profile", data.profileId);
           localStorage.setItem("userName", values.user_name);
           localStorage.setItem("phone", values.phone);
+
           setProfileId(data.profileId);
+
           setIsUploading(false);
           handleOpen();
         }

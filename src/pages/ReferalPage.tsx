@@ -9,19 +9,22 @@ import {
   useMediaQuery,
   Card,
   CardContent,
+  TextField,
+  IconButton,
 } from "@mui/material";
-import React, { memo, useMemo } from "react";
+import React, { memo, useEffect, useMemo, useState } from "react";
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import GroupsIcon from "@mui/icons-material/Groups";
-import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
-import ShareIcon from "@mui/icons-material/Share";
-import StarIcon from "@mui/icons-material/Star";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import QRCode from "react-qr-code";
-
-const userAffiliateCode = "3422";
-const affiliateLink = `https://swingsocial.co/?aff=${userAffiliateCode}`;
+import Link from "next/link";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { jwtDecode } from "jwt-decode";
+import { toast } from "react-toastify";
+import { DownloadIcon, ShareIcon } from "lucide-react";
+import * as htmlToImage from "html-to-image";
 
 const theme = createTheme({
   palette: {
@@ -110,50 +113,83 @@ const StatCard = ({
   </Card>
 );
 
-const StepCard = ({
-  step,
-  icon,
-  title,
-  description,
-}: {
-  step: string;
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) => (
-  <Card
-    sx={{
-      bgcolor: "rgba(255,255,255,0.06)",
-      backdropFilter: "blur(10px)",
-      borderRadius: "16px",
-      p: 2,
-      color: "white",
-      textAlign: "center",
-    }}
-  >
-    <CardContent>
-      <Typography
-        variant="h6"
-        sx={{
-          mb: 1,
-          color: "primary.main",
-          fontWeight: "bold",
-        }}
-      >
-        {step}
-      </Typography>
-      <Box mb={1}>{icon}</Box>
-      <Typography variant="subtitle1" fontWeight="bold">
-        {title}
-      </Typography>
-      <Typography variant="body2">{description}</Typography>
-    </CardContent>
-  </Card>
-);
-
 const ReferalPage = () => {
+  const [profile, setProfile] = useState<any>();
+  const [affiliateCode, setAffiliateCode] = useState<string | null>(null);
+  const [affiliateLink, setAffiliateLink] = useState<string>("");
+  const qrRef = React.useRef<HTMLDivElement>(null);
+
+  const handleDownloadQR = async () => {
+    if (qrRef.current === null) return;
+    try {
+      const dataUrl = await htmlToImage.toPng(qrRef.current);
+      const link = document.createElement("a");
+      link.download = `affiliate-qr-${affiliateCode}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Failed to download QR code", err);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const tokenDevice = localStorage.getItem("loginInfo");
+      if (tokenDevice) {
+        const decodeToken = jwtDecode<any>(tokenDevice);
+        setProfile(decodeToken);
+        const fetchAffiliateCode = async () => {
+          try {
+            const res = await fetch("/api/user/getaffiliate-code", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ profileId: decodeToken?.profileId }),
+            });
+
+            const data = await res.json();
+            if (data.success) {
+              setAffiliateCode(data.affiliate_code);
+              setAffiliateLink(
+                `https://swingsocial.co/?aff=${data.affiliate_code}`
+              );
+            }
+          } catch (err) {
+            console.error("Error fetching affiliate code:", err);
+          }
+        };
+
+        fetchAffiliateCode();
+      }
+    }
+  }, []);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(affiliateLink);
+    toast.success("Affiliate link copied!");
+  };
+
+  const handleShare = async () => {
+    const message = `🎉 Join me on SwingSocial!\n\n
+Earn rewards on your signup. Use my referral link below:`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Join me on SwingSocial!",
+          text: message,
+          url: affiliateLink,
+        });
+      } catch (err) {
+        console.error("Share failed:", err);
+      }
+    } else {
+      await navigator.clipboard.writeText(message);
+    }
+  };
+
   return (
     <ThemeProvider theme={theme}>
+      <Header />
       <Box
         sx={{
           minHeight: "100vh",
@@ -186,26 +222,6 @@ const ReferalPage = () => {
             Earn <strong>50% commission</strong> on referrals + $4 monthly per
             user 🎉
           </Typography>
-          <Button
-            variant="contained"
-            size="large"
-            sx={{
-              mt: 3,
-              px: 4,
-              py: 1.5,
-              fontSize: "1.1rem",
-              fontWeight: "bold",
-              borderRadius: "30px",
-              background: "linear-gradient(90deg,#FF2D55,#7000FF)",
-              transition: "0.3s",
-              "&:hover": {
-                transform: "scale(1.08)",
-                boxShadow: "0px 0px 25px rgba(255,45,85,0.6)",
-              },
-            }}
-          >
-            Sign Up Now
-          </Button>
         </Box>
 
         {/* Stats Section */}
@@ -226,7 +242,7 @@ const ReferalPage = () => {
           <StatCard
             icon={<MonetizationOnIcon fontSize="large" />}
             title="Monthly Commission"
-            value="$4 / Referral"
+            value="$3 / Referral"
           />
           <StatCard
             icon={<TrendingUpIcon fontSize="large" />}
@@ -240,113 +256,114 @@ const ReferalPage = () => {
           />
         </Box>
 
-        {/* Step Section */}
-        <Box textAlign="center" mb={6}>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            How It Works
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr 1fr" },
-            gap: 3,
-            maxWidth: "1000px",
-            mx: "auto",
-            mb: 8,
-          }}
-        >
-          <StepCard
-            step="1️⃣"
-            icon={<PersonAddAlt1Icon fontSize="large" />}
-            title="Register"
-            description="Sign up and get your unique referral link."
-          />
-          <StepCard
-            step="2️⃣"
-            icon={<ShareIcon fontSize="large" />}
-            title="Share"
-            description="Promote Swing Social with your link."
-          />
-          <StepCard
-            step="3️⃣"
-            icon={<StarIcon fontSize="large" />}
-            title="Earn"
-            description="Earn 50% signup + $4 monthly per referral."
-          />
-        </Box>
+        {/* QR + Affiliate Link Section */}
+        {affiliateCode && (
+          <Box textAlign="center" mb={8}>
+            <Box
+              ref={qrRef}
+              sx={{
+                display: "inline-block",
+                p: 2,
+                bgcolor: "white",
+                borderRadius: "12px",
+              }}
+            >
+              <QRCode value={affiliateLink} size={180} />
+            </Box>
+            <Typography variant="body2" mt={2}>
+              Share this QR or copy your affiliate link below.
+            </Typography>
 
-        {/* Details Section */}
-        <Box sx={{ maxWidth: "850px", mx: "auto", textAlign: "center", mb: 8 }}>
-          <Typography variant="body1" paragraph>
-            Swing Social is an alternative lifestyle platform for couples and
-            singles. Our users are loyal —{" "}
-            <strong>80% stay active for an average of 5 years!</strong>
-          </Typography>
-          <Typography variant="body1" paragraph>
-            That means <strong>$240 per referral</strong>,{" "}
-            <strong>$2,400 for 10 referrals</strong>, and{" "}
-            <strong>$24,000 for 100 referrals</strong>.
-          </Typography>
-        </Box>
+            <Button
+              onClick={handleDownloadQR}
+              variant="outlined"
+              startIcon={<DownloadIcon size={18} />}
+              sx={{
+                mt: 2,
+                borderRadius: "20px",
+                color: "white",
+                borderColor: "white",
+                "&:hover": { background: "rgba(255,255,255,0.1)" },
+              }}
+            >
+              Download QR Code
+            </Button>
 
-        {/* Final CTA */}
-        <Box textAlign="center">
-          <Button
-            variant="contained"
-            size="large"
-            sx={{
-              px: 5,
-              py: 1.8,
-              fontSize: "1.2rem",
-              fontWeight: "bold",
-              borderRadius: "40px",
-              background: "linear-gradient(90deg,#FF2D55,#7000FF)",
-              "&:hover": { transform: "scale(1.05)" },
-            }}
-          >
-            Sign up today!
-          </Button>
-        </Box>
+            <Box
+              sx={{
+                mt: 3,
+                display: "flex",
+                alignItems: "center",
+                maxWidth: "700px",
+                mx: "auto",
+                bgcolor: "rgba(255,255,255,0.08)",
+                borderRadius: "8px",
+                overflow: "hidden",
+              }}
+            >
+              {/* Affiliate URL */}
+              <TextField
+                fullWidth
+                value={affiliateLink}
+                InputProps={{
+                  readOnly: true,
+                  disableUnderline: true,
+                  style: {
+                    color: "white",
+                    fontFamily: "monospace",
+                    fontSize: "0.95rem",
+                  },
+                }}
+                variant="outlined"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    border: "none",
+                    pr: 0, // remove extra padding
+                  },
+                  "& input": {
+                    whiteSpace: "nowrap",
+                    overflowX: "auto", // scroll if long
+                    textOverflow: "unset",
+                  },
+                }}
+              />
 
-        {/* QR Code Section */}
-        <Box
-          sx={{
-            textAlign: "center",
-            mt: 10,
-            mb: 8,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
-            Share Your QR Code
-          </Typography>
+              {/* Buttons on the right side */}
+              <Box sx={{ display: "flex", alignItems: "center", pr: 1 }}>
+                <IconButton onClick={handleCopy} sx={{ color: "white" }}>
+                  <ContentCopyIcon />
+                </IconButton>
+                <IconButton onClick={handleShare} sx={{ color: "white" }}>
+                  <ShareIcon />
+                </IconButton>
+              </Box>
+            </Box>
+          </Box>
+        )}
 
-          <QRCode
-            value={affiliateLink}
-            size={180}
-            bgColor="#ffffff"
-            fgColor="#000000"
-          />
-
-          <Typography variant="body2" mt={2}>
-            New users can scan this QR code to sign up with your affiliate link.
-          </Typography>
-
-          <Button
-            startIcon={<ContentCopyIcon />}
-            sx={{ mt: 2 }}
-            variant="outlined"
-            onClick={() => {
-              navigator.clipboard.writeText(affiliateLink);
-            }}
-          >
-            Copy Link
-          </Button>
+        {/* View Reports Button */}
+        <Box textAlign="center" mt={6}>
+          <Link href="/dashboard/reports">
+            <Button
+              variant="contained"
+              size="large"
+              sx={{
+                px: 4,
+                py: 1.5,
+                mb: 4,
+                fontSize: "1rem",
+                fontWeight: "bold",
+                borderRadius: "30px",
+                background: "linear-gradient(90deg,#7000FF,#FF2D55)",
+                "&:hover": { transform: "scale(1.05)" },
+              }}
+            >
+              View Reports
+            </Button>
+          </Link>
         </Box>
       </Box>
+      <Footer />
     </ThemeProvider>
   );
 };

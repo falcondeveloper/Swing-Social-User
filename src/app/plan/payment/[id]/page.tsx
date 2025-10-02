@@ -54,10 +54,20 @@ export default function Payment(props: { params: Params }) {
   const [state, setState] = useState<any>("");
 
   const [isValidPromoCode, setValidPromoCode] = useState<any>(false);
+  const router = useRouter();
+
+  const [price, setPrice] = useState<any>("");
+  const [plan, setPlan] = useState<any>("");
+  const [unit, setUnit] = useState<any>("");
+  const [email, setEmail] = useState<any>("");
+  const [userName, setUsername] = useState<any>("");
+  const [password, setPassword] = useState<any>("");
+  const [getAffCode, setGetAffCode] = useState<any>("");
+  const [referralLoading, setReferralLoading] = useState(false);
+  const [referralValid, setReferralValid] = useState(false);
+  const [referralError, setReferralError] = useState<string | null>(null);
 
   const handleChangePromoCode = (promoCodeText: string) => {
-    // handleGetAllPromoCodes();
-    console.log("Promo Code", promoCodeText);
     setPromoCode(promoCodeText);
     if (promoCodeText) {
       let filter = promoCodeList.filter(
@@ -91,6 +101,7 @@ export default function Payment(props: { params: Params }) {
       console.error("Error submitting form:", error);
     }
   };
+
   const onSuccessHandler = async (response: ResponseType) => {
     console.log("response", response);
     toast.success("Transaction Successful");
@@ -173,14 +184,6 @@ export default function Payment(props: { params: Params }) {
       handleSubmitPromoCode();
     }
   };
-  const router = useRouter();
-
-  const [price, setPrice] = useState<any>("");
-  const [plan, setPlan] = useState<any>("");
-  const [unit, setUnit] = useState<any>("");
-  const [email, setEmail] = useState<any>("");
-  const [userName, setUsername] = useState<any>("");
-  const [password, setPassword] = useState<any>("");
 
   const getLocationName = async (latitude: number, longitude: number) => {
     const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0"; // Replace with your actual API key
@@ -250,19 +253,29 @@ export default function Payment(props: { params: Params }) {
       setPromoCodeList(result.promocodes);
     } catch (error) {}
   };
+
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Ensure localStorage is accessed only in the browser
-      setPrice(localStorage.getItem("ssprice"));
-      setPlan(localStorage.getItem("ssplan"));
-      setUnit(localStorage.getItem("ssunit"));
-      setEmail(localStorage.getItem("email"));
-      setUsername(localStorage.getItem("userName"));
-      setPassword(localStorage.getItem("password"));
+      const ssprice = localStorage.getItem("ssprice");
+      const ssplan = localStorage.getItem("ssplan");
+      const ssunit = localStorage.getItem("ssunit");
+      const emailVal = localStorage.getItem("email");
+      const userNameVal = localStorage.getItem("userName");
+      const passwordVal = localStorage.getItem("password");
+      const affCodeVal = localStorage.getItem("affiliate_code");
+
+      setPrice(ssprice);
+      setPlan(ssplan);
+      setUnit(ssunit);
+      setEmail(emailVal);
+      setUsername(userNameVal);
+      setPassword(passwordVal);
+      setGetAffCode(affCodeVal);
     }
     getCurrentLocation();
     handleGetAllPromoCodes();
   }, [address]);
+
   const [selectedTab, setSelectedTab] = useState(0);
   const [billingCycle, setBillingCycle] = useState("1");
 
@@ -363,6 +376,7 @@ export default function Payment(props: { params: Params }) {
       setPErrors((prev: any) => ({ ...prev, cvc: "" }));
     }
   };
+
   const handleUpdateMembershipStatus = async (userid: string, pprice: any) => {
     try {
       const response = await fetch("/api/user/membership", {
@@ -377,6 +391,37 @@ export default function Payment(props: { params: Params }) {
       localStorage.setItem("memberShip", "1");
     } catch (error) {
       console.error("Error:", error);
+    }
+  };
+
+  const validateReferral = async (code: string): Promise<boolean> => {
+    if (!code) return false;
+    setReferralLoading(true);
+    setReferralError(null);
+    setReferralValid(false);
+    try {
+      const res = await fetch("/api/user/affiliate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const json = await res.json();
+      if (res.ok && json?.valid) {
+        setReferralValid(true);
+        setReferralError(null);
+        return true;
+      } else {
+        setReferralValid(false);
+        setReferralError(json?.message || "Referral code not found");
+        return false;
+      }
+    } catch (err) {
+      console.error(err);
+      setReferralError("Unable to validate referral at this time");
+      setReferralValid(false);
+      return false;
+    } finally {
+      setReferralLoading(false);
     }
   };
 
@@ -396,11 +441,36 @@ export default function Payment(props: { params: Params }) {
 
     const data = await result.json();
 
+    if (getAffCode) {
+      try {
+        const isValid = await validateReferral(getAffCode);
+        if (isValid) {
+          const referralRes = await fetch("/api/user/create-referral", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              affiliateCode: getAffCode,
+              referredProfileId: data.profileId,
+              source: "direct",
+            }),
+          });
+          const referralData = await referralRes.json();
+          console.log("Referral created:", referralData);
+          localStorage.removeItem("affiliate_code");
+          setGetAffCode(null);
+        } else {
+          console.warn("Affiliate code invalid or not available:", getAffCode);
+        }
+      } catch (err) {
+        console.error("Referral API error:", err);
+      }
+    }
+
     localStorage.setItem("loginInfo", data.jwtToken);
     localStorage.setItem("logged_in_profile", data.currentProfileId);
     localStorage.setItem("profileUsername", data.currentuserName);
-    localStorage.setItem("memberalarm", "0");
-    // window.location.href = 'https://swing-social-user.vercel.app/home';
+    localStorage.setItem("memberalarm", data.memberAlarm);
+    localStorage.setItem("memberShip", data.memberShip);
     router.push("/home");
   };
 
@@ -459,13 +529,9 @@ export default function Payment(props: { params: Params }) {
     }
 
     if (!errors.cardNumber && !errors.expiry && !errors.cvc) {
-      // Set processing state to prevent duplicate submissions
       setIsProcessing(true);
 
       try {
-        console.log("price");
-        console.log(price);
-
         var ssunit = unit;
         var planName = "";
         var billingCycle = "1";
@@ -488,133 +554,86 @@ export default function Payment(props: { params: Params }) {
           pprice = "69.95";
         }
 
-        // if (isValidPromoCode) {
-        //   if (promoCode !== "") {
-        //     setPrice("$ 1");
-        //     console.log(price)
-        //   }
-        // }
-        console.log("plan price", price);
-        console.log(isValidPromoCode);
-        console.log(promoCode);
-        console.log({
-          price: price,
-          pprice: pprice,
-          length: billingCycle,
-          cardNumber: cardNumber,
-          expiry: expiry,
-          cvc: cvc,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          plan: planName,
-          isPromoCode: isValidPromoCode,
-          city: formData?.qcity,
-          country: formData?.qcountry,
-          state: state,
-          streetAddress: formData?.qstreetAddress,
-          phone: formData?.phone,
-          zipCode: formData?.qzipCode,
-          firstMonthFree: firstMonthFree,
+        if (promoCode !== "") {
+          pprice = "1";
+        }
+
+        const response = await fetch("/api/user/payment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            price: price,
+            pprice: pprice,
+            length: billingCycle,
+            cardNumber: cardNumber,
+            expiry: expiry,
+            cvc: cvc,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            plan: planName,
+            isPromoCode: isValidPromoCode,
+            city: formData?.qcity,
+            country: formData?.qcountry,
+            state: state,
+            streetAddress: formData?.qstreetAddress,
+            phone: formData?.phone,
+            zipCode: formData?.qzipCode,
+            firstMonthFree: firstMonthFree,
+            promocode: promoCode,
+            email: email,
+            username: userName,
+            userid: id,
+          }),
         });
-        if (isValidPromoCode) {
-          if (promoCode !== "") {
-            pprice = "1";
-          }
 
-          const response = await fetch("/api/user/payment", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              price: price,
-              pprice: pprice,
-              length: billingCycle,
-              cardNumber: cardNumber,
-              expiry: expiry,
-              cvc: cvc,
-              firstName: formData.firstName,
-              lastName: formData.lastName,
-              plan: planName,
-              isPromoCode: isValidPromoCode,
-              city: formData?.qcity,
-              country: formData?.qcountry,
-              state: state,
-              streetAddress: formData?.qstreetAddress,
-              phone: formData?.phone,
-              zipCode: formData?.qzipCode,
-              firstMonthFree: firstMonthFree,
-              promocode: promoCode,
-              email: email,
-              username: userName,
-              userid: id,
-            }),
-          });
-
-          if (response.ok) {
-            // router.push(`/plan/${id}`);
-            const data = await response.json();
-            const respondCode = data.respondCode;
-            console.log("*********");
-            console.log(data);
-            console.log(respondCode);
-            if (respondCode === "1") {
-              if (promoCode === "") {
-                await handleUpdateMembershipStatus(id, pprice);
-              } else {
-                await handleSubmitPromoCode();
-                await handleUpdateMembershipStatus(id, pprice);
-              }
-              // await sendEmail(userName, email);
-              setOpen(false);
-              Swal.fire({
-                title: `Thank you ${userName}!`,
-                text: "You will now be directed to Swing Social soon!",
-                icon: "success",
-                confirmButtonText: "OK",
-              }).then((result) => {
-                if (result?.isConfirmed) {
-                  handleLogin(userName, password);
-                }
-              });
+        if (response.ok) {
+          const data = await response.json();
+          const respondCode = data.respondCode;
+          if (respondCode === "1") {
+            if (promoCode === "") {
+              await handleUpdateMembershipStatus(id, pprice);
             } else {
-              setOpen(false);
-              Swal.fire({
-                title: `Error`,
-                text: `Sorry, we are unable to process.`,
-                icon: "error",
-                confirmButtonText: "Edit the card",
-                cancelButtonText: "Continue as the free member",
-              }).then((result) => {
-                if (result.isConfirmed) {
-                  setOpen(true);
-                } else if (result.dismiss === Swal.DismissReason.cancel) {
-                  console.log("User chose to continue as a free member.");
-                  // sendEmail(userName, email);
-                  Swal.fire({
-                    title: `Thank you ${userName}!`,
-                    text: "You will now be directed to login again to confirm your account and start using Swing Social!",
-                    icon: "success",
-                    confirmButtonText: "OK",
-                  }).then((result) => {
-                    if (result?.isConfirmed) {
-                      handleLogin(userName, password);
-                    }
-                  });
-                }
-              });
+              await handleSubmitPromoCode();
+              await handleUpdateMembershipStatus(id, pprice);
             }
+            setOpen(false);
+            Swal.fire({
+              title: `Thank you ${userName}!`,
+              text: "You will now be directed to Swing Social soon!",
+              icon: "success",
+              confirmButtonText: "OK",
+            }).then((result) => {
+              if (result?.isConfirmed) {
+                handleLogin(userName, password);
+              }
+            });
+          } else {
+            setOpen(false);
+            Swal.fire({
+              title: `Error`,
+              text: `Sorry, we are unable to process.`,
+              icon: "error",
+              confirmButtonText: "Edit the card",
+              cancelButtonText: "Continue as the free member",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                setOpen(true);
+              } else if (result.dismiss === Swal.DismissReason.cancel) {
+                Swal.fire({
+                  title: `Thank you ${userName}!`,
+                  text: "You will now be directed to login again to confirm your account and start using Swing Social!",
+                  icon: "success",
+                  confirmButtonText: "OK",
+                }).then((result) => {
+                  if (result?.isConfirmed) {
+                    handleLogin(userName, password);
+                  }
+                });
+              }
+            });
           }
-        } else {
-          setOpen(false);
-          Swal.fire({
-            title: `Your Promo Code is Invalid`,
-            text: `Sorry, promo code is not valid. Please check and try again.`,
-            icon: "error",
-            confirmButtonText: "Ok",
-          }).then(() => {
-            console.log("error");
-          });
         }
       } catch (error) {
         console.error("Error submitting form:", error);
