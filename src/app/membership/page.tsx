@@ -410,6 +410,45 @@ const BillingUpgrade: React.FC = () => {
     if (formError) setFormError("");
   };
 
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value.replace(/\D/g, ""); // only digits
+    let formatted = input;
+
+    // Auto format as MM/YY
+    if (input.length >= 3) {
+      formatted = `${input.substring(0, 2)}/${input.substring(2, 4)}`;
+    }
+
+    // Update formData
+    setFormData((prev) => ({
+      ...prev,
+      expDate: formatted,
+    }));
+
+    // Validate format
+    if (!/^\d{2}\/\d{2}$/.test(formatted)) {
+      setFormError("Invalid expiry date. Use MM/YY format.");
+      return;
+    }
+
+    // Validate month and expiry
+    const [month, year] = formatted.split("/").map((num) => parseInt(num, 10));
+    const now = new Date();
+    const currentYear = now.getFullYear() % 100; // last 2 digits
+    const currentMonth = now.getMonth() + 1;
+
+    if (month < 1 || month > 12) {
+      setFormError("Invalid month. Use 01–12.");
+    } else if (
+      year < currentYear ||
+      (year === currentYear && month < currentMonth)
+    ) {
+      setFormError("Card expired.");
+    } else {
+      setFormError(""); // valid
+    }
+  };
+
   const validateStep = (step: number) => {
     const tempErrors: Partial<FormData> = {};
 
@@ -1070,7 +1109,8 @@ const BillingUpgrade: React.FC = () => {
                           label="Expiry Date"
                           name="expDate"
                           value={formData.expDate}
-                          onChange={handleChange}
+                          // onChange={handleChange}
+                          onChange={handleExpiryChange}
                           error={Boolean(errors.expDate)}
                           helperText={errors.expDate}
                           placeholder="MM/YY"

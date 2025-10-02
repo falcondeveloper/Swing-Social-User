@@ -189,7 +189,7 @@ export async function POST(req: any) {
 			ARBCreateSubscriptionRequest: {
 				merchantAuthentication: {
 					name: "5n89FY2Wdn",
-					transactionKey: "3UrVG248Y3d2VAk5",
+					transactionKey: "8dVn289k5xm4WcKe",
 				},
 				refId: "12345",
 				subscription: {
@@ -335,7 +335,7 @@ export async function POST(req: any) {
 				createTransactionRequest: {
 					merchantAuthentication: {
 						name: "5n89FY2Wdn",
-						transactionKey: "3UrVG248Y3d2VAk5",
+						transactionKey: "8dVn289k5xm4WcKe",
 					},
 					refId: "123456",
 					transactionRequest: {
@@ -426,7 +426,7 @@ export async function POST(req: any) {
 				createTransactionRequest: {
 					merchantAuthentication: {
 						name: "5n89FY2Wdn",
-						transactionKey: "3UrVG248Y3d2VAk5",
+						transactionKey: "8dVn289k5xm4WcKe",
 					},
 					refId: "123456",
 					transactionRequest: {
