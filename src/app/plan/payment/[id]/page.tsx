@@ -1,18 +1,11 @@
 "use client";
 import React, { Suspense, useEffect, useState } from "react";
-import {
-  AcceptHosted,
-  FormComponent,
-  FormContainer,
-} from "react-authorize-net";
 
 import {
   Box,
   Typography,
   TextField,
   Button,
-  Checkbox,
-  FormControlLabel,
   Grid,
   Dialog,
   DialogTitle,
@@ -20,17 +13,52 @@ import {
   DialogActions,
 } from "@mui/material";
 import Swal from "sweetalert2";
-
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import { useRouter } from "next/navigation";
-import "react-toastify/dist/ReactToastify.css";
-import { toast, ToastContainer } from "react-toastify";
-type ResponseType = Record<string, any>; // Adjust this based on the actual shape of the response if you have more details
-type ErrorType = Record<string, any>; // Adjust this as well based on the error structure
+
 type Params = Promise<{ id: string }>;
 
 export default function Payment(props: { params: Params }) {
-  const [id, setId] = useState<string>(""); // State for error messages
+  const [id, setId] = useState<string>("");
+  const router = useRouter();
+
+  const [promoCode, setPromoCode] = useState<any>("");
+  const [promoCodeMessage, setPromocodeMessage] = useState<any>(null);
+  const [promoCodeList, setPromoCodeList] = useState<any>([]);
+  const [firstMonthFree, setFirstMonthFree] = useState(false);
+  const [address, setAddress] = useState<any>("");
+  const [state, setState] = useState<any>("");
+  const [isValidPromoCode, setValidPromoCode] = useState<any>(false);
+  const [price, setPrice] = useState<any>("");
+  const [plan, setPlan] = useState<any>("");
+  const [unit, setUnit] = useState<any>("");
+  const [email, setEmail] = useState<any>("");
+  const [phone, setPhone] = useState("");
+  const [userName, setUsername] = useState<any>("");
+  const [password, setPassword] = useState<any>("");
+  const [getAffCode, setGetAffCode] = useState<any>("");
+  const [open, setOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvc, setCvc] = useState("");
+  const [perrors, setPErrors] = useState<any>({
+    cardNumber: "",
+    expiry: "",
+    cvc: "",
+  });
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    qstreetAddress: "",
+    qzipCode: "",
+    qcity: "",
+    qcountry: "",
+    phone: "",
+  });
+
+  const [errors, setErrors] = useState<any>({});
+
   useEffect(() => {
     const getIdFromParam = async () => {
       const params = await props.params;
@@ -41,31 +69,6 @@ export default function Payment(props: { params: Params }) {
     getIdFromParam();
     handlePromoState();
   }, [props]);
-  // const clientKey: string = "2Y2W7LXwFsCqaBpj723C7juMu7GquF8Aftc7E2U54zNd446T35BrPNLC87c5FHDn";
-  // const apiLoginId: string = "8LqpS52cU3n";
-  const clientKey: string =
-    "42PTvHZ7UVcj6h5GKYG5nL6E7Fvmy9KY8kYVQ2Eek2JMg7Ltg3YXB55TX3Y6t9pE";
-  const apiLoginId: string = "5n89FY2Wdn";
-  const [promoCode, setPromoCode] = useState<any>("");
-  const [promoCodeMessage, setPromocodeMessage] = useState<any>(null);
-  const [promoCodeList, setPromoCodeList] = useState<any>([]);
-  const [firstMonthFree, setFirstMonthFree] = useState(false);
-  const [address, setAddress] = useState<any>("");
-  const [state, setState] = useState<any>("");
-
-  const [isValidPromoCode, setValidPromoCode] = useState<any>(false);
-  const router = useRouter();
-
-  const [price, setPrice] = useState<any>("");
-  const [plan, setPlan] = useState<any>("");
-  const [unit, setUnit] = useState<any>("");
-  const [email, setEmail] = useState<any>("");
-  const [userName, setUsername] = useState<any>("");
-  const [password, setPassword] = useState<any>("");
-  const [getAffCode, setGetAffCode] = useState<any>("");
-  const [referralLoading, setReferralLoading] = useState(false);
-  const [referralValid, setReferralValid] = useState(false);
-  const [referralError, setReferralError] = useState<string | null>(null);
 
   const handleChangePromoCode = (promoCodeText: string) => {
     setPromoCode(promoCodeText);
@@ -86,6 +89,7 @@ export default function Payment(props: { params: Params }) {
       setValidPromoCode(true);
     }
   };
+
   const handleSubmitPromoCode = async () => {
     try {
       const response = await fetch("/api/user/promocode", {
@@ -102,94 +106,10 @@ export default function Payment(props: { params: Params }) {
     }
   };
 
-  const onSuccessHandler = async (response: ResponseType) => {
-    console.log("response", response);
-    toast.success("Transaction Successful");
-    sendEmail(userName, email);
-    setOpen(false);
-
-    if (promoCode) {
-      await handleSubmitPromoCode();
-    }
-
-    // Show SweetAlert
-    Swal.fire({
-      title: `Thank you ${userName}!`,
-      text: "You will now be directed to login again to confirm your account and start using Swingsocial!",
-      icon: "success",
-      confirmButtonText: "Tap here to login",
-    }).then(() => {
-      // Redirect after the user clicks "OK"
-      // window.location.href = 'https://swing-social-user.vercel.app/home';
-      router.push("/home");
-    });
-  };
-
-  const sendEmail = async (username: string, email: string) => {
-    try {
-      const response = await fetch("/api/user/email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username: username, email: email }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log("Email sent successfully:", data);
-    } catch (error: any) {
-      console.error("Error sending email:", error.message);
-    }
-  };
-
-  // const sendEmail = async (username: string, email: string) => {
-  //   try {
-  //     const response = await fetch("https://api.postmarkapp.com/email/withTemplate", {
-  //       method: "POST",
-  //       headers: {
-  //         Accept: "application/json",
-  //         "Content-Type": "application/json",
-  //         "X-Postmark-Server-Token": "dcd2cc9f-7ac2-4753-bf70-46cb9df05178", // Replace with your server token
-  //       },
-  //       body: JSON.stringify({
-  //         From: "info@swingsocial.co",
-  //         To: email,
-  //         TemplateId: 32736568,
-  //         TemplateModel: {
-  //           user_name: username, // Replace with dynamic data as needed
-  //         },
-  //       }),
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error(`Error: ${response.statusText}`);
-  //     }
-
-  //     const data = await response.json();
-  //     console.log("Email sent successfully:", data);
-  //   } catch (error: any) {
-
-  //   }
-  // };
-
-  const onErrorHandler = (error: ErrorType): void => {
-    console.log("error", error);
-    toast.error("Transaction Failed");
-    // Show SweetAlert
-    if (promoCode) {
-      handleSubmitPromoCode();
-    }
-  };
-
   const getLocationName = async (latitude: number, longitude: number) => {
-    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0"; // Replace with your actual API key
+    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0";
 
     try {
-      // Call the Google Maps Geocoding API
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
       );
@@ -200,9 +120,8 @@ export default function Payment(props: { params: Params }) {
 
       const data = await response.json();
 
-      // Extract the location name from the response
       if (data.status === "OK" && data.results.length > 0) {
-        return data.results[0].formatted_address; // Return the formatted address of the first result
+        return data.results[0].formatted_address;
       }
 
       console.error("No results found or status not OK:", data);
@@ -218,12 +137,8 @@ export default function Payment(props: { params: Params }) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-          // Reverse geocoding to get the location name (you may need a third-party service here)
           const locationName = await getLocationName(latitude, longitude);
           setAddress(locationName);
-
-          console.log(locationName);
-          // await handlePromoState();
         },
         (error) => {
           console.error("Geolocation error:", error);
@@ -237,7 +152,6 @@ export default function Payment(props: { params: Params }) {
   const handleGetAllPromoCodes = async () => {
     try {
       const apiUrl = `/api/user/promocode/check`;
-      // Fetch event data from your API
       const response = await fetch(apiUrl);
       if (!response.ok) {
         throw new Error("Failed to fetch event data");
@@ -249,7 +163,6 @@ export default function Payment(props: { params: Params }) {
         throw new Error(result.error);
       }
 
-      // Set the fetched data
       setPromoCodeList(result.promocodes);
     } catch (error) {}
   };
@@ -276,24 +189,9 @@ export default function Payment(props: { params: Params }) {
     handleGetAllPromoCodes();
   }, [address]);
 
-  const [selectedTab, setSelectedTab] = useState(0);
-  const [billingCycle, setBillingCycle] = useState("1");
-
-  const handleTabChange = (event: any, newValue: any) => {
-    setSelectedTab(newValue);
-  };
-
-  const handleBillingCycleChange = (event: any, newCycle: any) => {
-    if (newCycle) {
-      setBillingCycle(newCycle);
-    }
-  };
-
-  const [phone, setPhone] = useState("");
-
   const handlePhoneChange = (event: any) => {
-    let value = event.target.value.replace(/\D/g, ""); // Remove all non-numeric characters
-    if (value.length > 10) value = value.substring(0, 10); // Limit to 10 digits
+    let value = event.target.value.replace(/\D/g, "");
+    if (value.length > 10) value = value.substring(0, 10);
 
     if (value.length > 6) {
       value = `(${value.substring(0, 3)}) ${value.substring(
@@ -309,28 +207,14 @@ export default function Payment(props: { params: Params }) {
     setPhone(value);
   };
 
-  const [open, setOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const onClose = () => {
     setOpen(false);
   };
-  const onConfirm = () => {
-    setOpen(false);
-  };
-
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvc, setCvc] = useState("");
-  const [perrors, setPErrors] = useState<any>({
-    cardNumber: "",
-    expiry: "",
-    cvc: "",
-  });
 
   const handleCardNumberChange = (e: any) => {
-    const input = e.target.value.replace(/\D/g, ""); // Remove all non-digit characters
-    const formatted = input.replace(/(\d{4})(?=\d)/g, "$1 "); // Add a space every 4 digits
-    setCardNumber(formatted.trim()); // Update the state with the formatted value
+    const input = e.target.value.replace(/\D/g, "");
+    const formatted = input.replace(/(\d{4})(?=\d)/g, "$1 ");
+    setCardNumber(formatted.trim());
 
     if (input.length !== 16) {
       setPErrors((prev: any) => ({
@@ -343,10 +227,9 @@ export default function Payment(props: { params: Params }) {
   };
 
   const handleExpiryChange = (e: any) => {
-    const input = e.target.value.replace(/\D/g, ""); // Remove all non-digit characters
+    const input = e.target.value.replace(/\D/g, "");
     let formatted = input;
 
-    // Automatically format as MM/YY
     if (input.length >= 2) {
       formatted = `${input.substring(0, 2)}/${input.substring(2, 4)}`;
     }
@@ -380,11 +263,11 @@ export default function Payment(props: { params: Params }) {
   const handleUpdateMembershipStatus = async (userid: string, pprice: any) => {
     try {
       const response = await fetch("/api/user/membership", {
-        method: "POST", // Specify the HTTP method
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ profileId: userid, price: pprice }), // Pass profileId and selected upgrade option
+        body: JSON.stringify({ profileId: userid, price: pprice }),
       });
 
       const checkData = await response.json();
@@ -396,9 +279,6 @@ export default function Payment(props: { params: Params }) {
 
   const validateReferral = async (code: string): Promise<boolean> => {
     if (!code) return false;
-    setReferralLoading(true);
-    setReferralError(null);
-    setReferralValid(false);
     try {
       const res = await fetch("/api/user/affiliate", {
         method: "POST",
@@ -407,21 +287,16 @@ export default function Payment(props: { params: Params }) {
       });
       const json = await res.json();
       if (res.ok && json?.valid) {
-        setReferralValid(true);
-        setReferralError(null);
+        console.log("Referall is ok");
         return true;
       } else {
-        setReferralValid(false);
-        setReferralError(json?.message || "Referral code not found");
+        console.log(json?.message || "Referral code not found");
         return false;
       }
     } catch (err) {
       console.error(err);
-      setReferralError("Unable to validate referral at this time");
-      setReferralValid(false);
+      console.log("Unable to validate referral at this time");
       return false;
-    } finally {
-      setReferralLoading(false);
     }
   };
 
@@ -474,11 +349,6 @@ export default function Payment(props: { params: Params }) {
     router.push("/home");
   };
 
-  const extractState = (address: string) => {
-    const match = address.match(/,\s([A-Z]{2})\s\d{5}/);
-    return match ? match[1] : null; // Return the state or null if not found
-  };
-
   const handlePromoState = async () => {
     const params = await props.params;
     const userid: any = params.id;
@@ -513,7 +383,6 @@ export default function Payment(props: { params: Params }) {
   };
 
   const handleConfirm = async () => {
-    // Prevent multiple submissions
     if (isProcessing) {
       console.log("Payment already in progress, ignoring duplicate request");
       return;
@@ -651,22 +520,9 @@ export default function Payment(props: { params: Params }) {
     }
   };
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    qstreetAddress: "",
-    qzipCode: "",
-    qcity: "",
-    qcountry: "",
-    phone: "",
-  });
-
-  const [errors, setErrors] = useState<any>({});
-
   const handleInputChange = (e: any) => {
     const { name, value } = e.target;
     if (name == "phone") {
-      console.log("sd");
       handlePhoneChange(e);
     }
     setFormData({ ...formData, [name]: value });
@@ -709,8 +565,6 @@ export default function Payment(props: { params: Params }) {
 
   const handlePaymentProcess = () => {
     if (validateForm()) {
-      // Proceed with payment processing
-      console.log("Payment data:", formData);
       setOpen(true);
     }
   };
@@ -727,10 +581,8 @@ export default function Payment(props: { params: Params }) {
           borderRadius: 2,
           backgroundColor: "#000",
           color: "#fff",
-          border: "1px solid",
         }}
       >
-        {/* Heading */}
         <Typography variant="h5" mb={2} align="center">
           Payment Details
         </Typography>
@@ -738,8 +590,6 @@ export default function Payment(props: { params: Params }) {
           Payment for {plan} Subscription
         </Typography>
 
-        {/* Recurring Payment Checkbox */}
-        {/* Form Fields */}
         <Grid container spacing={2}>
           {/* First Name */}
           <Grid item xs={12} sm={6}>
@@ -807,28 +657,6 @@ export default function Payment(props: { params: Params }) {
             />
           </Grid>
 
-          {/* Zip Code */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Zip Code"
-              name="qzipCode"
-              value={formData.qzipCode}
-              onChange={handleInputChange}
-              error={!!errors.zipCode}
-              helperText={errors.zipCode}
-              variant="outlined"
-              InputLabelProps={{ style: { color: "#fff" } }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: "#fff" },
-                  "&:hover fieldset": { borderColor: "#61dafb" },
-                },
-                input: { color: "#fff" },
-              }}
-            />
-          </Grid>
-
           {/* City */}
           <Grid item xs={12} sm={6}>
             <TextField
@@ -861,6 +689,28 @@ export default function Payment(props: { params: Params }) {
               onChange={handleInputChange}
               error={!!errors.country}
               helperText={errors.country}
+              variant="outlined"
+              InputLabelProps={{ style: { color: "#fff" } }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": { borderColor: "#fff" },
+                  "&:hover fieldset": { borderColor: "#61dafb" },
+                },
+                input: { color: "#fff" },
+              }}
+            />
+          </Grid>
+
+          {/* Zip Code */}
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Zip Code"
+              name="qzipCode"
+              value={formData.qzipCode}
+              onChange={handleInputChange}
+              error={!!errors.zipCode}
+              helperText={errors.zipCode}
               variant="outlined"
               InputLabelProps={{ style: { color: "#fff" } }}
               sx={{
@@ -919,6 +769,7 @@ export default function Payment(props: { params: Params }) {
           Pay with Card
         </Button>
       </Box>
+
       <Dialog
         open={open}
         onClose={onClose}
@@ -1027,6 +878,7 @@ export default function Payment(props: { params: Params }) {
                 }}
               />
             </Grid>
+
             {promoCodeMessage && (
               <Grid item xs={12}>
                 <Typography>{promoCodeMessage}</Typography>
@@ -1069,8 +921,6 @@ export default function Payment(props: { params: Params }) {
           </Button>
         </DialogActions>
       </Dialog>
-
-      <ToastContainer position="top-right" autoClose={3000} />
     </Suspense>
   );
 }

@@ -343,22 +343,46 @@ const RegisterPage = () => {
 
       const getOS = () => {
         const userAgent = window.navigator.userAgent;
-        if (userAgent.indexOf("Win") !== -1) return "Windows";
-        if (userAgent.indexOf("Mac") !== -1) return "MacOS";
-        if (userAgent.indexOf("Linux") !== -1) return "Linux";
-        if (userAgent.indexOf("Android") !== -1) return "Android";
-        if (
-          userAgent.indexOf("iPhone") !== -1 ||
-          userAgent.indexOf("iPad") !== -1
-        )
+        if (userAgent.includes("Win")) return "Windows";
+        if (userAgent.includes("Mac")) return "MacOS";
+        if (userAgent.includes("Linux")) return "Linux";
+        if (userAgent.includes("Android")) return "Android";
+        if (userAgent.includes("iPhone") || userAgent.includes("iPad"))
           return "iOS";
         return "Unknown";
       };
 
       try {
         setIsUploading(true);
-        const ipData = await (await fetch("https://ipapi.co/json")).json();
 
+        // 👇 Create safe timeout wrapper for fetch
+        const fetchWithTimeout = async (url: string, ms = 3000) => {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), ms);
+          try {
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeout);
+            return res;
+          } catch {
+            clearTimeout(timeout);
+            return null; // fail silently
+          }
+        };
+
+        // 👇 Try to get IP info, but skip on failure
+        let ipData: any = null;
+        const ipRes = await fetchWithTimeout("https://ipapi.co/json", 3000);
+        if (ipRes && ipRes.ok) {
+          try {
+            ipData = await ipRes.json();
+          } catch {
+            console.warn("⚠️ Invalid IPAPI response JSON");
+          }
+        } else {
+          console.warn("⚠️ Skipping IPAPI (network error or timeout)");
+        }
+
+        // 👇 Continue regardless of ipapi result
         const hitData = await (
           await fetch("/api/user/tracking", {
             method: "POST",
@@ -370,34 +394,32 @@ const RegisterPage = () => {
               page: "Register",
               url: window.location.href,
               userid: null,
-              ip: ipData?.ip,
-              city: ipData?.city,
-              region: ipData?.region,
-              country_name: ipData?.country_name,
+              ip: ipData?.ip || null,
+              city: ipData?.city || null,
+              region: ipData?.region || null,
+              country_name: ipData?.country_name || null,
             }),
           })
         ).json();
+
         const hitId = hitData?.data?.HitId;
 
-        if (
-          (
-            await (
-              await fetch("/api/user/screenname/check", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ search: values.user_name }),
-              })
-            ).json()
-          ).exists
-        ) {
+        // Username check
+        const usernameCheck = await (
+          await fetch("/api/user/screenname/check", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ search: values.user_name }),
+          })
+        ).json();
+
+        if (usernameCheck.exists) {
           setErrors({ user_name: "Username already taken" });
           formik.setTouched({ ...formik.touched, user_name: true }, false);
-
           requestAnimationFrame(() => {
             userNameRef.current?.scrollIntoView({
               behavior: "smooth",
               block: "center",
-              inline: "nearest",
             });
             setTimeout(
               () => userNameRef.current?.focus({ preventScroll: true }),
@@ -407,25 +429,22 @@ const RegisterPage = () => {
           return setSubmitting(false);
         }
 
-        if (
-          (
-            await (
-              await fetch("/api/user/profile/check", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ search: values.email }),
-              })
-            ).json()
-          ).exists
-        ) {
+        // Email check
+        const emailCheck = await (
+          await fetch("/api/user/profile/check", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ search: values.email }),
+          })
+        ).json();
+
+        if (emailCheck.exists) {
           setErrors({ email: "Email already taken" });
           formik.setTouched({ ...formik.touched, email: true }, false);
-
           requestAnimationFrame(() => {
             emailRef.current?.scrollIntoView({
               behavior: "smooth",
               block: "center",
-              inline: "nearest",
             });
             setTimeout(
               () => emailRef.current?.focus({ preventScroll: true }),
@@ -435,6 +454,7 @@ const RegisterPage = () => {
           return setSubmitting(false);
         }
 
+        // Register user
         const data = await (
           await fetch("/api/user", {
             method: "POST",
@@ -457,12 +477,11 @@ const RegisterPage = () => {
           localStorage.setItem("phone", values.phone);
 
           setProfileId(data.profileId);
-
           setIsUploading(false);
           handleOpen();
         }
       } catch (err) {
-        console.error(err);
+        console.error("❌ Registration failed:", err);
         alert("Something went wrong!");
       } finally {
         setIsUploading(false);

@@ -16,9 +16,7 @@ export async function POST(req: any) {
       city,
       state,
       streetAddress,
-      phone,
       zipCode,
-      username,
     } = await req.json();
     if (!cardNumber || !expiry || !cvc) {
       return NextResponse.json(
@@ -28,7 +26,6 @@ export async function POST(req: any) {
     }
 
     const sanitizedonetimePriceWithOutFee = pprice;
-    const santiziedPrice = pprice;
 
     const sanitizedonetimePrice = (
       sanitizedonetimePriceWithOutFee * 1.035
@@ -37,15 +34,13 @@ export async function POST(req: any) {
     const oneTimePaymentPayload = {
       createTransactionRequest: {
         merchantAuthentication: {
-          // name: "8LqpS52cU3n",
-          // transactionKey: "5k9VmYfS5aP5332X"
           name: "5n89FY2Wdn",
           transactionKey: "8dVn289k5xm4WcKe",
         },
         refId: "123456",
         transactionRequest: {
           transactionType: "authCaptureTransaction",
-          amount: sanitizedonetimePrice, // One-time payment amount
+          amount: sanitizedonetimePrice,
           payment: {
             creditCard: {
               cardNumber: sanitizeCardNumber(cardNumber),
@@ -56,12 +51,10 @@ export async function POST(req: any) {
           billTo: {
             firstName: firstName,
             lastName: lastName,
-            // "phone": phone,
             address: streetAddress,
             city: city,
             state: state,
             zip: zipCode,
-            // company: username,
           },
         },
       },
