@@ -421,33 +421,6 @@ export default function CalendarView() {
 
   return (
     <>
-      {/* <Dialog
-        open={locationDialogOpen}
-        onClose={() => setLocationDialogOpen(false)}
-      >
-        <DialogTitle>Enable Location?</DialogTitle>
-        <DialogContent>
-          <Typography>{locationDialogMessage}</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setLocationDialogOpen(false);
-            }}
-          >
-            No thanks
-          </Button>
-          <Button
-            onClick={() => {
-              requestCurrentLocation();
-            }}
-            variant="contained"
-          >
-            Enable Location
-          </Button>
-        </DialogActions>
-      </Dialog> */}
-
       <Box
         sx={{
           bgcolor: "#0A0A0A",
@@ -489,18 +462,55 @@ export default function CalendarView() {
                   Events
                 </Typography>
 
-                <Button
-                  variant="contained"
-                  startIcon={<FilterListIcon />}
-                  onClick={toggleFilter(true)}
-                  sx={{
-                    backgroundColor: "#f50057",
-                    fontWeight: "bold",
-                    textTransform: "none",
-                  }}
-                >
-                  Filters
-                </Button>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={() => {
+                      const token = localStorage.getItem("loginInfo");
+                      if (token) {
+                        try {
+                          const decodeToken = jwtDecode<any>(token);
+                          if (decodeToken?.membership === 0) {
+                            router.push("/membership");
+                          } else {
+                            router.push("/events/create");
+                          }
+                        } catch (e) {
+                          router.push("/events/create");
+                        }
+                      } else {
+                        router.push("/login");
+                      }
+                    }}
+                    sx={{
+                      backgroundColor: "#f50057",
+                      fontWeight: "bold",
+                      textTransform: "none",
+                      "&:hover": { backgroundColor: "#c51162" },
+                    }}
+                  >
+                    Create
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    startIcon={<FilterListIcon />}
+                    onClick={toggleFilter(true)}
+                    sx={{
+                      borderColor: "#f50057",
+                      color: "#f50057",
+                      fontWeight: "bold",
+                      textTransform: "none",
+                      "&:hover": {
+                        backgroundColor: "rgba(245,0,87,0.1)",
+                        borderColor: "#f50057",
+                      },
+                    }}
+                  >
+                    Filters
+                  </Button>
+                </Stack>
               </Box>
 
               <Drawer
@@ -538,38 +548,6 @@ export default function CalendarView() {
 
                   {/* Create + Calendar Buttons */}
                   <Stack direction="row" spacing={2} mb={2}>
-                    <Button
-                      onClick={() => {
-                        const token = localStorage.getItem("loginInfo");
-                        if (token) {
-                          try {
-                            const decodeToken = jwtDecode<any>(token);
-                            if (decodeToken?.membership === 0) {
-                              router.push("/membership");
-                            } else {
-                              router.push("/events/create");
-                            }
-                          } catch (e) {
-                            router.push("/events/create");
-                          }
-                        } else {
-                          router.push("/login");
-                        }
-                        setOpenFilter(false);
-                      }}
-                      variant="contained"
-                      startIcon={<Add />}
-                      sx={{
-                        flex: 1,
-                        textTransform: "none",
-                        backgroundColor: "#f50057",
-                        fontWeight: "bold",
-                        "&:hover": { backgroundColor: "#c51162" },
-                      }}
-                    >
-                      Create
-                    </Button>
-
                     <Button
                       onClick={() => router.push("/events/calendar")}
                       variant="contained"
