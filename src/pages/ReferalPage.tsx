@@ -3,28 +3,20 @@
 import {
   Box,
   Typography,
-  Button,
   ThemeProvider,
   createTheme,
   useMediaQuery,
   Card,
   CardContent,
-  TextField,
-  IconButton,
 } from "@mui/material";
-import React, { memo, useEffect, useMemo, useState } from "react";
+import React, { memo, useMemo } from "react";
+
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import GroupsIcon from "@mui/icons-material/Groups";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import QRCode from "react-qr-code";
-import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { jwtDecode } from "jwt-decode";
-import { toast } from "react-toastify";
-import { DownloadIcon, ShareIcon } from "lucide-react";
-import * as htmlToImage from "html-to-image";
+import ReferalForm from "@/components/ReferalForm";
 
 const theme = createTheme({
   palette: {
@@ -114,79 +106,6 @@ const StatCard = ({
 );
 
 const ReferalPage = () => {
-  const [profile, setProfile] = useState<any>();
-  const [affiliateCode, setAffiliateCode] = useState<string | null>(null);
-  const [affiliateLink, setAffiliateLink] = useState<string>("");
-  const qrRef = React.useRef<HTMLDivElement>(null);
-
-  const handleDownloadQR = async () => {
-    if (qrRef.current === null) return;
-    try {
-      const dataUrl = await htmlToImage.toPng(qrRef.current);
-      const link = document.createElement("a");
-      link.download = `affiliate-qr-${affiliateCode}.png`;
-      link.href = dataUrl;
-      link.click();
-    } catch (err) {
-      console.error("Failed to download QR code", err);
-    }
-  };
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const tokenDevice = localStorage.getItem("loginInfo");
-      if (tokenDevice) {
-        const decodeToken = jwtDecode<any>(tokenDevice);
-        setProfile(decodeToken);
-        const fetchAffiliateCode = async () => {
-          try {
-            const res = await fetch("/api/user/getaffiliate-code", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ profileId: decodeToken?.profileId }),
-            });
-
-            const data = await res.json();
-            if (data.success) {
-              setAffiliateCode(data.affiliate_code);
-              setAffiliateLink(
-                `https://swingsocial.co/?aff=${data.affiliate_code}`
-              );
-            }
-          } catch (err) {
-            console.error("Error fetching affiliate code:", err);
-          }
-        };
-
-        fetchAffiliateCode();
-      }
-    }
-  }, []);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(affiliateLink);
-    toast.success("Affiliate link copied!");
-  };
-
-  const handleShare = async () => {
-    const message = `🎉 Join me on SwingSocial!\n\n
-Earn rewards on your signup. Use my referral link below:`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "Join me on SwingSocial!",
-          text: message,
-          url: affiliateLink,
-        });
-      } catch (err) {
-        console.error("Share failed:", err);
-      }
-    } else {
-      await navigator.clipboard.writeText(message);
-    }
-  };
-
   return (
     <ThemeProvider theme={theme}>
       <Header />
@@ -198,7 +117,7 @@ Earn rewards on your signup. Use my referral link below:`;
             "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
           position: "relative",
           overflow: "hidden",
-          px: 3,
+          px: 2,
           py: 8,
         }}
       >
@@ -216,11 +135,11 @@ Earn rewards on your signup. Use my referral link below:`;
               WebkitTextFillColor: "transparent",
             }}
           >
-            Swing Social Affiliate Program
+            Swing Social Affiliate Application
           </Typography>
           <Typography variant="h6" gutterBottom>
-            Earn <strong>50% commission</strong> on referrals + $4 monthly per
-            user 🎉
+            Apply to become an affiliate. We review all applications before
+            approval.
           </Typography>
         </Box>
 
@@ -241,127 +160,23 @@ Earn rewards on your signup. Use my referral link below:`;
         >
           <StatCard
             icon={<MonetizationOnIcon fontSize="large" />}
-            title="Monthly Commission"
-            value="$3 / Referral"
+            title="Signup Commission"
+            value="50%"
           />
           <StatCard
             icon={<TrendingUpIcon fontSize="large" />}
-            title="One Referral in 5 Yrs"
-            value="$240"
+            title="Monthly Recurring"
+            value="$4 / Member"
           />
           <StatCard
             icon={<GroupsIcon fontSize="large" />}
-            title="100 Referrals in 5 Yrs"
-            value="$24,000"
+            title="Lifetime Potential"
+            value="$240 / Referral"
           />
         </Box>
 
-        {/* QR + Affiliate Link Section */}
-        {affiliateCode && (
-          <Box textAlign="center" mb={8}>
-            <Box
-              ref={qrRef}
-              sx={{
-                display: "inline-block",
-                p: 2,
-                bgcolor: "white",
-                borderRadius: "12px",
-              }}
-            >
-              <QRCode value={affiliateLink} size={180} />
-            </Box>
-            <Typography variant="body2" mt={2}>
-              Share this QR or copy your affiliate link below.
-            </Typography>
-
-            <Button
-              onClick={handleDownloadQR}
-              variant="outlined"
-              startIcon={<DownloadIcon size={18} />}
-              sx={{
-                mt: 2,
-                borderRadius: "20px",
-                color: "white",
-                borderColor: "white",
-                "&:hover": { background: "rgba(255,255,255,0.1)" },
-              }}
-            >
-              Download QR Code
-            </Button>
-
-            <Box
-              sx={{
-                mt: 3,
-                display: "flex",
-                alignItems: "center",
-                maxWidth: "700px",
-                mx: "auto",
-                bgcolor: "rgba(255,255,255,0.08)",
-                borderRadius: "8px",
-                overflow: "hidden",
-              }}
-            >
-              {/* Affiliate URL */}
-              <TextField
-                fullWidth
-                value={affiliateLink}
-                InputProps={{
-                  readOnly: true,
-                  disableUnderline: true,
-                  style: {
-                    color: "white",
-                    fontFamily: "monospace",
-                    fontSize: "0.95rem",
-                  },
-                }}
-                variant="outlined"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    border: "none",
-                    pr: 0, // remove extra padding
-                  },
-                  "& input": {
-                    whiteSpace: "nowrap",
-                    overflowX: "auto", // scroll if long
-                    textOverflow: "unset",
-                  },
-                }}
-              />
-
-              {/* Buttons on the right side */}
-              <Box sx={{ display: "flex", alignItems: "center", pr: 1 }}>
-                <IconButton onClick={handleCopy} sx={{ color: "white" }}>
-                  <ContentCopyIcon />
-                </IconButton>
-                <IconButton onClick={handleShare} sx={{ color: "white" }}>
-                  <ShareIcon />
-                </IconButton>
-              </Box>
-            </Box>
-          </Box>
-        )}
-
-        {/* View Reports Button */}
-        <Box textAlign="center" mt={6}>
-          <Link href="/dashboard/reports">
-            <Button
-              variant="contained"
-              size="large"
-              sx={{
-                px: 4,
-                py: 1.5,
-                mb: 4,
-                fontSize: "1rem",
-                fontWeight: "bold",
-                borderRadius: "30px",
-                background: "linear-gradient(90deg,#7000FF,#FF2D55)",
-                "&:hover": { transform: "scale(1.05)" },
-              }}
-            >
-              View Reports
-            </Button>
-          </Link>
-        </Box>
+        {/* Affiliate Application Form */}
+        <ReferalForm />
       </Box>
       <Footer />
     </ThemeProvider>
