@@ -9,8 +9,11 @@ import {
   IconButton,
   ThemeProvider,
   createTheme,
+  Tabs,
+  Tab,
+  Grid,
 } from "@mui/material";
-import { DownloadIcon, ShareIcon } from "lucide-react";
+import { DownloadIcon, ShareIcon, PlusIcon, TrashIcon } from "lucide-react";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import QRCode from "react-qr-code";
 import { toast } from "react-toastify";
@@ -36,6 +39,11 @@ interface Props {
 
 const ReferalDashboard: React.FC<Props> = ({ affiliateCode }) => {
   const [affiliateLink, setAffiliateLink] = useState<string>("");
+  const [tab, setTab] = useState<number>(0);
+  const [customLinks, setCustomLinks] = useState<
+    { id: number; name: string; url: string }[]
+  >([]);
+  const [newLinkName, setNewLinkName] = useState<string>("");
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -81,6 +89,24 @@ const ReferalDashboard: React.FC<Props> = ({ affiliateCode }) => {
     }
   };
 
+  const handleAddCustomLink = () => {
+    if (!newLinkName.trim()) {
+      toast.error("Please enter a link name (e.g. Instagram, YouTube)");
+      return;
+    }
+    const newUrl = `${affiliateLink}&src=${encodeURIComponent(newLinkName)}`;
+    setCustomLinks([
+      ...customLinks,
+      { id: Date.now(), name: newLinkName, url: newUrl },
+    ]);
+    setNewLinkName("");
+    toast.success("New custom link added!");
+  };
+
+  const handleDeleteLink = (id: number) => {
+    setCustomLinks(customLinks.filter((l) => l.id !== id));
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <Header />
@@ -92,159 +118,224 @@ const ReferalDashboard: React.FC<Props> = ({ affiliateCode }) => {
             "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
           px: 3,
           py: 8,
-          textAlign: "center",
         }}
       >
-        {/* Heading */}
+        {/* Page Heading */}
         <Typography
-          variant="h3"
+          component="h1"
           fontWeight="bold"
+          textAlign="center"
+          marginBottom={4}
           gutterBottom
           sx={{
+            fontSize: {
+              xs: "1.8rem",
+              sm: "2.3rem",
+              md: "3rem",
+              lg: "3.5rem",
+              xl: "4rem",
+            },
+            lineHeight: 1.2,
+            letterSpacing: "0.5px",
             background: "linear-gradient(90deg,#FF2D55,#7000FF)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
+            transition: "all 0.3s ease",
           }}
         >
-          Welcome to Your Affiliate Dashboard 🎉
+          Affiliate Dashboard
         </Typography>
 
-        <Typography variant="h6" sx={{ mb: 5, opacity: 0.9 }}>
-          Share your personalized link or QR code below to earn commissions.
-        </Typography>
-
-        {/* QR Code Section */}
-        <Box textAlign="center" mb={6}>
-          <Box
-            ref={qrRef}
-            sx={{
-              display: "inline-block",
-              p: 2,
-              bgcolor: "white",
-              borderRadius: "12px",
-              mb: 2,
-            }}
-          >
-            <QRCode value={affiliateLink || ""} size={180} />
-          </Box>
-
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Share this QR code or copy your unique link below.
-          </Typography>
-
-          <Button
-            onClick={handleDownloadQR}
-            variant="outlined"
-            startIcon={<DownloadIcon size={18} />}
-            sx={{
-              mt: 1,
-              borderRadius: "20px",
-              color: "white",
-              borderColor: "white",
-              "&:hover": { background: "rgba(255,255,255,0.1)" },
-            }}
-          >
-            Download QR Code
-          </Button>
-        </Box>
-
-        {/* Affiliate Link Box */}
-        <Box
+        {/* Tabs Menu */}
+        <Tabs
+          value={tab}
+          onChange={(_, v) => setTab(v)}
+          variant="fullWidth" // makes tabs stretch 100%
+          textColor="inherit"
           sx={{
-            mt: 3,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            maxWidth: "700px",
-            mx: "auto",
-            bgcolor: "rgba(255,255,255,0.08)",
-            borderRadius: "10px",
-            overflow: "hidden",
-          }}
-        >
-          <TextField
-            fullWidth
-            value={affiliateLink}
-            InputProps={{
-              readOnly: true,
-              disableUnderline: true,
-              style: {
-                color: "white",
-                fontFamily: "monospace",
-                fontSize: "0.95rem",
-              },
-            }}
-            variant="outlined"
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                border: "none",
-                pr: 0,
-              },
-            }}
-          />
-          <Box sx={{ display: "flex", alignItems: "center", pr: 1 }}>
-            <IconButton
-              onClick={() => handleCopy(affiliateLink)}
-              sx={{ color: "white" }}
-            >
-              <ContentCopyIcon />
-            </IconButton>
-            <IconButton onClick={handleShare} sx={{ color: "white" }}>
-              <ShareIcon />
-            </IconButton>
-          </Box>
-        </Box>
-
-        {/* CTA Section */}
-        <Box sx={{ mt: 6, mb: 6 }}>
-          <Typography variant="body1" mb={2}>
-            Start sharing your referral link with friends, newsletters, or
-            social media!
-          </Typography>
-          <Typography variant="body2" color="rgba(255,255,255,0.6)" mb={6}>
-            Each signup through your link earns you a commission automatically.
-          </Typography>
-
-          <Link href="/dashboard/reports" passHref>
-            <Button
-              variant="contained"
-              size="large"
-              sx={{
-                px: 4,
-                py: 1.4,
-                fontWeight: "bold",
-                borderRadius: "30px",
-                background: "linear-gradient(90deg,#7000FF,#FF2D55)",
-                "&:hover": { transform: "scale(1.05)" },
-              }}
-            >
-              View Reports
-            </Button>
-          </Link>
-        </Box>
-
-        {/* 🎯 Banner Section */}
-        <Box sx={{ mt: 8 }}>
-          <Typography
-            variant="h4"
-            fontWeight="bold"
-            gutterBottom
-            sx={{
+            mb: 6,
+            width: "100%",
+            maxWidth: "600px", // optional, center limit
+            mx: "auto", // centers tabs container
+            "& .MuiTab-root": {
+              color: "rgba(255,255,255,0.6)",
+              fontWeight: 600,
+              letterSpacing: "1px",
+              fontSize: "0.95rem",
+              textTransform: "uppercase",
+              minHeight: "48px",
+              minWidth: "auto",
+              flex: 1, // makes each tab equal width
+              transition: "all 0.3s ease",
+            },
+            "& .Mui-selected": {
+              color: "#fff",
               background: "linear-gradient(90deg,#FF2D55,#7000FF)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
-            }}
-          >
-            Affiliate Banners
-          </Typography>
+            },
+            "& .MuiTabs-indicator": {
+              height: "3px",
+              borderRadius: "3px",
+              background: "linear-gradient(90deg,#FF2D55,#7000FF)",
+              width: "50%", // ensures gradient looks smooth under tab
+              transition: "all 0.4s ease",
+            },
+          }}
+        >
+          <Tab label="Links" />
+          <Tab label="Banners" />
+        </Tabs>
 
-          <Typography variant="body2" sx={{ mb: 4, opacity: 0.8 }}>
-            Use these banners in your website, blog, or newsletters. Each banner
-            automatically includes your affiliate link.
-          </Typography>
+        {/* ------------------ LINKS SECTION ------------------ */}
+        {tab === 0 && (
+          <Box textAlign="center">
+            {/* QR Section */}
+            <Box mb={6}>
+              <Box
+                ref={qrRef}
+                sx={{
+                  display: "inline-block",
+                  p: 2,
+                  bgcolor: "white",
+                  borderRadius: "12px",
+                  mb: 2,
+                }}
+              >
+                <QRCode value={affiliateLink || ""} size={180} />
+              </Box>
 
-          <AffiliateBanner affiliateCode={affiliateLink} />
-        </Box>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                Share this QR code or copy your unique link below.
+              </Typography>
+
+              <Button
+                onClick={handleDownloadQR}
+                variant="outlined"
+                startIcon={<DownloadIcon size={18} />}
+                sx={{
+                  mt: 1,
+                  borderRadius: "20px",
+                  color: "white",
+                  borderColor: "white",
+                  "&:hover": { background: "rgba(255,255,255,0.1)" },
+                }}
+              >
+                Download QR Code
+              </Button>
+            </Box>
+
+            {/* Default Affiliate Link */}
+            <Box
+              sx={{
+                mt: 3,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                maxWidth: "700px",
+                mx: "auto",
+                bgcolor: "rgba(255,255,255,0.08)",
+                borderRadius: "10px",
+                overflow: "hidden",
+              }}
+            >
+              <TextField
+                fullWidth
+                value={affiliateLink}
+                InputProps={{
+                  readOnly: true,
+                  disableUnderline: true,
+                  style: {
+                    color: "white",
+                    fontFamily: "monospace",
+                    fontSize: "0.95rem",
+                  },
+                }}
+                variant="outlined"
+                sx={{
+                  "& .MuiOutlinedInput-root": { border: "none", pr: 0 },
+                }}
+              />
+              <Box sx={{ display: "flex", alignItems: "center", pr: 1 }}>
+                <IconButton
+                  onClick={() => handleCopy(affiliateLink)}
+                  sx={{ color: "white" }}
+                >
+                  <ContentCopyIcon />
+                </IconButton>
+                <IconButton onClick={handleShare} sx={{ color: "white" }}>
+                  <ShareIcon />
+                </IconButton>
+              </Box>
+            </Box>
+
+            {/* View Reports Button */}
+            <Box sx={{ mt: 8 }}>
+              <Link href="/dashboard/reports" passHref>
+                <Button
+                  component="a"
+                  variant="contained"
+                  size="large"
+                  sx={{
+                    px: 4,
+                    py: 1.4,
+                    fontWeight: "bold",
+                    borderRadius: "30px",
+                    background: "linear-gradient(90deg,#7000FF,#FF2D55)",
+                    color: "white",
+                    textTransform: "none",
+                    fontSize: {
+                      xs: "0.9rem",
+                      sm: "1rem",
+                    },
+                    "&:hover": {
+                      transform: "scale(1.05)",
+                      background: "linear-gradient(90deg,#FF2D55,#7000FF)",
+                    },
+                  }}
+                >
+                  View Reports
+                </Button>
+              </Link>
+            </Box>
+          </Box>
+        )}
+
+        {/* ------------------ BANNERS SECTION ------------------ */}
+        {tab === 1 && (
+          <Box>
+            <Typography
+              variant="h4"
+              fontWeight="bold"
+              gutterBottom
+              textAlign="center"
+              sx={{
+                background: "linear-gradient(90deg,#FF2D55,#7000FF)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              Affiliate Banners
+            </Typography>
+
+            <Typography
+              variant="body2"
+              textAlign="center"
+              sx={{ mb: 4, opacity: 0.8 }}
+            >
+              Use these banners in your website, blog, or newsletters. Each one
+              includes your affiliate link.
+            </Typography>
+
+            <Grid container spacing={3} justifyContent="center">
+              {[...Array(10)].map((_, i) => (
+                <Grid item xs={12} sm={6} md={4} key={i}>
+                  <AffiliateBanner affiliateCode={affiliateLink} />
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        )}
       </Box>
       <Footer />
     </ThemeProvider>
