@@ -328,11 +328,9 @@ const ReferalDashboard: React.FC<Props> = ({ affiliateCode }) => {
             </Typography>
 
             <Grid container spacing={3} justifyContent="center">
-              {[...Array(10)].map((_, i) => (
-                <Grid item xs={12} sm={6} md={4} key={i}>
-                  <AffiliateBanner affiliateCode={affiliateLink} />
-                </Grid>
-              ))}
+              <Grid item xs={12} sm={6} md={4}>
+                <AffiliateBanner affiliateCode={affiliateLink} />
+              </Grid>
             </Grid>
           </Box>
         )}
