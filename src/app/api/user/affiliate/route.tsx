@@ -12,26 +12,21 @@ const pool = new Pool({
 export async function POST(req: Request) {
   try {
     const { code } = await req.json();
-
     const client = await pool.connect();
+
     const result = await client.query(
       `SELECT * FROM check_affiliate_code($1)`,
       [code]
     );
+
     client.release();
 
     const row = result.rows[0];
     return NextResponse.json({
       valid: row.is_valid,
-      affiliate: row.is_valid
-        ? {
-            userId: row.affiliate_id,
-            email: row.affiliate_email,
-            code: row.affiliate_code,
-            username: row.affiliate_username,
-          }
-        : null,
       message: row.message,
+      code: row.affiliate_code,
+      profile_id: row.profile_id,
     });
   } catch (err: any) {
     console.error("Affiliate API error:", err);

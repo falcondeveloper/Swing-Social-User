@@ -36,7 +36,6 @@ export async function POST(req: Request) {
         referral: result.rows[0],
       });
     } catch (dbErr: any) {
-      // ✅ Handle custom Postgres errors
       if (dbErr.message.includes("Self-referral is not allowed")) {
         return NextResponse.json(
           { success: false, error: "You cannot refer yourself." },
@@ -51,7 +50,7 @@ export async function POST(req: Request) {
         );
       }
 
-      throw dbErr; // let the catch below handle unexpected errors
+      throw dbErr;
     } finally {
       client.release();
     }

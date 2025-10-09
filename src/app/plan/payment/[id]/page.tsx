@@ -18,6 +18,13 @@ import { useRouter } from "next/navigation";
 
 type Params = Promise<{ id: string }>;
 
+interface ReferralValidationResult {
+  valid: boolean;
+  affiliateCode?: string | null;
+  profileId?: string | null;
+  message?: string;
+}
+
 export default function Payment(props: { params: Params }) {
   const [id, setId] = useState<string>("");
   const router = useRouter();
@@ -277,26 +284,44 @@ export default function Payment(props: { params: Params }) {
     }
   };
 
-  const validateReferral = async (code: string): Promise<boolean> => {
-    if (!code) return false;
+  const validateReferral = async (
+    code?: string | null
+  ): Promise<ReferralValidationResult> => {
+    if (!code) {
+      console.log("No referral code provided — skipping validation.");
+      return { valid: false, message: "No referral code provided" };
+    }
+
     try {
       const res = await fetch("/api/user/affiliate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),
       });
+
       const json = await res.json();
-      if (res.ok && json?.valid) {
-        console.log("Referall is ok");
-        return true;
+
+      if (res.ok && json?.is_valid) {
+        console.log("✅ Referral code is valid:", json?.affiliate_code);
+        return {
+          valid: true,
+          affiliateCode: json?.affiliate_code,
+          profileId: json?.profile_id,
+          message: json?.message,
+        };
       } else {
-        console.log(json?.message || "Referral code not found");
-        return false;
+        console.warn("❌", json?.message || "Referral code not found");
+        return {
+          valid: false,
+          message: json?.message || "Referral code not found",
+        };
       }
     } catch (err) {
-      console.error(err);
-      console.log("Unable to validate referral at this time");
-      return false;
+      console.error("Referral validation error:", err);
+      return {
+        valid: false,
+        message: "Unable to validate referral at this time",
+      };
     }
   };
 
@@ -330,7 +355,6 @@ export default function Payment(props: { params: Params }) {
             }),
           });
           const referralData = await referralRes.json();
-          console.log("Referral created:", referralData);
           localStorage.removeItem("affiliate_code");
           setGetAffCode(null);
         } else {

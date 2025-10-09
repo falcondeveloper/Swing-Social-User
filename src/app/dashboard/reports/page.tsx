@@ -293,7 +293,7 @@ const ReportsPage = () => {
 
                 {/* Table Body */}
                 <TableBody>
-                  {stats.referral_details.map((ref: any, index: number) => (
+                  {stats?.referral_details?.map((ref: any, index: number) => (
                     <TableRow
                       key={ref.id}
                       sx={{
