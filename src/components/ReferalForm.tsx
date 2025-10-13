@@ -31,7 +31,7 @@ const fieldSx = {
   "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.7)" },
 } as const;
 
-const phoneRegExp = /^[0-9]{7,15}$/;
+const phoneRegExp = /^[0-9]{10}$/;
 const zipRegExp = /^[0-9A-Za-z\s-]{4,10}$/;
 const nameRegExp = /^[A-Za-z\s'-]{2,40}$/;
 
@@ -55,10 +55,12 @@ const validationSchema = Yup.object().shape({
     .email("Enter a valid email address.")
     .required("Email is required."),
   mobilePhone: Yup.string()
-    .matches(phoneRegExp, "Enter a valid phone number (7–15 digits).")
+    .transform((value) => value.replace(/\D/g, ""))
+    .matches(phoneRegExp, "Enter a valid 10-digit phone number.")
     .required("Mobile phone number is required."),
   businessPhone: Yup.string()
-    .matches(phoneRegExp, "Enter a valid business phone number.")
+    .transform((value) => (value ? value.replace(/\D/g, "") : value))
+    .matches(phoneRegExp, "Enter a valid 10-digit business phone number.")
     .nullable(),
   address: Yup.string()
     .min(5, "Address must be at least 5 characters.")
@@ -106,6 +108,42 @@ const ReferalForm: React.FC<ReferalFormProps> = ({ onSuccess }) => {
       }
     }
   }, []);
+
+  const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    let value = event.target.value.replace(/\D/g, "");
+    if (value.length > 10) value = value.substring(0, 10);
+
+    if (value.length > 6) {
+      value = `(${value.substring(0, 3)}) ${value.substring(
+        3,
+        6
+      )}-${value.substring(6)}`;
+    } else if (value.length > 3) {
+      value = `(${value.substring(0, 3)}) ${value.substring(3)}`;
+    } else if (value.length > 0) {
+      value = `(${value}`;
+    }
+
+    formik.setFieldValue("mobilePhone", value);
+  };
+
+  const handleBusinessPhoneChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    let value = event.target.value.replace(/\D/g, "");
+    if (value.length > 10) value = value.substring(0, 10);
+    if (value.length > 6) {
+      value = `(${value.substring(0, 3)}) ${value.substring(
+        3,
+        6
+      )}-${value.substring(6)}`;
+    } else if (value.length > 3) {
+      value = `(${value.substring(0, 3)}) ${value.substring(3)}`;
+    } else if (value.length > 0) {
+      value = `(${value}`;
+    }
+    formik.setFieldValue("businessPhone", value);
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -322,7 +360,7 @@ const ReferalForm: React.FC<ReferalFormProps> = ({ onSuccess }) => {
                 label="Mobile Phone *"
                 name="mobilePhone"
                 value={formik.values.mobilePhone}
-                onChange={formik.handleChange}
+                onChange={handlePhoneChange}
                 onBlur={formik.handleBlur}
                 error={
                   formik.touched.mobilePhone &&
@@ -339,7 +377,7 @@ const ReferalForm: React.FC<ReferalFormProps> = ({ onSuccess }) => {
                 label="Business Phone"
                 name="businessPhone"
                 value={formik.values.businessPhone}
-                onChange={formik.handleChange}
+                onChange={handleBusinessPhoneChange}
                 onBlur={formik.handleBlur}
                 margin="normal"
                 sx={fieldSx}
