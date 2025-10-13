@@ -22,6 +22,7 @@ import Footer from "@/components/Footer";
 import * as htmlToImage from "html-to-image";
 import Link from "next/link";
 import AffiliateBanner from "./AffiliateBanner";
+import AffiliateDashboard from "./AffiliateDashboard";
 
 const theme = createTheme({
   palette: {
@@ -40,10 +41,7 @@ interface Props {
 const ReferalDashboard: React.FC<Props> = ({ affiliateCode }) => {
   const [affiliateLink, setAffiliateLink] = useState<string>("");
   const [tab, setTab] = useState<number>(0);
-  const [customLinks, setCustomLinks] = useState<
-    { id: number; name: string; url: string }[]
-  >([]);
-  const [newLinkName, setNewLinkName] = useState<string>("");
+
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -89,24 +87,6 @@ const ReferalDashboard: React.FC<Props> = ({ affiliateCode }) => {
     }
   };
 
-  const handleAddCustomLink = () => {
-    if (!newLinkName.trim()) {
-      toast.error("Please enter a link name (e.g. Instagram, YouTube)");
-      return;
-    }
-    const newUrl = `${affiliateLink}&src=${encodeURIComponent(newLinkName)}`;
-    setCustomLinks([
-      ...customLinks,
-      { id: Date.now(), name: newLinkName, url: newUrl },
-    ]);
-    setNewLinkName("");
-    toast.success("New custom link added!");
-  };
-
-  const handleDeleteLink = (id: number) => {
-    setCustomLinks(customLinks.filter((l) => l.id !== id));
-  };
-
   return (
     <ThemeProvider theme={theme}>
       <Header />
@@ -150,13 +130,13 @@ const ReferalDashboard: React.FC<Props> = ({ affiliateCode }) => {
         <Tabs
           value={tab}
           onChange={(_, v) => setTab(v)}
-          variant="fullWidth" // makes tabs stretch 100%
+          variant="fullWidth"
           textColor="inherit"
           sx={{
-            mb: 6,
+            mb: 4,
             width: "100%",
-            maxWidth: "600px", // optional, center limit
-            mx: "auto", // centers tabs container
+            maxWidth: "600px",
+            mx: "auto",
             "& .MuiTab-root": {
               color: "rgba(255,255,255,0.6)",
               fontWeight: 600,
@@ -165,7 +145,7 @@ const ReferalDashboard: React.FC<Props> = ({ affiliateCode }) => {
               textTransform: "uppercase",
               minHeight: "48px",
               minWidth: "auto",
-              flex: 1, // makes each tab equal width
+              flex: 1,
               transition: "all 0.3s ease",
             },
             "& .Mui-selected": {
@@ -178,13 +158,14 @@ const ReferalDashboard: React.FC<Props> = ({ affiliateCode }) => {
               height: "3px",
               borderRadius: "3px",
               background: "linear-gradient(90deg,#FF2D55,#7000FF)",
-              width: "50%", // ensures gradient looks smooth under tab
+              width: "50%",
               transition: "all 0.4s ease",
             },
           }}
         >
           <Tab label="Links" />
           <Tab label="Banners" />
+          <Tab label="View Reports" />
         </Tabs>
 
         {/* ------------------ LINKS SECTION ------------------ */}
@@ -333,6 +314,13 @@ const ReferalDashboard: React.FC<Props> = ({ affiliateCode }) => {
               </Grid>
             </Grid>
           </Box>
+        )}
+
+        {/* ------------------ AFFILIATE DASHBOARD SECTION ------------------ */}
+        {tab === 2 && (
+          <>
+            <AffiliateDashboard />
+          </>
         )}
       </Box>
       <Footer />

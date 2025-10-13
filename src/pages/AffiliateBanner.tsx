@@ -86,7 +86,6 @@ const AffiliateDatingBanner: React.FC<AffiliateDatingBannerProps> = ({
                   width: "100%",
                   height: "auto",
                   display: "block",
-                  maxWidth: "600px",
                 }}
               />
             </Box>
