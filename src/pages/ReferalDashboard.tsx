@@ -249,36 +249,6 @@ const ReferalDashboard: React.FC<Props> = ({ affiliateCode }) => {
                 </IconButton>
               </Box>
             </Box>
-
-            {/* View Reports Button */}
-            <Box sx={{ mt: 8 }}>
-              <Link href="/dashboard/reports" passHref>
-                <Button
-                  component="a"
-                  variant="contained"
-                  size="large"
-                  sx={{
-                    px: 4,
-                    py: 1.4,
-                    fontWeight: "bold",
-                    borderRadius: "30px",
-                    background: "linear-gradient(90deg,#7000FF,#FF2D55)",
-                    color: "white",
-                    textTransform: "none",
-                    fontSize: {
-                      xs: "0.9rem",
-                      sm: "1rem",
-                    },
-                    "&:hover": {
-                      transform: "scale(1.05)",
-                      background: "linear-gradient(90deg,#FF2D55,#7000FF)",
-                    },
-                  }}
-                >
-                  View Reports
-                </Button>
-              </Link>
-            </Box>
           </Box>
         )}
 
