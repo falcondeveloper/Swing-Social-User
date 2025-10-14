@@ -372,7 +372,7 @@ const ReferalForm: React.FC<ReferalFormProps> = ({ onSuccess }) => {
                 margin="normal"
                 sx={fieldSx}
               />
-              <TextField
+              {/* <TextField
                 fullWidth
                 label="Business Phone"
                 name="businessPhone"
@@ -381,7 +381,7 @@ const ReferalForm: React.FC<ReferalFormProps> = ({ onSuccess }) => {
                 onBlur={formik.handleBlur}
                 margin="normal"
                 sx={fieldSx}
-              />
+              /> */}
             </Box>
 
             <TextField
