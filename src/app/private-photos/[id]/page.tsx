@@ -325,7 +325,7 @@ const page = ({ params }: { params: Params }) => {
     e.preventDefault();
     setDragOver(true);
   };
-  
+
   const onDragLeave = () => setDragOver(false);
 
   const Tile = ({ i, showAddBadge }: { i: number; showAddBadge?: boolean }) => {
@@ -463,22 +463,22 @@ const page = ({ params }: { params: Params }) => {
             }}
           >
             <form onSubmit={formik.handleSubmit} style={{ width: "100%" }}>
-              <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto", mb: 2 }}>
-                <Button
-                  onClick={() => router.back()}
-                  startIcon={<ArrowBackIcon />}
+              <Grid>
+                <Typography
+                  variant="h6"
                   sx={{
-                    color: "#fff",
-                    textTransform: "none",
+                    color: "#c2185b",
                     fontWeight: "bold",
-                    "&:hover": { backgroundColor: "#2e2e2e" },
+                    textAlign: "center",
+                    textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+                    mb: { xs: 2, sm: 3 },
                   }}
                 >
-                  Back
-                </Button>
-              </Box>
-
-              <Grid>
+                  Private Photos{" "}
+                  <Typography component="span" sx={{ fontWeight: 400 }}>
+                    (Optional)
+                  </Typography>
+                </Typography>
                 <Typography
                   sx={{
                     textAlign: "center",
@@ -490,17 +490,6 @@ const page = ({ params }: { params: Params }) => {
                 >
                   You can post private pics here. Only users you give access
                   will be able to see these - so anything goes!
-                </Typography>
-                <Typography
-                  sx={{
-                    textAlign: "center",
-                    color: "#fff",
-                    fontWeight: "bold",
-                    fontSize: { xs: "0.85rem", sm: "0.95rem" },
-                    px: { xs: 1, sm: 2 },
-                  }}
-                >
-                  (This step is optional)
                 </Typography>
 
                 {/* Drag & Drop wrapper */}
@@ -524,7 +513,19 @@ const page = ({ params }: { params: Params }) => {
                     sx={{ maxWidth: 1000, mx: "auto" }}
                   >
                     {Array.from({ length: MAX_PHOTOS }).map((_, i) => (
-                      <Grid key={i} item xs={6} sm={4} md={3} lg={2}>
+                      <Grid
+                        key={i}
+                        item
+                        xs={4}
+                        sm={4}
+                        md={3}
+                        lg={2}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
                         <Tile i={i} showAddBadge={showAddBadgeIndex === i} />
                       </Grid>
                     ))}

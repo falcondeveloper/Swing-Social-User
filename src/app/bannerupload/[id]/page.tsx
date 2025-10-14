@@ -36,27 +36,12 @@ type Params = Promise<{ id: string }>;
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: "#FF2D55",
-      light: "#FF617B",
-      dark: "#CC1439",
-    },
-    secondary: {
-      main: "#7000FF",
-      light: "#9B4DFF",
-      dark: "#5200CC",
-    },
-    success: {
-      main: "#00D179",
-    },
-    background: {
-      default: "#0A0118",
-    },
+    primary: { main: "#FF2D55", light: "#FF617B", dark: "#CC1439" },
+    secondary: { main: "#7000FF", light: "#9B4DFF", dark: "#5200CC" },
+    success: { main: "#00D179" },
+    background: { default: "#0A0118" },
   },
-
-  typography: {
-    fontFamily: '"Poppins", "Roboto", "Arial", sans-serif',
-  },
+  typography: { fontFamily: '"Poppins", "Roboto", "Arial", sans-serif' },
 });
 
 const ParticleField = memo(() => {
@@ -282,10 +267,14 @@ export default function UploadBanner({ params }: { params: Params }) {
             position: "relative",
             overflow: "hidden",
             width: "100%",
+            minHeight: "100vh",
           }}
         >
           <ParticleField />
-          <Container maxWidth="sm" sx={{ p: 0 }}>
+          <Container
+            maxWidth="sm"
+            sx={{ px: { xs: 1, sm: 2, md: 3 }, py: { xs: 1.5, sm: 2 } }}
+          >
             <Paper
               elevation={24}
               sx={{
@@ -293,14 +282,7 @@ export default function UploadBanner({ params }: { params: Params }) {
                 background: "rgba(255, 255, 255, 0.05)",
                 backdropFilter: "blur(20px)",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
-                maxHeight: { xs: "85vh", sm: "95vh" },
-                overflowY: { xs: "auto", sm: "auto" },
-                scrollbarWidth: "thin",
-                "&::-webkit-scrollbar": { width: "6px" },
-                "&::-webkit-scrollbar-thumb": {
-                  backgroundColor: "rgba(255,255,255,0.3)",
-                  borderRadius: "3px",
-                },
+                overflow: "hidden",
               }}
             >
               <form onSubmit={formik.handleSubmit} style={{ width: "100%" }}>
@@ -343,22 +325,6 @@ export default function UploadBanner({ params }: { params: Params }) {
                     </Step>
                   ))}
                 </Stepper>
-                <Box sx={{ width: "100%", maxWidth: 600, mx: "auto", mb: 2 }}>
-                  <Button
-                    onClick={() => router.back()}
-                    startIcon={<ArrowBackIcon />}
-                    sx={{
-                      color: "#fff",
-                      textTransform: "none",
-                      fontWeight: "bold",
-                      "&:hover": {
-                        backgroundColor: "#2e2e2e",
-                      },
-                    }}
-                  >
-                    Back
-                  </Button>
-                </Box>
 
                 <Grid>
                   <Typography
@@ -373,7 +339,7 @@ export default function UploadBanner({ params }: { params: Params }) {
                     across the top of your profile
                   </Typography>
 
-                  <Grid item xs={12} sx={{ mt: 4, textAlign: "center" }}>
+                  <Grid item xs={12} sx={{ mt: 2, textAlign: "center" }}>
                     <Typography
                       variant="h6"
                       sx={{ color: "#c2185b", fontWeight: "bold", mb: 2 }}

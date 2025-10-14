@@ -147,7 +147,7 @@ const Carousel = ({ title }: { title: string }) => {
         <Grid
           item
           xs={12}
-          sx={{ textAlign: "center", mt: 6 }}
+          sx={{ textAlign: "center", mt: 4 }}
           style={{ padding: "0 16px" }}
         >
           <Typography
@@ -155,10 +155,22 @@ const Carousel = ({ title }: { title: string }) => {
             sx={{
               color: "#fff",
               fontWeight: "bold",
-              mb: 2,
-              fontSize: "1.10rem",
-              textShadow: "0 1px 3px rgba(0,0,0,0.5)",
               textAlign: "center",
+              textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+              mb: { xs: 1.5, sm: 2, md: 3 },
+              fontSize: {
+                xs: "0.95rem",
+                sm: "1.1rem",
+                md: "1.25rem",
+                lg: "1.4rem",
+                xl: "1.6rem",
+              },
+              lineHeight: {
+                xs: 1.2,
+                sm: 1.3,
+                md: 1.4,
+              },
+              px: { xs: 1, sm: 0 },
             }}
           >
             {title}

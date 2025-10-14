@@ -26,27 +26,12 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: "#FF2D55",
-      light: "#FF617B",
-      dark: "#CC1439",
-    },
-    secondary: {
-      main: "#7000FF",
-      light: "#9B4DFF",
-      dark: "#5200CC",
-    },
-    success: {
-      main: "#00D179",
-    },
-    background: {
-      default: "#0A0118",
-    },
+    primary: { main: "#FF2D55", light: "#FF617B", dark: "#CC1439" },
+    secondary: { main: "#7000FF", light: "#9B4DFF", dark: "#5200CC" },
+    success: { main: "#00D179" },
+    background: { default: "#0A0118" },
   },
-
-  typography: {
-    fontFamily: '"Poppins", "Roboto", "Arial", sans-serif',
-  },
+  typography: { fontFamily: '"Poppins", "Roboto", "Arial", sans-serif' },
 });
 
 const ParticleField = memo(() => {
@@ -246,24 +231,39 @@ export default function Otp({
       <ThemeProvider theme={theme}>
         <Box
           sx={{
-            minHeight: "85vh",
             display: "flex",
-            alignItems: "center",
+            justifyContent: "center",
+            alignItems: "center", // ✅ Vertically center
             background:
               "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
             position: "relative",
             overflow: "hidden",
+            width: "100%",
+            height: "100vh", // ✅ Full viewport height
           }}
         >
           <ParticleField />
-          <Container maxWidth="sm" sx={{ p: 0 }}>
+          <Container
+            maxWidth="sm"
+            sx={{
+              px: { xs: 1, sm: 2, md: 3 },
+              py: { xs: 1.5, sm: 2 },
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center", // ✅ Center content inside container
+              height: "100%",
+            }}
+          >
             <Paper
               elevation={24}
               sx={{
-                p: { xs: 2, sm: 2, md: 4 },
+                p: { xs: 2, sm: 3, md: 4 },
                 background: "rgba(255, 255, 255, 0.05)",
                 backdropFilter: "blur(20px)",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
+                overflow: "hidden",
+                mx: "auto",
+                width: "100%",
               }}
             >
               <Stepper

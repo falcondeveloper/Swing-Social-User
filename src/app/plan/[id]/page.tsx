@@ -284,10 +284,14 @@ export default function Pricing({ params }: { params: Params }) {
             position: "relative",
             overflow: "hidden",
             width: "100%",
+            minHeight: "100vh",
           }}
         >
           <ParticleField />
-          <Container maxWidth="sm" sx={{ p: 0 }}>
+          <Container
+            maxWidth="sm"
+            sx={{ px: { xs: 1, sm: 2, md: 3 }, py: { xs: 1.5, sm: 2 } }}
+          >
             <Paper
               elevation={24}
               sx={{
@@ -295,14 +299,7 @@ export default function Pricing({ params }: { params: Params }) {
                 background: "rgba(255, 255, 255, 0.05)",
                 backdropFilter: "blur(20px)",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
-                maxHeight: { xs: "85vh", sm: "95vh" },
-                overflowY: { xs: "auto", sm: "auto" },
-                scrollbarWidth: "thin",
-                "&::-webkit-scrollbar": { width: "6px" },
-                "&::-webkit-scrollbar-thumb": {
-                  backgroundColor: "rgba(255,255,255,0.3)",
-                  borderRadius: "3px",
-                },
+                overflow: "hidden",
               }}
             >
               {isLoading ? (
@@ -315,7 +312,9 @@ export default function Pricing({ params }: { params: Params }) {
                   }}
                 >
                   <CircularProgress sx={{ color: "#fff" }} />
-                  <Typography variant="h6" sx={{ color: "#fff" }}>Checking Promo State...</Typography>
+                  <Typography variant="h6" sx={{ color: "#fff" }}>
+                    Checking Promo State...
+                  </Typography>
                 </Box>
               ) : (
                 <>
@@ -339,7 +338,12 @@ export default function Pricing({ params }: { params: Params }) {
 
                   {selectedTab === 0 && (
                     <Box mt={3}>
-                      <Typography variant="body1" mb={2} textAlign="center" sx={{ color: "#fff" }}>
+                      <Typography
+                        variant="body1"
+                        mb={2}
+                        textAlign="center"
+                        sx={{ color: "#fff" }}
+                      >
                         {firstMonthFree
                           ? "Enjoy your first month for just $1!"
                           : "Choose your billing cycle:"}
