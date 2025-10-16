@@ -20,6 +20,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Avatar,
 } from "@mui/material";
 import Loader from "@/commonPage/Loader";
 import {
@@ -43,6 +44,8 @@ interface EventType {
   Address: string | null;
   CoverImageUrl: string | null;
   Category?: string | null;
+  rsvp_list?: any[];
+  rsvp_count?: number;
 }
 
 type EventItem = {
@@ -53,6 +56,9 @@ type EventItem = {
   Venue?: string | null;
   Description?: string;
   CoverImageUrl?: string | null;
+  Address?: string | null;
+  rsvp_list?: any[];
+  rsvp_count?: number;
 };
 
 const fmtDateTime = (s: string) =>
@@ -1162,6 +1168,96 @@ const PublicEventsDesktop: React.FC = () => {
                                 />
                                 {fmtDateTime(ev.StartTime)}
                               </Typography>
+
+                              {/* {ev?.rsvp_list && ev.rsvp_list.length > 0 && ( */}
+                              <Box
+                                sx={{
+                                  mt: 2,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "flex-start",
+                                  gap: 1,
+                                }}
+                              >
+                                {/* Section Title */}
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color: "rgba(255,255,255,0.95)",
+                                    fontWeight: 700,
+                                    fontSize: "0.85rem",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 0.5,
+                                  }}
+                                >
+                                  RSVP List{" "}
+                                  <Typography
+                                    component="span"
+                                    sx={{
+                                      color: "rgba(255,255,255,0.75)",
+                                      fontWeight: 500,
+                                      fontSize: "0.8rem",
+                                    }}
+                                  >
+                                    ({ev.rsvp_count || ev.rsvp_list.length}{" "}
+                                    Going)
+                                  </Typography>
+                                </Typography>
+
+                                {/* Avatars */}
+                                <Stack direction="row" spacing={-1}>
+                                  {ev.rsvp_list
+                                    .slice(0, 6)
+                                    .map((user: any, index: number) => (
+                                      <Box
+                                        key={index}
+                                        sx={{
+                                          position: "relative",
+                                          "&:hover": {
+                                            transform: "scale(1.05)",
+                                          },
+                                          transition: "all 0.2s ease",
+                                        }}
+                                      >
+                                        <Box
+                                          component="img"
+                                          src={
+                                            user.Avatar ||
+                                            "/images/default-avatar.png"
+                                          }
+                                          alt={
+                                            user.Username ||
+                                            user.name ||
+                                            "Guest"
+                                          }
+                                          sx={{
+                                            width: 32,
+                                            height: 32,
+                                            borderRadius: "50%",
+                                            border: "2px solid #fff",
+                                            bgcolor: user.Avatar
+                                              ? "transparent"
+                                              : "#880E4F",
+                                          }}
+                                        />
+                                      </Box>
+                                    ))}
+
+                                  {ev.rsvp_list.length > 6 && (
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        color: "rgba(255,255,255,0.85)",
+                                        fontSize: "0.8rem",
+                                        ml: 1,
+                                      }}
+                                    >
+                                      +{ev.rsvp_list.length - 6} more
+                                    </Typography>
+                                  )}
+                                </Stack>
+                              </Box>
                             </Box>
                           </Paper>
                         )
@@ -1306,6 +1402,76 @@ const PublicEventsDesktop: React.FC = () => {
               >
                 {openEvent.Venue}
               </Typography>
+            )}
+
+            {openEvent?.rsvp_list && openEvent.rsvp_list.length > 0 && (
+              <Box sx={{ mt: 3, mb: 3 }}>
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: "1rem",
+                    mb: 1,
+                    color: "#fff",
+                  }}
+                >
+                  RSVP Attendees ({openEvent.rsvp_list.length})
+                </Typography>
+
+                <Stack
+                  direction="row"
+                  flexWrap="wrap"
+                  gap={1.5}
+                  sx={{
+                    maxHeight: 150,
+                    overflowY: "auto",
+                    pr: 1,
+                  }}
+                >
+                  {openEvent.rsvp_list.map((user: any, index: number) => (
+                    <Stack
+                      key={index}
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
+                      sx={{
+                        bgcolor: "rgba(255,255,255,0.05)",
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: 2,
+                        minWidth: 120,
+                      }}
+                    >
+                      <Avatar
+                        src={user.Avatar}
+                        alt={user.Name}
+                        sx={{
+                          width: 30,
+                          height: 30,
+                          border: "2px solid #880E4F",
+                          transition: "all 0.3s ease",
+                          bgcolor: user.Avatar ? "transparent" : "#880E4F",
+                          "&:hover": {
+                            transform: "scale(1.1)",
+                            boxShadow: "0 4px 8px rgba(136, 14, 79, 0.4)",
+                            cursor: "hand",
+                          },
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "rgba(255,255,255,0.85)",
+                          textOverflow: "ellipsis",
+                          overflow: "hidden",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {user.Username || "Anonymous"}
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+              </Box>
             )}
 
             {/* Short irresistible benefit lines — keep these punchy */}
