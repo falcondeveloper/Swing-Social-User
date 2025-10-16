@@ -1,6 +1,5 @@
 "use client";
 
-
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
 import {
@@ -42,6 +41,8 @@ type EventItem = {
   Venue?: string;
   Description?: string;
   CoverImageUrl?: string;
+  rsvp_list?: Array<{ name: string }>;
+  rsvp_count?: number;
 };
 
 const sameMonth = (a: Date, b: Date) =>
@@ -137,7 +138,8 @@ const PublicEvents: React.FC = () => {
         <link
           rel="canonical"
           href={`${
-            process.env.NEXT_PUBLIC_SITE_URL || "https://swing-social-user.vercel.app/"
+            process.env.NEXT_PUBLIC_SITE_URL ||
+            "https://swing-social-user.vercel.app/"
           }/events`}
         />
 
@@ -170,7 +172,8 @@ const PublicEvents: React.FC = () => {
         <meta
           property="og:url"
           content={`${
-            process.env.NEXT_PUBLIC_SITE_URL || "https://swing-social-user.vercel.app/"
+            process.env.NEXT_PUBLIC_SITE_URL ||
+            "https://swing-social-user.vercel.app/"
           }/events`}
         />
         <meta
@@ -178,7 +181,8 @@ const PublicEvents: React.FC = () => {
           content={
             upcomingEvents[0]?.CoverImageUrl ||
             `${
-              process.env.NEXT_PUBLIC_SITE_URL || "https://swing-social-user.vercel.app/"
+              process.env.NEXT_PUBLIC_SITE_URL ||
+              "https://swing-social-user.vercel.app/"
             }/images/og-events-cover.jpg`
           }
         />
@@ -203,7 +207,8 @@ const PublicEvents: React.FC = () => {
           content={
             upcomingEvents[0]?.CoverImageUrl ||
             `${
-              process.env.NEXT_PUBLIC_SITE_URL || "https://swing-social-user.vercel.app/"
+              process.env.NEXT_PUBLIC_SITE_URL ||
+              "https://swing-social-user.vercel.app/"
             }/images/og-events-cover.jpg`
           }
         />
@@ -614,7 +619,7 @@ const PublicEvents: React.FC = () => {
                 <DialogContent
                   sx={{ bgcolor: "#0d0d0d", color: "white", px: 2, pt: 2 }}
                 >
-                  {/* Big hero image (tapable) */}
+                  {/* Big hero image */}
                   {openEvent?.CoverImageUrl && (
                     <Box sx={{ mb: 2, borderRadius: 1, overflow: "hidden" }}>
                       <img
@@ -631,7 +636,7 @@ const PublicEvents: React.FC = () => {
                     </Box>
                   )}
 
-                  {/* Key info */}
+                  {/* Event details */}
                   <Stack spacing={0.5}>
                     <Chip
                       label={
@@ -663,8 +668,104 @@ const PublicEvents: React.FC = () => {
                       </Typography>
                     )}
 
-                    {/* Short irresistible benefit lines — keep these punchy */}
-                    <Box sx={{ mt: 1 }}>
+                    {/* ✅ RSVP LIST SECTION */}
+                    {openEvent?.rsvp_list && openEvent.rsvp_list.length > 0 && (
+                      <Box sx={{ mt: 3, mb: 3 }}>
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: "1rem",
+                            mb: 1,
+                            color: "#fff",
+                          }}
+                        >
+                          RSVP Attendees ({openEvent.rsvp_list.length})
+                        </Typography>
+
+                        <Stack
+                          direction="row"
+                          flexWrap="wrap"
+                          gap={1.5}
+                          sx={{
+                            maxHeight: 150,
+                            overflowY: "auto",
+                            pr: 1,
+                          }}
+                        >
+                          {openEvent.rsvp_list.map(
+                            (user: any, index: number) => (
+                              <Stack
+                                key={index}
+                                direction="row"
+                                alignItems="center"
+                                spacing={1}
+                                sx={{
+                                  bgcolor: "rgba(255,255,255,0.05)",
+                                  px: 1.5,
+                                  py: 0.5,
+                                  borderRadius: 2,
+                                  minWidth: 120,
+                                }}
+                              >
+                                {/* <Avatar
+                                  sx={{
+                                    width: 30,
+                                    height: 30,
+                                    border: "2px solid #880E4F",
+                                    transition: "all 0.3s ease",
+                                    bgcolor: user.Avatar
+                                      ? "transparent"
+                                      : "#880E4F",
+                                    "&:hover": {
+                                      transform: "scale(1.1)",
+                                      boxShadow:
+                                        "0 4px 8px rgba(136, 14, 79, 0.4)",
+                                      cursor: "hand",
+                                    },
+                                  }}
+                                >
+                                  {user.Avatar}
+                                </Avatar> */}
+
+                                <Avatar
+                                  src={user.Avatar}
+                                  alt={user.Name}
+                                  sx={{
+                                    width: 30,
+                                    height: 30,
+                                    border: "2px solid #880E4F",
+                                    transition: "all 0.3s ease",
+                                    bgcolor: user.Avatar
+                                      ? "transparent"
+                                      : "#880E4F",
+                                    "&:hover": {
+                                      transform: "scale(1.1)",
+                                      boxShadow:
+                                        "0 4px 8px rgba(136, 14, 79, 0.4)",
+                                      cursor: "hand",
+                                    },
+                                  }}
+                                />
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color: "rgba(255,255,255,0.85)",
+                                    textOverflow: "ellipsis",
+                                    overflow: "hidden",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {user.Username || "Anonymous"}
+                                </Typography>
+                              </Stack>
+                            )
+                          )}
+                        </Stack>
+                      </Box>
+                    )}
+
+                    {/* Why Sign Up Section */}
+                    <Box sx={{ mt: 2 }}>
                       <Typography
                         sx={{ fontWeight: 700, fontSize: "0.95rem", mb: 0.5 }}
                       >
