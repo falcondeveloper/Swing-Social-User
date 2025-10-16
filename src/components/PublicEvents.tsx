@@ -1,3 +1,6 @@
+"use client";
+
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
 import {
@@ -27,7 +30,6 @@ import Loader from "@/commonPage/Loader";
 import {
   FilterList as FilterListIcon,
   Close as CloseIcon,
-  CalendarMonth,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import PublicEventsDesktop from "./PublicEventsDesktop";
@@ -57,8 +59,6 @@ const PublicEvents: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [openEvent, setOpenEvent] = useState<EventItem | null>(null);
-  const [leadEmail, setLeadEmail] = useState("");
-  const [leadSubmitting, setLeadSubmitting] = useState(false);
 
   const now = useMemo(() => new Date(), []);
 
@@ -91,36 +91,6 @@ const PublicEvents: React.FC = () => {
     })();
   }, []);
 
-  const submitLead = async (eventId?: string | number) => {
-    if (!leadEmail || !/\S+@\S+\.\S+/.test(leadEmail)) {
-      alert("Please enter a valid email.");
-      return;
-    }
-    setLeadSubmitting(true);
-    try {
-      await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: leadEmail,
-          source: "events-seo",
-          eventId: eventId || null,
-        }),
-      });
-      alert(
-        "Thanks — we saved your spot! Check your email to complete signup."
-      );
-      setLeadEmail("");
-      router.push("/register");
-    } catch (e) {
-      console.error(e);
-      alert("Something went wrong — please try again.");
-    } finally {
-      setLeadSubmitting(false);
-      setOpenEvent(null);
-    }
-  };
-
   const ldJson = {
     "@context": "https://schema.org",
     "@graph": (upcomingEvents.slice(0, 5) || []).map((ev) => ({
@@ -143,37 +113,107 @@ const PublicEvents: React.FC = () => {
 
   if (loading) return <Loader />;
 
-  const parseSafeDate = (dateLike?: string | null) => {
-    if (!dateLike) return null;
-    const d = new Date(dateLike);
-    return isNaN(d.getTime()) ? null : d;
-  };
-
-  const formatDateShort = (dateStr?: string | null) => {
-    const d = parseSafeDate(dateStr);
-    if (!d) return "TBA";
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    }).format(d);
-  };
-
   return (
     <>
       {/* SEO head + JSON-LD */}
       <Head>
-        <title>Events · Discover local events near you — [YourSiteName]</title>
+        {/* Basic SEO */}
+        <title>
+          Discover Local Events Near You |{" "}
+          {upcomingEvents[0]?.Name ? `${upcomingEvents[0].Name} & More | ` : ""}
+          [https://swing-social-user.vercel.app/public-events]
+        </title>
+
         <meta
           name="description"
-          content="Discover local events and RSVP. Create a free account to save events, get reminders, and unlock exclusive content."
+          content={
+            upcomingEvents[0]?.Description
+              ? `${upcomingEvents[0].Description.slice(0, 150)}...`
+              : "Find and join exciting local events, workshops, and meetups near you. Sign up to RSVP, save events, and connect with others."
+          }
         />
-        <meta name="robots" content="index,follow" />
+
+        {/* Canonical URL */}
+        <link
+          rel="canonical"
+          href={`${
+            process.env.NEXT_PUBLIC_SITE_URL || "https://swing-social-user.vercel.app/"
+          }/events`}
+        />
+
+        {/* Robots & indexing */}
+        <meta
+          name="robots"
+          content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1"
+        />
+
+        {/* Mobile optimization */}
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="language" content="en" />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta
+          property="og:title"
+          content={`Discover Local Events | ${
+            upcomingEvents[0]?.Name || "https://swing-social-user.vercel.app/"
+          }`}
+        />
+        <meta
+          property="og:description"
+          content={
+            upcomingEvents[0]?.Description ||
+            "Join free local events and meet people with similar interests near you."
+          }
+        />
+        <meta
+          property="og:url"
+          content={`${
+            process.env.NEXT_PUBLIC_SITE_URL || "https://swing-social-user.vercel.app/"
+          }/events`}
+        />
+        <meta
+          property="og:image"
+          content={
+            upcomingEvents[0]?.CoverImageUrl ||
+            `${
+              process.env.NEXT_PUBLIC_SITE_URL || "https://swing-social-user.vercel.app/"
+            }/images/og-events-cover.jpg`
+          }
+        />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content={`Discover Local Events | ${
+            upcomingEvents[0]?.Name || "https://swing-social-user.vercel.app/"
+          }`}
+        />
+        <meta
+          name="twitter:description"
+          content={
+            upcomingEvents[0]?.Description ||
+            "Find and RSVP to local events near you. Get reminders and connect with attendees."
+          }
+        />
+        <meta
+          name="twitter:image"
+          content={
+            upcomingEvents[0]?.CoverImageUrl ||
+            `${
+              process.env.NEXT_PUBLIC_SITE_URL || "https://swing-social-user.vercel.app/"
+            }/images/og-events-cover.jpg`
+          }
+        />
+
+        {/* Structured Data (Event Schema) */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(ldJson) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(ldJson),
+          }}
         />
       </Head>
 
