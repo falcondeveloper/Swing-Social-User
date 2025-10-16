@@ -504,6 +504,104 @@ const PublicEvents: React.FC = () => {
                                 }).format(eventDate)}
                               </Typography>
 
+                              {/* ✅ RSVP List Section */}
+                              {post?.rsvp_list && post.rsvp_list.length > 0 && (
+                                <Box
+                                  sx={{
+                                    mt: 1.8,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "flex-start",
+                                    gap: 0.8,
+                                  }}
+                                >
+                                  {/* Section Title */}
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      color: "rgba(255,255,255,0.95)",
+                                      fontWeight: 700,
+                                      fontSize: "0.85rem",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 0.5,
+                                    }}
+                                  >
+                                    RSVP List{" "}
+                                    <Typography
+                                      component="span"
+                                      sx={{
+                                        color: "rgba(255,255,255,0.7)",
+                                        fontWeight: 500,
+                                        fontSize: "0.8rem",
+                                      }}
+                                    >
+                                      (
+                                      {post.rsvp_count || post.rsvp_list.length}{" "}
+                                      Going)
+                                    </Typography>
+                                  </Typography>
+
+                                  {/* Avatars */}
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      flexWrap: "wrap",
+                                      gap: 0.5,
+                                    }}
+                                  >
+                                    <Stack
+                                      direction="row"
+                                      spacing={-0.8}
+                                      sx={{ mr: 1 }}
+                                    >
+                                      {post.rsvp_list
+                                        .slice(0, 5)
+                                        .map((user: any, index: number) => (
+                                          <Avatar
+                                            key={index}
+                                            src={user.Avatar || ""}
+                                            alt={
+                                              user.Username ||
+                                              user.name ||
+                                              "Guest"
+                                            }
+                                            sx={{
+                                              width: 28,
+                                              height: 28,
+                                              border: "2px solid #fff",
+                                              fontSize: "0.75rem",
+                                              bgcolor: user.Avatar
+                                                ? "transparent"
+                                                : "#ad1457",
+                                              zIndex:
+                                                post.rsvp_list.length - index,
+                                            }}
+                                          >
+                                            {(user.Username ||
+                                              user.name ||
+                                              "G")[0]?.toUpperCase()}
+                                          </Avatar>
+                                        ))}
+                                    </Stack>
+
+                                    {post.rsvp_count && post.rsvp_count > 5 && (
+                                      <Typography
+                                        variant="body2"
+                                        sx={{
+                                          color: "rgba(255,255,255,0.8)",
+                                          fontSize: "0.8rem",
+                                          fontWeight: 500,
+                                        }}
+                                      >
+                                        +{post.rsvp_count - 5} more
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                </Box>
+                              )}
+
                               {/* Right-aligned action button (drop-in replacement) */}
                               <Box
                                 sx={{
@@ -707,26 +805,6 @@ const PublicEvents: React.FC = () => {
                                   minWidth: 120,
                                 }}
                               >
-                                {/* <Avatar
-                                  sx={{
-                                    width: 30,
-                                    height: 30,
-                                    border: "2px solid #880E4F",
-                                    transition: "all 0.3s ease",
-                                    bgcolor: user.Avatar
-                                      ? "transparent"
-                                      : "#880E4F",
-                                    "&:hover": {
-                                      transform: "scale(1.1)",
-                                      boxShadow:
-                                        "0 4px 8px rgba(136, 14, 79, 0.4)",
-                                      cursor: "hand",
-                                    },
-                                  }}
-                                >
-                                  {user.Avatar}
-                                </Avatar> */}
-
                                 <Avatar
                                   src={user.Avatar}
                                   alt={user.Name}
