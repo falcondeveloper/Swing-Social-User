@@ -133,7 +133,7 @@ const DesktopEventCreateCard = () => {
   }, [cityInput, openCity]);
 
   const getLatLngByLocationName = async (locationName: string) => {
-    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0";
+    const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc";
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
@@ -322,8 +322,8 @@ const DesktopEventCreateCard = () => {
         .required("Cover photo is required"),
 
       images: Yup.array()
-        .min(1, "Please upload at least one image")
-        .max(5, "You can upload up to 5 images only"),
+        .max(5, "You can upload up to 5 images only")
+        .notRequired(),
     }),
     onSubmit: async (values) => {
       setLoading(true);
@@ -670,7 +670,7 @@ const DesktopEventCreateCard = () => {
                         variant="body1"
                         sx={{ fontWeight: 500, color: "white" }}
                       >
-                        Cover Photo
+                        Cover Photo (Required)
                       </Typography>
 
                       <Paper
@@ -787,7 +787,7 @@ const DesktopEventCreateCard = () => {
                         variant="body1"
                         sx={{ fontWeight: 500, color: "white" }}
                       >
-                        Photos (max 5)
+                        Photos (max 5) (Optional)
                       </Typography>
 
                       <Paper

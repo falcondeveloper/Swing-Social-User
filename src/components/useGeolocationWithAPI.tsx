@@ -23,7 +23,7 @@ export const useGeolocationWithAPI = (profileId?: string) => {
     };
 
     const getLocationName = async (latitude: number, longitude: number) => {
-      const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0";
+      const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc";
 
       try {
         const response = await fetch(

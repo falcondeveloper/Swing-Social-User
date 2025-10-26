@@ -166,7 +166,7 @@ export default function CalendarView() {
 
   // Geocode a freeform place string (e.g., "Texas City, TX") to lat/lng + state
   const geocodePlace = async (place: string) => {
-    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0"; // you already have this in your file
+    const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc"; // you already have this in your file
     const res = await fetch(
       `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
         place
@@ -456,7 +456,7 @@ export default function CalendarView() {
   // REPLACE getCurrentLocation + getLocationName with this:
 
   const reverseGeocode = async (latitude: number, longitude: number) => {
-    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0";
+    const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc";
     const res = await fetch(
       `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
     );

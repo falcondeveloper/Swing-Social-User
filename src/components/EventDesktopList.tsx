@@ -248,7 +248,7 @@
 //   };
 
 //   const getLocationName = async (latitude: number, longitude: number) => {
-//     const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0";
+//     const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc";
 
 //     try {
 //       const response = await fetch(
@@ -1381,7 +1381,7 @@ export default function EventDesktopList() {
 
   // Optional: widen radius quickly if nothing nearby
   const widenRadius = () => setRadiusMi((r) => Math.min(1000, r + 100));
-  const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0";
+  const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc";
 
   const [searchText, setSearchText] = useState("");
 
@@ -1920,7 +1920,7 @@ export default function EventDesktopList() {
   };
 
   const getLocationName = async (lat: number, lng: number) => {
-    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0";
+    const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc";
     try {
       const res = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`

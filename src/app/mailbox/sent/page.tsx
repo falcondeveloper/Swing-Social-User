@@ -359,7 +359,7 @@ export default function ChatPage() {
   };
 
   const getLocationName = async (latitude: number, longitude: number) => {
-    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0"; // Replace with your actual API key
+    const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc"; // Replace with your actual API key
 
     try {
       // Call the Google Maps Geocoding API
