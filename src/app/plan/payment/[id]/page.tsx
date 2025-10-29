@@ -341,29 +341,29 @@ export default function Payment(props: { params: Params }) {
 
     const data = await result.json();
 
-    if (getAffCode) {
-      try {
-        const isValid = await validateReferral(getAffCode);
-        if (isValid) {
-          const referralRes = await fetch("/api/user/create-referral", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              affiliateCode: getAffCode,
-              referredProfileId: data.profileId,
-              source: "direct",
-            }),
-          });
-          const referralData = await referralRes.json();
-          localStorage.removeItem("affiliate_code");
-          setGetAffCode(null);
-        } else {
-          console.warn("Affiliate code invalid or not available:", getAffCode);
-        }
-      } catch (err) {
-        console.error("Referral API error:", err);
-      }
-    }
+    // if (getAffCode) {
+    //   try {
+    //     const isValid = await validateReferral(getAffCode);
+    //     if (isValid) {
+    //       const referralRes = await fetch("/api/user/create-referral", {
+    //         method: "POST",
+    //         headers: { "Content-Type": "application/json" },
+    //         body: JSON.stringify({
+    //           affiliateCode: getAffCode,
+    //           referredProfileId: data.profileId,
+    //           source: "direct",
+    //         }),
+    //       });
+    //       const referralData = await referralRes.json();
+    //       localStorage.removeItem("affiliate_code");
+    //       setGetAffCode(null);
+    //     } else {
+    //       console.warn("Affiliate code invalid or not available:", getAffCode);
+    //     }
+    //   } catch (err) {
+    //     console.error("Referral API error:", err);
+    //   }
+    // }
 
     localStorage.setItem("loginInfo", data.jwtToken);
     localStorage.setItem("logged_in_profile", data.currentProfileId);
