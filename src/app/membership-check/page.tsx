@@ -1,7 +1,7 @@
 "use client";
 
-import React, { memo, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { memo, Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Box,
   Button,
@@ -28,10 +28,6 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
-
-interface PageProps {
-  searchParams: { email?: string };
-}
 
 const ParticleField = memo(() => {
   const isMobile = useMediaQuery("(max-width:600px)");
@@ -91,8 +87,9 @@ const ParticleField = memo(() => {
   );
 });
 
-const Page = ({ searchParams }: PageProps) => {
-  const email = searchParams.email ?? "No email found";
+const MembershipCheckPage = () => {
+  const searchParams = useSearchParams();
+  const email = searchParams?.get("email") ?? "No email found";
 
   const router = useRouter();
   const theme = useTheme();
@@ -533,4 +530,25 @@ const Page = ({ searchParams }: PageProps) => {
   );
 };
 
-export default Page;
+const MembershipCheckPageContent = () => {
+  return (
+    <Suspense
+      fallback={
+        <Container
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
+        >
+          <CircularProgress />
+        </Container>
+      }
+    >
+      <MembershipCheckPage />
+    </Suspense>
+  );
+};
+
+export default MembershipCheckPageContent;
