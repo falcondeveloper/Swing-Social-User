@@ -13,7 +13,6 @@ import {
   CircularProgress,
   useMediaQuery,
   useTheme,
-  createTheme,
   ThemeProvider,
   Container,
   Paper,
@@ -23,33 +22,7 @@ import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
-
-type Params = Promise<{ id: string }>;
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "#FF2D55",
-      light: "#FF617B",
-      dark: "#CC1439",
-    },
-    secondary: {
-      main: "#7000FF",
-      light: "#9B4DFF",
-      dark: "#5200CC",
-    },
-    success: {
-      main: "#00D179",
-    },
-    background: {
-      default: "#0A0118",
-    },
-  },
-
-  typography: {
-    fontFamily: '"Poppins", "Roboto", "Arial", sans-serif',
-  },
-});
+import { jwtDecode } from "jwt-decode";
 
 const ParticleField = memo(() => {
   const isMobile = useMediaQuery("(max-width:600px)");
@@ -109,7 +82,7 @@ const ParticleField = memo(() => {
   );
 });
 
-export default function Pricing({ params }: { params: Params }) {
+export default function Pricing() {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -125,39 +98,21 @@ export default function Pricing({ params }: { params: Params }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const [profileId, setProfileId] = useState<any>();
+  const [profile, setProfile] = useState<any>();
+  const [currentName, setCurrentName] = useState<any>("");
+
   useEffect(() => {
-    setFullName(localStorage.getItem("fullName") || "");
-    setUsername(localStorage.getItem("userName") || "");
-    setEmail(localStorage.getItem("email") || "");
-    setPassword(localStorage.getItem("password") || "");
-
-    const initialize = async () => {
-      const { id } = await params;
-      setId(id);
-      setIsLoading(true);
-
-      try {
-        const res = await fetch(`/api/user/state?userid=${id}`);
-        const { user } = await res.json();
-        const state = user.Location.split(", ")[1];
-
-        const promoRes = await fetch("/api/user/promostate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ state }),
-        });
-
-        const promoData = await promoRes.json();
-        setFirstMonthFree(promoData.result == 1);
-      } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        setIsLoading(false);
+    if (typeof window !== "undefined") {
+      const tokenDevice = localStorage.getItem("loginInfo");
+      if (tokenDevice) {
+        const decodeToken = jwtDecode<any>(tokenDevice);
+        setCurrentName(decodeToken?.profileName);
+        setProfileId(decodeToken?.profileId);
+        setProfile(decodeToken);
       }
-    };
-
-    initialize();
-  }, [params]);
+    }
+  }, []);
 
   const plans = [
     {
