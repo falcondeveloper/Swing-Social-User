@@ -27,6 +27,8 @@ import {
   Snackbar,
   Alert,
   SnackbarCloseReason,
+  Dialog,
+  DialogContent,
 } from "@mui/material";
 import { useFormik, FormikErrors } from "formik";
 import * as Yup from "yup";
@@ -731,30 +733,59 @@ const CreateEventForm: React.FC = () => {
                 }}
               >
                 {isSubmitting && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      inset: 0,
-                      zIndex: 30,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: "rgba(0,0,0,0.6)",
-                      backdropFilter: "blur(20px)",
-                      borderRadius: 2,
-                      pointerEvents: "auto",
+                  <Dialog
+                    open={isSubmitting}
+                    disableEscapeKeyDown
+                    onClose={(event: any, reason: any) => {
+                      if (
+                        reason === "backdropClick" ||
+                        reason === "escapeKeyDown"
+                      )
+                        return;
+                    }}
+                    fullWidth={false}
+                    maxWidth="xs"
+                    aria-labelledby="uploading-dialog-title"
+                    BackdropProps={{
+                      sx: {
+                        backgroundColor: "rgba(0,0,0,0.6)",
+                        backdropFilter: "blur(6px)",
+                      },
+                    }}
+                    PaperProps={{
+                      sx: {
+                        borderRadius: 2,
+                        p: 2,
+                        background:
+                          "linear-gradient(180deg, rgba(20,20,20,0.98), rgba(10,10,10,0.98))",
+                        color: "#fff",
+                        boxShadow: (theme) => theme.shadows[24],
+                      },
                     }}
                   >
-                    <Box sx={{ textAlign: "center", color: "#fff", px: 3 }}>
+                    <DialogContent
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 1.25,
+                        py: 3,
+                        px: { xs: 3, sm: 4 },
+                        textAlign: "center",
+                      }}
+                    >
                       <CircularProgress size={56} />
-                      <Typography sx={{ mt: 2, fontWeight: 600 }}>
+                      <Typography
+                        id="uploading-dialog-title"
+                        sx={{ mt: 1, fontWeight: 700 }}
+                      >
                         {uploadMessage ?? "Uploading…"}
                       </Typography>
 
                       {uploadProgress && (
                         <Typography
                           variant="body2"
-                          sx={{ mt: 1, opacity: 0.9 }}
+                          sx={{ mt: 0.5, opacity: 0.95 }}
                         >
                           {`(${uploadProgress.current} / ${uploadProgress.total})`}
                         </Typography>
@@ -763,13 +794,14 @@ const CreateEventForm: React.FC = () => {
                       <Typography
                         variant="caption"
                         display="block"
-                        sx={{ mt: 1, opacity: 0.8 }}
+                        sx={{ mt: 0.5, opacity: 0.85 }}
                       >
                         Please do not refresh or close the window.
                       </Typography>
-                    </Box>
-                  </Box>
+                    </DialogContent>
+                  </Dialog>
                 )}
+
                 <Box
                   sx={{
                     textAlign: "center",
@@ -817,6 +849,18 @@ const CreateEventForm: React.FC = () => {
                           },
                           "& .MuiStepIcon-root.Mui-completed": {
                             color: "#c2185b",
+                          },
+                          "@media (max-width:600px)": {
+                            "& .MuiStepIcon-text": {
+                              fontSize: "15px",
+                              fill: "#fff",
+                              textAnchor: "middle",
+                              dominantBaseline: "central",
+                            },
+                            "& .MuiStepIcon-root": {
+                              width: "30px",
+                              height: "30px",
+                            },
                           },
                         }}
                       >
