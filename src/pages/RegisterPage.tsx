@@ -630,7 +630,6 @@ const RegisterPage = () => {
               <form onSubmit={formik.handleSubmit}>
                 <TextField
                   fullWidth
-                  autoFocus
                   label="Name (Never shared)"
                   name="userName"
                   placeholder="Your full name"

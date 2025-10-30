@@ -578,13 +578,9 @@ const EventForm: React.FC = () => {
       try {
         const imageData = formData?.coverPhoto;
         const coverURL = await uploadCoverImage(imageData);
-        console.log("SwingSocial----->Uploading Cover Event Image", coverURL);
 
         const images = formData?.photos;
         const photoURLs = await uploadImagesSequentially(images);
-        console.log("SwingSocial----->Uploading Images", photoURLs);
-
-        // return false;
 
         const locationName = formData?.venue;
         const coordinates = await getLatLngByLocationName(locationName);
