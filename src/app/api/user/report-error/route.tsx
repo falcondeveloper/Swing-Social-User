@@ -23,21 +23,23 @@ export async function POST(req: any) {
       throw new Error("Mailgun API key not found in DB");
     }
 
-    const { errorMessage, stack } = await req.json();
-    const mailgun = new Mailgun(FormData);
+    const { errorMessage, stack, routeName, userId } = await req.json();
 
+    const mailgun = new Mailgun(FormData);
     const mg = mailgun.client({
       username: "api",
       key: mailgunKey,
     });
 
-    const subject = "🚨 Error in uploadCoverImage";
+    const subject = `🚨 Error in ${routeName || "Unknown Route"}`;
     const body = `
-      An error occurred in uploadCoverImage:
+An error occurred in the application:
 
-      Message: ${errorMessage}
-      Stack: ${stack || "No stack trace provided"}
-      Time: ${new Date().toISOString()}
+🔹 Route: ${routeName || "N/A"}
+🔹 User ID: ${userId || "N/A"}
+🔹 Message: ${errorMessage || "No error message provided"}
+🔹 Stack: ${stack || "No stack trace provided"}
+🔹 Time: ${new Date().toISOString()}
     `;
 
     const recipients = [

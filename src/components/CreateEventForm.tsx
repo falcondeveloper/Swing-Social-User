@@ -42,6 +42,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
+import { sendErrorEmail } from "@/utils/reportError";
 
 const theme = createTheme({
   palette: {
@@ -263,11 +264,67 @@ const CreateEventForm: React.FC = () => {
 
       console.error("No results found or status not OK:", data);
       return null;
-    } catch (error) {
+    } catch (error: unknown) {
+      let message = "Unknown upload error";
+      let stack = "";
+
+      if (error instanceof Error) {
+        message = error.message;
+        stack = error.stack || "";
+      } else if (typeof error === "string") {
+        message = error;
+      }
+
+      await sendErrorEmail({
+        errorMessage: message,
+        stack,
+        routeName: "getLatLngByLocationName function",
+        userId: profileId,
+      });
       console.error("Error fetching latitude and longitude:", error);
       return null;
     }
   };
+
+  async function compressImageFile(
+    file: File,
+    maxWidth = 1600,
+    maxHeight = 1600,
+    quality = 0.75
+  ) {
+    return new Promise<Blob>((resolve, reject) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Failed to load image"));
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.onload = () => {
+        img.src = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+
+      img.onload = () => {
+        let { width, height } = img;
+        const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
+        const targetW = Math.round(width * ratio);
+        const targetH = Math.round(height * ratio);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error("Canvas toBlob failed"));
+            resolve(blob);
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+    });
+  }
 
   const uploadCoverImage = async (
     imageData: File | string
@@ -275,30 +332,66 @@ const CreateEventForm: React.FC = () => {
     try {
       const formData = new FormData();
 
+      let blobToSend: Blob | null = null;
+
       if (typeof imageData === "string" && imageData.startsWith("data:")) {
         const res = await fetch(imageData);
         const blob = await res.blob();
-        formData.append("image", blob, "cover.jpg");
+        // optionally compress blob
+        const fileFromBlob = new File([blob], "cover.jpg", { type: blob.type });
+        blobToSend = await compressImageFile(fileFromBlob, 1600, 1600, 0.8);
+        formData.append("image", blobToSend, "cover.jpg");
       } else if (imageData instanceof File) {
-        formData.append("image", imageData, imageData.name);
+        // compress the file if it's large
+        const maxClientMB = 6;
+        if (imageData.size > maxClientMB * 1024 * 1024) {
+          const compressed = await compressImageFile(
+            imageData,
+            1600,
+            1600,
+            0.8
+          );
+          formData.append(
+            "image",
+            compressed,
+            imageData.name.replace(/\.\w+$/, ".jpg")
+          );
+        } else {
+          formData.append("image", imageData, imageData.name);
+        }
       } else {
         console.error("Unsupported imageData type", imageData);
         return null;
       }
 
-      const response = await fetch("/api/user/upload", {
+      const res = await fetch("/api/user/upload", {
         method: "POST",
         body: formData,
       });
-
-      if (!response.ok) {
-        console.error("Upload failed:", response.status, await response.text());
+      if (!res.ok) {
+        console.error("Upload failed", res.status, await res.text());
         return null;
       }
-      const data = await response.json();
-      return data?.blobUrl || null;
+      const data = await res.json();
+      return data?.blobUrl || data?.imageUrl || null;
     } catch (error) {
-      console.error("Error uploading image:", error);
+      let message = "Unknown upload error";
+      let stack = "";
+
+      if (error instanceof Error) {
+        message = error.message;
+        stack = error.stack || "";
+      } else if (typeof error === "string") {
+        message = error;
+      }
+
+      await sendErrorEmail({
+        errorMessage: message,
+        stack,
+        routeName: "uploadCoverImage function",
+        userId: profileId,
+      });
+      console.error(error);
       return null;
     }
   };
@@ -354,6 +447,22 @@ const CreateEventForm: React.FC = () => {
       const data = await response.json();
       return data?.imageUrl ?? data?.blobUrl ?? null;
     } catch (error) {
+      let message = "Unknown upload error";
+      let stack = "";
+
+      if (error instanceof Error) {
+        message = error.message;
+        stack = error.stack || "";
+      } else if (typeof error === "string") {
+        message = error;
+      }
+
+      await sendErrorEmail({
+        errorMessage: message,
+        stack,
+        routeName: "uploadEventImage multiple images",
+        userId: profileId,
+      });
       console.error("Error uploading image:", error);
       return null;
     }
@@ -379,6 +488,22 @@ const CreateEventForm: React.FC = () => {
         onProgress?.(i + 1, total);
       } catch (err) {
         console.error("Failed uploading image index", i, err);
+        let message = "Unknown upload error";
+        let stack = "";
+
+        if (err instanceof Error) {
+          message = err.message;
+          stack = err.stack || "";
+        } else if (typeof err === "string") {
+          message = err;
+        }
+
+        await sendErrorEmail({
+          errorMessage: message,
+          stack,
+          routeName: "uploadCoverImage",
+          userId: profileId,
+        });
         results.push(null);
         onProgress?.(i + 1, total);
       }
@@ -489,6 +614,22 @@ const CreateEventForm: React.FC = () => {
         setUploadMessage(
           "Upload failed. Please check your connection and try again."
         );
+        let message = "Unknown upload error";
+        let stack = "";
+
+        if (error instanceof Error) {
+          message = error.message;
+          stack = error.stack || "";
+        } else if (typeof error === "string") {
+          message = error;
+        }
+
+        await sendErrorEmail({
+          errorMessage: message,
+          stack,
+          routeName: "Submit event form",
+          userId: profileId,
+        });
       } finally {
         setTimeout(() => {
           setIsSubmitting(false);
