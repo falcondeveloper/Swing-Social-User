@@ -1203,6 +1203,7 @@ const CreateEventForm: React.FC = () => {
                               flexDirection: "column",
                               gap: 1,
                               mt: { xs: 1, md: 0 },
+                              mb: { xs: 2, md: 1 },
                             }}
                           >
                             <FormControlLabel
