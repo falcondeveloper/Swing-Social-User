@@ -29,6 +29,8 @@ import {
   SnackbarCloseReason,
   Dialog,
   DialogContent,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import { useFormik, FormikErrors } from "formik";
 import * as Yup from "yup";
@@ -135,6 +137,8 @@ type FormValues = {
   description: string;
   coverPhoto: any | null;
   photos: string[];
+  hideVenue: number;
+  hideTicketOption: number;
   repeats: {
     type: "none" | "daily" | "weekly" | "monthly";
     interval: number;
@@ -521,6 +525,8 @@ const CreateEventForm: React.FC = () => {
       description: "",
       coverPhoto: null,
       photos: [],
+      hideVenue: 0,
+      hideTicketOption: 0,
       repeats: {
         type: "none",
         interval: 1,
@@ -588,8 +594,8 @@ const CreateEventForm: React.FC = () => {
             startTime: values?.startTime,
             endTime: values?.endTime,
             venue: values?.venue,
-            isVenueHidden: 0,
-            hideTicketOption: 0,
+            isVenueHidden: values?.hideVenue ?? 0,
+            hideTicketOption: values?.hideTicketOption ?? 0,
             category: values?.category,
             description: values?.description,
             emailDescription: "test",
@@ -1120,7 +1126,7 @@ const CreateEventForm: React.FC = () => {
                                 {...params}
                                 name="venue"
                                 variant="outlined"
-                                label="Venue"
+                                label="City (location of your event)"
                                 autoComplete="address-level2"
                                 error={
                                   formik.touched.venue &&
@@ -1147,6 +1153,90 @@ const CreateEventForm: React.FC = () => {
                               />
                             )}
                           />
+                        </Grid>
+
+                        <Grid item xs={12} md={12}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 1,
+                              mt: { xs: 1, md: 0 },
+                            }}
+                          >
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={
+                                    formik.values.hideVenue == 1 ? true : false
+                                  }
+                                  onChange={(e) =>
+                                    formik.setFieldValue(
+                                      "hideVenue",
+                                      e.target.checked
+                                    )
+                                  }
+                                  name="hideVenue"
+                                  sx={{
+                                    color: "#fff",
+                                    p: 0.5,
+                                    marginLeft:"10px",
+                                    "& .MuiSvgIcon-root": { fontSize: 22 },
+                                  }}
+                                />
+                              }
+                              label={
+                                <Typography
+                                  sx={{ color: "#fff", fontSize: 14 }}
+                                >
+                                  Hide Address
+                                </Typography>
+                              }
+                            />
+                          </Box>
+                        </Grid>
+
+                        <Grid item xs={12} md={12}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 1,
+                              mt: { xs: 1, md: 0 },
+                            }}
+                          >
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={
+                                    formik.values.hideTicketOption == 1
+                                      ? true
+                                      : false
+                                  }
+                                  onChange={(e) =>
+                                    formik.setFieldValue(
+                                      "hideTicketOption",
+                                      e.target.checked
+                                    )
+                                  }
+                                  name="hideTicketOption"
+                                  sx={{
+                                    color: "#fff",
+                                    p: 0.5,
+                                    marginLeft:"10px",
+                                    "& .MuiSvgIcon-root": { fontSize: 22 },
+                                  }}
+                                />
+                              }
+                              label={
+                                <Typography
+                                  sx={{ color: "#fff", fontSize: 14 }}
+                                >
+                                  Hide Ticket Purchase Option
+                                </Typography>
+                              }
+                            />
+                          </Box>
                         </Grid>
 
                         {/* START */}

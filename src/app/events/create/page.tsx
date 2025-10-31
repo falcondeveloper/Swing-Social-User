@@ -606,7 +606,7 @@ const EventForm: React.FC = () => {
             endTime: formData?.endTime,
             venue: formData?.venue,
             isVenueHidden: formData?.hideVenue,
-            hideTicketOption: formData?.hideTicketOption, 
+            hideTicketOption: formData?.hideTicketOption,
             category: formData?.category,
             description: formData?.description,
             emailDescription: "test",
@@ -923,9 +923,9 @@ const EventForm: React.FC = () => {
                   <Checkbox
                     color="primary"
                     sx={{
-                      color: "white", // Default color when unchecked
+                      color: "white",
                       "&.Mui-checked": {
-                        color: "##f50057", // Custom color when checked
+                        color: "##f50057",
                       },
                     }}
                     checked={formData.hideVenue == 1 ? true : false}
