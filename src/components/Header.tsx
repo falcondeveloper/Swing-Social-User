@@ -808,7 +808,7 @@ const Header = () => {
           typeof window !== "undefined" ? window.location.pathname : "";
         return (
           !pathsWithoutSpacer.includes(currentPath) && (
-            <Box sx={{ height: isMobile ? "64px" : "90.5px" }} />
+            <Box sx={{ height: isMobile ? "60.8px" : "90.5px" }} />
           )
         );
       })()}

@@ -424,7 +424,6 @@ export default function CalendarView() {
       <Box
         sx={{
           bgcolor: "#0A0A0A",
-          mt: 2,
           color: "white",
           background: "linear-gradient(to bottom, #0A0A0A, #1A1A1A)",
         }}
@@ -446,6 +445,7 @@ export default function CalendarView() {
                   alignItems: "center",
                   mb: 2,
                   px: 1,
+                  mt: 3,
                 }}
               >
                 <Typography

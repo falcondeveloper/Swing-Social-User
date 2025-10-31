@@ -853,20 +853,18 @@ const CreateEventForm: React.FC = () => {
         <LocalizationProvider dateAdapter={AdapterMoment}>
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "center",
               background:
                 "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
-              position: "relative",
-              overflow: "visible",
               width: "100%",
-              minHeight: "100vh",
             }}
           >
             <ParticleField />
             <Container
               maxWidth={isXs ? "sm" : "lg"}
-              sx={{ px: { xs: 1, sm: 2, md: 3 }, py: { xs: 1.5, sm: 2 } }}
+              sx={{
+                px: { xs: 1, sm: 2, md: 3 },
+                py: { xs: 1.5, sm: 2 },
+              }}
             >
               <Paper
                 elevation={24}
@@ -876,7 +874,7 @@ const CreateEventForm: React.FC = () => {
                   backdropFilter: "blur(20px)",
                   border: "1px solid rgba(255, 255, 255, 0.1)",
                   overflowY: { xs: "auto", sm: "visible" },
-                  pb: { xs: 10, sm: 3 },
+                  // pb: { xs: 10, sm: 3 },
                 }}
               >
                 {isSubmitting && (
@@ -953,7 +951,6 @@ const CreateEventForm: React.FC = () => {
                   sx={{
                     textAlign: "center",
                     mb: 4,
-                    mt: { xs: 1, sm: 2 },
                   }}
                 >
                   <Typography
@@ -1650,6 +1647,7 @@ const CreateEventForm: React.FC = () => {
           </Box>
         </LocalizationProvider>
       </ThemeProvider>
+      <Box sx={{ height: isXs ? "63.2px" : "0" }} />
       <Footer />
     </>
   );
