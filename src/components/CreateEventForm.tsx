@@ -594,8 +594,8 @@ const CreateEventForm: React.FC = () => {
             startTime: values?.startTime,
             endTime: values?.endTime,
             venue: values?.venue,
-            isVenueHidden: values?.hideVenue ?? 0,
-            hideTicketOption: values?.hideTicketOption ?? 0,
+            isVenueHidden: values?.hideVenue,
+            hideTicketOption: values?.hideTicketOption,
             category: values?.category,
             description: values?.description,
             emailDescription: "test",
@@ -1173,14 +1173,14 @@ const CreateEventForm: React.FC = () => {
                                   onChange={(e) =>
                                     formik.setFieldValue(
                                       "hideVenue",
-                                      e.target.checked
+                                      e.target.checked ? 1 : 0
                                     )
                                   }
                                   name="hideVenue"
                                   sx={{
                                     color: "#fff",
                                     p: 0.5,
-                                    marginLeft:"10px",
+                                    marginLeft: "10px",
                                     "& .MuiSvgIcon-root": { fontSize: 22 },
                                   }}
                                 />
@@ -1216,14 +1216,14 @@ const CreateEventForm: React.FC = () => {
                                   onChange={(e) =>
                                     formik.setFieldValue(
                                       "hideTicketOption",
-                                      e.target.checked
+                                      e.target.checked ? 1 : 0
                                     )
                                   }
                                   name="hideTicketOption"
                                   sx={{
                                     color: "#fff",
                                     p: 0.5,
-                                    marginLeft:"10px",
+                                    marginLeft: "10px",
                                     "& .MuiSvgIcon-root": { fontSize: 22 },
                                   }}
                                 />
