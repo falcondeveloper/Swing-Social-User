@@ -1,0 +1,1596 @@
+"use client";
+
+import React, { memo, useEffect, useMemo, useRef, useState } from "react";
+import Header from "./Header";
+import Footer from "./Footer";
+import {
+  Box,
+  Container,
+  createTheme,
+  Paper,
+  Step,
+  StepLabel,
+  Stepper,
+  ThemeProvider,
+  useMediaQuery,
+  TextField,
+  Button,
+  Typography,
+  Grid,
+  MenuItem,
+  Autocomplete,
+  Popper,
+  CircularProgress,
+  IconButton,
+  Tooltip,
+  Snackbar,
+  Alert,
+  Dialog,
+  DialogContent,
+  FormControlLabel,
+  Checkbox,
+} from "@mui/material";
+import { useFormik, FormikErrors } from "formik";
+import * as Yup from "yup";
+import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import moment, { Moment } from "moment";
+import { Editor } from "@tinymce/tinymce-react";
+import { EditIcon } from "lucide-react";
+import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
+import { sendErrorEmail } from "@/utils/reportError";
+
+const theme = createTheme({
+  palette: {
+    primary: { main: "#FF2D55", light: "#FF617B", dark: "#CC1439" },
+    secondary: { main: "#7000FF", light: "#9B4DFF", dark: "#5200CC" },
+    success: { main: "#00D179" },
+    background: { default: "#0A0118" },
+  },
+  typography: { fontFamily: '"Poppins", "Roboto", "Arial", sans-serif' },
+});
+
+const ParticleField = memo(() => {
+  const isMobile = useMediaQuery("(max-width:600px)");
+
+  const particles = useMemo(() => {
+    const count = isMobile ? 15 : 50;
+    return [...Array(count)].map((_, i) => ({
+      id: i,
+      size: Math.random() * (isMobile ? 4 : 6) + 2,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      duration: Math.random() * (isMobile ? 15 : 20) + 10,
+      delay: -Math.random() * 20,
+    }));
+  }, [isMobile]);
+
+  return (
+    <Box
+      sx={{
+        position: "absolute",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        opacity: 0.6,
+      }}
+    >
+      {particles.map((particle) => (
+        <Box
+          key={particle.id}
+          sx={{
+            position: "absolute",
+            width: particle.size,
+            height: particle.size,
+            left: `${particle.x}%`,
+            top: `${particle.y}%`,
+            background: "linear-gradient(45deg, #FF2D55, #7000FF)",
+            borderRadius: "50%",
+            animation: `float ${particle.duration}s infinite linear`,
+            animationDelay: `${particle.delay}s`,
+            "@keyframes float": {
+              "0%": {
+                transform: "translate(0, 0) rotate(0deg)",
+                opacity: 0,
+              },
+              "50%": {
+                opacity: 0.8,
+              },
+              "100%": {
+                transform: "translate(100px, -100px) rotate(360deg)",
+                opacity: 0,
+              },
+            },
+          }}
+        />
+      ))}
+    </Box>
+  );
+});
+
+const yourTextFieldSx = {
+  mb: 1,
+  "& .MuiOutlinedInput-root": {
+    color: "white",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: "12px",
+    "& fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.4)" },
+  },
+  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.7)" },
+} as const;
+
+const steps = ["Details", "Description", "Media"];
+
+type FormValues = {
+  eventName: string;
+  category: string;
+  startTime: Moment | null;
+  endTime: Moment | null;
+  venue: string;
+  description: string;
+  coverPhoto: File | string | null;
+  photos: (string | File)[];
+  hideVenue: number;
+  hideTicketOption: number;
+  repeats: {
+    type: "none" | "daily" | "weekly" | "monthly";
+    interval: number;
+    stopCondition: "never" | "date" | "times";
+    untilDate: Moment | null;
+    times: number;
+    weekDays: boolean[];
+    monthDay: number;
+  };
+};
+
+type CityType = {
+  id: number;
+  City: string;
+};
+
+const validationSchema = Yup.object().shape({
+  eventName: Yup.string().trim().required("Event name is required"),
+  category: Yup.string().trim().required("Please select category"),
+  startTime: Yup.mixed()
+    .required("Start time is required")
+    .test("is-future", "Start must be in the future", function (value) {
+      const v = value as Moment | null;
+      return v ? moment(v).isAfter(moment()) : false;
+    }),
+  endTime: Yup.mixed()
+    .required("End time is required")
+    .test("after-start", "End must be after start", function (value) {
+      const v = value as Moment | null;
+      const startTime = this.parent.startTime as Moment | null;
+      if (!startTime || !v) return true;
+      return moment(v).isAfter(moment(startTime));
+    }),
+  venue: Yup.string().required("Venue is required"),
+  description: Yup.string().trim().required("Description is required"),
+  coverPhoto: Yup.mixed().required("Cover photo is required"),
+  photos: Yup.array().of(Yup.mixed()).max(5, "You can upload up to 5 photos"),
+});
+
+const MAX_PHOTOS = 3;
+
+const EditEventForm: React.FC = () => {
+  const router = useRouter();
+  const isXs = useMediaQuery(theme.breakpoints.down("sm"));
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [profileId, setProfileId] = useState<any>();
+  const [activeStep, setActiveStep] = useState(0);
+  const [message, setMessage] = useState<string>("");
+  const [cityLoading, setCityLoading] = useState(false);
+  const [openCity, setOpenCity] = useState(false);
+  const [cityOption, setCityOption] = useState<CityType[] | []>([]);
+  const [cityInput, setCityInput] = useState<string | "">("");
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
+  const [eventId, setEventId] = useState<string>("");
+  const [eventDetail, setEventDetail] = useState<any>(null);
+
+  const [initialFormValues, setInitialFormValues] = useState<FormValues>({
+    eventName: "",
+    category: "",
+    startTime: moment().add(1, "hour"),
+    endTime: moment().add(7, "hour"),
+    venue: "",
+    description: "",
+    coverPhoto: null,
+    photos: [],
+    hideVenue: 0,
+    hideTicketOption: 0,
+    repeats: {
+      type: "none",
+      interval: 1,
+      stopCondition: "never",
+      untilDate: null,
+      times: 1,
+      weekDays: Array(7).fill(false),
+      monthDay: 1,
+    },
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const token =
+      localStorage.getItem("loginInfo") || localStorage.getItem("authToken");
+    if (token) {
+      try {
+        const decoded = jwtDecode<any>(token);
+        setProfileId(decoded?.profileId || decoded?.id || null);
+      } catch (e) {
+        console.warn("Failed to decode token", e);
+      }
+    } else {
+      router.push("/login");
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const queryParams = new URLSearchParams(window.location.search);
+    const param = queryParams.get("q");
+    if (!param) return;
+    setEventId(param);
+    (async function () {
+      try {
+        const checkResponse = await fetch("/api/user/events?eventId=" + param, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!checkResponse.ok) {
+          console.error("Failed to fetch event", await checkResponse.text());
+          return;
+        }
+        const eventData = await checkResponse.json();
+        const ev = eventData?.event;
+        if (!ev) return;
+
+        console.log("ev", ev);
+
+        const fv: FormValues = {
+          eventName: ev?.Name ?? "",
+          category: ev?.Category ?? "",
+          startTime: ev?.StartTime
+            ? moment(ev.StartTime)
+            : moment().add(1, "hour"),
+          endTime: ev?.EndTime ? moment(ev.EndTime) : moment().add(7, "hour"),
+          venue: ev?.Venue ?? "",
+          description: ev?.Description ?? "",
+          coverPhoto: ev?.CoverImageUrl ?? null,
+          photos: Array.isArray(ev?.Images) ? ev.Images : [],
+          hideVenue: ev?.isVenueHidden === 1 ? 1 : 0,
+          hideTicketOption: ev?.HideTicketOption === 1 ? 1 : 0,
+          repeats: ev?.repeats ?? {
+            type: "none",
+            interval: 1,
+            stopCondition: "never",
+            untilDate: null,
+            times: 1,
+            weekDays: Array(7).fill(false),
+            monthDay: 1,
+          },
+        };
+        setCityInput(ev?.Venue?.replace(", USA", "") || "");
+        setInitialFormValues(fv);
+        setCoverPreview(ev?.CoverImageUrl ?? null);
+      } catch (err) {
+        console.error("Error fetching event detail", err);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!openCity) setCityOption([]);
+  }, [openCity]);
+
+  useEffect(() => {
+    if (!openCity) return;
+    if (cityInput === "") return;
+    const fetchCities = async () => {
+      setCityLoading(true);
+      try {
+        const res = await fetch(`/api/user/city?city=${cityInput}`);
+        const json = await res.json();
+        const cities: CityType[] = json?.cities ?? [];
+        const uniqueCities = cities.filter(
+          (city, index, self) =>
+            index === self.findIndex((t) => t.City === city.City)
+        );
+        setCityOption(uniqueCities);
+      } catch (e) {
+        console.error("city fetch", e);
+      } finally {
+        setCityLoading(false);
+      }
+    };
+    const t = setTimeout(fetchCities, 400);
+    return () => clearTimeout(t);
+  }, [cityInput, openCity]);
+
+  const getLatLngByLocationName = async (locationName: string) => {
+    const apiKey =
+      process.env.NEXT_PUBLIC_GOOGLE_GEOCODE_KEY ||
+      "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc";
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          locationName
+        )}&key=${apiKey}`
+      );
+      if (!response.ok) throw new Error(response.statusText);
+      const data = await response.json();
+      if (data.status === "OK" && data.results.length > 0) {
+        const { lat, lng } = data.results[0].geometry.location;
+        return { lat, lng };
+      }
+      return null;
+    } catch (error: unknown) {
+      let message = "Unknown upload error";
+      let stack = "";
+      if (error instanceof Error) {
+        message = error.message;
+        stack = error.stack || "";
+      } else if (typeof error === "string") message = error;
+      await sendErrorEmail({
+        errorMessage: message,
+        stack,
+        routeName: "getLatLngByLocationName function",
+        userId: profileId,
+      });
+      console.error("Error fetching latitude and longitude:", error);
+      return null;
+    }
+  };
+
+  async function compressImageFile(
+    file: File,
+    maxWidth = 1600,
+    maxHeight = 1600,
+    quality = 0.75
+  ) {
+    return new Promise<Blob>((resolve, reject) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Failed to load image"));
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.onload = () => {
+        img.src = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+
+      img.onload = () => {
+        let { width, height } = img;
+        const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
+        const targetW = Math.round(width * ratio);
+        const targetH = Math.round(height * ratio);
+        const canvas = document.createElement("canvas");
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error("Canvas toBlob failed"));
+            resolve(blob);
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+    });
+  }
+
+  const dataURLtoFile = (dataUrl: string, filename = "photo.jpg"): File => {
+    const arr = dataUrl.split(",");
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  };
+
+  const uploadCoverImage = async (
+    imageData: File | string
+  ): Promise<string | null> => {
+    try {
+      const form = new FormData();
+      if (typeof imageData === "string" && imageData.startsWith("data:")) {
+        const res = await fetch(imageData);
+        const blob = await res.blob();
+        const fileFromBlob = new File([blob], "cover.jpg", { type: blob.type });
+        const compressed = await compressImageFile(
+          fileFromBlob,
+          1600,
+          1600,
+          0.8
+        );
+        form.append("image", compressed, "cover.jpg");
+      } else if (imageData instanceof File) {
+        if (imageData.size > 6 * 1024 * 1024) {
+          const compressed = await compressImageFile(
+            imageData,
+            1600,
+            1600,
+            0.8
+          );
+          form.append(
+            "image",
+            compressed,
+            imageData.name.replace(/\.\w+$/, ".jpg")
+          );
+        } else {
+          form.append("image", imageData, imageData.name);
+        }
+      } else if (typeof imageData === "string") {
+        return imageData;
+      } else {
+        return null;
+      }
+      const res = await fetch("/api/user/upload", {
+        method: "POST",
+        body: form,
+      });
+      if (!res.ok) {
+        console.error("Upload failed", await res.text());
+        return null;
+      }
+      const json = await res.json();
+      return json?.blobUrl ?? json?.imageUrl ?? null;
+    } catch (err) {
+      console.error("uploadCoverImage error", err);
+      return null;
+    }
+  };
+
+  const uploadEventImage = async (
+    imageData: string | File | Blob
+  ): Promise<string | null> => {
+    try {
+      const form = new FormData();
+      if (typeof imageData === "string") {
+        if (imageData.startsWith("data:")) {
+          const file = dataURLtoFile(imageData, `photo_${Date.now()}.jpg`);
+          form.append("image", file, file.name);
+        } else {
+          return imageData;
+        }
+      } else if (imageData instanceof File) {
+        form.append("image", imageData, imageData.name);
+      } else {
+        form.append("image", imageData, `photo_${Date.now()}.jpg`);
+      }
+      const response = await fetch("/api/user/upload", {
+        method: "POST",
+        body: form,
+      });
+      if (!response.ok) {
+        console.error(
+          "uploadEventImage failed",
+          response.status,
+          await response.text()
+        );
+        return null;
+      }
+      const data = await response.json();
+      return data?.imageUrl ?? data?.blobUrl ?? null;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      return null;
+    }
+  };
+
+  const uploadImagesSequentially = async (
+    images: (string | File)[],
+    onProgress?: (current: number, total: number) => void
+  ): Promise<(string | null)[]> => {
+    const results: (string | null)[] = [];
+    const total = images.length;
+    for (let i = 0; i < total; i++) {
+      const image = images[i];
+      try {
+        onProgress?.(i, total);
+        let result: string | null = null;
+        if (typeof image === "string" && !image.startsWith("data:")) {
+          result = image;
+        } else {
+          const file =
+            typeof image === "string"
+              ? dataURLtoFile(image, `photo_${i}_${Date.now()}.jpg`)
+              : image;
+          result = await uploadEventImage(file);
+        }
+        results.push(result);
+        onProgress?.(i + 1, total);
+      } catch (err) {
+        console.error("Failed uploading image index", i, err);
+        results.push(null);
+        onProgress?.(i + 1, total);
+      }
+    }
+    return results;
+  };
+
+  const formik = useFormik<FormValues>({
+    initialValues: initialFormValues,
+    enableReinitialize: true,
+    validationSchema,
+    onSubmit: async (values) => {
+      try {
+        setIsSubmitting(true);
+        setUploadMessage("Preparing your update…");
+        setUploadProgress(null);
+        let coverURL: string | null = null;
+        if (values.coverPhoto) {
+          setUploadMessage("Uploading cover photo…");
+          coverURL = await uploadCoverImage(values.coverPhoto as File | string);
+          if (!coverURL) throw new Error("Cover upload failed");
+        }
+        const images = values.photos ?? [];
+        let photoURLs: (string | null)[] = [];
+        if (images.length > 0) {
+          setUploadMessage("Uploading photos…");
+          setUploadProgress({ current: 0, total: images.length });
+          photoURLs = await uploadImagesSequentially(
+            images,
+            (current, total) => {
+              const safeCurrent = Math.min(current, total);
+              setUploadMessage(`Uploading photos ${safeCurrent} / ${total}…`);
+              setUploadProgress({ current: safeCurrent, total });
+            }
+          );
+          setUploadProgress({ current: images.length, total: images.length });
+        }
+        setUploadMessage("Looking up venue location…");
+        const coords = await getLatLngByLocationName(values.venue);
+        if (!coords) throw new Error("Failed to fetch latitude and longitude");
+        const { lat, lng } = coords;
+
+        setUploadMessage("Updating event…");
+
+        const payload = {
+          coverImageURL:
+            coverURL ??
+            (typeof values.coverPhoto === "string" ? values.coverPhoto : null),
+          images: photoURLs,
+          eventName: values.eventName,
+          profileId,
+          eventId,
+          startTime: values.startTime
+            ? moment(values.startTime).toISOString()
+            : null,
+          endTime: values.endTime ? moment(values.endTime).toISOString() : null,
+          venue: values.venue,
+          isVenueHidden: values.hideVenue,
+          hideTicketOption: values.hideTicketOption,
+          category: values.category,
+          description: values.description,
+          emailDescription: values.description,
+          latitude: lat,
+          longitude: lng,
+        };
+
+        const response = await fetch("/api/user/events/update/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        setMessage(data.message ?? "Event updated.");
+        setOpenSnackbar(true);
+
+        if (response.ok) {
+          setUploadMessage("Event updated! Redirecting…");
+          router.push("/events");
+        } else {
+          console.error("Event update failed", data);
+          setUploadMessage("Failed to update event. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error submitting form:", error);
+        setUploadMessage(
+          "Update failed. Please check your connection and try again."
+        );
+        let message = "Unknown upload error";
+        let stack = "";
+        if (error instanceof Error) {
+          message = error.message;
+          stack = error.stack || "";
+        } else if (typeof error === "string") {
+          message = error;
+        }
+        await sendErrorEmail({
+          errorMessage: message,
+          stack,
+          routeName: "Submit event form - update",
+          userId: profileId,
+        });
+      } finally {
+        setTimeout(() => {
+          setIsSubmitting(false);
+          setUploadMessage(null);
+          setUploadProgress(null);
+        }, 700);
+      }
+    },
+    validateOnBlur: true,
+    validateOnChange: true,
+  });
+
+  const stepFields: (keyof FormValues)[][] = [
+    ["eventName", "category", "startTime", "endTime", "venue"],
+    ["description"],
+    ["coverPhoto", "photos"],
+  ];
+
+  const handleNext = async () => {
+    window.scroll(0, 0);
+    const currentFields = stepFields[activeStep];
+    const errors: FormikErrors<FormValues> = await formik.validateForm();
+    const hasErrorInStep = currentFields.some((f) => Boolean(errors[f]));
+    if (hasErrorInStep) {
+      currentFields.forEach((f) => formik.setFieldTouched(f, true, true));
+      return;
+    }
+    if (activeStep < steps.length - 1) {
+      setActiveStep((s) => s + 1);
+    } else {
+      formik.handleSubmit();
+    }
+  };
+
+  const handleBack = () => {
+    window.scroll(0, 0);
+    if (activeStep > 0) setActiveStep((s) => s - 1);
+  };
+
+  const onCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.currentTarget.files && e.currentTarget.files[0];
+    if (!file) return;
+    const objectUrl = URL.createObjectURL(file);
+    setCoverPreview(objectUrl);
+    formik.setFieldValue("coverPhoto", file);
+    if (e.target) (e.target as HTMLInputElement).value = "";
+  };
+
+  const previews = formik.values.photos || [];
+
+  const onTileChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.currentTarget.files && e.currentTarget.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const current = [...(formik.values.photos || [])];
+      if (index < current.length) {
+        current[index] = dataUrl;
+      } else {
+        current.push(dataUrl);
+      }
+      const sliced = current.slice(0, MAX_PHOTOS);
+      formik.setFieldValue("photos", sliced);
+      formik.setFieldError("photos", undefined);
+      formik.setFieldTouched("photos", true, false);
+    };
+    reader.onerror = (err) => {
+      console.error("Error reading tile file", err);
+      formik.setFieldError("photos", "Failed to read photo");
+    };
+    reader.readAsDataURL(file);
+    if (e.target) (e.target as HTMLInputElement).value = "";
+  };
+
+  const removePhoto = (index: number) => {
+    const current = [...(formik.values.photos || [])];
+    current.splice(index, 1);
+    formik.setFieldValue("photos", current);
+    if (current.length <= MAX_PHOTOS) formik.setFieldError("photos", undefined);
+  };
+
+  function CustomPopper(props: any) {
+    return <Popper {...props} placement="top-start" />;
+  }
+
+  const onTilePick = (i: number) => inputRefs.current[i]?.click();
+
+  const showAddBadgeIndex =
+    formik.values.photos && formik.values.photos.length < MAX_PHOTOS
+      ? formik.values.photos.length
+      : -1;
+
+  const Tile = ({ i, showAddBadge }: { i: number; showAddBadge?: boolean }) => {
+    const hasPhoto = !!previews[i];
+    return (
+      <Box
+        role="button"
+        aria-label={hasPhoto ? `Photo slot ${i + 1}` : `Add photo ${i + 1}`}
+        onClick={() => onTilePick(i)}
+        sx={{
+          width: 170,
+          height: 120,
+          border: "2px dashed rgba(255,255,255,0.7)",
+          borderRadius: 3,
+          backgroundColor: "#1d1d1d",
+          mx: "auto",
+          position: "relative",
+          overflow: "hidden",
+          display: "grid",
+          placeItems: "center",
+          cursor: "pointer",
+          transition: "transform 0.15s ease",
+          "&:hover": { transform: "scale(1.02)" },
+        }}
+      >
+        {!hasPhoto ? (
+          <Box sx={{ textAlign: "center" }}>
+            <PhotoCameraOutlinedIcon
+              sx={{ fontSize: { xs: 26, sm: 30, md: 34 }, color: "#c2185b" }}
+            />
+            {showAddBadge && (
+              <Typography
+                sx={{
+                  color: "#c2185b",
+                  fontSize: { xs: 10, sm: 12 },
+                  mt: 0.5,
+                  fontWeight: 700,
+                }}
+              >
+                Add Photo
+              </Typography>
+            )}
+          </Box>
+        ) : (
+          <>
+            <img
+              src={previews[i] as string}
+              alt={`public-photo-${i + 1}`}
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+            <Box
+              sx={{
+                position: "absolute",
+                right: 6,
+                bottom: 6,
+                display: "flex",
+                gap: 0.5,
+              }}
+            >
+              <Tooltip title="Replace">
+                <IconButton
+                  size="small"
+                  sx={{ bgcolor: "rgba(0,0,0,0.6)", color: "#fff" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTilePick(i);
+                  }}
+                >
+                  <EditOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Remove">
+                <IconButton
+                  size="small"
+                  sx={{ bgcolor: "rgba(0,0,0,0.6)", color: "#fff" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removePhoto(i);
+                  }}
+                >
+                  <DeleteOutlineIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </>
+        )}
+        <input
+          ref={(el: any) => (inputRefs.current[i] = el)}
+          type="file"
+          accept="image/*"
+          onChange={(e) => onTileChange(i, e)}
+          style={{ display: "none" }}
+        />
+      </Box>
+    );
+  };
+
+  return (
+    <>
+      <Header />
+      <ThemeProvider theme={theme}>
+        <LocalizationProvider dateAdapter={AdapterMoment}>
+          <Box
+            sx={{
+              background:
+                "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
+              width: "100%",
+            }}
+          >
+            <ParticleField />
+            <Container
+              maxWidth={isXs ? "sm" : "lg"}
+              sx={{ px: { xs: 1, sm: 2, md: 3 }, py: { xs: 1.5, sm: 2 } }}
+            >
+              <Paper
+                elevation={24}
+                sx={{
+                  p: { xs: 2, sm: 3, md: 4 },
+                  background: "rgba(255, 255, 255, 0.05)",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                }}
+              >
+                {isSubmitting && (
+                  <Dialog
+                    open={isSubmitting}
+                    disableEscapeKeyDown
+                    BackdropProps={{
+                      sx: {
+                        backgroundColor: "rgba(0,0,0,0.6)",
+                        backdropFilter: "blur(6px)",
+                      },
+                    }}
+                    PaperProps={{
+                      sx: {
+                        borderRadius: 2,
+                        p: 2,
+                        background:
+                          "linear-gradient(180deg, rgba(20,20,20,0.98), rgba(10,10,10,0.98))",
+                        color: "#fff",
+                      },
+                    }}
+                  >
+                    <DialogContent
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 1.25,
+                        py: 3,
+                        px: { xs: 3, sm: 4 },
+                        textAlign: "center",
+                      }}
+                    >
+                      <CircularProgress size={56} />
+                      <Typography sx={{ mt: 1, fontWeight: 700 }}>
+                        {uploadMessage ?? "Uploading…"}
+                      </Typography>
+                      {uploadProgress && (
+                        <Typography
+                          variant="body2"
+                          sx={{ mt: 0.5, opacity: 0.95 }}
+                        >{`(${uploadProgress.current} / ${uploadProgress.total})`}</Typography>
+                      )}
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        sx={{ mt: 0.5, opacity: 0.85 }}
+                      >
+                        Please do not refresh or close the window.
+                      </Typography>
+                    </DialogContent>
+                  </Dialog>
+                )}
+
+                <Box sx={{ textAlign: "center", mb: 4 }}>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontWeight: 700,
+                      color: "#ffffff",
+                      fontSize: { xs: "1.8rem", sm: "2.4rem" },
+                      background: "linear-gradient(90deg, #FF2D55, #7000FF)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      mb: 1,
+                    }}
+                  >
+                    Edit Your Event
+                  </Typography>
+                </Box>
+
+                <Stepper
+                  activeStep={activeStep}
+                  alternativeLabel
+                  sx={{
+                    background: "transparent",
+                    width: "100%",
+                    margin: "0 auto 45px auto",
+                  }}
+                >
+                  {steps.map((label) => (
+                    <Step key={label}>
+                      <StepLabel
+                        sx={{
+                          "& .MuiStepLabel-label": {
+                            color: "#fff !important",
+                            fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                          },
+                          "& .MuiStepIcon-root": {
+                            color: "rgba(255,255,255,0.3)",
+                          },
+                          "& .MuiStepIcon-root.Mui-active": {
+                            color: "#c2185b",
+                          },
+                          "& .MuiStepIcon-root.Mui-completed": {
+                            color: "#c2185b",
+                          },
+                        }}
+                      >
+                        {label}
+                      </StepLabel>
+                    </Step>
+                  ))}
+                </Stepper>
+
+                <Box>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleNext();
+                    }}
+                  >
+                    {activeStep === 0 && (
+                      <Grid
+                        container
+                        spacing={isXs ? 1 : 2}
+                        alignItems="center"
+                      >
+                        <Grid item xs={12} md={4}>
+                          <TextField
+                            fullWidth
+                            label="Event Name"
+                            name="eventName"
+                            placeholder="Your event name"
+                            variant="outlined"
+                            value={formik.values.eventName}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            autoComplete="off"
+                            error={
+                              formik.touched.eventName &&
+                              Boolean(formik.errors.eventName)
+                            }
+                            helperText={
+                              formik.touched.eventName &&
+                              formik.errors.eventName
+                            }
+                            sx={yourTextFieldSx}
+                          />
+                        </Grid>
+
+                        <Grid item xs={12} md={4}>
+                          <TextField
+                            select
+                            fullWidth
+                            label="Category"
+                            name="category"
+                            value={formik.values.category}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            variant="outlined"
+                            error={
+                              formik.touched.category &&
+                              Boolean(formik.errors.category)
+                            }
+                            autoComplete="off"
+                            helperText={
+                              formik.touched.category && formik.errors.category
+                            }
+                            sx={yourTextFieldSx}
+                          >
+                            <MenuItem value="" disabled>
+                              What's your category?
+                            </MenuItem>
+                            <MenuItem value="House Party">House Party</MenuItem>
+                            <MenuItem value="Meet & Greet">
+                              Meet & Greet
+                            </MenuItem>
+                            <MenuItem value="Hotel Takeover">
+                              Hotel Takeover
+                            </MenuItem>
+                          </TextField>
+                        </Grid>
+
+                        <Grid item xs={12} md={4}>
+                          <Autocomplete
+                            id="city-autocomplete"
+                            open={openCity}
+                            onOpen={() => setOpenCity(true)}
+                            onClose={(event, reason) => {
+                              if (isXs && reason === "blur") return;
+                              setOpenCity(false);
+                            }}
+                            disableClearable
+                            disablePortal
+                            PopperComponent={CustomPopper}
+                            isOptionEqualToValue={(option: any, value: any) =>
+                              option.City === value.City
+                            }
+                            getOptionLabel={(option: any) => option.City ?? ""}
+                            options={cityOption.map((city) => ({
+                              ...city,
+                              key: city.id,
+                            }))}
+                            loading={cityLoading}
+                            inputValue={cityInput}
+                            onInputChange={(event, newInputValue) => {
+                              if (
+                                event?.type === "change" ||
+                                event?.type === "click"
+                              )
+                                setCityInput(newInputValue.trim());
+                            }}
+                            onChange={(event, newValue: any) => {
+                              if (newValue?.City) {
+                                formik.setFieldValue("venue", newValue.City);
+                                if (
+                                  document.activeElement instanceof HTMLElement
+                                )
+                                  document.activeElement.blur();
+                              }
+                            }}
+                            value={
+                              formik.values.venue
+                                ? {
+                                    City: formik.values.venue.replace(
+                                      ", USA",
+                                      ""
+                                    ),
+                                  }
+                                : null
+                            }
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                name="venue"
+                                variant="outlined"
+                                label="City (location of your event)"
+                                autoComplete="address-level2"
+                                error={
+                                  formik.touched.venue &&
+                                  Boolean(formik.errors.venue)
+                                }
+                                helperText={
+                                  formik.touched.venue && formik.errors.venue
+                                }
+                                InputProps={{
+                                  ...params.InputProps,
+                                  endAdornment: (
+                                    <>
+                                      {cityLoading ? (
+                                        <CircularProgress
+                                          color="inherit"
+                                          size={15}
+                                        />
+                                      ) : null}
+                                      {params.InputProps.endAdornment}
+                                    </>
+                                  ),
+                                }}
+                                sx={yourTextFieldSx}
+                              />
+                            )}
+                          />
+                        </Grid>
+
+                        <Grid item xs={12} md={12}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 1,
+                              mt: { xs: 1, md: 0 },
+                            }}
+                          >
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={formik.values.hideVenue === 1}
+                                  onChange={(e) =>
+                                    formik.setFieldValue(
+                                      "hideVenue",
+                                      e.target.checked ? 1 : 0
+                                    )
+                                  }
+                                  name="hideVenue"
+                                  sx={{
+                                    color: "#fff",
+                                    p: 0.5,
+                                    marginLeft: "10px",
+                                    "& .MuiSvgIcon-root": { fontSize: 22 },
+                                  }}
+                                />
+                              }
+                              label={
+                                <Typography
+                                  sx={{ color: "#fff", fontSize: 14 }}
+                                >
+                                  Hide Address
+                                </Typography>
+                              }
+                            />
+                          </Box>
+                        </Grid>
+
+                        <Grid item xs={12} md={12}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 1,
+                              mt: { xs: 1, md: 0 },
+                              mb: { xs: 2, md: 1 },
+                            }}
+                          >
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={formik.values.hideTicketOption === 1}
+                                  onChange={(e) =>
+                                    formik.setFieldValue(
+                                      "hideTicketOption",
+                                      e.target.checked ? 1 : 0
+                                    )
+                                  }
+                                  name="hideTicketOption"
+                                  sx={{
+                                    color: "#fff",
+                                    p: 0.5,
+                                    marginLeft: "10px",
+                                    "& .MuiSvgIcon-root": { fontSize: 22 },
+                                  }}
+                                />
+                              }
+                              label={
+                                <Typography
+                                  sx={{ color: "#fff", fontSize: 14 }}
+                                >
+                                  Hide Ticket Purchase Option
+                                </Typography>
+                              }
+                            />
+                          </Box>
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                          <DateTimePicker
+                            label="Start Time"
+                            value={formik.values.startTime}
+                            onChange={(value: Moment | null) => {
+                              formik.setFieldValue("startTime", value);
+                              if (value)
+                                formik.setFieldValue(
+                                  "endTime",
+                                  moment(value).add(6, "hours")
+                                );
+                              else formik.setFieldValue("endTime", null);
+                            }}
+                            onClose={() =>
+                              formik.setFieldTouched("startTime", true, true)
+                            }
+                            disablePast
+                            minDateTime={moment().add(1, "minute")}
+                            sx={{ width: "100%" }}
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                                error:
+                                  formik.touched.startTime &&
+                                  Boolean(formik.errors.startTime),
+                                helperText:
+                                  formik.touched.startTime &&
+                                  (formik.errors.startTime as
+                                    | string
+                                    | undefined),
+                                sx: yourTextFieldSx,
+                              },
+                            }}
+                          />
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                          {(() => {
+                            const start: Moment | null =
+                              formik.values.startTime;
+                            const now = moment();
+                            const minEnd = start
+                              ? moment(start).add(1, "minute")
+                              : now.clone().add(1, "minute");
+                            return (
+                              <DateTimePicker
+                                label="End Time"
+                                value={formik.values.endTime}
+                                onChange={(value: Moment | null) => {
+                                  if (!value) {
+                                    formik.setFieldValue("endTime", null);
+                                    return;
+                                  }
+                                  const startVal: Moment | null =
+                                    formik.values.startTime;
+                                  if (startVal) {
+                                    const picked = moment(value);
+                                    const final = picked.isAfter(startVal)
+                                      ? picked
+                                      : moment(startVal).add(1, "minute");
+                                    formik.setFieldValue("endTime", final);
+                                  } else formik.setFieldValue("endTime", value);
+                                }}
+                                onClose={() =>
+                                  formik.setFieldTouched("endTime", true, true)
+                                }
+                                minDateTime={minEnd}
+                                sx={{ width: "100%" }}
+                                slotProps={{
+                                  textField: {
+                                    fullWidth: true,
+                                    error:
+                                      formik.touched.endTime &&
+                                      Boolean(formik.errors.endTime),
+                                    helperText:
+                                      formik.touched.endTime &&
+                                      (formik.errors.endTime as
+                                        | string
+                                        | undefined),
+                                    sx: yourTextFieldSx,
+                                  },
+                                }}
+                              />
+                            );
+                          })()}
+                        </Grid>
+                      </Grid>
+                    )}
+
+                    {activeStep === 1 && (
+                      <Grid container spacing={2} sx={{ mt: 1 }}>
+                        <Grid item xs={12}>
+                          <Typography
+                            variant="h6"
+                            sx={{ color: "#fff", mb: 1, fontSize: "16px" }}
+                          >
+                            Description
+                          </Typography>
+                          <Editor
+                            apiKey={
+                              "3yffl36ic8qni4zhtxbmc0t1sujg1m25sc4l638375rwb5vs"
+                            }
+                            value={formik.values.description}
+                            onEditorChange={(content) =>
+                              formik.setFieldValue("description", content)
+                            }
+                            onBlur={() =>
+                              formik.setFieldTouched("description", true, true)
+                            }
+                            init={{
+                              menubar: false,
+                              statusbar: false,
+                              plugins: [
+                                "advlist",
+                                "autolink",
+                                "lists",
+                                "link",
+                                "image",
+                                "charmap",
+                                "preview",
+                                "anchor",
+                                "searchreplace",
+                                "visualblocks",
+                                "code",
+                                "fullscreen",
+                                "insertdatetime",
+                                "media",
+                                "table",
+                                "code",
+                                "help",
+                                "wordcount",
+                              ],
+                              toolbar:
+                                "undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help",
+                              content_style:
+                                "body { background-color: #2d2d2d; color: white; }",
+                              skin: true,
+                            }}
+                          />
+                          {formik.touched.description &&
+                            formik.errors.description && (
+                              <Typography sx={{ color: "#ff0000ff", mt: 1 }}>
+                                {formik.errors.description as string}
+                              </Typography>
+                            )}
+                        </Grid>
+                      </Grid>
+                    )}
+
+                    {activeStep === 2 && (
+                      <Grid container spacing={4} sx={{ mt: 1 }}>
+                        <Grid item xs={12} md={6}>
+                          <Typography
+                            variant="h6"
+                            sx={{ color: "#fff", mb: 2, fontSize: "16px" }}
+                          >
+                            Cover Photo (Required)
+                          </Typography>
+
+                          <Box
+                            sx={{
+                              width: "100%",
+                              height: isXs ? 200 : 250,
+                              border: "2px dashed rgba(255,255,255,0.7)",
+                              borderRadius: 4,
+                              backgroundColor: "#1d1d1d",
+                              mx: "auto",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              position: "relative",
+                              overflow: "hidden",
+                            }}
+                          >
+                            <input
+                              id="upload-cover"
+                              type="file"
+                              accept="image/*"
+                              onChange={onCoverFileChange}
+                              style={{ display: "none" }}
+                            />
+                            <label
+                              htmlFor="upload-cover"
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                display: "block",
+                              }}
+                            >
+                              {coverPreview ? (
+                                <>
+                                  <img
+                                    src={coverPreview}
+                                    alt="Cover Preview"
+                                    style={{
+                                      width: "100%",
+                                      height: "100%",
+                                      objectFit: "cover",
+                                      borderRadius: "16px",
+                                    }}
+                                  />
+                                  <IconButton
+                                    component="span"
+                                    sx={{
+                                      position: "absolute",
+                                      bottom: 8,
+                                      right: 8,
+                                      backgroundColor: "rgba(0,0,0,0.6)",
+                                      color: "#fff",
+                                      "&:hover": {
+                                        backgroundColor: "rgba(0,0,0,0.8)",
+                                      },
+                                    }}
+                                  >
+                                    <EditIcon />
+                                  </IconButton>
+                                </>
+                              ) : (
+                                <Box
+                                  sx={{
+                                    width: "100%",
+                                    height: "100%",
+                                    display: "grid",
+                                    placeItems: "center",
+                                  }}
+                                >
+                                  <PhotoCameraOutlinedIcon
+                                    sx={{ fontSize: 60, color: "#c2185b" }}
+                                  />
+                                </Box>
+                              )}
+                            </label>
+                          </Box>
+
+                          {formik.touched.coverPhoto &&
+                            typeof formik.errors.coverPhoto === "string" && (
+                              <Typography
+                                color="error"
+                                variant="body2"
+                                sx={{ mt: 1 }}
+                              >
+                                {formik.errors.coverPhoto}
+                              </Typography>
+                            )}
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                          <Typography
+                            variant="h6"
+                            sx={{ color: "#fff", mb: 2, fontSize: "16px" }}
+                          >
+                            Photos (Optional - max 3)
+                          </Typography>
+
+                          <Box>
+                            <Grid container spacing={2}>
+                              {Array.from({ length: MAX_PHOTOS }).map(
+                                (_, i) => (
+                                  <Grid
+                                    key={i}
+                                    item
+                                    xs={4}
+                                    md={4}
+                                    sx={{
+                                      display: "flex",
+                                      justifyContent: "center",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <Tile
+                                      i={i}
+                                      showAddBadge={showAddBadgeIndex === i}
+                                    />
+                                  </Grid>
+                                )
+                              )}
+                            </Grid>
+
+                            {formik.values.photos.length > 0 && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  gap: 1,
+                                  mt: 1,
+                                  justifyContent: "flex-start",
+                                }}
+                              >
+                                {formik.values.photos.map((p, idx) => (
+                                  <Box
+                                    key={idx}
+                                    sx={{
+                                      width: 110,
+                                      height: 110,
+                                      borderRadius: 2,
+                                      overflow: "hidden",
+                                      position: "relative",
+                                      backgroundColor: "#000",
+                                      border:
+                                        "1px solid rgba(255,255,255,0.06)",
+                                    }}
+                                  >
+                                    <img
+                                      src={
+                                        typeof p === "string"
+                                          ? p
+                                          : (p as any).name
+                                          ? URL.createObjectURL(p as File)
+                                          : (p as unknown as string)
+                                      }
+                                      alt={`photo-${idx}`}
+                                      style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                      }}
+                                    />
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => removePhoto(idx)}
+                                      sx={{
+                                        position: "absolute",
+                                        top: 6,
+                                        right: 6,
+                                        backgroundColor: "rgba(0,0,0,0.6)",
+                                        color: "#fff",
+                                        "&:hover": {
+                                          backgroundColor: "rgba(0,0,0,0.8)",
+                                        },
+                                      }}
+                                    >
+                                      <DeleteOutlineIcon fontSize="small" />
+                                    </IconButton>
+                                  </Box>
+                                ))}
+                              </Box>
+                            )}
+
+                            {formik.touched.photos && formik.errors.photos && (
+                              <Typography
+                                color="error"
+                                variant="body2"
+                                sx={{ mt: 1 }}
+                              >
+                                {formik.errors.photos as string}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    )}
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mt: 3,
+                        gap: 2,
+                      }}
+                    >
+                      <Button variant="outlined" onClick={handleBack}>
+                        Back
+                      </Button>
+
+                      <Button
+                        variant="contained"
+                        onClick={handleNext}
+                        disabled={isSubmitting}
+                        startIcon={
+                          isSubmitting && activeStep === steps.length - 1 ? (
+                            <CircularProgress size={18} />
+                          ) : undefined
+                        }
+                      >
+                        {activeStep === steps.length - 1
+                          ? isSubmitting
+                            ? "Submitting…"
+                            : "Submit"
+                          : "Next"}
+                      </Button>
+                    </Box>
+                  </form>
+                </Box>
+              </Paper>
+            </Container>
+
+            <Snackbar
+              open={openSnackbar}
+              anchorOrigin={{ vertical: "top", horizontal: "right" }}
+              autoHideDuration={5000}
+              onClose={() => setOpenSnackbar(false)}
+            >
+              <Alert
+                severity="success"
+                sx={{
+                  backgroundColor: "white",
+                  color: "#fc4c82",
+                  fontWeight: "bold",
+                  alignItems: "center",
+                  borderRight: "5px solid #fc4c82",
+                }}
+              >
+                {message}
+              </Alert>
+            </Snackbar>
+          </Box>
+        </LocalizationProvider>
+      </ThemeProvider>
+      <Box sx={{ height: isXs ? "63.2px" : "0" }} />
+      <Footer />
+    </>
+  );
+};
+
+export default EditEventForm;
