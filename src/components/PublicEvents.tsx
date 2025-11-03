@@ -225,11 +225,10 @@ const PublicEvents: React.FC = () => {
       <Box
         sx={{
           bgcolor: "#0A0A0A",
-          mt: 2,
           color: "white",
         }}
       >
-        <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 }, pb: { xs: 8 } }}>
+        <Container maxWidth="xl" sx={{ px: { xs: 0, sm: 0 }, pb: { xs: 8 } }}>
           {isMobile ? (
             <>
               <Box
