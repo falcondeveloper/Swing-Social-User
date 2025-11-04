@@ -1029,7 +1029,7 @@ const EditEventForm: React.FC = () => {
                             }}
                             disableClearable
                             disablePortal
-                            PopperComponent={CustomPopper}
+                            PopperComponent={isXs ? CustomPopper : undefined}
                             isOptionEqualToValue={(option: any, value: any) =>
                               option.City === value.City
                             }

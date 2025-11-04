@@ -617,7 +617,6 @@ const ProfileDetail: React.FC = () => {
       [field]: value,
     }));
 
-    // Clear errors
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }

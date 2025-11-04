@@ -1089,7 +1089,7 @@ const CreateEventForm: React.FC = () => {
                             }}
                             disableClearable
                             disablePortal
-                            PopperComponent={CustomPopper}
+                            PopperComponent={isXs ? CustomPopper : undefined}
                             isOptionEqualToValue={(option, value) =>
                               option.City === value.City
                             }
@@ -1110,11 +1110,6 @@ const CreateEventForm: React.FC = () => {
                             onChange={(event, newValue) => {
                               if (newValue?.City) {
                                 formik.setFieldValue("venue", newValue.City);
-                                if (
-                                  document.activeElement instanceof HTMLElement
-                                ) {
-                                  document.activeElement.blur();
-                                }
                               }
                             }}
                             renderInput={(params) => (
