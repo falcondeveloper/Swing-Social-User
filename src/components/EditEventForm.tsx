@@ -1045,7 +1045,7 @@ const EditEventForm: React.FC = () => {
                                 event?.type === "change" ||
                                 event?.type === "click"
                               )
-                                setCityInput(newInputValue.trim());
+                                setCityInput(newInputValue);
                             }}
                             onChange={(event, newValue: any) => {
                               if (newValue?.City) {

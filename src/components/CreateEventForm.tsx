@@ -1104,9 +1104,8 @@ const CreateEventForm: React.FC = () => {
                               if (
                                 event?.type === "change" ||
                                 event?.type === "click"
-                              ) {
-                                setCityInput(newInputValue.trim());
-                              }
+                              )
+                                setCityInput(newInputValue);
                             }}
                             onChange={(event, newValue) => {
                               if (newValue?.City) {
