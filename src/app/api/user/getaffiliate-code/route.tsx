@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         success: true,
         affiliate_code: code,
-        affiliate_link: `https://swingsocial.co/?aff=${code}`,
+        affiliate_link: `https://swingsocial.co?aff=${code}`,
       });
     } finally {
       client.release();

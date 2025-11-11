@@ -433,6 +433,7 @@ const LoginPage = () => {
                     error={formik.touched.email && Boolean(formik.errors.email)}
                     helperText={formik.touched.email && formik.errors.email}
                     sx={fieldSx}
+                    autoComplete="new-email"
                   />
                 ) : (
                   <>
@@ -537,17 +538,18 @@ const LoginPage = () => {
                         }
                         helperText={formik.touched.email && formik.errors.email}
                         sx={fieldSx}
+                        autoComplete="new-email"
                       />
                     )}
                   </>
                 )}
-                {/* 🔑 Password field only for password login */}
                 {loginMethod === "password" && (
                   <TextField
                     fullWidth
                     label="Password"
                     name="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
                     value={formik.values.password}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
@@ -573,7 +575,6 @@ const LoginPage = () => {
                     sx={fieldSx}
                   />
                 )}
-                {/* Submit Button stays same */}
                 <Button
                   fullWidth
                   type="submit"
@@ -610,7 +611,6 @@ const LoginPage = () => {
                     "Send Phone Code"
                   )}{" "}
                 </Button>
-
                 <Typography
                   onClick={() => router.push("/forgot-password")}
                   sx={{
@@ -624,7 +624,6 @@ const LoginPage = () => {
                   {" "}
                   <Link href="forgot-password">Lost your password?</Link>{" "}
                 </Typography>{" "}
-
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   {" "}
                   <Box
@@ -649,7 +648,6 @@ const LoginPage = () => {
                     }}
                   />{" "}
                 </Box>{" "}
-
                 {loginMethod === "password" ? (
                   <Button
                     fullWidth
@@ -711,7 +709,6 @@ const LoginPage = () => {
                     Login with Password
                   </Button>
                 )}
-                
                 <Typography
                   sx={{
                     mt: 3,

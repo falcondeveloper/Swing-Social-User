@@ -23,8 +23,16 @@ import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
+import MembershipCheckPageContent from "@/app/membership-check/page";
 
 type Params = Promise<{ id: string }>;
+
+interface ReferralValidationResult {
+  valid: boolean;
+  affiliateCode?: string | null;
+  profileId?: string | null;
+  message?: string;
+}
 
 const theme = createTheme({
   palette: {
@@ -124,12 +132,15 @@ export default function Pricing({ params }: { params: Params }) {
   const [firstMonthFree, setFirstMonthFree] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [getAffCode, setGetAffCode] = useState<any>("");
+  const [checkMemberShip, setCheckMembership] = useState<any>("");
 
   useEffect(() => {
     setFullName(localStorage.getItem("fullName") || "");
     setUsername(localStorage.getItem("userName") || "");
     setEmail(localStorage.getItem("email") || "");
     setPassword(localStorage.getItem("password") || "");
+    setGetAffCode(localStorage.getItem("affiliate_code") || "");
 
     const initialize = async () => {
       const { id } = await params;
@@ -256,6 +267,46 @@ export default function Pricing({ params }: { params: Params }) {
     });
   };
 
+  const validateReferral = async (
+    code?: string | null
+  ): Promise<ReferralValidationResult> => {
+    if (!code) {
+      console.log("No referral code provided — skipping validation.");
+      return { valid: false, message: "No referral code provided" };
+    }
+
+    try {
+      const res = await fetch("/api/user/affiliate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+
+      const json = await res.json();
+
+      if (res.ok && json?.is_valid) {
+        return {
+          valid: true,
+          affiliateCode: json?.affiliate_code,
+          profileId: json?.profile_id,
+          message: json?.message,
+        };
+      } else {
+        console.warn("❌", json?.message || "Referral code not found");
+        return {
+          valid: false,
+          message: json?.message || "Referral code not found",
+        };
+      }
+    } catch (err) {
+      console.error("Referral validation error:", err);
+      return {
+        valid: false,
+        message: "Unable to validate referral at this time",
+      };
+    }
+  };
+
   const handleLogin = async (userName: string, password: string) => {
     const response = await fetch("/api/user/login", {
       method: "POST",
@@ -264,11 +315,39 @@ export default function Pricing({ params }: { params: Params }) {
     });
 
     const data = await response.json();
+
+    if (getAffCode) {
+      try {
+        const isValid = await validateReferral(getAffCode);
+        if (isValid) {
+          const referralRes = await fetch("/api/user/create-referral", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              affiliateCode: getAffCode,
+              referredUserId: data.currentProfileId,
+              referredUserName: data.currentuserName,
+              referredEmail: email,
+              subscriptionId: null,
+              memberShipCheck: data?.memberShip === 0 ? "Free" : "Paid",
+            }),
+          });
+          const referralData = await referralRes.json();
+          localStorage.removeItem("affiliate_code");
+          setGetAffCode(null);
+        } else {
+          console.warn("Affiliate code invalid or not available:", getAffCode);
+        }
+      } catch (err) {
+        console.error("Referral API error:", err);
+      }
+    }
     localStorage.setItem("loginInfo", data.jwtToken);
     localStorage.setItem("logged_in_profile", data.currentProfileId);
     localStorage.setItem("profileUsername", data.currentuserName);
     localStorage.setItem("memberalarm", data.memberAlarm);
     localStorage.setItem("memberShip", data.memberShip);
+    localStorage.removeItem("password");
     router.push("/home");
   };
 

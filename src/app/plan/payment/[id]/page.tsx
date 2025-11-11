@@ -350,8 +350,11 @@ export default function Payment(props: { params: Params }) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               affiliateCode: getAffCode,
-              referredProfileId: data.profileId,
-              source: "direct",
+              referredUserId: data.currentProfileId,
+              referredUserName: data.currentuserName,
+              referredEmail: email,
+              subscriptionId: null,
+              memberShipCheck: data?.memberShip === 0 ? "Free" : "Paid",
             }),
           });
           const referralData = await referralRes.json();

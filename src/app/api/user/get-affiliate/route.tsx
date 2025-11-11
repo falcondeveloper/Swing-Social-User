@@ -9,37 +9,57 @@ const pool = new Pool({
   port: 5432,
 });
 
-export async function POST(req: Request) {
-  try {
-    const { affiliateId } = await req.json();
+type Body = {
+  affiliateCode?: string;
+  limit?: number;
+};
 
-    if (!affiliateId) {
+export async function POST(req: Request) {
+  let client;
+  try {
+    const body: Body = await req.json();
+
+    const affiliateCode = body.affiliateCode?.toString().trim();
+    const limit =
+      body.limit && Number.isFinite(body.limit) && body.limit > 0
+        ? Math.floor(body.limit)
+        : 50;
+
+    if (!affiliateCode) {
       return NextResponse.json(
-        { success: false, error: "affiliateId is required" },
+        { success: false, error: "affiliateCode is required" },
         { status: 400 }
       );
     }
 
-    const result = await pool.query(`SELECT * FROM get_affiliate_stats($1)`, [
-      affiliateId,
-    ]);
+    client = await pool.connect();
+    const sql = `SELECT * FROM public.get_affiliate_stats($1::text, $2::integer)`;
+    const res = await client.query(sql, [affiliateCode, limit]);
 
-    if (!result.rows || result.rows.length === 0) {
+    if (!res || res.rowCount === 0) {
       return NextResponse.json(
-        { success: true, message: "No data available for this affiliate." },
+        {
+          success: true,
+          message: "No data available for this affiliate.",
+          stats: null,
+        },
         { status: 200 }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      stats: result.rows[0],
-    });
+    const stats = res.rows[0];
+
+    return NextResponse.json({ success: true, stats }, { status: 200 });
   } catch (err: any) {
     console.error("Affiliate stats error:", err);
     return NextResponse.json(
-      { success: false, error: "Internal server error: " + err.message },
+      {
+        success: false,
+        error: "Internal server error: " + (err?.message ?? err),
+      },
       { status: 500 }
     );
+  } finally {
+    if (client) client.release();
   }
 }

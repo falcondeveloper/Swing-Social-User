@@ -234,9 +234,6 @@ const RegisterPage = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const host = window.location.host.replace(/^www\./, "");
-      setSupportEmail(`support@${host}`);
-
       const urlParams = new URLSearchParams(window.location.search);
       const aff = urlParams.get("aff");
       if (aff) {
@@ -888,7 +885,7 @@ const RegisterPage = () => {
                   inputValue={cityInput}
                   onInputChange={(event, newInputValue) => {
                     if (event?.type === "change" || event?.type === "click") {
-                      setCityInput(newInputValue.trim());
+                      setCityInput(newInputValue);
                     }
                   }}
                   onChange={(event, newValue) => {

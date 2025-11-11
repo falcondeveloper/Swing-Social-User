@@ -515,6 +515,22 @@ const BillingUpgrade: React.FC = () => {
     setFormError("");
   };
 
+  const handleUpdateAffiliate = async (userid: string) => {
+    try {
+      const response = await fetch("/api/user/upgrade-anytime", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profileId: userid,
+        }),
+      });
+
+      const data = await response.json();
+    } catch (error) {
+      console.error("Error updating affiliate:", error);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!validateStep(2)) return;
     if (!isValidPromoCode && promoCode) {
@@ -600,6 +616,7 @@ const BillingUpgrade: React.FC = () => {
         }
 
         await handleUpdateMembershipStatus(profileId, pprice);
+        await handleUpdateAffiliate(profileId);
 
         Swal.fire({
           title: "Payment Successful! 🎉",

@@ -131,6 +131,11 @@ const Footer = () => {
                     url: "https://swingsocial.co/contact-us/",
                     internal: false,
                   },
+                  // {
+                  //   name: "Affiliate",
+                  //   url: "/earn-money-referrals",
+                  //   internal: true,
+                  // },
                 ].map((item) => (
                   <Typography
                     key={item.name}

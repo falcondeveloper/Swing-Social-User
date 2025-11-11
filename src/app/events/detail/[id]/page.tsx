@@ -408,21 +408,6 @@ export default function EventDetail(props: { params: Params }) {
   const handleCloseHere = () => setOpen(false);
 
   const handleSaveRsvp = async (eventId: any) => {
-    // if (membership == 0) {
-    //   return Swal.fire({
-    //     title: `Upgrade your membership.`,
-    //     text: `Sorry, you need to upgrade your membership.`,
-    //     icon: "error",
-    //     showCancelButton: true,
-    //     confirmButtonText: "Upgrade the membership",
-    //     cancelButtonText: "Continue as the free member",
-    //   }).then((result) => {
-    //     if (result.isConfirmed) {
-    //       router.push("/membership");
-    //     }
-    //   });
-    // }
-
     const response = await fetch("/api/user/events/rsvp/", {
       method: "POST",
       headers: {
@@ -1093,12 +1078,14 @@ export default function EventDetail(props: { params: Params }) {
                       </>
                     ) : (
                       <>
-                        <MTicketListComponent
-                          tickets={tickets}
-                          onTicketsChange={handleTicketsChange}
-                          summary={summary}
-                          emailDescriptions={emailDescriptionData}
-                        />
+                        {tickets?.length > 0 && (
+                          <MTicketListComponent
+                            tickets={tickets}
+                            onTicketsChange={handleTicketsChange}
+                            summary={summary}
+                            emailDescriptions={emailDescriptionData}
+                          />
+                        )}
                       </>
                     )}
                   </>
@@ -1233,6 +1220,7 @@ export default function EventDetail(props: { params: Params }) {
               open={showDetail}
               userid={selectedUserId}
             />
+
             <Grid container spacing={3} sx={{ mt: 1 }}>
               {/* Left Column - 8/12 width */}
               <Grid item xs={12} md={8}>
@@ -1825,61 +1813,65 @@ export default function EventDetail(props: { params: Params }) {
                       </>
                     ) : (
                       <>
-                        <Card
-                          sx={{
-                            mb: 4,
-                            bgcolor: "#1a1a1a",
-                            borderRadius: 2,
-                            border: "0.0625rem solid rgb(55, 58, 64)",
-                          }}
-                        >
-                          <CardContent>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: 2,
-                                px: 4,
-                                pt: 2,
-                              }}
-                            >
-                              <Typography
-                                variant="h5"
-                                sx={{ fontWeight: "bold", color: "white" }}
-                              >
-                                Available Tickets
-                              </Typography>
-                              <IconButton
-                                disabled={membership === 0 ? true : false}
-                                onClick={() => setExpanded(!expanded)}
-                                sx={{
-                                  color: "white",
-                                  transition: "transform 0.3s ease",
-                                  transform: expanded
-                                    ? "rotate(45deg)"
-                                    : "rotate(0deg)",
-                                }}
-                              >
-                                <AddIcon />
-                              </IconButton>
-                            </Box>
-                            <Grow in={expanded} timeout={500}>
+                        {tickets?.length > 0 && (
+                          <Card
+                            sx={{
+                              mb: 4,
+                              bgcolor: "#1a1a1a",
+                              borderRadius: 2,
+                              border: "0.0625rem solid rgb(55, 58, 64)",
+                            }}
+                          >
+                            <CardContent>
                               <Box
                                 sx={{
-                                  display: expanded ? "block" : "none",
-                                  px: 5,
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  mb: 2,
+                                  px: 4,
+                                  pt: 2,
                                 }}
                               >
-                                <DTicketListComponent
-                                  tickets={tickets}
-                                  emailDescriptions={emailDescriptionData}
-                                  onTicketsChange={handleTicketsChange}
-                                />
+                                <Typography
+                                  variant="h5"
+                                  sx={{ fontWeight: "bold", color: "white" }}
+                                >
+                                  Available Tickets
+                                </Typography>
+                                <IconButton
+                                  disabled={membership === 0 ? true : false}
+                                  onClick={() => setExpanded(!expanded)}
+                                  sx={{
+                                    color: "white",
+                                    transition: "transform 0.3s ease",
+                                    transform: expanded
+                                      ? "rotate(45deg)"
+                                      : "rotate(0deg)",
+                                  }}
+                                >
+                                  <AddIcon />
+                                </IconButton>
                               </Box>
-                            </Grow>
-                          </CardContent>
-                        </Card>
+                              <Grow in={expanded} timeout={500}>
+                                <Box
+                                  sx={{
+                                    display: expanded ? "block" : "none",
+                                    px: 5,
+                                  }}
+                                >
+                                  <>
+                                    <DTicketListComponent
+                                      tickets={tickets}
+                                      emailDescriptions={emailDescriptionData}
+                                      onTicketsChange={handleTicketsChange}
+                                    />
+                                  </>
+                                </Box>
+                              </Grow>
+                            </CardContent>
+                          </Card>
+                        )}
                       </>
                     )}
                   </>

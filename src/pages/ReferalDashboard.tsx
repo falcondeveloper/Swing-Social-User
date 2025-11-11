@@ -1,90 +1,159 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  Button,
-  TextField,
-  IconButton,
   ThemeProvider,
   createTheme,
   Tabs,
   Tab,
-  Grid,
+  useMediaQuery,
+  Stack,
 } from "@mui/material";
-import { DownloadIcon, ShareIcon, PlusIcon, TrashIcon } from "lucide-react";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import QRCode from "react-qr-code";
-import { toast } from "react-toastify";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import * as htmlToImage from "html-to-image";
-import Link from "next/link";
-import AffiliateBanner from "./AffiliateBanner";
-import AffiliateDashboard from "./AffiliateDashboard";
+import AffiliateHistory from "./affiliateData/AffiliateHistory";
+import AffiliatePayment from "./affiliateData/AffiliatePayment";
+import AffiliateBanners from "./affiliateData/AffiliateBanners";
+import { jwtDecode } from "jwt-decode";
+import Swal from "sweetalert2";
 
 const theme = createTheme({
   palette: {
-    primary: { main: "#FF2D55", light: "#FF617B", dark: "#CC1439" },
-    secondary: { main: "#7000FF", light: "#9B4DFF", dark: "#5200CC" },
-    success: { main: "#00D179" },
-    background: { default: "#0A0118" },
+    mode: "dark",
+    primary: { main: "#FF2D55" },
+    secondary: { main: "#7000FF" },
+    background: {
+      default: "#000000",
+      paper: "rgba(255,255,255,0.03)",
+    },
+    text: {
+      primary: "#EAECEF",
+      secondary: "rgba(234,236,239,0.75)",
+    },
   },
-  typography: { fontFamily: '"Poppins", "Roboto", "Arial", sans-serif' },
+
+  typography: {
+    h5: { color: "#F5F7FA", fontWeight: 700 },
+    h6: { color: "#F5F7FA" },
+    body1: { color: "#EAECEF" },
+    body2: { color: "rgba(234,236,239,0.85)" },
+  },
+
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          background: "rgba(255,255,255,0.03)",
+          color: "#EAECEF",
+          border: "1px solid rgba(255,255,255,0.06)",
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          color: "#EAECEF",
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+        },
+      },
+    },
+    MuiTypography: {
+      styleOverrides: {
+        root: {
+          color: "#EAECEF",
+        },
+      },
+    },
+    MuiTabs: {
+      styleOverrides: {
+        root: {
+          minHeight: 36,
+        },
+        indicator: {
+          background: "linear-gradient(90deg,#FF2D55,#7000FF)",
+          height: 3,
+          borderRadius: 3,
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          textTransform: "none",
+          color: "rgba(234,236,239,0.75)",
+          fontWeight: 600,
+          minWidth: 100,
+          "&.Mui-selected": {
+            color: "#FFFFFF",
+            textShadow: "0 1px 6px rgba(255,45,85,0.12)",
+          },
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: "none",
+        },
+      },
+    },
+  },
 });
 
-interface Props {
-  affiliateCode?: string | null;
-}
-
-const ReferalDashboard: React.FC<Props> = ({ affiliateCode }) => {
-  const [affiliateLink, setAffiliateLink] = useState<string>("");
-  const [tab, setTab] = useState<number>(0);
-
-  const qrRef = useRef<HTMLDivElement>(null);
+const ReferalDashboard = () => {
+  const [tabIndex, setTabIndex] = useState<number>(0);
+  const [affiliateCode, setAffiliateCode] = useState<string | null>(null);
+  const isSm = useMediaQuery("(max-width:900px)");
 
   useEffect(() => {
-    if (affiliateCode) {
-      setAffiliateLink(`https://swingsocial.co/?aff=${affiliateCode}`);
-    }
-  }, [affiliateCode]);
-
-  const handleCopy = async (text: string) => {
-    await navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard!");
-  };
-
-  const handleDownloadQR = async () => {
-    if (qrRef.current === null) return;
-    try {
-      const dataUrl = await htmlToImage.toPng(qrRef.current);
-      const link = document.createElement("a");
-      link.download = `affiliate-qr-${affiliateCode}.png`;
-      link.href = dataUrl;
-      link.click();
-    } catch (err) {
-      console.error("Failed to download QR code", err);
-    }
-  };
-
-  const handleShare = async () => {
-    if (!affiliateLink) return;
-    const message = `🎉 Join me on SwingSocial!\n\nEarn rewards using my referral link:\n${affiliateLink}`;
-    if (navigator.share) {
+    const fetchAffiliateStatus = async () => {
       try {
-        await navigator.share({
-          title: "Join me on SwingSocial!",
-          text: message,
-          url: affiliateLink,
-        });
+        if (typeof window !== "undefined") {
+          const tokenDevice = localStorage.getItem("loginInfo");
+          if (tokenDevice) {
+            if (!tokenDevice) {
+              Swal.fire({
+                icon: "warning",
+                title: "Not Logged In",
+                text: "Please log in to access the affiliate page.",
+                confirmButtonColor: "#7000FF",
+              });
+              return;
+            }
+            const decodeToken = jwtDecode<any>(tokenDevice);
+            const pid = decodeToken?.profileId;
+
+            const res = await fetch("/api/user/getaffiliate-code", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ profileId: pid }),
+            });
+
+            const data = await res.json();
+            if (data.success) {
+              setAffiliateCode(data.affiliate_code);
+            }
+          }
+        }
       } catch (err) {
-        console.error("Share failed:", err);
+        console.error("Error checking affiliate status:", err);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Unable to check affiliate status. Please try again later.",
+          confirmButtonColor: "#7000FF",
+        });
       }
-    } else {
-      await navigator.clipboard.writeText(message);
-      toast.info("Referral link copied to clipboard!");
-    }
+    };
+
+    fetchAffiliateStatus();
+  }, []);
+
+  const handleTabChange = (_: React.SyntheticEvent, val: number) => {
+    setTabIndex(val);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -93,205 +162,62 @@ const ReferalDashboard: React.FC<Props> = ({ affiliateCode }) => {
       <Box
         sx={{
           minHeight: "100vh",
-          color: "white",
           background:
             "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
-          px: 3,
-          py: 8,
+          py: { xs: 3, sm: 4, md: 6 },
+          color: "text.primary",
         }}
       >
-        {/* Page Heading */}
-        <Typography
-          component="h1"
-          fontWeight="bold"
-          textAlign="center"
-          marginBottom={4}
-          gutterBottom
+        <Box
           sx={{
-            fontSize: {
-              xs: "1.8rem",
-              sm: "2.3rem",
-              md: "3rem",
-              lg: "3.5rem",
-              xl: "4rem",
-            },
-            lineHeight: 1.2,
-            letterSpacing: "0.5px",
-            background: "linear-gradient(90deg,#FF2D55,#7000FF)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            transition: "all 0.3s ease",
-          }}
-        >
-          Affiliate Dashboard
-        </Typography>
-
-        {/* Tabs Menu */}
-        <Tabs
-          value={tab}
-          onChange={(_, v) => setTab(v)}
-          variant="fullWidth"
-          textColor="inherit"
-          sx={{
-            mb: 4,
-            width: "100%",
-            maxWidth: "600px",
+            maxWidth: { xs: 920, sm: 1100, md: 1400 },
             mx: "auto",
-            "& .MuiTab-root": {
-              color: "rgba(255,255,255,0.6)",
-              fontWeight: 600,
-              letterSpacing: "1px",
-              fontSize: "0.95rem",
-              textTransform: "uppercase",
-              minHeight: "48px",
-              minWidth: "auto",
-              flex: 1,
-              transition: "all 0.3s ease",
-            },
-            "& .Mui-selected": {
-              color: "#fff",
-              background: "linear-gradient(90deg,#FF2D55,#7000FF)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            },
-            "& .MuiTabs-indicator": {
-              height: "3px",
-              borderRadius: "3px",
-              background: "linear-gradient(90deg,#FF2D55,#7000FF)",
-              width: "50%",
-              transition: "all 0.4s ease",
-            },
+            px: { xs: 2, sm: 3, md: 4 },
           }}
         >
-          <Tab label="Links" />
-          <Tab label="Banners" />
-          <Tab label="View Reports" />
-        </Tabs>
-
-        {/* ------------------ LINKS SECTION ------------------ */}
-        {tab === 0 && (
-          <Box textAlign="center">
-            {/* QR Section */}
-            <Box mb={6}>
-              <Box
-                ref={qrRef}
-                sx={{
-                  display: "inline-block",
-                  p: 2,
-                  bgcolor: "white",
-                  borderRadius: "12px",
-                  mb: 2,
-                }}
-              >
-                <QRCode value={affiliateLink || ""} size={180} />
-              </Box>
-
-              <Typography variant="body2" sx={{ mb: 2 }}>
-                Share this QR code or copy your unique link below.
-              </Typography>
-
-              <Button
-                onClick={handleDownloadQR}
-                variant="outlined"
-                startIcon={<DownloadIcon size={18} />}
-                sx={{
-                  mt: 1,
-                  borderRadius: "20px",
-                  color: "white",
-                  borderColor: "white",
-                  "&:hover": { background: "rgba(255,255,255,0.1)" },
-                }}
-              >
-                Download QR Code
-              </Button>
-            </Box>
-
-            {/* Default Affiliate Link */}
-            <Box
+          <Stack
+            direction={isSm ? "column" : "row"}
+            alignItems={isSm ? "stretch" : "center"}
+            justifyContent="space-between"
+            spacing={isSm ? 1 : 0}
+            sx={{ mb: { xs: 2, sm: 3 } }}
+          >
+            <Typography
+              variant="h5"
               sx={{
-                mt: 3,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                maxWidth: "700px",
-                mx: "auto",
-                bgcolor: "rgba(255,255,255,0.08)",
-                borderRadius: "10px",
-                overflow: "hidden",
+                mr: { md: 3 },
+                fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.5rem" },
               }}
             >
-              <TextField
-                fullWidth
-                value={affiliateLink}
-                InputProps={{
-                  readOnly: true,
-                  disableUnderline: true,
-                  style: {
-                    color: "white",
-                    fontFamily: "monospace",
-                    fontSize: "0.95rem",
-                  },
-                }}
-                variant="outlined"
-                sx={{
-                  "& .MuiOutlinedInput-root": { border: "none", pr: 0 },
-                }}
-              />
-              <Box sx={{ display: "flex", alignItems: "center", pr: 1 }}>
-                <IconButton
-                  onClick={() => handleCopy(affiliateLink)}
-                  sx={{ color: "white" }}
-                >
-                  <ContentCopyIcon />
-                </IconButton>
-                <IconButton onClick={handleShare} sx={{ color: "white" }}>
-                  <ShareIcon />
-                </IconButton>
-              </Box>
-            </Box>
-          </Box>
-        )}
+              Affiliate Center
+            </Typography>
 
-        {/* ------------------ BANNERS SECTION ------------------ */}
-        {tab === 1 && (
-          <Box>
-            <Typography
-              variant="h4"
-              fontWeight="bold"
-              gutterBottom
-              textAlign="center"
+            <Tabs
+              value={tabIndex}
+              onChange={handleTabChange}
+              textColor="inherit"
+              variant={isSm ? "scrollable" : "standard"}
+              scrollButtons={isSm ? "auto" : false}
+              allowScrollButtonsMobile
               sx={{
-                background: "linear-gradient(90deg,#FF2D55,#7000FF)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
+                mt: isSm ? 1 : 0,
+                minHeight: 36,
               }}
             >
-              Affiliate Banners
-            </Typography>
+              <Tab label="My Referrals" />
+              <Tab label="Payment Details" />
+              <Tab label="Banners & Links" />
+            </Tabs>
+          </Stack>
 
-            <Typography
-              variant="body2"
-              textAlign="center"
-              sx={{ mb: 4, opacity: 0.8 }}
-            >
-              Use these banners in your website, blog, or newsletters. Each one
-              includes your affiliate link.
-            </Typography>
-
-            <Grid container spacing={3} justifyContent="center">
-              <Grid item xs={12} sm={6} md={4}>
-                <AffiliateBanner affiliateCode={affiliateLink} />
-              </Grid>
-            </Grid>
+          <Box sx={{ mt: { xs: 1, sm: 2 } }}>
+            {tabIndex === 0 && <AffiliateHistory />}
+            {tabIndex === 1 && <AffiliatePayment />}
+            {tabIndex === 2 && (
+              <AffiliateBanners affiliateCode={affiliateCode} />
+            )}
           </Box>
-        )}
-
-        {/* ------------------ AFFILIATE DASHBOARD SECTION ------------------ */}
-        {tab === 2 && (
-          <>
-            <AffiliateDashboard />
-          </>
-        )}
+        </Box>
       </Box>
       <Footer />
     </ThemeProvider>
