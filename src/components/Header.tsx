@@ -578,7 +578,6 @@ const Header = () => {
                     badge: isNewMessage,
                   },
                   { icon: Heart, label: "Matches", path: "/matches" },
-                  // { icon: Heart, label: "Earn $$ for Referrals!", path: "/earn-money-referrals" },
                 ].map((item, index) => {
                   const Icon = item.icon;
                   const isActive =

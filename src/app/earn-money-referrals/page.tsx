@@ -18,6 +18,7 @@ import Swal from "sweetalert2";
 import AffiliateHistory from "@/pages/affiliateData/AffiliateHistory";
 import AffiliateBanners from "@/pages/affiliateData/AffiliateBanners";
 import AffiliatePayment from "@/pages/affiliateData/AffiliatePayment";
+import ReferalForm from "@/components/ReferalForm";
 
 const theme = createTheme({
   palette: {
@@ -104,31 +105,43 @@ const theme = createTheme({
 
 const page = () => {
   const [tabIndex, setTabIndex] = useState<number>(0);
-  const [affiliateCode, setAffiliateCode] = useState<string | null>(null);
   const isSm = useMediaQuery("(max-width:900px)");
+  const [affiliateCode, setAffiliateCode] = useState<string | null>(null);
+  const [affiliateStatus, setAffiliateStatus] = useState<boolean | null>(null);
 
   useEffect(() => {
     const fetchAffiliateStatus = async () => {
       try {
         if (typeof window !== "undefined") {
           const tokenDevice = localStorage.getItem("loginInfo");
-          if (tokenDevice) {
-            if (!tokenDevice) {
-              Swal.fire({
-                icon: "warning",
-                title: "Not Logged In",
-                text: "Please log in to access the affiliate page.",
-                confirmButtonColor: "#7000FF",
-              });
-              return;
-            }
-            const decodeToken = jwtDecode<any>(tokenDevice);
-            const pid = decodeToken?.profileId;
 
+          if (!tokenDevice) {
+            Swal.fire({
+              icon: "warning",
+              title: "Not Logged In",
+              text: "Please log in to access the affiliate page.",
+              confirmButtonColor: "#7000FF",
+            });
+            return;
+          }
+
+          const decodeToken = jwtDecode<any>(tokenDevice);
+          const userId = decodeToken?.profileId;
+
+          const statusRes = await fetch("/api/user/check-affiliate-status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId }),
+          });
+
+          const statusData = await statusRes.json();
+          setAffiliateStatus(statusData.check_affiliate_form_status);
+
+          if (statusData.check_affiliate_form_status === true) {
             const res = await fetch("/api/user/getaffiliate-code", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ profileId: pid }),
+              body: JSON.stringify({ profileId: userId }),
             });
 
             const data = await res.json();
@@ -155,6 +168,41 @@ const page = () => {
     setTabIndex(val);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const handleReferralSuccess = () => {
+    setAffiliateStatus(true);
+    setAffiliateCode(null);
+    setTabIndex(0);
+  };
+
+  if (affiliateStatus === null) {
+    return (
+      <ThemeProvider theme={theme}>
+        <Header />
+        <Box
+          sx={{
+            minHeight: "50vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Typography>Loading...</Typography>
+        </Box>
+        <Footer />
+      </ThemeProvider>
+    );
+  }
+
+  if (affiliateStatus === false) {
+    return (
+      <ThemeProvider theme={theme}>
+        <Header />
+        <ReferalForm onSuccess={handleReferralSuccess} />
+        <Footer />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>
