@@ -175,7 +175,7 @@ const Header = () => {
     },
     { icon: Heart, label: "Matches", path: "/matches" },
     { icon: Calendar, label: "Events", path: "/events" },
-    { icon: "/images/dollar_img.png", label: "Earn $$ for Referrals!", path: "/earn-money-referrals" },
+    // { icon: "/images/dollar_img.png", label: "Earn $$ for Referrals!", path: "/earn-money-referrals" },
   ];
 
   useEffect(() => {
