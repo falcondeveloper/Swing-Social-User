@@ -849,9 +849,18 @@ const ReferalForm = ({
                         </Typography>
                       }
                       sx={{
-                        alignItems: "flex-start",
                         mt: 0.3,
                         ml: 0,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                      componentsProps={{
+                        typography: {
+                          sx: {
+                            display: "flex",
+                            alignItems: "center",
+                          },
+                        },
                       }}
                     />
 
