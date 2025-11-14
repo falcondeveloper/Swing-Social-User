@@ -324,9 +324,7 @@ export default function UploadAvatar({ params }: { params: Params }) {
                     </Step>
                   ))}
                 </Stepper>
-                <Box
-                  sx={{ width: "100%", maxWidth: 600, mx: "auto", mb: 2 }}
-                ></Box>
+
                 <Grid>
                   <Typography
                     sx={{
