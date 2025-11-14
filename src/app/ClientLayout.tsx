@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -23,12 +23,14 @@ import * as Yup from "yup";
 import Cropper from "react-easy-crop";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import Snackbar, { SnackbarCloseReason } from "@mui/material/Snackbar";
+import { usePathname } from "next/navigation";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
 }
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
+  const pathname = usePathname();
   const [openDialog, setOpenDialog] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [avatarImage, setAvatarImage] = useState<string | null>(null);
@@ -40,15 +42,86 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const [snack, setSnack] = useState({ open: false, message: "" });
   const [uploading, setUploading] = useState(false);
 
+  const checkAvatarForProfile = useCallback(async (pid: string | null) => {
+    if (!pid) return;
+
+    try {
+      const res = await fetch("/api/user/profile/profile-img-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: pid }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        console.error("profile-img-check failed:", json);
+        setOpenDialog(true);
+        return;
+      }
+
+      const avatar = json?.avatar;
+
+      if (avatar === null || avatar === "") {
+        setOpenDialog(true);
+      } else {
+        setOpenDialog(false);
+      }
+    } catch (err) {
+      console.error("Profile check error:", err);
+    }
+  }, []);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const tokenDevice = localStorage.getItem("loginInfo");
       if (tokenDevice) {
-        const decodeToken = jwtDecode<any>(tokenDevice);
-        setProfileId(decodeToken?.profileId);
+        try {
+          const decodeToken = jwtDecode<any>(tokenDevice);
+          setProfileId(decodeToken?.profileId || null);
+        } catch (err) {
+          console.error("jwt decode failed:", err);
+          setProfileId(null);
+        }
+      } else {
+        setProfileId(null);
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (!profileId) return;
+    checkAvatarForProfile(profileId);
+  }, [profileId, checkAvatarForProfile]);
+
+  useEffect(() => {
+    if (!profileId) return;
+    checkAvatarForProfile(profileId);
+  }, [pathname]);
+
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key === "loginInfo") {
+        const tokenDevice = localStorage.getItem("loginInfo");
+        if (tokenDevice) {
+          try {
+            const decodeToken = jwtDecode<any>(tokenDevice);
+            const newPid = decodeToken?.profileId || null;
+            setProfileId(newPid);
+            if (newPid) checkAvatarForProfile(newPid);
+          } catch (err) {
+            console.error("jwt decode failed (storage event):", err);
+          }
+        } else {
+          setProfileId(null);
+          setOpenDialog(false);
+        }
+      }
+    }
+
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [checkAvatarForProfile]);
 
   useEffect(() => {
     const preventDefault = (e: Event) => {
@@ -348,7 +421,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                   textAlign: "center",
                   color: "#ffffffff",
                   fontWeight: "bold",
-                  fontSize: 'clamp(0.875rem, 1.8vw, 1.05rem)',
+                  fontSize: "clamp(0.875rem, 1.8vw, 1.05rem)",
                   mb: 1,
                 }}
               >
@@ -365,7 +438,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                     fontWeight: "bold",
                     mb: 2,
                     textAlign: "center",
-                    fontSize: { xs: '0.98rem', sm: '1.05rem', md: '1.15rem' },
+                    fontSize: { xs: "0.98rem", sm: "1.05rem", md: "1.15rem" },
                   }}
                 >
                   Primary Profile Picture
@@ -442,7 +515,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                   color: "#ffffffff",
                   fontWeight: "bold",
                   mt: 2,
-                  fontSize: { xs: '0.625rem', sm: '0.7rem', md: '0.75rem' },
+                  fontSize: { xs: "0.625rem", sm: "0.7rem", md: "0.75rem" },
                 }}
               >
                 Please upload a clear, front-facing photo — no nudity, no
