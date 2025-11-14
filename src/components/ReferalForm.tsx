@@ -94,17 +94,17 @@ const validationSchema = Yup.object().shape({
   website: Yup.string().nullable(),
   whatsapp: Yup.string().nullable(),
   paymentMethod: Yup.string().required("Please select a payment method."),
-  paypalEmail: Yup.string().when(
-    "paymentMethod",
-    (paymentMethod: unknown, schema) => {
-      const method = paymentMethod as string;
-      return method === "paypal"
-        ? schema
-            .email("Enter a valid PayPal email address.")
-            .required("PayPal email is required.")
-        : schema.notRequired();
-    }
-  ),
+  paypalEmail: Yup.string()
+    .nullable()
+    .when("paymentMethod", {
+      is: (val: string) => val === "paypal",
+      then: (schema) =>
+        schema
+          .trim()
+          .email("Enter a valid PayPal email address.")
+          .required("PayPal email is required."),
+      otherwise: (schema) => schema.notRequired().nullable(),
+    }),
 
   agreeToTerms: Yup.boolean().oneOf(
     [true],
@@ -167,6 +167,8 @@ const ReferalForm = ({
       agreeToTerms: false,
     },
     validationSchema,
+    validateOnChange: true,
+    validateOnBlur: true,
     onSubmit: async (values, { resetForm, setSubmitting }) => {
       try {
         const payload = { ...values, profileId };
@@ -243,6 +245,45 @@ const ReferalForm = ({
     },
   });
 
+  useEffect(() => {
+    if (formik.values.paymentMethod !== "paypal") {
+      if (formik.values.paypalEmail) formik.setFieldValue("paypalEmail", "");
+      if (formik.touched.paypalEmail || formik.errors.paypalEmail) {
+        formik.setFieldError("paypalEmail", undefined);
+        formik.setFieldTouched("paypalEmail", false, false);
+      }
+    } else {
+    }
+  }, [formik.values.paymentMethod]);
+
+  const scrollToField = (fieldName: string) => {
+    if (!fieldName) return;
+    const selector = `[name="${fieldName}"]`;
+    const el = document.querySelector(selector) as HTMLElement | null;
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      try {
+        (el as HTMLElement).focus({ preventScroll: true });
+      } catch {}
+    }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const errors = await formik.validateForm();
+    if (Object.keys(errors).length > 0) {
+      const touched: Record<string, boolean> = {};
+      Object.keys(formik.initialValues).forEach((k) => {
+        touched[k] = true;
+      });
+      formik.setTouched(touched);
+      const firstInvalid = Object.keys(errors)[0];
+      scrollToField(firstInvalid);
+      return;
+    }
+    formik.handleSubmit(e);
+  };
+
   return (
     <>
       <ThemeProvider theme={theme}>
@@ -318,7 +359,7 @@ const ReferalForm = ({
                           }
                           secondary={
                             <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
-                              Fill this short form and wait for approval.
+                              Submit this short form
                             </Typography>
                           }
                         />
@@ -530,7 +571,7 @@ const ReferalForm = ({
                   </List>
                 </Box>
               </Box>
-              <Box component="form" noValidate onSubmit={formik.handleSubmit}>
+              <Box component="form" noValidate onSubmit={handleFormSubmit}>
                 <Box>
                   <Typography
                     variant="h5"
@@ -863,56 +904,6 @@ const ReferalForm = ({
                         },
                       }}
                     />
-
-                    <Box
-                      sx={{
-                        mt: 4,
-                        mb: 2,
-                      }}
-                    >
-                      <Typography
-                        variant="h6"
-                        fontWeight="bold"
-                        gutterBottom
-                        color="primary.main"
-                      >
-                        What Happens Next?
-                      </Typography>
-
-                      <Typography
-                        variant="body2"
-                        sx={{ mb: 2, color: "rgba(255,255,255,0.85)" }}
-                      >
-                        After you submit your application, our team will review
-                        your details to ensure everything is complete and
-                        accurate.
-                      </Typography>
-
-                      <Typography
-                        variant="body2"
-                        sx={{ mb: 2, color: "rgba(255,255,255,0.85)" }}
-                      >
-                        Once your application has been reviewed, you’ll be{" "}
-                        <strong>
-                          notified via the email address and phone number
-                        </strong>{" "}
-                        you provided. If your application is accepted, you’ll
-                        receive the{" "}
-                        <strong>Swing Social Affiliate Agreement</strong>{" "}
-                        electronically for signature.
-                      </Typography>
-
-                      <Typography
-                        variant="body2"
-                        sx={{ mb: 2, color: "rgba(255,255,255,0.85)" }}
-                      >
-                        After signing, we’ll create your{" "}
-                        <strong>unique affiliate code</strong> and personalized{" "}
-                        <strong>landing page</strong> for your promotions. You
-                        can share these links to earn commissions — all sales
-                        will be tracked automatically to your account.
-                      </Typography>
-                    </Box>
 
                     <Button
                       type="submit"
