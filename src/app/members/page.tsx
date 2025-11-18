@@ -38,6 +38,7 @@ import MobileSweaping from "@/components/MobileSweaping";
 import { useMediaQuery } from "@mui/material";
 import ProfileCard from "@/components/ProfileCard";
 import { jwtDecode } from "jwt-decode";
+import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 
 export default function Home() {
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
@@ -1202,6 +1203,8 @@ export default function Home() {
         open={showDetail}
         userid={selectedUserId}
       />
+
+      {profileId && <ProfileImgCheckerModel profileId={profileId} />}
 
       <Modal open={isReportModalOpen} onClose={handleReportModalToggle}>
         <Box

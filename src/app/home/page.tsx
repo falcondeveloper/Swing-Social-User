@@ -26,6 +26,7 @@ import app from "../../../firebase";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import { io } from "socket.io-client";
+import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 
 const categories = [
   {
@@ -839,6 +840,8 @@ const Home = () => {
           </Container>
         </Box>
       )}
+
+      {profileId && <ProfileImgCheckerModel profileId={profileId} />}
       <Footer />
     </>
   );

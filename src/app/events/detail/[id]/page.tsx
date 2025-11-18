@@ -63,6 +63,7 @@ import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 import Swal from "sweetalert2";
 import UserProfileModal from "@/components/UserProfileModal";
+import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 
 type Params = Promise<{ id: string }>;
 
@@ -1964,6 +1965,8 @@ export default function EventDetail(props: { params: Params }) {
           </Container>
         )}
       </Grid>
+
+      {profileId && <ProfileImgCheckerModel profileId={profileId} />}
 
       {/* Modal */}
       <Dialog

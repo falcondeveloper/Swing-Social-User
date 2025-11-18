@@ -45,6 +45,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import { sendErrorEmail } from "@/utils/reportError";
+import ProfileImgCheckerModel from "./ProfileImgCheckerModel";
 
 const theme = createTheme({
   palette: {
@@ -200,6 +201,50 @@ const CreateEventForm: React.FC = () => {
     current: number;
     total: number;
   } | null>(null);
+
+  const [stepLoading, setStepLoading] = useState<Record<number, boolean>>({});
+  const [stepError, setStepError] = useState<Record<number, string | null>>({});
+  const [stepResult, setStepResult] = useState<Record<number, any>>({});
+
+  const callApiForStep = async (
+    stepIndex: number,
+    extra?: { stepData?: any; partialValues?: any }
+  ): Promise<{ ok: boolean; data?: any; error?: string }> => {
+    const endpoint = `/api/user/events/step-${stepIndex + 1}`;
+    if (stepLoading[stepIndex])
+      return { ok: true, data: stepResult[stepIndex] };
+
+    setStepLoading((s) => ({ ...s, [stepIndex]: true }));
+    setStepError((s) => ({ ...s, [stepIndex]: null }));
+    try {
+      const body = {
+        profileId,
+        values: extra?.partialValues ?? formik.values,
+      };
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        const msg = json?.message || `HTTP ${res.status}`;
+        setStepError((s) => ({ ...s, [stepIndex]: msg }));
+        return { ok: false, error: msg };
+      }
+
+      setStepResult((r) => ({ ...r, [stepIndex]: json }));
+      return { ok: true, data: json };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setStepError((s) => ({ ...s, [stepIndex]: msg }));
+      return { ok: false, error: msg };
+    } finally {
+      setStepLoading((s) => ({ ...s, [stepIndex]: false }));
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -609,17 +654,55 @@ const CreateEventForm: React.FC = () => {
         setMessage(data.message);
 
         if (data.status == 200) {
+          try {
+            await callApiForStep(2, {
+              partialValues: {
+                coverPhoto: (values as any)._coverURL ?? null,
+                photos: photoURLs.filter((url) => url !== null) as string[],
+                repeats: values?.repeats,
+              },
+            });
+          } catch (step3Error) {
+            console.error(
+              "Step-3 email notification failed, but event was created:",
+              step3Error
+            );
+          }
           setUploadMessage("Event created! Redirecting…");
           router.push("/events");
         } else {
           console.error("Event create failed", data);
           setUploadMessage("Failed to create event. Please try again.");
+          try {
+            await callApiForStep(2, {
+              partialValues: {
+                coverPhoto: (values as any)._coverURL ?? null,
+                photos: photoURLs.filter((url) => url !== null) as string[],
+                repeats: values?.repeats,
+              },
+            });
+          } catch (step3Error) {
+            console.error("Step-3 failure email also failed:", step3Error);
+          }
         }
       } catch (error) {
         console.error("Error submitting form:", error);
         setUploadMessage(
           "Upload failed. Please check your connection and try again."
         );
+        // try {
+        //   await callApiForStep(2, {
+        //     partialValues: {
+        //       coverPhoto: (values as any)._coverURL ?? null,
+        //       photos:
+        //         (photoURLs?.filter((url: any) => url !== null) as string[]) ||
+        //         [],
+        //       repeats: values?.repeats,
+        //     },
+        //   });
+        // } catch (step3Error) {
+        //   console.error("Step-3 failure email also failed:", step3Error);
+        // }
         let message = "Unknown upload error";
         let stack = "";
 
@@ -663,6 +746,42 @@ const CreateEventForm: React.FC = () => {
     if (hasErrorInStep) {
       currentFields.forEach((f) => formik.setFieldTouched(f, true, true));
       return;
+    }
+
+    if (activeStep !== 2) {
+      try {
+        const partialValues: Partial<FormValues> =
+          activeStep === 0
+            ? {
+                eventName: formik.values.eventName,
+                category: formik.values.category,
+                startTime: formik.values.startTime,
+                endTime: formik.values.endTime,
+                venue: formik.values.venue,
+                hideVenue: formik.values.hideVenue,
+                hideTicketOption: formik.values.hideTicketOption,
+              }
+            : activeStep === 1
+            ? {
+                description: formik.values.description,
+              }
+            : {};
+
+        if (activeStep === 0 || activeStep === 1) {
+          const resp = await callApiForStep(activeStep, { partialValues });
+
+          if (!resp.ok) {
+            setMessage(resp.error || "Failed to save step. Please try again.");
+            setOpen(true);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Unexpected error saving step:", err);
+        setMessage("Unexpected error. Try again.");
+        setOpen(true);
+        return;
+      }
     }
 
     if (activeStep < steps.length - 1) {
@@ -848,6 +967,7 @@ const CreateEventForm: React.FC = () => {
 
   return (
     <>
+      {profileId && <ProfileImgCheckerModel profileId={profileId} />}
       <Header />
       <ThemeProvider theme={theme}>
         <LocalizationProvider dateAdapter={AdapterMoment}>

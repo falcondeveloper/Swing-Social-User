@@ -38,6 +38,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import CloseIcon from "@mui/icons-material/Close";
 import ClearIcon from "@mui/icons-material/Clear";
 import { useGeolocationWithAPI } from "@/components/useGeolocationWithAPI";
+import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 
 export default function CalendarView() {
   const router = useRouter();
@@ -421,6 +422,7 @@ export default function CalendarView() {
 
   return (
     <>
+      {profileId && <ProfileImgCheckerModel profileId={profileId} />}
       <Box
         sx={{
           bgcolor: "#0A0A0A",

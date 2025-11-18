@@ -26,6 +26,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
+import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 
 interface User {
   Id: string;
@@ -302,6 +303,7 @@ export default function Pineapple() {
   return (
     <>
       <Header />
+      {profileId && <ProfileImgCheckerModel profileId={profileId} />}
 
       <Container
         fixed

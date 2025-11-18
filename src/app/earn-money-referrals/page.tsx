@@ -19,6 +19,7 @@ import AffiliateHistory from "@/pages/affiliateData/AffiliateHistory";
 import AffiliateBanners from "@/pages/affiliateData/AffiliateBanners";
 import AffiliatePayment from "@/pages/affiliateData/AffiliatePayment";
 import ReferalForm from "@/components/ReferalForm";
+import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 
 const theme = createTheme({
   palette: {
@@ -108,6 +109,7 @@ const page = () => {
   const isSm = useMediaQuery("(max-width:900px)");
   const [affiliateCode, setAffiliateCode] = useState<string | null>(null);
   const [affiliateStatus, setAffiliateStatus] = useState<boolean | null>(null);
+  const [profileId, setProfileId] = useState<any>(null);
 
   useEffect(() => {
     const fetchAffiliateStatus = async () => {
@@ -127,6 +129,7 @@ const page = () => {
 
           const decodeToken = jwtDecode<any>(tokenDevice);
           const userId = decodeToken?.profileId;
+          setProfileId(userId);
 
           const statusRes = await fetch("/api/user/check-affiliate-status", {
             method: "POST",
@@ -205,70 +208,73 @@ const page = () => {
   }
 
   return (
-    <ThemeProvider theme={theme}>
-      <Header />
-      <Box
-        sx={{
-          minHeight: "100vh",
-          background:
-            "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
-          py: { xs: 3, sm: 4, md: 6 },
-          color: "text.primary",
-        }}
-      >
+    <>
+      {profileId && <ProfileImgCheckerModel profileId={profileId} />}
+      <ThemeProvider theme={theme}>
+        <Header />
         <Box
           sx={{
-            maxWidth: { xs: 920, sm: 1100, md: 1400 },
-            mx: "auto",
-            px: { xs: 2, sm: 3, md: 4 },
+            minHeight: "100vh",
+            background:
+              "radial-gradient(circle at top left, #1A0B2E 0%, #000000 100%)",
+            py: { xs: 3, sm: 4, md: 6 },
+            color: "text.primary",
           }}
         >
-          <Stack
-            direction={isSm ? "column" : "row"}
-            alignItems={isSm ? "stretch" : "center"}
-            justifyContent="space-between"
-            spacing={isSm ? 1 : 0}
-            sx={{ mb: { xs: 2, sm: 3 } }}
+          <Box
+            sx={{
+              maxWidth: { xs: 920, sm: 1100, md: 1400 },
+              mx: "auto",
+              px: { xs: 2, sm: 3, md: 4 },
+            }}
           >
-            <Typography
-              variant="h5"
-              sx={{
-                mr: { md: 3 },
-                fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.5rem" },
-              }}
+            <Stack
+              direction={isSm ? "column" : "row"}
+              alignItems={isSm ? "stretch" : "center"}
+              justifyContent="space-between"
+              spacing={isSm ? 1 : 0}
+              sx={{ mb: { xs: 2, sm: 3 } }}
             >
-              Affiliate Center
-            </Typography>
+              <Typography
+                variant="h5"
+                sx={{
+                  mr: { md: 3 },
+                  fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.5rem" },
+                }}
+              >
+                Affiliate Center
+              </Typography>
 
-            <Tabs
-              value={tabIndex}
-              onChange={handleTabChange}
-              textColor="inherit"
-              variant={isSm ? "scrollable" : "standard"}
-              scrollButtons={isSm ? "auto" : false}
-              allowScrollButtonsMobile
-              sx={{
-                mt: isSm ? 1 : 0,
-                minHeight: 36,
-              }}
-            >
-              <Tab label="My Referrals" />
-              <Tab label="Payment Details" />
-              <Tab label="Banners & Links" />
-            </Tabs>
-          </Stack>
+              <Tabs
+                value={tabIndex}
+                onChange={handleTabChange}
+                textColor="inherit"
+                variant={isSm ? "scrollable" : "standard"}
+                scrollButtons={isSm ? "auto" : false}
+                allowScrollButtonsMobile
+                sx={{
+                  mt: isSm ? 1 : 0,
+                  minHeight: 36,
+                }}
+              >
+                <Tab label="My Referrals" />
+                <Tab label="Payment Details" />
+                <Tab label="Banners & Links" />
+              </Tabs>
+            </Stack>
 
-          <Box sx={{ mt: { xs: 1, sm: 2 } }}>
-            {tabIndex === 0 && <AffiliateHistory />}
-            {tabIndex === 1 && <AffiliatePayment />}
-            {tabIndex === 2 && (
-              <AffiliateBanners affiliateCode={affiliateCode} />
-            )}
+            <Box sx={{ mt: { xs: 1, sm: 2 } }}>
+              {tabIndex === 0 && <AffiliateHistory />}
+              {tabIndex === 1 && <AffiliatePayment />}
+              {tabIndex === 2 && (
+                <AffiliateBanners affiliateCode={affiliateCode} />
+              )}
+            </Box>
           </Box>
         </Box>
-      </Box>
-      <Footer />
-    </ThemeProvider>
+        <Footer />
+      </ThemeProvider>
+    </>
   );
 };
 

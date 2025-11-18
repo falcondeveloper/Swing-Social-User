@@ -70,6 +70,7 @@ import {
 } from "lucide-react";
 import Cropper, { Area } from "react-easy-crop";
 import getCroppedImg from "../../utils/cropImage";
+import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 
 // Enhanced theme with your brand guidelines
 const theme = createTheme({
@@ -2006,6 +2007,8 @@ const ProfileDetail: React.FC = () => {
             </IconButton>
           </DialogContent>
         </Dialog>
+
+        {profileId && <ProfileImgCheckerModel profileId={profileId} />}
 
         {showCropper && (
           <>

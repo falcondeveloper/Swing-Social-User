@@ -122,7 +122,6 @@ export async function POST(req: Request) {
 
     
 
-    const eventDates = generateEventDates(startTime, endTime, repeats);
     const imagesArray = images.map((url: string) => url).join(",");
 
     const insertQuery = `SELECT * FROM public.event_insert($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`;

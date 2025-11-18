@@ -66,6 +66,7 @@ const Header = () => {
       try {
         const decodeToken = jwtDecode<any>(token);
         setAvatar(decodeToken?.avatar || "");
+        console.log("Decoded Token:", decodeToken);
         setUserName(decodeToken?.profileName || "User");
       } catch (error) {
         console.error("Invalid token:", error);
@@ -142,11 +143,6 @@ const Header = () => {
     }
   };
 
-  // Close notification settings modal
-  const handleCloseNotificationModal = () => {
-    setNotificationModalOpen(false);
-  };
-
   // Logout function
   const handleLogout = () => {
     localStorage.removeItem("loginInfo");
@@ -158,7 +154,6 @@ const Header = () => {
     localStorage.clear();
   };
 
-  // Mobile navigation items
   const mobileNavItems = [
     { icon: Home, label: "Home", path: "/home" },
     { icon: Users, label: "Members", path: "/members" },
@@ -175,7 +170,11 @@ const Header = () => {
     },
     { icon: Heart, label: "Matches", path: "/matches" },
     { icon: Calendar, label: "Events", path: "/events" },
-   { icon: "/images/dollar_img.png", label: "Earn $$ for Referrals!", path: "/earn-money-referrals" },
+    {
+      icon: "/images/dollar_img.png",
+      label: "Earn $$ for Referrals!",
+      path: "/earn-money-referrals",
+    },
   ];
 
   useEffect(() => {
@@ -271,17 +270,9 @@ const Header = () => {
                   },
                 }}
               >
-                {/* <img
-                  src={avatar || advertiser?.Avatar}
-                  alt="Profile"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                /> */}
+                
                 <Avatar
-                  src={avatar || advertiser?.Avatar}
+                  src={avatar}
                   alt="Profile"
                   sx={{
                     width: "100%",
@@ -351,7 +342,7 @@ const Header = () => {
                 {/* User Info */}
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <Avatar
-                    src={avatar || advertiser?.Avatar}
+                    src={avatar}
                     sx={{
                       width: 48,
                       height: 48,
@@ -379,7 +370,6 @@ const Header = () => {
               <Box sx={{ flex: 1, py: 2 }}>
                 <List sx={{ px: 2 }}>
                   {mobileNavItems.map((item, index) => {
-                    
                     const isActive =
                       typeof window !== "undefined" &&
                       window.location.pathname === item.path;
@@ -785,7 +775,7 @@ const Header = () => {
                   }}
                 >
                   <img
-                    src={avatar || advertiser?.Avatar}
+                    src={avatar}
                     alt="Avatar"
                     style={{
                       objectFit: "cover",

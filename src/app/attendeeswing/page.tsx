@@ -38,6 +38,7 @@ import { useTheme, useMediaQuery } from "@mui/material";
 import ProfileCard from "@/components/ProfileCard";
 import { Bold } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
+import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 
 export default function Home() {
   const [userProfiles, setUserProfiles] = useState<any[]>([]); // User profiles fetched from API
@@ -902,6 +903,7 @@ export default function Home() {
 
   return (
     <>
+      {profileId && <ProfileImgCheckerModel profileId={profileId} />}
       {isMobile ? (
         <MobileAttendeeSwing />
       ) : (
