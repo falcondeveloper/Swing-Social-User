@@ -32,6 +32,7 @@ import PhoneInput, { CountryData } from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
+import { jwtDecode } from "jwt-decode";
 
 const theme = createTheme({
   palette: {
@@ -182,6 +183,16 @@ const LoginPage = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const aff = urlParams.get("aff");
     const refer = urlParams.get("refer");
+    const tokenfrom = urlParams.get("token");
+    if (tokenfrom) {
+      const decodeToken = jwtDecode<any>(tokenfrom);
+      localStorage.setItem("loginInfo", tokenfrom);
+      localStorage.setItem("logged_in_profile", decodeToken.profileId);
+      localStorage.setItem("profileUsername", decodeToken.profileName);
+      localStorage.setItem("memberalarm", decodeToken.memberAlarm);
+      localStorage.setItem("memberShip", decodeToken.membership);
+      router.push("/home");
+    }
     (async () => {
       try {
         const ipData = await fetch("https://ipapi.co/json").then((r) =>
@@ -286,7 +297,6 @@ const LoginPage = () => {
           localStorage.setItem("memberShip", data.memberShip);
           router.push("/home");
         } else if (mode === "email") {
-          // 🔑 Email login (code)
           const code = Math.floor(1000 + Math.random() * 9000);
           const res = await fetch("/api/user/resetLoginCodeEmail", {
             method: "POST",
