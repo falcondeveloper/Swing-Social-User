@@ -45,6 +45,8 @@ export default function Preferences() {
   const [savedOptions, setSavedOptions] = useState<any>(null);
   const [cityInput, setCityInput] = useState<string>("");
 
+  const NEW_DEFAULT_DISTANCE = 15;
+
   const [formData, setFormData] = useState<FormDataType>({
     city: "",
     swiping: {
@@ -52,7 +54,7 @@ export default function Preferences() {
       singleMale: false,
       singleFemale: false,
     },
-    maxDistance: 500,
+    maxDistance: NEW_DEFAULT_DISTANCE,
     distanceChecked: false,
     block: {
       couples: false,
@@ -78,7 +80,7 @@ export default function Preferences() {
           singleMale: savedOptions.SingleMales === 1,
           singleFemale: savedOptions.SingleFemales === 1,
         },
-        maxDistance: savedOptions.Distance || 500,
+        maxDistance: savedOptions.Distance ?? NEW_DEFAULT_DISTANCE,
         distanceChecked: savedOptions.UseDistance === 1,
         block: {
           couples: savedOptions.BlockCouples === 1,
@@ -293,26 +295,46 @@ export default function Preferences() {
         label="Max Distance"
         sx={{ color: "white" }}
       />
+
       {showDistanceSlider && (
-        <Box sx={{ mt: 2, width: 300 }}>
-          <Slider
-            value={formData.maxDistance}
-            min={0}
-            max={150}
-            onChange={handleSliderChange}
-            valueLabelDisplay="auto"
-            marks={[
-              { value: 0, label: "0 Miles" },
-              { value: 150, label: "150 Miles" },
-            ]}
-            sx={{
-              color: "#e91e63",
-              "& .MuiSlider-thumb": { borderRadius: "50%" },
-              "& .MuiSlider-markLabel": {
-                color: "white",
-              },
-            }}
-          />
+        <Box
+          sx={{
+            mt: 2,
+            width: { xs: "100%", sm: 400, md: 500 },
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+          }}
+        >
+          <Box sx={{ flex: 1 }}>
+            <Slider
+              value={formData.maxDistance}
+              min={0}
+              max={150}
+              onChange={handleSliderChange}
+              valueLabelDisplay="auto"
+              marks={[
+                { value: 0, label: "0" },
+                { value: 15, label: "15" },
+                { value: 50, label: "50" },
+                { value: 100, label: "100" },
+                { value: 150, label: "150" },
+              ]}
+              sx={{
+                color: "#e91e63",
+                "& .MuiSlider-thumb": { borderRadius: "50%" },
+                "& .MuiSlider-markLabel": {
+                  color: "white",
+                },
+              }}
+            />
+          </Box>
+
+          <Box sx={{ minWidth: 72, textAlign: "center" }}>
+            <Typography variant="body2" sx={{ color: "white" }}>
+              {formData.maxDistance} mi
+            </Typography>
+          </Box>
         </Box>
       )}
 
