@@ -409,7 +409,7 @@ export default function EventDetail(props: { params: Params }) {
   const handleCloseHere = () => setOpen(false);
 
   const handleSaveRsvp = async (eventId: any) => {
-    const response = await fetch("/api/user/events/rsvp/", {
+    const response = await fetch("/api/user/events/rsvp", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

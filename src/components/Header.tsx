@@ -66,7 +66,6 @@ const Header = () => {
       try {
         const decodeToken = jwtDecode<any>(token);
         setAvatar(decodeToken?.avatar || "");
-        console.log("Decoded Token:", decodeToken);
         setUserName(decodeToken?.profileName || "User");
       } catch (error) {
         console.error("Invalid token:", error);

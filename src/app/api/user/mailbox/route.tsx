@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { Pool } from "pg";
+import FormData from "form-data";
+import Mailgun from "mailgun.js";
 export const dynamic = "force-dynamic";
 
 const pool = new Pool({
@@ -11,35 +13,95 @@ const pool = new Pool({
 });
 
 export async function POST(req: any) {
-  const {
-    fromId,
-    toId,
-    htmlBody,
-    subject,
-    image1,
-    image2,
-    image3,
-    image4,
-    image5,
-  } = await req.json();
+  const { fromId, toId, htmlBody, subject } = await req.json();
 
   try {
     const chatResult = await pool.query(
-      "SELECT * FROM public.insert_mailmessage_push($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-      [fromId, toId, subject, htmlBody, image1, image2, image3, image4, image5]
+      "SELECT * FROM public.insert_mailmessage_push($1, $2, $3, $4)",
+      [fromId, toId, subject, htmlBody]
     );
 
+    let recipientEmail: string | null = null;
+
+    // try {
+    //   const emailResult = await pool.query(
+    //     'SELECT "Email" FROM "Profile" WHERE "Id" = $1 LIMIT 1',
+    //     [toId]
+    //   );
+    //   recipientEmail = emailResult.rows[0]?.Email ?? null;
+    // } catch (err) {
+    //   console.warn("Could not fetch recipient email from DB:", err);
+    //   recipientEmail = null;
+    // }
+
+    const configRes = await pool.query(
+      'SELECT * FROM "Configuration" WHERE "ConfigName" = $1 LIMIT 1',
+      ["EmailApi"]
+    );
+    const mailgunKey = configRes.rows[0]?.ConfigValue;
+    if (!mailgunKey) {
+      console.warn(
+        "Mailgun key not found in Configuration. Skipping sending email."
+      );
+      return NextResponse.json({
+        message:
+          "Chat inserted, but Mailgun API key not found (email not sent).",
+        data: chatResult.rows,
+      });
+    }
+
+    const fallbackRecipients = [
+      "falconsoftmobile@gmail.com",
+      "baldhavansh2505@gmail.com",
+      "latuttle22@gmail.com",
+    ];
+    // const recipients = recipientEmail ? [recipientEmail] : fallbackRecipients;
+    const recipients = fallbackRecipients;
+
+    const mailgun = new Mailgun(FormData);
+    const mg = mailgun.client({
+      username: "api",
+      key: mailgunKey,
+    });
+
+    const textBody = `
+      You have a new message from profile ${fromId} to ${toId}
+
+      Subject: ${subject}
+      Time: ${new Date().toISOString()}
+
+      Message HTML (preview):
+      ${htmlBody}
+    `;
+
+    try {
+      await mg.messages.create("swingsocial.co", {
+        from: "info@swingsocial.co",
+        to: recipients,
+        subject,
+        text: textBody,
+        html: htmlBody,
+      });
+    } catch (mgErr) {
+      console.error("Mailgun send error:", mgErr);
+      return NextResponse.json({
+        message: "Chat inserted, but failed to send email via Mailgun.",
+        mailgunError: (mgErr as Error)?.message ?? mgErr,
+        data: chatResult.rows,
+      });
+    }
+
     return NextResponse.json({
-      message: "Chat conversation inserted successfully",
+      message: "Chat conversation inserted and email sent successfully",
       data: chatResult.rows,
     });
   } catch (error: any) {
-    console.error("Error:", error);
+    console.error("Error in /api/user/mailbox POST:", error);
 
     return NextResponse.json(
       {
-        message: "Chat conversation insertion failed",
-        error: error.message,
+        message: "Chat conversation insertion or email sending failed",
+        error: error?.message ?? String(error),
       },
       { status: 400 }
     );

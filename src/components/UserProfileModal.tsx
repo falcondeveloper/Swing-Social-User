@@ -71,7 +71,6 @@ const ImageWithFallback = ({
       if (imageUrl.includes("swingsocial.app/swing_images/")) {
         const timer = setTimeout(() => {
           setTimeoutExpired(true);
-          // Solo cambiar la URL si aún no ha habido un error
           if (!imgError) {
             setImgSrc(getAlternativeUrl(imageUrl));
           }
@@ -203,41 +202,105 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
   }, []);
 
   const handleAddFriend = async (): Promise<void> => {
-    // const tid = toast.loading("Sending friend request...");
-
     try {
+      const safeFromId = profileId ?? "";
+      const safeToId = userid ?? "";
+
+      const BASE_URL = "https://swing-social-user.vercel.app";
+
+      const acceptUrl = `${BASE_URL}/api/user/profile/friend/accept?fromId=${encodeURIComponent(
+        safeFromId
+      )}&toId=${encodeURIComponent(safeToId)}`;
+
+      const declineUrl = `${BASE_URL}/api/user/profile/friend/decline?fromId=${encodeURIComponent(
+        safeFromId
+      )}&toId=${encodeURIComponent(safeToId)}`;
+
+      const viewProfileUrl = `${BASE_URL}/profile/${encodeURIComponent(
+        safeToId
+      )}`;
+
+      const subject = `${userName} sent you a friend request on Swing Social`;
+
+      const htmlBody = `
+      <div style="font-family: Arial, Helvetica, sans-serif; color:#333; margin:0; padding:0;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fa; padding:40px 0;">
+          <tr>
+            <td align="center">
+              <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                
+                <tr>
+                  <td style="padding:20px 24px; text-align:center;">
+                    <h1 style="margin:0; font-size:22px; color:#111;">Swing Social</h1>
+                    <p style="margin:8px 0 0; color:#666;">You have a new friend request</p>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="padding:20px 32px; border-top:1px solid #eee;">
+                    <p style="font-size:16px; margin:0 0 12px; color:#222;">
+                      <strong>${userName}</strong> wants to connect with you.
+                    </p>
+
+                    <p style="margin:0 0 18px; color:#555; line-height:1.5;">
+                      Click below to view their profile or respond to the request.
+                    </p>
+
+                    <p style="margin:0 0 18px;">
+                      <a href="${viewProfileUrl}" 
+                         style="color:#1e88e5; font-weight:bold; text-decoration:none;">
+                        View Profile
+                      </a>
+                    </p>
+
+                    <table cellpadding="0" cellspacing="0" style="margin:18px 0;">
+                      <tr>
+                        <td align="center" style="padding-right:8px;">
+                          <a href="${acceptUrl}" target="_blank" rel="noopener"
+                            style="display:inline-block; padding:12px 22px; background:#4CAF50; color:#ffffff; 
+                                   text-decoration:none; border-radius:6px; font-weight:600;">
+                            Accept
+                          </a>
+                        </td>
+
+                        <td align="center" style="padding-left:8px;">
+                          <a href="${declineUrl}" target="_blank" rel="noopener"
+                            style="display:inline-block; padding:12px 22px; background:#f44336; color:#ffffff; 
+                                   text-decoration:none; border-radius:6px; font-weight:600;">
+                            Decline
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <hr style="border:none; border-top:1px solid #eee; margin:18px 0;" />
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </div>
+    `;
+
+      const textBody = `${userName} has sent you a friend request on Swing Social.
+
+    View profile: ${viewProfileUrl}
+Accept: ${acceptUrl}
+Decline: ${declineUrl}
+
+If you didn't expect this, ignore this message.
+`;
+
       const mailResponse = await fetch("/api/user/mailbox", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fromId: profileId,
           toId: userid,
-          htmlBody: `
-          <div style="text-align: center; padding: 20px; font-family: Arial, sans-serif;">
-            <h2 style="color: #333;">Friend Request</h2>
-            <p style="color: #666; margin: 15px 0;">You have received a friend request</p>
-            <div style="margin: 20px 0; display: flex; justify-content: center; gap: 20px;">
-              <button onclick="fetch('/api/user/profile/friend/accept', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fromId: '${profileId}', toId: '${userid}' })
-              })" 
-              style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; border: none; cursor: pointer;">Accept</button>
-
-              <button onclick="fetch('/api/user/profile/friend/decline', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fromId: '${profileId}', toId: '${userid}' })
-              })" 
-              style="display: inline-block; padding: 10px 20px; background-color: #f44336; color: white; text-decoration: none; border-radius: 5px; border: none; cursor: pointer;">Decline</button>
-            </div>
-          </div>`,
-          subject: `Friend Request`,
-          image1: "",
-          image2: "",
-          image3: "",
-          image4: "",
-          image5: "",
+          subject,
+          htmlBody,
+          textBody,
         }),
       });
 
@@ -245,28 +308,26 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
         throw new Error(`Failed to send email. Status: ${mailResponse.status}`);
       }
 
-      const notifyResponse = await fetch(
-        "/api/user/notification/requestfriend",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: userid,
-            title: "New Friend Request!",
-            body: `${userName} sent you a friend request!`,
-            image: "https://example.com/path/to/image.jpg",
-            url: `https://swing-social-user.vercel.app/mailbox/${userid}`,
-          }),
-        }
-      );
+      toast.success("Friend request sent 🎉", { autoClose: 2000 });
 
-      if (!notifyResponse.ok) {
-        throw new Error(`Failed to notify. Status: ${notifyResponse.status}`);
-      }
+      // const notifyResponse = await fetch(
+      //   "/api/user/notification/requestfriend",
+      //   {
+      //     method: "POST",
+      //     headers: { "Content-Type": "application/json" },
+      //     body: JSON.stringify({
+      //       id: userid,
+      //       title: "New Friend Request!",
+      //       body: `${userName} sent you a friend request!`,
+      //       image: "https://example.com/path/to/image.jpg",
+      //       url: `https://swing-social-user.vercel.app/mailbox/${userid}`,
+      //     }),
+      //   }
+      // );
 
-      toast.success("Friend request sent 🎉", {
-        autoClose: 2000,
-      });
+      // if (!notifyResponse.ok) {
+      //   throw new Error(`Failed to notify. Status: ${notifyResponse.status}`);
+      // }
     } catch (error: any) {
       console.error("Error:", error);
       toast.error(error?.message ?? "Something went wrong", {
