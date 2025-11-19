@@ -45,8 +45,6 @@ export default function Preferences() {
   const [savedOptions, setSavedOptions] = useState<any>(null);
   const [cityInput, setCityInput] = useState<string>("");
 
-  const NEW_DEFAULT_DISTANCE = 15;
-
   const [formData, setFormData] = useState<FormDataType>({
     city: "",
     swiping: {
@@ -54,7 +52,7 @@ export default function Preferences() {
       singleMale: false,
       singleFemale: false,
     },
-    maxDistance: NEW_DEFAULT_DISTANCE,
+    maxDistance: 500,
     distanceChecked: false,
     block: {
       couples: false,
@@ -80,7 +78,7 @@ export default function Preferences() {
           singleMale: savedOptions.SingleMales === 1,
           singleFemale: savedOptions.SingleFemales === 1,
         },
-        maxDistance: savedOptions.Distance ?? NEW_DEFAULT_DISTANCE,
+        maxDistance: savedOptions.Distance || 500,
         distanceChecked: savedOptions.UseDistance === 1,
         block: {
           couples: savedOptions.BlockCouples === 1,
@@ -314,8 +312,7 @@ export default function Preferences() {
               onChange={handleSliderChange}
               valueLabelDisplay="auto"
               marks={[
-                { value: 0, label: "0" },
-                { value: 15, label: "15" },
+                { value: 0, label: "0 mi" },
                 { value: 50, label: "50" },
                 { value: 100, label: "100" },
                 { value: 150, label: "150" },
