@@ -57,7 +57,7 @@ export default function Home() {
   const [matchedProfile, setMatchedProfile] = useState<any>(null);
   const [swipeCount, setSwipeCount] = useState(0);
   const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
-  const [dailyLimit, setDailyLimit] = useState(15);
+  const [dailyLimit, setDailyLimit] = useState(30);
   const [isSwipingDisabled, setSwipingDisable] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [membership, setMembership] = useState(0);

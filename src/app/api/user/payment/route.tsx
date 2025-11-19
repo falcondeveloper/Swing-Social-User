@@ -260,6 +260,7 @@ export async function POST(req: any) {
                   pprice || "N/A"
                 }</p>   
                 <p style="margin: 5px 0;"><strong>Country:</strong> ${country}</p>
+                <p style="margin: 5px 0;"><strong>State:</strong> ${state}</p>
                 <p style="margin: 5px 0;"><strong>City:</strong> ${
                   city || "N/A"
                 }</p>      

@@ -33,13 +33,12 @@ import {
   MapPin,
   Phone,
   Tag,
-  CheckCircle,
   Sparkles,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
-import jwt from "jsonwebtoken";
+import CheckCircle from "@mui/icons-material/CheckCircle";
 
 const theme = createTheme({
   palette: {
@@ -163,6 +162,7 @@ interface FormData {
   lastName: string;
   streetAddress: string;
   country: string;
+  state: string;
   city: string;
   zipCode: string;
   phoneNumber: string;
@@ -222,6 +222,7 @@ const BillingUpgrade: React.FC = () => {
     lastName: "",
     streetAddress: "",
     country: "",
+    state: "",
     city: "",
     zipCode: "",
     phoneNumber: "",
@@ -462,6 +463,7 @@ const BillingUpgrade: React.FC = () => {
       if (!formData.lastName.trim()) tempErrors.lastName = "Required";
       if (!formData.streetAddress.trim()) tempErrors.streetAddress = "Required";
       if (!formData.country.trim()) tempErrors.country = "Required";
+      if (!formData.state.trim()) tempErrors.state = "Required";
       if (!formData.city.trim()) tempErrors.city = "Required";
       if (!formData.zipCode.trim()) tempErrors.zipCode = "Required";
       if (!formData.phoneNumber.trim()) tempErrors.phoneNumber = "Required";
@@ -591,7 +593,7 @@ const BillingUpgrade: React.FC = () => {
         isPromoCode: isValidPromoCode,
         country: formData.country,
         city: formData.city,
-        state: state,
+        state: formData.state,
         streetAddress: formData.streetAddress,
         phone: formData.phoneNumber,
         zipCode: formData.zipCode,
@@ -730,7 +732,12 @@ const BillingUpgrade: React.FC = () => {
 
             <Card sx={{ textAlign: "center", p: 4 }}>
               <Box sx={{ mb: 3 }}>
-                <CheckCircle size={64} color="#4caf50" />
+                <CheckCircle
+                  fontSize="large"
+                  sx={{
+                    color: "#4caf50",
+                  }}
+                />
               </Box>
               <Typography
                 variant="h4"
@@ -863,90 +870,150 @@ const BillingUpgrade: React.FC = () => {
                             sx={{
                               cursor: "pointer",
                               position: "relative",
+                              minHeight: { xs: 220, sm: 240 },
+                              borderRadius: 3,
+                              overflow: "visible",
                               border:
                                 formData.membershipOption === plan.id
                                   ? "2px solid #FF1B6B"
-                                  : "2px solid transparent",
+                                  : "2px solid rgba(255,255,255,0.02)",
                               transform:
                                 formData.membershipOption === plan.id
-                                  ? "scale(1.02)"
-                                  : "scale(1)",
-                              transition:
-                                "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                                  ? "translateY(-6px) scale(1.02)"
+                                  : "none",
+                              transition: "all 240ms cubic-bezier(.2,.8,.2,1)",
+                              // background:
+                              //   "linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.35))",
+                              // boxShadow:
+                              //   formData.membershipOption === plan.id
+                              //     ? "0 12px 30px rgba(255,27,107,0.14)"
+                              //     : "inset 0 1px 0 rgba(255,255,255,0.02), 0 6px 18px rgba(0,0,0,0.6)",
                               "&:hover": {
-                                transform: "scale(1.02)",
+                                transform: "translateY(-6px) scale(1.01)",
                                 boxShadow:
-                                  "0 8px 25px rgba(255, 27, 107, 0.15)",
+                                  "0 14px 36px rgba(255,27,107,0.12), inset 0 1px 0 rgba(255,255,255,0.02)",
                               },
                             }}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  membershipOption: plan.id,
+                                }));
+                              }
+                            }}
                           >
+                            {/* Popular badge (same placement / functionality) */}
                             {plan.popular && (
                               <Chip
                                 label="Most Popular"
                                 size="small"
                                 sx={{
                                   position: "absolute",
-                                  top: -8,
+                                  top: -10,
                                   left: "50%",
                                   transform: "translateX(-50%)",
                                   bgcolor: "#FF1B6B",
-                                  color: "white",
-                                  fontWeight: "bold",
+                                  color: "#fff",
+                                  fontWeight: 700,
+                                  px: 1.2,
+                                  py: 0.4,
+                                  borderRadius: 2,
+                                  boxShadow: "0 8px 20px rgba(0,0,0,0.5)",
                                 }}
                               />
                             )}
 
-                            <CardContent sx={{ textAlign: "center", p: 3 }}>
+                            <CardContent
+                              sx={{ textAlign: "center", p: { xs: 2, sm: 3 } }}
+                            >
+                              {/* Plan name */}
                               <Typography
                                 variant="h6"
-                                sx={{ color: "#FF1B6B", fontWeight: "bold" }}
+                                sx={{
+                                  color: "#FF1B6B",
+                                  fontWeight: 800,
+                                  letterSpacing: 0.2,
+                                  fontSize: { xs: 14, sm: 16 },
+                                  mb: { xs: 1, sm: 1.5 },
+                                }}
                               >
                                 {plan.name}
                               </Typography>
-                              <Box sx={{ my: 2 }}>
+
+                              {/* Price area (responsive sizes) */}
+                              <Box
+                                sx={{
+                                  my: 1.5,
+                                  display: "flex",
+                                  justifyContent: "center",
+                                  alignItems: "baseline",
+                                  gap: 1,
+                                }}
+                              >
                                 <Typography
                                   variant="h4"
                                   component="span"
-                                  sx={{ color: "#fff", fontWeight: "bold" }}
+                                  sx={{
+                                    color: "#ffffff",
+                                    fontWeight: 900,
+                                    fontSize: { xs: "1.4rem", sm: "1.9rem" },
+                                    lineHeight: 1,
+                                  }}
                                 >
                                   {plan.price}
                                 </Typography>
                                 <Typography
                                   variant="body2"
                                   component="span"
-                                  sx={{ color: "#aaaaaa" }}
+                                  sx={{
+                                    color: "#aaaaaa",
+                                    fontSize: { xs: 11, sm: 13 },
+                                  }}
                                 >
                                   {plan.period}
                                 </Typography>
                               </Box>
+
+                              {/* Save chip (keeps same data) */}
                               {plan.savings && (
                                 <Chip
                                   label={`Save ${plan.savings}`}
                                   size="small"
                                   sx={{
-                                    bgcolor: "rgba(76, 175, 80, 0.2)",
+                                    bgcolor: "rgba(76,175,80,0.14)",
                                     color: "#4caf50",
-                                    mb: 2,
+                                    fontWeight: 700,
+                                    mb: 1.25,
+                                    px: 1,
                                   }}
                                 />
                               )}
-                              <Box sx={{ textAlign: "left" }}>
+
+                              {/* Feature list (unchanged functionality, only styling) */}
+                              <Box sx={{ textAlign: "left", mt: 1 }}>
                                 {plan.features.map((feature, index) => (
                                   <Typography
                                     key={index}
                                     variant="body2"
                                     sx={{
-                                      color: "#aaaaaa",
-                                      mb: 0.5,
+                                      color: "#cccccc",
+                                      mb: 0.8,
                                       display: "flex",
                                       alignItems: "center",
+                                      fontSize: { xs: 12, sm: 13 },
                                     }}
                                   >
                                     <CheckCircle
-                                      size={14}
-                                      style={{
-                                        marginRight: 8,
+                                      fontSize="small"
+                                      sx={{
+                                        mr: 1,
                                         color: "#4caf50",
+                                        background: "rgba(0,0,0,0.15)",
+                                        borderRadius: "50%",
+                                        p: "2px",
                                       }}
                                     />
                                     {feature}
@@ -1019,6 +1086,19 @@ const BillingUpgrade: React.FC = () => {
                               </InputAdornment>
                             ),
                           }}
+                        />
+                      </Grid>
+
+                      <Grid item xs={12} sm={3}>
+                        <TextField
+                          required
+                          fullWidth
+                          label="State"
+                          name="state"
+                          value={formData.state}
+                          onChange={handleChange}
+                          error={Boolean(errors.state)}
+                          helperText={errors.state}
                         />
                       </Grid>
                       <Grid item xs={12} sm={4}>

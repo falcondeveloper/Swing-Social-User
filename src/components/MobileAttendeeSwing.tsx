@@ -51,7 +51,7 @@ export default function MobileAttendeeSwing() {
   const [showEndPopup, setShowEndPopup] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState<any>(null);
   const [swipeCount, setSwipeCount] = useState(0);
-  const [dailyLimit, setDailyLimit] = useState(15);
+  const [dailyLimit, setDailyLimit] = useState(30);
   const [profileId, setProfileId] = useState<any>(); // Animation direction
   const [showDetail, setShowDetail] = useState<any>(false);
   const [selectedUserId, setSelectedUserId] = useState<any>(null);

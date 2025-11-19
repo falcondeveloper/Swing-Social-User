@@ -116,7 +116,7 @@ export default function MobileSweaping() {
   const [showEndPopup, setShowEndPopup] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState<any>(null);
   const [swipeCount, setSwipeCount] = useState(0);
-  const DAILY_LIMIT = 15;
+  const DAILY_LIMIT = 30;
   const [profileId, setProfileId] = useState<any>();
   const [showDetail, setShowDetail] = useState<any>(false);
   const [selectedUserId, setSelectedUserId] = useState<any>(null);
