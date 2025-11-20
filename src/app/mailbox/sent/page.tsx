@@ -158,12 +158,10 @@ export default function ChatPage() {
       `/api/user/mailbox/reply?chatid=${chat.MessageId}`
     );
     const mails = await result.json();
-    console.log("mailswithreply", mails.data);
     setSelectedMailsWithReply(mails.data);
   };
 
   const handleMailDesktopClick = async (chat: any) => {
-    console.log(chat);
     setSelectedMail({
       Avatar: chat.Avatar,
       ProfileFromId: chat.ProfileIdFrom,
@@ -182,17 +180,14 @@ export default function ChatPage() {
       `/api/user/mailbox/reply?chatid=${chat.MessageId}`
     );
     const mails = await result.json();
-    console.log("mailswithreply", mails.data);
     setSelectedMailsWithReply(mails.data);
   };
 
   useEffect(() => {
     const token = localStorage.getItem("loginInfo");
-    console.log(token);
     if (token) {
       const decodeToken = jwtDecode<any>(token);
       setMembership(decodeToken?.membership);
-      console.log(decodeToken);
 
       if (decodeToken?.membership == 0) {
         Swal.fire({
@@ -220,13 +215,9 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    socket.on("connect", () => {
-      console.log("Connected to WebSocket server");
-    });
+    socket.on("connect", () => {});
 
-    socket.on("disconnect", () => {
-      console.log("Disconnected from WebSocket server");
-    });
+    socket.on("disconnect", () => {});
     socket.on("message", (message) => {
       // Handle incoming message
       fetchAllChats();
@@ -266,8 +257,6 @@ export default function ChatPage() {
       }
     }
   };
-
-  console.log(chatList, "========================");
 
   const handleCloseMailBox = () => {
     setMailbox(!mailBoxOpen);
@@ -412,7 +401,6 @@ export default function ChatPage() {
 
       const data = await response.json();
       if (response.ok) {
-        // console.log('Location sent successfully:', data);
       } else {
         console.error("Error sending location:", data.message);
       }
@@ -482,8 +470,6 @@ export default function ChatPage() {
       alert("Please fill in all fields.");
       return;
     }
-    console.log(profileId, selectedUser, newMail);
-    // Send the email
     const response = await fetch("/api/user/mailbox", {
       method: "POST",
       headers: {
@@ -514,7 +500,7 @@ export default function ChatPage() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        token: userDeviceToken, // Replace with the recipient's FCM token
+        token: userDeviceToken,
         title: myProfile?.Username,
         body: message,
         image: "https://example.com/path/to/image.jpg",
@@ -523,7 +509,6 @@ export default function ChatPage() {
     });
 
     const result = await response.json();
-    console.log(result);
   };
 
   const deleteChat = async (chatId: any) => {
@@ -541,7 +526,6 @@ export default function ChatPage() {
     // If user confirms deletion
     if (result.isConfirmed) {
       try {
-        // console.log(chatId);
         const response = await fetch("/api/user/mailbox/delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -551,7 +535,6 @@ export default function ChatPage() {
         if (!response.ok) {
           throw new Error(`Failed to delete chat. Status: ${response.status}`);
         }
-        // Show success alert
         Swal.fire("Deleted!", "The chat has been deleted.", "success");
         fetchAllChats();
       } catch (error) {
@@ -1138,9 +1121,26 @@ export default function ChatPage() {
                                 py: "10px",
                               }}
                             >
-                              <Typography variant="body1">
+                              <Typography
+                                variant="subtitle1"
+                                dangerouslySetInnerHTML={{
+                                  __html: mail.Body,
+                                }}
+                                // sx={{
+                                //   color: "#d81160",
+                                //   marginLeft: "15px",
+                                //   fontWeight: "bold",
+                                //   maxWidth: "100%",
+                                //   whiteSpace: "normal",
+                                //   wordWrap: "break-word",
+                                //   overflow: "hidden",
+                                //   display: "-webkit-box",
+                                //   WebkitBoxOrient: "vertical",
+                                // }}
+                              ></Typography>
+                              {/* <Typography variant="body1">
                                 {mail.Body}
-                              </Typography>
+                              </Typography> */}
                               {/* Images Grid */}
                               <Box
                                 sx={{
@@ -1765,6 +1765,7 @@ export default function ChatPage() {
             )}
           </DialogContent>
         </Dialog>
+
         <Dialog
           open={openModal}
           onClose={() => setOpenModal(false)}
@@ -1931,6 +1932,7 @@ export default function ChatPage() {
             }}
           />
         </Dialog>
+
         <Dialog
           open={imageModalOpen}
           onClose={() => setImageModalOpen(false)}
