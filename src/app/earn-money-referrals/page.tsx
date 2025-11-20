@@ -20,6 +20,7 @@ import AffiliateBanners from "@/pages/affiliateData/AffiliateBanners";
 import AffiliatePayment from "@/pages/affiliateData/AffiliatePayment";
 import ReferalForm from "@/components/ReferalForm";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
+import Loader from "@/commonPage/Loader";
 
 const theme = createTheme({
   palette: {
@@ -182,16 +183,7 @@ const page = () => {
     return (
       <ThemeProvider theme={theme}>
         <Header />
-        <Box
-          sx={{
-            minHeight: "50vh",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Typography>Loading...</Typography>
-        </Box>
+        <Loader />
         <Footer />
       </ThemeProvider>
     );

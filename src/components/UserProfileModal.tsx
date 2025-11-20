@@ -33,6 +33,7 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
+import { Calendar, MapPin, Clock } from "lucide-react";
 
 interface UserProfileModalProps {
   handleGrantAccess: () => void;
@@ -40,60 +41,6 @@ interface UserProfileModalProps {
   open: boolean;
   userid: string | null;
 }
-
-const ImageWithFallback = ({
-  imageUrl,
-  altText,
-}: {
-  imageUrl: string;
-  altText: string;
-}) => {
-  const [imgError, setImgError] = useState(false);
-  const [timeoutExpired, setTimeoutExpired] = useState(false);
-  const [imgSrc, setImgSrc] = useState(imageUrl);
-
-  const getAlternativeUrl = (url: string) => {
-    if (!url) return "";
-    const urlParts = url.split("/");
-    const fileName = urlParts[urlParts.length - 1];
-    return `https://andystutor.com/images/${fileName}`;
-  };
-
-  const handleImageError = () => {
-    if (!imgError && imageUrl) {
-      setImgError(true);
-      setImgSrc(getAlternativeUrl(imageUrl));
-    }
-  };
-
-  useEffect(() => {
-    if (imageUrl && !imgError && !timeoutExpired) {
-      if (imageUrl.includes("swingsocial.app/swing_images/")) {
-        const timer = setTimeout(() => {
-          setTimeoutExpired(true);
-          if (!imgError) {
-            setImgSrc(getAlternativeUrl(imageUrl));
-          }
-        }, 2000);
-
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [imageUrl, imgError, timeoutExpired]);
-
-  return (
-    <img
-      src={imgSrc}
-      alt={altText}
-      onError={handleImageError}
-      style={{
-        width: "100%",
-        height: "100%",
-        objectFit: "cover",
-      }}
-    />
-  );
-};
 
 const UserProfileModal: React.FC<UserProfileModalProps> = ({
   handleGrantAccess,
@@ -112,7 +59,6 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [grantOpen, setGrantOpen] = useState(false);
   const [privateOpen, setPrivateOpen] = useState(false);
   const [profileId, setProfileId] = useState<any>();
-  const [privateImages, setPrivateImages] = useState<any>([]);
   const [profileImages, setProfileImages] = useState<any>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -127,6 +73,19 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
     const fetchData = async () => {
       setLoading(true);
+      const token = localStorage.getItem("loginInfo");
+
+      if (token) {
+        try {
+          const decodeToken = jwtDecode<any>(token);
+          setUserName(decodeToken?.profileName || "User");
+        } catch (error) {
+          console.error("Invalid token:", error);
+          router.push("/login");
+        }
+      } else {
+        router.push("/login");
+      }
 
       try {
         const userProfileID = localStorage.getItem("logged_in_profile");
@@ -166,40 +125,6 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
   }, [userid]);
 
   const filteredEvents = selectedTab === "RSVP" ? [] : events;
-
-  const handleGetPrivateImages = async () => {
-    try {
-      const checkResponse = await fetch(
-        "/api/user/sweeping/images?id=" + userid,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      const checkData = await checkResponse.json();
-      setPrivateImages(checkData?.images);
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
-  useEffect(() => {
-    const token = localStorage.getItem("loginInfo");
-    if (token) {
-      try {
-        const decodeToken = jwtDecode<any>(token);
-        setUserName(decodeToken?.profileName || "User");
-      } catch (error) {
-        console.error("Invalid token:", error);
-        router.push("/login");
-      }
-    } else {
-      router.push("/login");
-    }
-  }, []);
 
   const handleAddFriend = async (): Promise<void> => {
     try {
@@ -369,7 +294,6 @@ If you didn't expect this, ignore this message.
   };
 
   const handlePrivateModal = () => {
-    handleGetPrivateImages();
     setPrivateOpen(false);
   };
 
@@ -766,7 +690,6 @@ If you didn't expect this, ignore this message.
                   </Typography>
 
                   <Grid container spacing={3} mt={2}>
-                    {/* Right Column */}
                     <Grid item xs={12} md={12}>
                       <Box>
                         <Typography
@@ -783,8 +706,8 @@ If you didn't expect this, ignore this message.
                               <TableCell
                                 sx={{
                                   backgroundColor: "gray",
-                                  width: "30%", // First cell takes 30% of the row
-                                  whiteSpace: "nowrap", // Prevents text wrapping
+                                  width: "30%",
+                                  whiteSpace: "nowrap",
                                 }}
                               >
                                 <Typography variant="body2" color="white">
@@ -1054,11 +977,12 @@ If you didn't expect this, ignore this message.
                       ) : null}
                     </Grid>
                   </Grid>
+
                   <Box
                     sx={{
                       display: "flex",
-                      gap: 1, // Reduce the gap between buttons
-                      padding: 1, // Reduce padding inside the container
+                      gap: 1,
+                      padding: 1,
                       borderRadius: 2,
                       mt: 3,
                     }}
@@ -1067,11 +991,11 @@ If you didn't expect this, ignore this message.
                     <Button
                       variant="contained"
                       sx={{
-                        backgroundColor: "#c2185b", // Reddish color
+                        backgroundColor: "#c2185b",
                         color: "white",
-                        fontSize: "0.75rem", // Smaller font size
-                        padding: "12px 12px", // Smaller padding
-                        flex: 1, // Equal width for all buttons
+                        fontSize: "0.75rem",
+                        padding: "12px 12px",
+                        flex: 1,
                       }}
                     >
                       Public Images
@@ -1082,11 +1006,11 @@ If you didn't expect this, ignore this message.
                       onClick={() => setGrantOpen(true)}
                       variant="contained"
                       sx={{
-                        backgroundColor: "#c2185b", // Reddish color
+                        backgroundColor: "#c2185b",
                         color: "white",
-                        fontSize: "0.75rem", // Smaller font size
-                        padding: "12px 12px", // Smaller padding
-                        flex: 1, // Equal width for all buttons
+                        fontSize: "0.75rem",
+                        padding: "12px 12px",
+                        flex: 1,
                       }}
                     >
                       Grant Permission
@@ -1099,16 +1023,17 @@ If you didn't expect this, ignore this message.
                       }}
                       variant="contained"
                       sx={{
-                        backgroundColor: "#c2185b", // Reddish color
+                        backgroundColor: "#c2185b",
                         color: "white",
-                        fontSize: "0.75rem", // Smaller font size
-                        padding: "12px 12px", // Smaller padding
-                        flex: 1, // Equal width for all buttons
+                        fontSize: "0.75rem",
+                        padding: "12px 12px",
+                        flex: 1,
                       }}
                     >
                       Private Images
                     </Button>
                   </Box>
+
                   <Box
                     sx={{
                       display: "flex",
@@ -1138,8 +1063,8 @@ If you didn't expect this, ignore this message.
                       sx={{
                         display: "flex",
                         gap: 1,
-                        flexWrap: "wrap", // Ensures photos wrap to the next row
-                        justifyContent: "center", // Centers the photos
+                        flexWrap: "wrap",
+                        justifyContent: "center",
                       }}
                     >
                       {profileImages?.length > 0 ? (
@@ -1154,9 +1079,14 @@ If you didn't expect this, ignore this message.
                               boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
                             }}
                           >
-                            <ImageWithFallback
-                              imageUrl={image?.Url}
-                              altText={`Profile Photo ${index + 1}`}
+                            <img
+                              src={image?.Url}
+                              alt={`Profile Photo ${index + 1}`}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
                             />
                           </Box>
                         ))
@@ -1173,6 +1103,7 @@ If you didn't expect this, ignore this message.
                       )}
                     </Box>
                   </Box>
+
                   <Box
                     sx={{
                       display: "flex",
@@ -1192,7 +1123,7 @@ If you didn't expect this, ignore this message.
                       onChange={(e) => setSelectedTab(e.target.value)}
                       sx={{
                         display: "flex",
-                        justifyContent: "center", // Center the radio buttons horizontally
+                        justifyContent: "center",
                         gap: 3,
                         alignItems: "center",
                       }}
@@ -1202,13 +1133,12 @@ If you didn't expect this, ignore this message.
                         control={<Radio />}
                         label="RSVP"
                         sx={{
-                          color: "black", // Label color explicitly set to black
+                          color: "black",
                           "& .MuiTypography-root": {
-                            // Ensures the text label color is black
                             color: "black",
                           },
                           "& .MuiRadio-root": {
-                            color: "#c2185b", // Radio button color set to reddish
+                            color: "#c2185b",
                           },
                         }}
                       />
@@ -1217,13 +1147,12 @@ If you didn't expect this, ignore this message.
                         control={<Radio />}
                         label="All Events"
                         sx={{
-                          color: "black", // Label color explicitly set to black
+                          color: "black",
                           "& .MuiTypography-root": {
-                            // Ensures the text label color is black
                             color: "black",
                           },
                           "& .MuiRadio-root": {
-                            color: "#c2185b", // Radio button color set to reddish
+                            color: "#c2185b",
                           },
                         }}
                       />
@@ -1234,10 +1163,10 @@ If you didn't expect this, ignore this message.
                   <Box
                     sx={{
                       display: "flex",
-                      justifyContent: "center", // Centers the content horizontally
-                      alignItems: "center", // Centers the content vertically
-                      flexWrap: "wrap", // Allows wrapping of cards if there are multiple
-                      gap: 2, // Spacing between the cards
+                      justifyContent: "center",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 3,
                     }}
                   >
                     {filteredEvents.length > 0 ? (
@@ -1245,64 +1174,126 @@ If you didn't expect this, ignore this message.
                         <Card
                           key={event.Id}
                           sx={{
-                            width: "320px", // Smaller card width
-                            borderRadius: 2,
-                            boxShadow: 3,
+                            width: 340,
+                            borderRadius: 4,
+                            overflow: "hidden",
+                            position: "relative",
+                            boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                            transition: "all .3s",
+                            "&:hover": {
+                              transform: "translateY(-6px)",
+                              boxShadow: "0 12px 32px rgba(0,0,0,0.25)",
+                            },
                           }}
                         >
-                          <CardMedia
-                            component="img"
-                            height="140"
-                            image={event.CoverImageUrl}
-                            alt={event.Name}
-                          />
-                          <CardContent>
-                            <Typography variant="h6" component="div">
+                          {/* Image with gradient overlay */}
+                          <Box sx={{ position: "relative" }}>
+                            <CardMedia
+                              component="img"
+                              height="180"
+                              image={event.CoverImageUrl}
+                              alt={event.Name}
+                            />
+                            <Box
+                              sx={{
+                                position: "absolute",
+                                inset: 0,
+                                background:
+                                  "linear-gradient(to bottom, rgba(0,0,0,0) 20%, rgba(0,0,0,0.6))",
+                              }}
+                            />
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                position: "absolute",
+                                bottom: 12,
+                                left: 16,
+                                color: "white",
+                                fontWeight: 700,
+                                textShadow: "0 2px 6px rgba(0,0,0,0.5)",
+                              }}
+                            >
                               {event.Name}
                             </Typography>
+                          </Box>
+
+                          <CardContent>
+                            {/* Description */}
                             <Typography
                               variant="body2"
                               color="text.secondary"
-                              sx={{ marginTop: 2 }}
+                              sx={{ mt: 1 }}
                               dangerouslySetInnerHTML={{
                                 __html:
                                   event.Description &&
                                   typeof event.Description === "string" &&
-                                  event.Description.length > 300
-                                    ? `${event.Description.slice(0, 300)}...`
+                                  event.Description.length > 160
+                                    ? `${event.Description.slice(0, 160)}...`
                                     : event.Description || "",
                               }}
                             />
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              mt={1}
+
+                            {/* Venue */}
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                mt: 2,
+                              }}
                             >
-                              <strong>Venue:</strong> {event.Venue}
-                            </Typography>
+                              <MapPin size={18} style={{ marginRight: 6 }} />
+                              <Typography variant="body2">
+                                {event.Venue}
+                              </Typography>
+                            </Box>
+
+                            {/* Time (if needed) */}
+                            {event.StartTime && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  mt: 1,
+                                }}
+                              >
+                                <Clock size={18} style={{ marginRight: 6 }} />
+                                <Typography variant="body2">
+                                  {new Date(event.StartTime).toLocaleString()}
+                                </Typography>
+                              </Box>
+                            )}
                           </CardContent>
                         </Card>
                       ))
                     ) : (
-                      <Grid container spacing={2} sx={{ marginTop: 2 }}>
+                      <Grid container spacing={3} mt={1}>
                         {rsvp?.length > 0 &&
                           rsvp.map((item: any) => (
-                            <Grid item xs={12} sm={12} md={12} key={item.Id}>
-                              <Card>
-                                {/* Cover Image */}
+                            <Grid item xs={12} key={item.Id}>
+                              <Card
+                                sx={{
+                                  borderRadius: 4,
+                                  overflow: "hidden",
+                                  boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
+                                  transition: "all .3s",
+                                  "&:hover": {
+                                    transform: "translateY(-4px)",
+                                  },
+                                }}
+                              >
+                                {/* Image */}
                                 <CardMedia
                                   component="img"
-                                  height="200"
+                                  height="220"
                                   image={item.CoverImageUrl}
                                   alt={item.Name}
                                 />
 
-                                {/* Card Content */}
                                 <CardContent>
-                                  {/* Name */}
+                                  {/* Title */}
                                   <Typography
                                     variant="h6"
-                                    component="div"
+                                    fontWeight={700}
                                     gutterBottom
                                   >
                                     {item.Name}
@@ -1317,40 +1308,53 @@ If you didn't expect this, ignore this message.
                                     {item.Tagline}
                                   </Typography>
 
-                                  {/* Avatar and Username */}
+                                  {/* Avatar + username */}
                                   <Box
                                     sx={{
                                       display: "flex",
                                       alignItems: "center",
-                                      marginTop: 1,
+                                      mt: 1,
                                     }}
                                   >
                                     <Avatar
                                       src={item.Avatar}
                                       alt={item.Username}
-                                      sx={{
-                                        marginRight: 1,
-                                        width: 40,
-                                        height: 40,
-                                      }}
+                                      sx={{ mr: 1.5, width: 42, height: 42 }}
                                     />
                                     <Typography variant="body1">
                                       {item.Username}
                                     </Typography>
                                   </Box>
 
-                                  {/* Start and End Times */}
-                                  <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                    sx={{ marginTop: 1 }}
-                                  >
-                                    <strong>Start:</strong>{" "}
-                                    {new Date(item.StartTime).toLocaleString()}
-                                    <br />
-                                    <strong>End:</strong>{" "}
-                                    {new Date(item.EndTime).toLocaleString()}
-                                  </Typography>
+                                  {/* Start & End */}
+                                  <Box sx={{ mt: 2 }}>
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
+                                      <Calendar
+                                        size={16}
+                                        style={{ marginRight: 6 }}
+                                      />
+                                      <strong>Start:</strong>{" "}
+                                      {new Date(
+                                        item.StartTime
+                                      ).toLocaleString()}
+                                    </Typography>
+
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                      mt={0.5}
+                                    >
+                                      <Calendar
+                                        size={16}
+                                        style={{ marginRight: 6 }}
+                                      />
+                                      <strong>End:</strong>{" "}
+                                      {new Date(item.EndTime).toLocaleString()}
+                                    </Typography>
+                                  </Box>
                                 </CardContent>
                               </Card>
                             </Grid>

@@ -30,8 +30,6 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import PhoneInput, { CountryData } from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
-import EmailIcon from "@mui/icons-material/Email";
-import PhoneIcon from "@mui/icons-material/Phone";
 import { jwtDecode } from "jwt-decode";
 
 const theme = createTheme({

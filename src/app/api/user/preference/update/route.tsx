@@ -19,7 +19,7 @@ export async function POST(req: any) {
   const qblockCouples = payload.block.couples === true ? 1 : 0;
   const qblocksinglemales = payload.block.singleMale === true ? 1 : 0;
   const qblocksinglefemales = payload.block.singleFemale === true ? 1 : 0;
-  const qdinstance = payload.block.maxDistance;
+  const qdinstance = payload?.maxDistance;
   const quseDistance = payload.distanceChecked === true ? 1 : 0;
   const qcityState = payload.city;
 
