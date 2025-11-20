@@ -593,7 +593,7 @@ const MemberProfile = (props: { params: Params }) => {
 					</Button>
 
 					{/* Box 4 */}
-					<Button
+					{/* <Button
 						variant="contained"
 						sx={{
 							flex: 2, // Keep this box wider
@@ -609,7 +609,7 @@ const MemberProfile = (props: { params: Params }) => {
 						}}
 					>
 						<span style={{ fontWeight: "bold", fontSize: "16px" }}>Mail</span>
-					</Button>
+					</Button> */}
 				</Box>
 
 				<Typography

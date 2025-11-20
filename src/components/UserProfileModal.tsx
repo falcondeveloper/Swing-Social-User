@@ -628,7 +628,7 @@ If you didn't expect this, ignore this message.
                         color: "white",
                         borderRadius: 1,
                         padding: 1,
-                        minWidth: "50px",
+                        minWidth: "80px",
                       }}
                     >
                       <Block fontSize="small" />
@@ -638,7 +638,7 @@ If you didn't expect this, ignore this message.
                       onClick={handleAddFriend}
                       variant="contained"
                       sx={{
-                        flex: 2,
+                        flex: 1,
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
@@ -655,7 +655,7 @@ If you didn't expect this, ignore this message.
                       </span>
                     </Button>
 
-                    <Button
+                    {/* <Button
                       variant="contained"
                       sx={{
                         flex: 2,
@@ -673,7 +673,7 @@ If you didn't expect this, ignore this message.
                       <span style={{ fontWeight: "bold", fontSize: "16px" }}>
                         Mail
                       </span>
-                    </Button>
+                    </Button> */}
                   </Box>
 
                   <Typography
