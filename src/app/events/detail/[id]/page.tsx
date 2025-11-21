@@ -1319,7 +1319,7 @@ export default function EventDetail(props: { params: Params }) {
                         alt="Event Cover"
                         style={{
                           width: "100%",
-                          height: "400px",
+                          // height: "400px",
                           objectFit: "cover",
                           borderRadius: "8px 8px 0 0",
                         }}
@@ -1521,7 +1521,7 @@ export default function EventDetail(props: { params: Params }) {
                               <Avatar
                                 key={index}
                                 alt={person.Name}
-                                src={person.Avatar || `/api/placeholder/56/56`}
+                                src={person.Avatar}
                                 onClick={() => {
                                   setOpenModalUser({
                                     state: true,

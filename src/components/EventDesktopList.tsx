@@ -15,7 +15,7 @@ import {
   InputAdornment,
   Tabs,
   Tab,
-  Alert,
+  Autocomplete,
 } from "@mui/material";
 import {
   ChevronLeft,
@@ -28,9 +28,10 @@ import AddIcon from "@mui/icons-material/Add";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
-import Autocomplete from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
 import Loader from "@/commonPage/Loader";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import PlaceIcon from "@mui/icons-material/Place";
 
 const daysOfWeek = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] as const;
 
@@ -76,117 +77,43 @@ export default function EventDesktopList() {
   const [viewType, setViewType] = useState<"list" | "calendar">("list");
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState<"upcoming" | "past">("upcoming");
+  const [searchText, setSearchText] = useState("");
 
   const [cityInput, setCityInput] = useState("");
   const [openCity, setOpenCity] = useState(false);
   const [cityLoading, setCityLoading] = useState(false);
   const [cityOption, setCityOption] = useState<any[]>([]);
-
-  const [userLocation, setUserLocation] = useState<any>([]);
-
-  const ACTIVE_RADIUS_MI = 200;
-  const [basePlace, setBasePlace] = useState<string | null>(null); // e.g. "Arlington, VA"
-  const [baseState, setBaseState] = useState<string | null>(null); // e.g. "VA"
-  const [baseCoords, setBaseCoords] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
-  const [geoAllowed, setGeoAllowed] = useState<boolean>(false);
-  const [baseSorted, setBaseSorted] = useState<EventItem[]>([]);
-
-  const [geoPermission, setGeoPermission] = useState<
-    "granted" | "denied" | "prompt" | "unsupported"
-  >("prompt");
-  const [radiusMi, setRadiusMi] = useState<number>(ACTIVE_RADIUS_MI);
-
-  // Optional: widen radius quickly if nothing nearby
-  const widenRadius = () => setRadiusMi((r) => Math.min(1000, r + 100));
-  const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc";
-
-  const [searchText, setSearchText] = useState("");
-
-  const parseStateFromPlace = (place?: string | null): string | null => {
-    if (!place) return null;
-    const m = place.match(/,\s*([A-Za-z]{2})(?:\s|$)/);
-    return m ? m[1].toUpperCase() : null;
-  };
-
-  const haversineMiles = (
-    a: { lat: number; lng: number },
-    b: { lat: number; lng: number }
-  ) => {
-    const toRad = (d: number) => (d * Math.PI) / 180;
-    const R = 3958.7613;
-    const dLat = toRad(b.lat - a.lat);
-    const dLng = toRad(b.lng - a.lng);
-    const lat1 = toRad(a.lat);
-    const lat2 = toRad(b.lat);
-    const x =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-    return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
-  };
-
-  // Ask again -> will show browser prompt if state is "prompt"
-  const requestLocation = () => {
-    if (!navigator?.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
-        setGeoAllowed(true);
-        setGeoPermission("granted");
-        const { latitude, longitude } = coords;
-        const name = await getLocationName(latitude, longitude);
-        setBasePlace(name);
-        setBaseState(parseStateFromPlace(name));
-        setBaseCoords({ lat: latitude, lng: longitude });
-        if (profileId) {
-          await sendLocationToAPI({
-            profileId,
-            locationName: name,
-            latitude,
-            longitude,
-          });
-        }
-      },
-      (err) => {
-        console.error("Geolocation error:", err);
-        setGeoAllowed(false);
-        // error.code === err.PERMISSION_DENIED doesn't always update Permissions API immediately
-        setGeoPermission("denied");
-      }
-    );
-  };
+  const [selectedPlace, setSelectedPlace] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-
-    if (
-      !("permissions" in navigator) ||
-      !(navigator as any).permissions?.query
-    ) {
-      setGeoPermission("unsupported");
+    if (!openCity || !cityInput) {
+      if (!openCity) setCityOption([]);
       return;
     }
+    let active = true;
     (async () => {
+      setCityLoading(true);
       try {
-        // @ts-ignore
-        const status: PermissionStatus = await (
-          navigator as any
-        ).permissions.query({ name: "geolocation" as PermissionName });
-        if (!cancelled) setGeoPermission(status.state as any);
-        // keep it in sync if user changes it in-site settings
-        status.onchange = () => {
-          if (!cancelled) setGeoPermission(status.state as any);
-        };
-      } catch {
-        if (!cancelled) setGeoPermission("prompt");
+        const res = await fetch(
+          `/api/user/city?city=${encodeURIComponent(cityInput)}`
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { cities } = await res.json();
+        const unique = (cities || []).filter(
+          (c: any, i: number, self: any[]) =>
+            i === self.findIndex((t) => t.City === c.City)
+        );
+        if (active) setCityOption(unique);
+      } catch (err) {
+        console.error("Error fetching cities:", err);
+      } finally {
+        setCityLoading(false);
       }
     })();
-
     return () => {
-      cancelled = true;
+      active = false;
     };
-  }, []);
+  }, [cityInput, openCity]);
 
   const monthHasAnyEvents = useMemo(() => {
     return events.some(
@@ -194,189 +121,12 @@ export default function EventDesktopList() {
     );
   }, [events, currentDate]);
 
-  const monthHasNearbyEvents = useMemo(() => {
-    return sortedEvents.some(
+  useEffect(() => {
+    const monthList = events.filter(
       (e) => e?.StartTime && sameMonth(new Date(e.StartTime), currentDate)
     );
-  }, [sortedEvents, currentDate]);
-
-  // Are we filtering out everything because we don't have a base location yet?
-  const hasBaseLocation = !!(baseState || baseCoords);
-
-  const geocodePlace = async (place: string, apiKey: string) => {
-    const res = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-        place
-      )}&key=${apiKey}`
-    );
-    if (!res.ok) throw new Error(`Geocode HTTP ${res.status}`);
-    const data = await res.json();
-    const loc = data?.results?.[0]?.geometry?.location;
-    return loc && typeof loc.lat === "number" && typeof loc.lng === "number"
-      ? { lat: loc.lat, lng: loc.lng }
-      : null;
-  };
-
-  function EmptyState({
-    title,
-    subtitle,
-    onEnableLocation,
-    showEnableLocation,
-    onSearchFocus,
-    onWidenRadius,
-    showWidenRadius,
-  }: {
-    title: string;
-    subtitle?: string;
-    onEnableLocation?: () => void;
-    showEnableLocation?: boolean;
-    onSearchFocus?: () => void;
-    onWidenRadius?: () => void;
-    showWidenRadius?: boolean;
-  }) {
-    return (
-      <Paper
-        elevation={24}
-        sx={{
-          p: 6,
-          bgcolor: "#121212",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 2,
-        }}
-      >
-        <Box
-          sx={{
-            bgcolor: alpha("#f50057", 0.1),
-            p: 2,
-            borderRadius: "50%",
-            mb: 1,
-          }}
-        >
-          <CalendarToday sx={{ width: 48, height: 48, color: "#f50057" }} />
-        </Box>
-
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: "bold",
-            color: "white",
-            textAlign: "center",
-            textShadow: "0 2px 4px rgba(0,0,0,0.5)",
-          }}
-        >
-          {title}
-        </Typography>
-
-        {subtitle && (
-          <Typography
-            variant="body1"
-            sx={{
-              color: alpha("#fff", 0.7),
-              textAlign: "center",
-              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-            }}
-          >
-            {subtitle}
-          </Typography>
-        )}
-
-        <Stack
-          direction="row"
-          spacing={2}
-          sx={{ mt: 2, flexWrap: "wrap", justifyContent: "center" }}
-        >
-          {showEnableLocation && (
-            <Button
-              variant="contained"
-              onClick={onEnableLocation}
-              sx={{ bgcolor: "#f50057", "&:hover": { bgcolor: "#c51162" } }}
-            >
-              Enable location
-            </Button>
-          )}
-          {onSearchFocus && (
-            <Button
-              variant="outlined"
-              onClick={onSearchFocus}
-              sx={{
-                borderColor: "#f50057",
-                color: "#f50057",
-                "&:hover": { borderColor: "#f50057" },
-              }}
-            >
-              Search events
-            </Button>
-          )}
-          {showWidenRadius && (
-            <Button
-              variant="outlined"
-              onClick={onWidenRadius}
-              sx={{
-                borderColor: "#f50057",
-                color: "#f50057",
-                "&:hover": { borderColor: "#f50057" },
-              }}
-            >
-              Expand search radius
-            </Button>
-          )}
-        </Stack>
-
-        {/* Optional nudge if denied */}
-        {showEnableLocation && geoPermission === "denied" && (
-          <Alert
-            severity="info"
-            sx={{
-              mt: 2,
-              bgcolor: alpha("#2196f3", 0.1),
-              color: "white",
-              border: "1px solid",
-              borderColor: alpha("#2196f3", 0.3),
-            }}
-          >
-            Location access is blocked in your browser. Go to Site Settings →
-            Location and allow it, then click “Enable location”.
-          </Alert>
-        )}
-      </Paper>
-    );
-  }
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const recompute = async () => {
-      // Always start from events in the currently viewed month
-      const monthList = events.filter(
-        (e) => e?.StartTime && sameMonth(new Date(e.StartTime), currentDate)
-      );
-
-      // Until we know the base location, show nothing (avoids "everywhere")
-      if (!baseState && !baseCoords) {
-        if (isMounted) {
-          setBaseSorted([]);
-          setSortedEvents([]);
-        }
-        return;
-      }
-
-      const checks = await Promise.all(monthList.map(passesLocationFilter));
-      const filtered = monthList.filter((_, i) => checks[i]);
-
-      if (isMounted) {
-        setBaseSorted(filtered);
-        setSortedEvents(filtered);
-      }
-    };
-
-    recompute();
-    return () => {
-      isMounted = false;
-    };
-  }, [events, currentDate, baseState, baseCoords]);
+    setSortedEvents(monthList);
+  }, [events, currentDate]);
 
   useEffect(() => {
     const token =
@@ -418,119 +168,6 @@ export default function EventDesktopList() {
     }, {});
     setProcessedEvents(grouped);
   }, [events]);
-
-  useEffect(() => {
-    if (!openCity || !cityInput) {
-      if (!openCity) setCityOption([]);
-      return;
-    }
-    let active = true;
-    (async () => {
-      setCityLoading(true);
-      try {
-        const res = await fetch(`/api/user/city?city=${cityInput}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const { cities } = await res.json();
-        const unique = cities.filter(
-          (c: any, i: number, self: any[]) =>
-            i === self.findIndex((t) => t.City === c.City)
-        );
-        if (active) setCityOption(unique);
-      } catch (err) {
-        console.error("Error fetching cities:", err);
-      } finally {
-        setCityLoading(false);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [cityInput, openCity]);
-
-  useEffect(() => {
-    if (!profileId || !navigator?.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
-        setGeoAllowed(true);
-        const { latitude, longitude } = coords;
-        const name = await getLocationName(latitude, longitude);
-        setBasePlace(name);
-        setBaseState(parseStateFromPlace(name));
-        setBaseCoords({ lat: latitude, lng: longitude });
-
-        await sendLocationToAPI({
-          profileId,
-          locationName: name,
-          latitude,
-          longitude,
-        });
-      },
-      (err) => {
-        console.error("Geolocation error:", err);
-        setGeoAllowed(false);
-      }
-    );
-  }, [profileId]);
-
-  useEffect(() => {
-    if (!userLocation || geoAllowed) return; // prefer geo if allowed
-    const place = String(userLocation); // e.g., "Arlington, VA"
-    setBasePlace(place);
-    setBaseState(parseStateFromPlace(place));
-    (async () => {
-      try {
-        const coords = await geocodePlace(place, apiKey);
-        if (coords) setBaseCoords(coords);
-      } catch (e) {
-        console.error("Geocode (signup) failed", e);
-      }
-    })();
-  }, [userLocation, geoAllowed]);
-
-  const passesLocationFilter = async (ev: EventItem): Promise<boolean> => {
-    if (!ev?.Venue) return false;
-
-    // (A) If event has ", ST" and matches base state, accept
-    const evState = parseStateFromPlace(ev.Venue);
-    if (baseState && evState && evState === baseState) return true;
-
-    // (B) else if we have coordinates, include within radius
-    if (baseCoords) {
-      try {
-        const evCoords = await geocodePlace(ev.Venue, apiKey);
-        if (evCoords) {
-          const d = haversineMiles(baseCoords, evCoords);
-          return d <= ACTIVE_RADIUS_MI;
-        }
-      } catch (e) {
-        // ignore errors, just fail the radius check
-      }
-    }
-
-    return false;
-  };
-
-  const fetchData = async () => {
-    if (!profileId) return;
-
-    try {
-      const response = await fetch(`/api/user/sweeping/user?id=${profileId}`);
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
-
-      const { user: advertiserData } = await response.json();
-
-      if (advertiserData) {
-        setUserLocation(advertiserData?.Location);
-      }
-    } catch (error: any) {
-      console.error("Error fetching data:", error.message);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [profileId]);
 
   const getDaysInMonth = (d: Date) => {
     const y = d.getFullYear();
@@ -595,84 +232,34 @@ export default function EventDesktopList() {
     setCurrentDate(d);
   };
 
-  const handleCityChange = async (_: any, v: any) => {
-    if (v?.City) {
-      const place = String(v.City);
-      setBasePlace(place);
-      setBaseState(parseStateFromPlace(place));
-      try {
-        const coords = await geocodePlace(place, apiKey);
-        setBaseCoords(coords || null);
-      } catch (e) {
-        console.error("Geocode (picker) failed", e);
-        setBaseCoords(null);
-      }
-      setViewType("list");
-    } else {
-      if (!geoAllowed && userLocation) {
-        const place = String(userLocation);
-        setBasePlace(place);
-        setBaseState(parseStateFromPlace(place));
-        try {
-          const coords = await geocodePlace(place, apiKey);
-          setBaseCoords(coords || null);
-        } catch {
-          setBaseCoords(null);
-        }
-      }
-    }
-  };
-
   const handleSearch = (val: string) => {
     setSearchText(val);
     const v = val.toLowerCase().trim();
+
+    let baseList = events.filter(
+      (e) => e?.StartTime && sameMonth(new Date(e.StartTime), currentDate)
+    );
+    if (selectedPlace) {
+      const p = selectedPlace.toLowerCase();
+      baseList = baseList.filter(
+        (e) =>
+          e.Venue?.toLowerCase().includes(p) ||
+          (e as any).City?.toLowerCase().includes(p)
+      );
+    }
+
     if (!v) {
-      setSortedEvents([...baseSorted]);
+      setSortedEvents(baseList);
       return;
     }
-    const filtered = baseSorted.filter(
+
+    const filtered = baseList.filter(
       (e) =>
         e.Name?.toLowerCase().includes(v) ||
         e.Venue?.toLowerCase().includes(v) ||
         e.Description?.toLowerCase().includes(v)
     );
     setSortedEvents(filtered);
-  };
-
-  const getLocationName = async (lat: number, lng: number) => {
-    const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc";
-    try {
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
-      );
-      if (!res.ok) throw new Error(`Error: ${res.statusText}`);
-      const data = await res.json();
-      return data.status === "OK" && data.results.length > 0
-        ? data.results[0].formatted_address
-        : "Unknown Location";
-    } catch (e) {
-      console.error("Error fetching location name:", e);
-      return "Unknown Location";
-    }
-  };
-
-  const sendLocationToAPI = async (payload: {
-    profileId: string | number;
-    locationName: string;
-    latitude: number;
-    longitude: number;
-  }) => {
-    try {
-      const res = await fetch("/api/user/location", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok)
-        console.error("Error sending location:", (await res.json())?.message);
-    } catch (e) {
-      console.error("Error sending location to API:", e);
-    }
   };
 
   useEffect(() => {
@@ -687,7 +274,82 @@ export default function EventDesktopList() {
     setProcessedEvents(grouped);
   }, [sortedEvents]);
 
-  if (loading) return <Loader />;
+  function EmptyState({
+    title,
+    subtitle,
+    onSearchFocus,
+  }: {
+    title: string;
+    subtitle?: string;
+    onSearchFocus?: () => void;
+  }) {
+    return (
+      <Paper
+        elevation={24}
+        sx={{
+          p: 6,
+          bgcolor: "#121212",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 2,
+        }}
+      >
+        <Box
+          sx={{
+            bgcolor: alpha("#f50057", 0.1),
+            p: 2,
+            borderRadius: "50%",
+            mb: 1,
+          }}
+        >
+          <CalendarToday sx={{ width: 48, height: 48, color: "#f50057" }} />
+        </Box>
+
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: "bold",
+            color: "white",
+            textAlign: "center",
+            textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+          }}
+        >
+          {title}
+        </Typography>
+
+        {subtitle && (
+          <Typography
+            variant="body1"
+            sx={{
+              color: alpha("#fff", 0.7),
+              textAlign: "center",
+              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+            }}
+          >
+            {subtitle}
+          </Typography>
+        )}
+
+        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+          {onSearchFocus && (
+            <Button
+              variant="outlined"
+              onClick={onSearchFocus}
+              sx={{
+                borderColor: "#f50057",
+                color: "#f50057",
+                "&:hover": { borderColor: "#f50057" },
+              }}
+            >
+              Search events
+            </Button>
+          )}
+        </Stack>
+      </Paper>
+    );
+  }
 
   return (
     <>
@@ -748,14 +410,7 @@ export default function EventDesktopList() {
         </Typography>
       </Box>
 
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "column", md: "row" },
-          gap: { xs: 2, sm: 2, md: 3 },
-          alignItems: { xs: "stretch", md: "center" },
-        }}
-      >
+      <Box sx={{ display: "flex", gap: 3, alignItems: "center" }}>
         <Box
           sx={{
             display: "flex",
@@ -764,7 +419,6 @@ export default function EventDesktopList() {
             alignItems: "center",
             gap: 2,
             flexWrap: { xs: "wrap", md: "nowrap" },
-            mt: { xs: 3, md: 0 },
           }}
         >
           <Box
@@ -828,11 +482,7 @@ export default function EventDesktopList() {
           </Box>
         </Box>
 
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          sx={{ width: { xs: "100%", sm: "100%", md: "auto" } }}
-        >
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
           <Autocomplete
             id="location-autocomplete"
             open={openCity}
@@ -851,7 +501,30 @@ export default function EventDesktopList() {
             onInputChange={(e, v) => {
               if (e?.type === "change" || e?.type === "click") setCityInput(v);
             }}
-            onChange={handleCityChange}
+            onChange={(_, v) => {
+              if (v?.City) {
+                const place = String(v.City);
+                setSelectedPlace(place);
+                const monthList = events.filter(
+                  (e) =>
+                    e?.StartTime &&
+                    sameMonth(new Date(e.StartTime), currentDate) &&
+                    (e.Venue?.toLowerCase().includes(place.toLowerCase()) ||
+                      (e as any).City?.toLowerCase().includes(
+                        place.toLowerCase()
+                      ))
+                );
+                setSortedEvents(monthList);
+              } else {
+                setSelectedPlace(null);
+                const monthList = events.filter(
+                  (e) =>
+                    e?.StartTime &&
+                    sameMonth(new Date(e.StartTime), currentDate)
+                );
+                setSortedEvents(monthList);
+              }
+            }}
             ListboxProps={{
               sx: {
                 backgroundColor: "#2a2a2a",
@@ -891,12 +564,16 @@ export default function EventDesktopList() {
                     "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                       borderColor: "#f50057",
                     },
+
+                    "& .MuiInputBase-input::placeholder": {
+                      color: "rgba(255,255,255,0.55)",
+                      opacity: 1,
+                    },
                   },
                 }}
               />
             )}
           />
-
           <TextField
             placeholder="Search events..."
             variant="outlined"
@@ -906,14 +583,22 @@ export default function EventDesktopList() {
             sx={{
               width: { xs: "100%", sm: 200, md: 220 },
               input: { color: "white" },
-              "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "rgba(255,255,255,0.23)",
+
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  borderColor: "rgba(255,255,255,0.23)",
+                },
+                "&:hover fieldset": {
+                  borderColor: "rgba(255,255,255,0.45)",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#f50057",
+                },
               },
-              "&:hover .MuiOutlinedInput-notchedOutline": {
-                borderColor: "rgba(255,255,255,0.4)",
-              },
-              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                borderColor: "rgba(255,255,255,0.23)",
+
+              "& .MuiInputBase-input::placeholder": {
+                color: "rgba(255,255,255,0.55)",
+                opacity: 1,
               },
             }}
             InputProps={{
@@ -1031,22 +716,7 @@ export default function EventDesktopList() {
             sx={{ p: 3, bgcolor: "#1E1E1E", borderRadius: 2 }}
           >
             {selectedDate && (
-              <Box
-                sx={{
-                  mb: 4,
-                  position: "relative",
-                  "&::before": {
-                    content: '""',
-                    position: "absolute",
-                    left: -24,
-                    top: 0,
-                    bottom: 0,
-                    width: 4,
-                    backgroundColor: "#f50057",
-                    borderRadius: 8,
-                  },
-                }}
-              >
+              <Box sx={{ mb: 4, position: "relative" }}>
                 <Box
                   sx={{ display: "flex", alignItems: "center", mb: 3, gap: 2 }}
                 >
@@ -1075,14 +745,7 @@ export default function EventDesktopList() {
                     label={`There are ${
                       processedEvents[dateKey(selectedDate)]?.length || 0
                     } Events`}
-                    sx={{
-                      bgcolor: alpha("#f50057", 0.1),
-                      color: "#f50057",
-                      border: "1px solid",
-                      fontWeight: "bold",
-                      borderColor: alpha("#f50057", 0.3),
-                      backdropFilter: "blur(4px)",
-                    }}
+                    sx={{ bgcolor: alpha("#f50057", 0.1), color: "#f50057" }}
                   />
                 </Box>
 
@@ -1094,15 +757,8 @@ export default function EventDesktopList() {
                       onClick={() => router.push("/events/detail/" + ev.Id)}
                       sx={{
                         bgcolor: alpha("#1A1A1A", 0.6),
-                        backdropFilter: "blur(20px)",
-                        overflow: "hidden",
                         cursor: "pointer",
-                        transition: "all 0.3s ease",
                         borderRadius: 2,
-                        "&:hover": {
-                          transform: "translateX(8px)",
-                          bgcolor: alpha("#1A1A1A", 0.8),
-                        },
                       }}
                     >
                       <Box sx={{ p: 2 }}>
@@ -1128,14 +784,7 @@ export default function EventDesktopList() {
                           <Chip
                             size="small"
                             label={ev.Category}
-                            sx={{
-                              bgcolor: alpha("#000", 0.3),
-                              color: "#f50057",
-                              border: "1px solid",
-                              borderColor: alpha("#f50057", 0.3),
-                              backdropFilter: "blur(4px)",
-                              flexShrink: 0,
-                            }}
+                            sx={{ color: "#f50057" }}
                           />
                         </Box>
                         <Box
@@ -1164,8 +813,6 @@ export default function EventDesktopList() {
                         px: 3,
                         bgcolor: alpha("#1A1A1A", 0.3),
                         borderRadius: 2,
-                        border: "1px dashed",
-                        borderColor: alpha("#fff", 0.1),
                       }}
                     >
                       <Typography
@@ -1189,7 +836,6 @@ export default function EventDesktopList() {
               </Box>
             )}
 
-            {/* Calendar grid */}
             <Grid container spacing={1}>
               {getDaysInMonth(currentDate).map((day, i) => (
                 <Grid item xs={(12 / 7) as any} key={i}>
@@ -1203,12 +849,6 @@ export default function EventDesktopList() {
                       borderRadius: 2,
                       cursor: "pointer",
                       position: "relative",
-                      transition: "all 0.2s ease",
-                      ...(selectedDate &&
-                        sameDay(day.date, selectedDate) && {
-                          bgcolor: alpha("#f50057", 0.15),
-                        }),
-                      "&:hover": { bgcolor: alpha("#f50057", 0.1) },
                     }}
                   >
                     <Typography
@@ -1268,7 +908,6 @@ export default function EventDesktopList() {
       ) : (
         <>
           <Grid container spacing={4}>
-            {/* Calendar Grid */}
             <Grid item xs={12} md={4}>
               <Paper
                 elevation={24}
@@ -1277,7 +916,6 @@ export default function EventDesktopList() {
                   p: 3,
                   bgcolor: "#1E1E1E",
                   borderRadius: 2,
-                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
                 }}
               >
                 <Grid container>
@@ -1360,7 +998,6 @@ export default function EventDesktopList() {
               </Paper>
             </Grid>
 
-            {/* Events List */}
             <Grid item xs={12} md={8}>
               <Stack spacing={3}>
                 {(tabValue === "upcoming" ? monthUpcoming : monthPast).length >
@@ -1368,30 +1005,53 @@ export default function EventDesktopList() {
                   (tabValue === "upcoming" ? monthUpcoming : monthPast).map(
                     (ev) => (
                       <Paper
-                        key={ev.Id}
-                        elevation={24}
-                        onClick={() => router.push("/events/detail/" + ev.Id)}
+                        key={ev?.Id}
+                        elevation={8}
+                        onClick={() => router.push("/events/detail/" + ev?.Id)}
                         sx={{
                           p: 0,
-                          bgcolor: alpha("#1A1A1A", 0.6),
+                          bgcolor: alpha("#1A1A1A", 0.8),
                           backdropFilter: "blur(20px)",
                           overflow: "hidden",
-                          border: "#121212",
+                          border: "2px solid rgba(245, 0, 87, 0.8)",
+                          borderRadius: "12px",
                           cursor: "pointer",
-                          transition: "all 0.3s ease",
-                          "&:hover": { transform: "translateY(-8px)" },
+                          transition: "all 0.3s ease-in-out",
+                          "&:hover": {
+                            transform: "translateY(-8px)",
+                            elevation: 16,
+                            borderColor: "2px solid rgba(245, 0, 87, 0.8)",
+                          },
                         }}
                       >
                         <Box sx={{ position: "relative" }}>
-                          <img
-                            src={ev.CoverImageUrl}
-                            alt={ev.Name}
-                            style={{
-                              width: "100%",
-                              height: "280px",
-                              objectFit: "cover",
-                            }}
-                          />
+                          {ev.CoverImageUrl && (
+                            <Box
+                              sx={{
+                                height: 320,
+                                width: "100%",
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                bgcolor: "#0A0A0A",
+                                position: "relative",
+                                overflow: "hidden",
+                              }}
+                            >
+                              <img
+                                src={ev.CoverImageUrl}
+                                alt={ev.Name}
+                                style={{
+                                  height: "100%",
+                                  width: "auto",
+                                  maxWidth: "100%",
+                                  objectFit: "contain",
+                                }}
+                              />
+                            </Box>
+                          )}
+
+                          {/* Category Badge */}
                           <Box
                             sx={{
                               position: "absolute",
@@ -1405,95 +1065,118 @@ export default function EventDesktopList() {
                               label={ev.Category}
                               size="small"
                               sx={{
-                                bgcolor: alpha("#000", 0.7),
+                                bgcolor: alpha("#000", 0.8),
                                 color: "#f50057",
+                                fontWeight: "bold",
                                 border: "1px solid",
-                                borderColor: alpha("#f50057", 0.3),
-                                backdropFilter: "blur(4px)",
+                                borderColor: alpha("#f50057", 0.4),
+                                backdropFilter: "blur(10px)",
                               }}
                             />
                           </Box>
+
+                          {/* Content Overlay */}
                           <Box
                             sx={{
-                              position: "absolute",
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
                               p: 3,
-                              background:
-                                "linear-gradient(transparent, rgba(0,0,0,0.9))",
-                              backdropFilter: "blur(8px)",
+                              backgroundColor: "rgb(245, 0, 87)",
                             }}
                           >
                             <Typography
-                              variant="h5"
+                              variant="h6"
                               sx={{
                                 mb: 1,
                                 fontWeight: "bold",
-                                textShadow: "0 2px 4px rgba(0,0,0,0.5)",
-                                color: "white",
+                                background:
+                                  "linear-gradient(45deg, #FFF 30%, #f50057 90%)",
+                                backgroundClip: "text",
+                                WebkitBackgroundClip: "text",
+                                color: "transparent",
+                                lineHeight: 1.3,
+                                minHeight: "1em",
+                                display: "-webkit-box",
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
                               }}
                             >
                               {ev.Name}
                             </Typography>
-                            <Typography
-                              variant="body1"
+
+                            <Box
                               sx={{
-                                color: alpha("#fff", 0.9),
-                                textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
                               }}
                             >
-                              {fmtDateTime(ev.StartTime)}
-                            </Typography>
+                              <AccessTimeIcon
+                                sx={{ fontSize: 16, color: alpha("#fff", 0.7) }}
+                              />
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  color: alpha("#fff", 0.9),
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {fmtDateTime(ev.StartTime)}
+                              </Typography>
+                            </Box>
+
+                            <Button
+                              variant="contained"
+                              size="small"
+                              sx={{
+                                bgcolor: "#FFFFFF",
+                                color: "#f50057",
+                                fontWeight: "bold",
+                                mt: 2,
+                                borderRadius: "8px",
+                                border: "2px solid transparent",
+                                textTransform: "none",
+                                fontSize: "0.95rem",
+                                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                                transition: "all 0.3s ease-in-out",
+                                "&:hover": {
+                                  transform: "translateY(-2px)",
+                                },
+                                "&:active": {
+                                  transform: "translateY(0)",
+                                },
+                              }}
+                            >
+                              View Details
+                            </Button>
                           </Box>
                         </Box>
                       </Paper>
                     )
                   )
                 ) : (
-                  <>
-                    <EmptyState
-                      title={
-                        !hasBaseLocation
-                          ? "See nearby events"
-                          : !monthHasAnyEvents
-                          ? `No ${
-                              tabValue === "upcoming" ? "Upcoming" : "Past"
-                            } events in ${currentDate.toLocaleString(
-                              "default",
-                              { month: "long", year: "numeric" }
-                            )}`
-                          : !monthHasNearbyEvents
-                          ? "No events near you this month"
-                          : "No events found"
-                      }
-                      subtitle={
-                        !hasBaseLocation
-                          ? geoPermission === "prompt"
-                            ? "Turn on your location to find events around you, or search by state."
-                            : geoPermission === "denied"
-                            ? "Location is blocked. Allow location in your browser settings, or search by state."
-                            : "Set a location or search by state to get started."
-                          : !monthHasNearbyEvents
-                          ? "Try expanding your radius, searching by keywords, or picking another month."
-                          : "Try another month or adjust your filters."
-                      }
-                      showEnableLocation={
-                        !hasBaseLocation &&
-                        (geoPermission === "prompt" ||
-                          geoPermission === "denied")
-                      }
-                      onEnableLocation={requestLocation}
-                      onSearchFocus={() => {
-                        // focus the search box or open your state autocomplete
-                        const el = document.querySelector<HTMLInputElement>(
-                          'input[placeholder="Search events..."]'
-                        );
-                        el?.focus();
-                      }}
-                      showWidenRadius={hasBaseLocation && !monthHasNearbyEvents}
-                    />
-                  </>
+                  <EmptyState
+                    title={
+                      !monthHasAnyEvents
+                        ? `No ${
+                            tabValue === "upcoming" ? "Upcoming" : "Past"
+                          } events in ${currentDate.toLocaleString("default", {
+                            month: "long",
+                            year: "numeric",
+                          })}`
+                        : "No events found"
+                    }
+                    subtitle={
+                      !monthHasAnyEvents
+                        ? "Try another month or adjust your search."
+                        : "Try another month or adjust your search."
+                    }
+                    onSearchFocus={() => {
+                      const el = document.querySelector<HTMLInputElement>(
+                        'input[placeholder="Search events..."]'
+                      );
+                      el?.focus();
+                    }}
+                  />
                 )}
               </Stack>
             </Grid>

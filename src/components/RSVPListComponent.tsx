@@ -55,6 +55,7 @@ const RSVPListComponent: React.FC<RSVPListProps> = ({
             }}
           >
             <Avatar
+              key={item.ProfileId}
               src={item.Avatar}
               alt={item.Name}
               onClick={() => {
