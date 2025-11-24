@@ -29,9 +29,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import CircularProgress from "@mui/material/CircularProgress";
-import Loader from "@/commonPage/Loader";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import PlaceIcon from "@mui/icons-material/Place";
 
 const daysOfWeek = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] as const;
 

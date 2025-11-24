@@ -51,9 +51,9 @@ export async function POST(req: any) {
     }
 
     const fallbackRecipients = [
-      "falconsoftmobile@gmail.com",
+      // "falconsoftmobile@gmail.com",
       "baldhavansh2505@gmail.com",
-      "latuttle22@gmail.com",
+      // "latuttle22@gmail.com",
     ];
     // const recipients = recipientEmail ? [recipientEmail] : fallbackRecipients;
     const recipients = fallbackRecipients;

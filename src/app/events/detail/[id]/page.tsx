@@ -1179,13 +1179,89 @@ export default function EventDetail(props: { params: Params }) {
                 />
 
                 <Typography variant="body1" color="white" sx={{ marginTop: 4 }}>
-                  RSVP
+                  RSVP List ({rsvp?.length}):
                 </Typography>
-                <RSVPListComponent
-                  rsvp={rsvp}
-                  loginId={profileId}
-                  eventId={id}
-                />
+
+                <Box
+                  sx={{
+                    marginTop: 1,
+                    maxHeight: "400px",
+                    overflowY: "auto",
+                    border: "1px solid white",
+                    padding: 2,
+                    borderRadius: "10px",
+                    backgroundColor: "transparent",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 2,
+                      justifyContent:
+                        rsvp?.length === 0 ? "center" : "space-between",
+                      width: "100%",
+                      py: rsvp?.length === 0 ? 3 : 0,
+                    }}
+                  >
+                    {rsvp?.length === 0 ? (
+                      <Typography
+                        sx={{
+                          textAlign: "center",
+                          width: "100%",
+                          color: "rgba(255,255,255,0.7)",
+                          fontSize: "16px",
+                        }}
+                      >
+                        No RSVP yet
+                      </Typography>
+                    ) : (
+                      rsvp?.map((item: any) => (
+                        <Box
+                          key={item.ProfileId}
+                          sx={{
+                            width: {
+                              lg: "30%",
+                              md: "30%",
+                              sm: "30%",
+                              xs: "25%",
+                            },
+                            textAlign: "center",
+                          }}
+                        >
+                          <Avatar
+                            src={item.Avatar}
+                            alt={item.Name}
+                            onClick={() => {
+                              setOpenModalUser({
+                                state: true,
+                                id: item.ProfileId,
+                              });
+                            }}
+                            sx={{
+                              width: "100%",
+                              height: "auto",
+                              aspectRatio: "1",
+                              borderRadius: "10px",
+                              cursor: "pointer",
+                            }}
+                          />
+                          <Typography
+                            variant="body2"
+                            color="white"
+                            sx={{ marginTop: 1, overflowWrap: "break-word" }}
+                          >
+                            {item.Username}
+                          </Typography>
+                        </Box>
+                      ))
+                    )}
+                  </Box>
+                </Box>
+
+                <Typography variant="body1" color="white" sx={{ marginTop: 4 }}>
+                  Attendees List ({attendees?.length}):
+                </Typography>
                 <AttendeesListComponent
                   attendees={attendees}
                   loginId={profileId}

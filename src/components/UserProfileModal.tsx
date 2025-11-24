@@ -133,17 +133,9 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
       const BASE_URL = "https://swing-social-user.vercel.app";
 
-      const acceptUrl = `${BASE_URL}/api/user/profile/friend/accept?fromId=${encodeURIComponent(
-        safeFromId
-      )}&toId=${encodeURIComponent(safeToId)}`;
+      const acceptUrl = `${BASE_URL}/mailbox/${encodeURIComponent(safeToId)}`;
 
-      const declineUrl = `${BASE_URL}/api/user/profile/friend/decline?fromId=${encodeURIComponent(
-        safeFromId
-      )}&toId=${encodeURIComponent(safeToId)}`;
-
-      const viewProfileUrl = `${BASE_URL}/profile/${encodeURIComponent(
-        safeToId
-      )}`;
+      const declineUrl = `${BASE_URL}/mailbox/${encodeURIComponent(safeToId)}`;
 
       const subject = `${userName} sent you a friend request on Swing Social`;
 
@@ -171,12 +163,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                       Click below to view their profile or respond to the request.
                     </p>
 
-                    <p style="margin:0 0 18px;">
-                      <a href="${viewProfileUrl}" 
-                         style="color:#1e88e5; font-weight:bold; text-decoration:none;">
-                        View Profile
-                      </a>
-                    </p>
+                    
 
                     <table cellpadding="0" cellspacing="0" style="margin:18px 0;">
                       <tr>
@@ -210,7 +197,6 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
       const textBody = `${userName} has sent you a friend request on Swing Social.
 
-    View profile: ${viewProfileUrl}
 Accept: ${acceptUrl}
 Decline: ${declineUrl}
 

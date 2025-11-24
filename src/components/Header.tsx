@@ -254,7 +254,7 @@ const Header = () => {
 
               {/* Profile Avatar */}
               <Box
-                onClick={() => router.push("/profile/")}
+                onClick={() => router.push("/profile")}
                 sx={{
                   width: 40,
                   height: 40,
@@ -269,7 +269,6 @@ const Header = () => {
                   },
                 }}
               >
-                
                 <Avatar
                   src={avatar}
                   alt="Profile"
@@ -339,7 +338,10 @@ const Header = () => {
                 </Box>
 
                 {/* User Info */}
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                  onClick={() => router.push("/profile")}
+                >
                   <Avatar
                     src={avatar}
                     sx={{
