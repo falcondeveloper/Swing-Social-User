@@ -1058,7 +1058,7 @@ export default function EditProfile() {
           >
             <MenuItem value="Couple">Couple</MenuItem>
             <MenuItem value="Man">Man</MenuItem>
-            <MenuItem value="Women">Women</MenuItem>
+            <MenuItem value="Woman">Woman</MenuItem>
             <MenuItem value="Throuple">Throuple</MenuItem>
           </Select>
         </FormControl>

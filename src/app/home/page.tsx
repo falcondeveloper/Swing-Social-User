@@ -20,7 +20,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import UserBottomNavigation from "@/components/BottomNavigation";
 import useFcmToken from "@/hooks/useFCMToken";
-import FcmTokenComp from "@/hooks/firebaseForeground";
 import { getMessaging, onMessage } from "firebase/messaging";
 import app from "../../../firebase";
 import { motion } from "framer-motion";
@@ -74,7 +73,6 @@ const socket = io("https://api.nomolive.com/");
 const Home = () => {
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
-  const { token, notificationPermissionStatus } = useFcmToken();
 
   const [profileId, setProfileId] = useState<any>();
   const [profile, setProfile] = useState<any>();
@@ -227,44 +225,44 @@ const Home = () => {
     }
   };
 
-  useEffect(() => {
-    if (profileId && token) {
-      const handleUpdateDeviceToken = async (token: any, profileId: any) => {
-        const payload = {
-          token: token,
-          profile: profile,
-        };
-        try {
-          const response = await fetch("/api/user/devicetoken", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-          });
-          if (!response.ok) {
-            console.error(
-              "❌ Error sending device token:",
-              await response.json()
-            );
-          }
-        } catch (error) {
-          console.error("❌ Network error while sending device token:", error);
-        }
-      };
-      handleUpdateDeviceToken(token, profileId);
-    }
-  }, [token, profileId]);
+  // useEffect(() => {
+  //   if (profileId && token) {
+  //     const handleUpdateDeviceToken = async (token: any, profileId: any) => {
+  //       const payload = {
+  //         token: token,
+  //         profile: profile,
+  //       };
+  //       try {
+  //         const response = await fetch("/api/user/devicetoken", {
+  //           method: "POST",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //           },
+  //           body: JSON.stringify(payload),
+  //         });
+  //         if (!response.ok) {
+  //           console.error(
+  //             "❌ Error sending device token:",
+  //             await response.json()
+  //           );
+  //         }
+  //       } catch (error) {
+  //         console.error("❌ Network error while sending device token:", error);
+  //       }
+  //     };
+  //     handleUpdateDeviceToken(token, profileId);
+  //   }
+  // }, [token, profileId]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      const messaging = getMessaging(app);
-      const unsubscribe = onMessage(messaging, (payload: any) => {});
-      return () => {
-        unsubscribe();
-      };
-    }
-  }, [notificationPermissionStatus]);
+  // useEffect(() => {
+  //   if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  //     const messaging = getMessaging(app);
+  //     const unsubscribe = onMessage(messaging, (payload: any) => {});
+  //     return () => {
+  //       unsubscribe();
+  //     };
+  //   }
+  // }, [notificationPermissionStatus]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
@@ -277,23 +275,23 @@ const Home = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      const messaging = getMessaging(app);
+  // useEffect(() => {
+  //   if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  //     const messaging = getMessaging(app);
 
-      const unsubscribe = onMessage(messaging, async (payload: any) => {
-        const registration = await navigator.serviceWorker.ready;
-        if (registration.active) {
-          registration.active.postMessage({
-            type: "SHOW_NOTIFICATION",
-            payload,
-          });
-        }
-      });
+  //     const unsubscribe = onMessage(messaging, async (payload: any) => {
+  //       const registration = await navigator.serviceWorker.ready;
+  //       if (registration.active) {
+  //         registration.active.postMessage({
+  //           type: "SHOW_NOTIFICATION",
+  //           payload,
+  //         });
+  //       }
+  //     });
 
-      return () => unsubscribe();
-    }
-  }, [notificationPermissionStatus]);
+  //     return () => unsubscribe();
+  //   }
+  // }, [notificationPermissionStatus]);
 
   useEffect(() => {
     const id = localStorage.getItem("logged_in_profile");
@@ -358,7 +356,6 @@ const Home = () => {
 
   return (
     <>
-      <FcmTokenComp />
       {isMobile ? (
         <Box sx={{ color: "white", padding: "16px", paddingBottom: "80px" }}>
           <Header />

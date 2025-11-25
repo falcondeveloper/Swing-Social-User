@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import FcmTokenComp from "@/hooks/firebaseForeground";
+import NotificationHandler from "../hooks/useFCMToken";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -10,8 +10,8 @@ interface ClientLayoutProps {
 export default function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <>
+      <NotificationHandler />
       {children}
-      <FcmTokenComp />
     </>
   );
 }
