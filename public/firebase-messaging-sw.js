@@ -1,3 +1,4 @@
+// public/firebase-messaging-sw.js
 importScripts(
   "https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"
 );
@@ -5,52 +6,56 @@ importScripts(
   "https://www.gstatic.com/firebasejs/10.5.0/firebase-messaging-compat.js"
 );
 
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyB0ZCpDgqTNoxnplSIlK7k6JdwRDV9gs9g",
-  authDomain: "swing-social-28101.firebaseapp.com",
-  projectId: "swing-social-28101",
-  storageBucket: "swing-social-28101.appspot.com",
-  messagingSenderId: "1024693141412",
-  appId: "1:1024693141412:web:da069d79d24114358ccb31",
-  measurementId: "G-0XD9GR0VE9",
+  apiKey: "AIzaSyBYKNIOcbbHKjS2ukuLMlriac7Lu_cw10c",
+  authDomain: "swing-social-website.firebaseapp.com",
+  projectId: "swing-social-website",
+  storageBucket: "swing-social-website.firebasestorage.app",
+  messagingSenderId: "620697559766",
+  appId: "1:620697559766:web:50d93c8b21d8e79f9f9f77",
+  measurementId: "G-BF70P8Z081",
 };
 
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
 const messaging = firebase.messaging();
 
+// Handle background messages
 messaging.onBackgroundMessage((payload) => {
-  const { title, body, icon, image } = payload.notification || {};
-  const notificationTitle = title || "Default Title";
+  console.log("Received background message:", payload);
+
+  const notificationTitle = payload.notification?.title || "New Message";
   const notificationOptions = {
-    body: body || "Default Body",
-    icon: icon || image || "/logo.png",
+    body: payload.notification?.body || "You have a new notification",
+    icon: payload.notification?.icon || "/logo.png",
     data: {
-      link:
-        payload?.data?.link || "https://swing-social-user.vercel.app/messaging",
+      url: payload.data?.link || "/",
     },
   };
 
-  return self.registration.showNotification(
-    notificationTitle,
-    notificationOptions
-  );
+  self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-self.addEventListener("message", (event) => {
-  if (event.data?.type === "SHOW_NOTIFICATION") {
-    const payload = event.data.payload;
-    const { title, body, icon, image } = payload.notification || {};
-    const notificationTitle = title || "New Notification";
-    const notificationOptions = {
-      body: body || "You got a message",
-      icon: icon || image || "/logo.png",
-      requireInteraction: true,
-      data: {
-        link: payload?.data?.link || "/",
-      },
-    };
+// Handle notification click
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
 
-    self.registration.showNotification(notificationTitle, notificationOptions);
-  }
+  const urlToOpen = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window" }).then((windowClients) => {
+      // Check if there's already a window/tab open with the target URL
+      for (let client of windowClients) {
+        if (client.url === urlToOpen && "focus" in client) {
+          return client.focus();
+        }
+      }
+      // If not, open a new window/tab
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
 });

@@ -1,43 +1,84 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { getMessaging, getToken } from 'firebase/messaging';
-import firebaseApp from '../../firebase';
+"use client";
+import { useEffect, useState } from "react";
+import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
+import firebaseApp from "../../firebase";
 
 const useFcmToken = () => {
-  const [token, setToken] = useState('');
-  const [notificationPermissionStatus, setNotificationPermissionStatus] = useState('');
+  const [token, setToken] = useState("");
+  const [notificationPermissionStatus, setNotificationPermissionStatus] =
+    useState<NotificationPermission | "unsupported" | "">("");
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    const retrieveToken = async () => {
+    const initializeFCM = async () => {
       try {
-        if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-          const messaging = getMessaging(firebaseApp);
-
-          const permission = await Notification.requestPermission();
-          setNotificationPermissionStatus(permission);
-
-          if (permission === 'granted') {
-            const currentToken = await getToken(messaging, {
-              vapidKey: 'BMQCJxFYGoZrPS4GNe-LBcXGBl_9T6xYGBU8SZBoq8LAKc1fRiiIZEhZAomThQdeEC9GFz4ZDwQE1Nru7ykS5fE',
-              serviceWorkerRegistration: await navigator.serviceWorker.ready,
-            });
-
-            if (currentToken) {
-              setToken(currentToken);
-            } else {
-              console.warn("⚠️ No registration token available");
-            }
-          }
+        const isFcmSupported = await isSupported();
+        if (!isFcmSupported) {
+          setNotificationPermissionStatus("unsupported");
+          setError("Firebase Cloud Messaging is not supported in this browser");
+          return;
         }
-      } catch (error) {
-        console.error('❌ Error retrieving FCM token:', error);
+
+        if (!("serviceWorker" in navigator)) {
+          setError("Service Worker is not supported in this browser");
+          return;
+        }
+
+        const messaging = getMessaging(firebaseApp);
+
+        const permission = await Notification.requestPermission();
+        setNotificationPermissionStatus(permission);
+
+        if (permission !== "granted") {
+          setError("Notification permission denied");
+          return;
+        }
+
+        let serviceWorkerRegistration;
+        try {
+          serviceWorkerRegistration = await navigator.serviceWorker.getRegistration("/firebase-messaging-sw.js");
+
+          if (!serviceWorkerRegistration) {
+            serviceWorkerRegistration = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
+              scope: "/",
+            });
+            console.log("Service Worker registered:", serviceWorkerRegistration);
+          }
+        } catch (swError) {
+          console.error("Service Worker registration failed:", swError);
+          setError("Failed to register Service Worker");
+          return;
+        }
+
+        await navigator.serviceWorker.ready;
+
+        const currentToken = await getToken(messaging, {
+          vapidKey: "BJ_sUo9JKNgQ_knM67BejMvIPs7_K_YSR3M3FB44zOxFaM9OPxTqbBTpiDIPGyY7JBM6Uym0GnZzQKWAigh_OWI",
+          serviceWorkerRegistration,
+        });
+
+        if (currentToken) {
+          console.log("FCM token retrieved:", currentToken);
+          setToken(currentToken);
+
+        } else {
+          setError("No token available");
+        }
+
+        onMessage(messaging, (payload) => {
+          console.log("Foreground message received:", payload);
+        });
+
+      } catch (err) {
+        console.error("Error initializing FCM:", err);
+        setError(err instanceof Error ? err.message : "Unknown error occurred");
       }
     };
 
-    retrieveToken();
+    initializeFCM();
   }, []);
 
-  return { token, notificationPermissionStatus };
+  return { token, notificationPermissionStatus, error };
 };
 
 export default useFcmToken;
