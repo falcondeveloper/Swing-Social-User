@@ -140,10 +140,6 @@ export default function MobileSweaping() {
     null
   );
   const [emptyMessage, setEmptyMessage] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [totalProfiles, setTotalProfiles] = useState(0);
 
   const visibleProfiles = useMemo(() => {
     return userProfiles.slice(currentIndex, currentIndex + 2);
@@ -234,68 +230,36 @@ export default function MobileSweaping() {
     }
   }, []);
 
-  const getUserList = useCallback(
-    async (
-      profileId: string,
-      page: number = 1,
-      isLoadMore: boolean = false
-    ) => {
-      try {
-        if (isLoadMore) {
-          setIsLoadingMore(true);
-        } else {
-          setLoading(true);
+  const getUserList = useCallback(async (profileId: string) => {
+    try {
+      const response = await fetch(
+        "/api/user/sweeping/swipes?id=" + profileId,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
+      );
+      const data = await response.json();
+      const profiles = data?.swipes || [];
+      setUserProfiles(profiles);
 
-        const response = await fetch(
-          `/api/user/sweeping/swipes?id=${profileId}&page=${page}&limit=30`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        const data = await response.json();
-        const profiles = data?.swipes || [];
-        if (isLoadMore) {
-          setUserProfiles((prev) => [...prev, ...profiles]);
-        } else {
-          setUserProfiles(profiles);
-        }
+      setEmptyMessage(data?.message || "");
 
-        setHasMore(data?.pagination?.hasMore || false);
-        setTotalProfiles(data?.pagination?.totalCount || 0);
-        setEmptyMessage(data?.message || "");
-
-        if (
-          !isLoadMore &&
-          data?.totalRows !== undefined &&
-          data.totalRows <= 0
-        ) {
-          setShowEndPopup(true);
-        } else if (!isLoadMore && profiles.length === 0) {
-          setShowEndPopup(true);
-        }
-
-        preloadProfileImages(profiles);
-      } catch (error) {
-        console.error("Error fetching user profiles:", error);
-      } finally {
-        setLoading(false);
-        setIsLoadingMore(false);
+      if (data?.totalRows !== undefined && data.totalRows <= 0) {
+        setShowEndPopup(true);
+      } else if (profiles.length === 0) {
+        setShowEndPopup(true);
       }
-    },
-    []
-  );
 
-  const loadMoreProfiles = useCallback(() => {
-    if (hasMore && !isLoadingMore) {
-      const nextPage = currentPage + 1;
-      setCurrentPage(nextPage);
-      getUserList(profileId, nextPage, true);
+      preloadProfileImages(profiles);
+    } catch (error) {
+      console.error("Error fetching user profiles:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [hasMore, isLoadingMore, currentPage, profileId, getUserList]);
+  }, []);
 
   const preloadProfileImages = useCallback(
     (profiles: any[]) => {
@@ -375,15 +339,6 @@ export default function MobileSweaping() {
   const processSwipe = useCallback(
     (direction: string, targetProfile: any) => {
       setCurrentIndex((prevIndex) => prevIndex + 1);
-
-      if (
-        currentIndex + 3 >= userProfiles.length &&
-        hasMore &&
-        !isLoadingMore
-      ) {
-        loadMoreProfiles();
-      }
-
       setCardStyles({
         active: {
           transform: "scale(1)",
@@ -435,34 +390,8 @@ export default function MobileSweaping() {
       setShowLimitPopup,
       setShowEndPopup,
       setCurrentIndex,
-      hasMore,
-      isLoadingMore,
-      loadMoreProfiles,
     ]
   );
-
-  useEffect(() => {
-    if (profileId) {
-      setCurrentPage(1);
-      getUserList(profileId, 1, false);
-    }
-  }, [profileId, getUserList]);
-
-  {
-    isLoadingMore && (
-      <Box
-        sx={{
-          position: "fixed",
-          bottom: 80,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 1000,
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   const getEventPoint = (e: any) => (e.touches ? e.touches[0] : e);
 
