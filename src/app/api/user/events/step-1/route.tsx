@@ -62,16 +62,14 @@ async function sendSuccessEmail(payload: any) {
   const body = `
 Event step 1 saved successfully.
 
-Profile ID: ${payload.profileId ?? "N/A"}
+Profile Name: ${payload.profileName ?? "N/A"}
 Event Name: ${payload.values?.eventName ?? "N/A"}
 Category: ${payload.values?.category ?? "N/A"}
 Venue: ${payload.values?.venue ?? "N/A"}
 Start Time: ${payload.values?.startTime ?? "N/A"}
 End Time: ${payload.values?.endTime ?? "N/A"}
 Hide Venue: ${payload.values?.hideVenue === 1 ? "Yes" : "No"}
-Hide Ticket Option: ${payload.values?.hideTicketOption === 1 ? "Yes" : "No"}
-Time: ${new Date().toISOString()}
-  `;
+Hide Ticket Option: ${payload.values?.hideTicketOption === 1 ? "Yes" : "No"}`;
   await sendMail(subject, body);
 }
 
@@ -88,6 +86,7 @@ An error occurred:
 
 Route: ${params.routeName ?? "step-1"}
 User ID: ${params.userId ?? "N/A"}
+Profile name: ${params.payload?.profileName ?? "N/A"}
 Message: ${params.errorMessage ?? "N/A"}
 Stack: ${params.stack ?? "No stack trace"}
 Payload: ${JSON.stringify(params.payload ?? {}, null, 2)}

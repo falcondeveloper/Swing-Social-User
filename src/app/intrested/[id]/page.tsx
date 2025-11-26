@@ -126,7 +126,7 @@ export default function ShowInterest({
   const validationSchema = Yup.object({
     selectedOption: Yup.string().required("Please select an option"),
     age: Yup.string().when("selectedOption", {
-      is: (val: string) => ["Man", "Woman", "Throuple", "Couple"].includes(val),
+      is: (val: string) => ["Male", "Woman", "Throuple", "Couple"].includes(val),
       then: (schema) => schema.required("Age is required"),
     }),
     gender: Yup.string().when("selectedOption", {
@@ -161,7 +161,7 @@ export default function ShowInterest({
   const handleSubmit = async (values: typeof initialValues) => {
     setLoading(true);
     const isSingle =
-      values.selectedOption === "Woman" || values.selectedOption === "Man";
+      values.selectedOption === "Woman" || values.selectedOption === "Male";
 
     const requestBody = isSingle
       ? {
@@ -335,13 +335,13 @@ export default function ShowInterest({
                       <MenuItem value="" disabled>
                         Select your option
                       </MenuItem>
-                      <MenuItem value="Man">Man</MenuItem>
+                      <MenuItem value="Male">Man</MenuItem>
                       <MenuItem value="Woman">Woman</MenuItem>
                       <MenuItem value="Throuple">Throuple</MenuItem>
                       <MenuItem value="Couple">Couple</MenuItem>
                     </TextField>
 
-                    {["Man", "Woman"].includes(values.selectedOption) ? (
+                    {["Male", "Woman"].includes(values.selectedOption) ? (
                       <>
                         <TextField
                           fullWidth

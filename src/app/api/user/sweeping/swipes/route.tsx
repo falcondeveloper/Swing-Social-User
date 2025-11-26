@@ -16,8 +16,16 @@ export async function GET(req: Request) {
     const userId = searchParams.get("id");
     let query = `SELECT * FROM public.get_swipescreenhome($1)`;
     const swipeResults = await pool.query(query, [userId]);
+
+    if (swipeResults?.rows?.length === 0) {
+      return NextResponse.json({
+        swipes: [],
+        message: "No profiles found",
+      });
+    }
+
     return NextResponse.json({
-      swipes: swipeResults.rows,
+      swipes: swipeResults?.rows,
     });
   } catch (error) {
     console.error("Database query failed:", error);

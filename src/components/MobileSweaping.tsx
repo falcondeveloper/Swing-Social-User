@@ -139,6 +139,7 @@ export default function MobileSweaping() {
   const [pendingSwipeAction, setPendingSwipeAction] = useState<string | null>(
     null
   );
+  const [emptyMessage, setEmptyMessage] = useState<string>("");
 
   const visibleProfiles = useMemo(() => {
     return userProfiles.slice(currentIndex, currentIndex + 2);
@@ -244,9 +245,14 @@ export default function MobileSweaping() {
       const profiles = data?.swipes || [];
       setUserProfiles(profiles);
 
+      setEmptyMessage(data?.message || "");
+
       if (data?.totalRows !== undefined && data.totalRows <= 0) {
         setShowEndPopup(true);
+      } else if (profiles.length === 0) {
+        setShowEndPopup(true);
       }
+
       preloadProfileImages(profiles);
     } catch (error) {
       console.error("Error fetching user profiles:", error);
@@ -814,24 +820,6 @@ export default function MobileSweaping() {
     }
   }, [currentProfile, profileId, reportOptions]);
 
-  if (userProfiles?.length === 0 && loading) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="100vh"
-        bgcolor="#121212"
-      >
-        <>
-          <Typography variant="h6" color="white">
-            Please wait...
-          </Typography>
-        </>
-      </Box>
-    );
-  }
-
   return (
     <>
       <Header />
@@ -1361,8 +1349,8 @@ export default function MobileSweaping() {
         <DialogTitle sx={{ color: "white" }}>End of Records</DialogTitle>
         <DialogContent>
           <Typography>
-            You've run out of matches. Adjust your preferences to view more
-            members.
+            {emptyMessage ||
+              "You've run out of matches. Adjust your preferences to view more members."}
           </Typography>
           <Button
             onClick={() => router.push("/prefrences")}

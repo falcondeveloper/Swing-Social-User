@@ -186,6 +186,7 @@ const CreateEventForm: React.FC = () => {
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [profileId, setProfileId] = useState<any>();
+  const [profileName, setProfileName] = useState<string>("");
   const [activeStep, setActiveStep] = useState(0);
   const [message, setMessage] = useState<string>("");
   const [cityLoading, setCityLoading] = useState(false);
@@ -219,6 +220,7 @@ const CreateEventForm: React.FC = () => {
     try {
       const body = {
         profileId,
+        profileName,
         values: extra?.partialValues ?? formik.values,
       };
 
@@ -252,6 +254,7 @@ const CreateEventForm: React.FC = () => {
       if (token) {
         const decodeToken = jwtDecode<any>(token);
         setProfileId(decodeToken?.profileId);
+        setProfileName(decodeToken?.profileName || "");
       } else {
         router.push("/login");
       }

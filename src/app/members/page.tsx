@@ -673,22 +673,6 @@ export default function Home() {
     }
   };
 
-  if (userProfiles.length === 0) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="100vh"
-        bgcolor="#121212"
-      >
-        <Typography variant="h6" color="white">
-          Please wait...
-        </Typography>
-      </Box>
-    );
-  }
-
   if (isMobile) {
     return <MobileSweaping />;
   }
