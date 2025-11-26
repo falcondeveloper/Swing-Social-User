@@ -30,7 +30,6 @@ import {
   Image as ImageIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-import useFcmToken from "@/hooks/useFCMToken";
 import { jwtDecode } from "jwt-decode";
 import Swal from "sweetalert2";
 type Params = Promise<{ id: string }>;
@@ -92,7 +91,7 @@ export default function MailboxCreate(props: { params: Params }) {
     }
   }, [profileId]);
 
-  const { token, notificationPermissionStatus } = useFcmToken();
+  // const { token, notificationPermissionStatus } = useFcmToken();
 
   useEffect(() => {
     if (typeof window !== "undefined") {

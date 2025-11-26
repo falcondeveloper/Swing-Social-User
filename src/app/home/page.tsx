@@ -19,7 +19,6 @@ import Swal from "sweetalert2";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import UserBottomNavigation from "@/components/BottomNavigation";
-import useFcmToken from "@/hooks/useFCMToken";
 import { getMessaging, onMessage } from "firebase/messaging";
 import app from "../../../firebase";
 import { motion } from "framer-motion";
