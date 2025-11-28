@@ -140,6 +140,7 @@ export default function MobileSweaping() {
     null
   );
   const [emptyMessage, setEmptyMessage] = useState<string>("");
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
   const visibleProfiles = useMemo(() => {
     return userProfiles.slice(currentIndex, currentIndex + 2);
@@ -333,6 +334,60 @@ export default function MobileSweaping() {
     }
   }, [profileId, currentProfile]);
 
+  const fetchNextBatchAndAppend = useCallback(async () => {
+    if (!profileId) return;
+
+    if (isFetchingMore) return;
+    setIsFetchingMore(true);
+
+    const MAX_RETRIES = 4;
+    const RETRY_DELAY_MS = 700; // small backoff so DB has a moment to commit
+    let attempt = 0;
+    let appended = false;
+
+    while (attempt < MAX_RETRIES && !appended) {
+      attempt += 1;
+      try {
+        const response = await fetch(
+          `/api/user/sweeping/swipes?id=${profileId}`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+        const data = await response.json();
+        const profiles = data?.swipes || [];
+
+        // Filter out any IDs we already have locally (defensive)
+        const existingIds = new Set(userProfiles.map((p) => p.Id));
+        const newProfiles = profiles.filter((p: any) => !existingIds.has(p.Id));
+
+        if (newProfiles.length > 0) {
+          // append
+          setUserProfiles((prev) => [...prev, ...newProfiles]);
+          preloadProfileImages(newProfiles);
+          appended = true;
+          break;
+        } else {
+          // If backend returned 0 or only already-known IDs, wait and retry once or twice
+          // This helps in case the relationship write hasn't fully committed yet
+          await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
+        }
+      } catch (err) {
+        console.error("Error while trying to fetch next batch:", err);
+        // wait a bit and retry
+        await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
+      }
+    }
+
+    if (!appended) {
+      // after retries we still have no new profiles — show end popup
+      setShowEndPopup(true);
+    }
+
+    setIsFetchingMore(false);
+  }, [profileId, userProfiles, preloadProfileImages]);
+
   const isUserPremium = () => membership === 1;
   const hasReachedSwipeLimit = () => swipeCount >= DAILY_LIMIT;
 
@@ -350,7 +405,7 @@ export default function MobileSweaping() {
         },
       });
 
-      const apiCalls = [];
+      const apiCalls: Promise<any>[] = [];
 
       if (direction === "left") {
         apiCalls.push(handleUpdateCategoryRelation("Denied", targetProfile));
@@ -366,8 +421,16 @@ export default function MobileSweaping() {
       });
 
       if (currentIndex + 1 >= userProfiles.length) {
-        setShowEndPopup(true);
+        try {
+          fetchNextBatchAndAppend();
+        } catch (err) {
+          console.error("fetchNextBatch error:", err);
+        }
       }
+
+      // if (currentIndex + 1 >= userProfiles.length) {
+      //   setShowEndPopup(true);
+      // }
 
       if (!isUserPremium() && hasReachedSwipeLimit()) {
         setShowLimitPopup(true);
@@ -390,6 +453,7 @@ export default function MobileSweaping() {
       setShowLimitPopup,
       setShowEndPopup,
       setCurrentIndex,
+      fetchNextBatchAndAppend,
     ]
   );
 

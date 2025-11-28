@@ -1,8 +1,5 @@
 "use client";
-
-import UserBottomNavigation from "@/components/BottomNavigation";
 import Header from "@/components/Header";
-import SidebarList from "@/components/SidebarList";
 import {
   Box,
   Typography,
@@ -21,9 +18,6 @@ import {
   Fade,
   Paper,
   useMediaQuery,
-  useTheme,
-  List,
-  ListItem,
   Avatar,
   Stack,
   Menu,
@@ -32,7 +26,6 @@ import {
   ListItemText,
   CircularProgress,
 } from "@mui/material";
-
 import {
   Favorite,
   FavoriteBorder,
@@ -52,67 +45,25 @@ import UserProfileModal from "@/components/UserProfileModal";
 import Swal from "sweetalert2";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
+import Loader from "@/commonPage/Loader";
 
 export default function Whatshot() {
+  const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
   const router = useRouter();
-
   const [posts, setPosts] = useState<any>([]);
-  const [likesCount, setLikesCount] = useState(posts?.LikesCount || 0);
-  const [hasLiked, setHasLiked] = useState(false); // Track if the user has liked the post
-  const [profileId, setProfileId] = useState<any>(""); // Animation direction
-  const [targetId, setTargetId] = useState<any>(null); // Animation direction
+  const [profileId, setProfileId] = useState<any>();
+  const [currentName, setCurrentName] = useState<any>("");
+  const [targetId, setTargetId] = useState<any>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [currentItem, setCurrentItem] = useState<any>("What's Hot");
-  const [isLoading, setIsLoading] = useState(true);
   const [showDetail, setShowDetail] = useState<any>(false);
   const [selectedUserId, setSelectedUserId] = useState<any>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  const theme = useTheme();
   const [reportOptions, setReportOptions] = useState({
     reportUser: false,
     blockUser: false,
     reportImage: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  //const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
-
-  const shimmerKeyframes = `
-      @keyframes shimmer {
-        0% {
-          transform: translateX(-100%) skewX(-15deg);
-        }
-        100% {
-          transform: translateX(100%) skewX(-15deg);
-        }
-      }
-    `;
-
-  const loadingBarKeyframes = `
-      @keyframes loadingBar {
-        0% {
-          left: -30%;
-          width: 30%;
-        }
-        50% {
-          width: 40%;
-        }
-        100% {
-          left: 100%;
-          width: 30%;
-        }
-      }
-    `;
-
-  interface LoadingScreenProps {
-    logoSrc?: string;
-  }
-
-  interface LoadingScreenProps {
-    logoSrc?: string;
-  }
 
   const handleClose = () => {
     setShowDetail(false);
@@ -121,182 +72,66 @@ export default function Whatshot() {
 
   const handleGrantAccess = async () => {
     try {
-      // const checkResponse = await fetch('/api/user/sweeping/grant', {
-      //     method: 'POST',
-      //     headers: {
-      //         'Content-Type': 'application/json',
-      //     },
-      //     body: JSON.stringify({ profileid: profileId, targetid: userProfiles[currentIndex]?.Id }),
-      // });
-
-      // const checkData = await checkResponse.json();
-      const checkData = "121212";
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
-  const LoadingScreen: React.FC<LoadingScreenProps> = ({
-    logoSrc = "/loading.png",
-  }) => {
-    return (
-      <>
-        <style>
-          {shimmerKeyframes}
-          {loadingBarKeyframes}
-        </style>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-            backgroundColor: "#121212",
-            position: "relative",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              marginBottom: 1,
-              gap: "12px",
-            }}
-          >
-            <Box
-              component="img"
-              src={logoSrc}
-              alt="Logo"
-              sx={{
-                width: "50px",
-                height: "auto",
-              }}
-            />
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: "32px",
-                letterSpacing: "-0.02em", // Reduced letter spacing
-                fontWeight: "bold",
-                color: "#C2185B",
-                position: "relative",
-                overflow: "hidden",
-                "&::after": {
-                  content: '""',
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                },
-              }}
-            >
-              SWINGSOCIAL
-            </Typography>
-          </Box>
-
-          {/* Loading Bar */}
-          <Box
-            sx={{
-              position: "relative",
-              width: "120px",
-              height: "2px",
-              backgroundColor: "rgba(194,24,91,0.2)",
-              borderRadius: "4px",
-              overflow: "hidden",
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                height: "100%",
-                backgroundColor: "#C2185B",
-                borderRadius: "4px",
-                animation: "loadingBar 1.5s infinite",
-              }}
-            />
-          </Box>
-
-          {/* Subtitle */}
-          <Box sx={{ textAlign: "center", marginTop: 2 }}>
-            <Typography
-              variant="subtitle1"
-              sx={{
-                fontSize: "14px",
-                letterSpacing: "0.02em",
-                opacity: 0.9,
-                color: "#C2185B",
-                // color: 'white',
-                position: "relative",
-                overflow: "hidden",
-                fontWeight: "bold",
-                "&::after": {
-                  content: '""',
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                },
-              }}
-            >
-              The best dating and events platform for Swingers
-            </Typography>
-          </Box>
-        </Box>
-      </>
-    );
+    } catch (error) {}
   };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setProfileId(localStorage.getItem("logged_in_profile"));
+      const token = localStorage.getItem("loginInfo");
+      if (token) {
+        try {
+          const decodeToken = jwtDecode<any>(token);
+          setCurrentName(decodeToken?.profileName);
+          setProfileId(decodeToken?.profileId);
+        } catch (e) {
+          console.warn("Failed to decode token", e);
+          setProfileId(null);
+        }
+      } else {
+        router.push("/login");
+      }
     }
   }, []);
 
   useEffect(() => {
-    handleWhatshotPosts();
-  }, []);
-
-  const sidebarItems = [
-    { label: "What's Hot", route: "/whatshot" },
-    { label: "Events", route: "/events" },
-    { label: "Travel", route: "/travel" },
-    { label: "Learn", route: "/learn" },
-    { label: "Coming soon...", route: "/coming-soon" },
-    { label: "Playdates", route: "/playdates" },
-    { label: "Marketplace", route: "/marketplace" },
-    { label: "Groups", route: "/groups" },
-  ];
+    if (profileId) {
+      handleWhatshotPosts();
+    }
+  }, [profileId]);
 
   const handleWhatshotPosts = async () => {
     try {
-      const userid = localStorage.getItem("logged_in_profile");
-      const response = await fetch("/api/user/whatshot?id=" + userid);
+      const response = await fetch("/api/user/whatshot?id=" + profileId);
       const data = await response.json();
-      console.log(data?.posts);
       setPosts(data?.posts || []);
-      setIsLoading(false);
     } catch (error) {
       console.error("Error:", error);
     }
   };
 
-  const handlePostLike = async (postId: string) => {
+  const handlePostLike = async ({
+    postId,
+    username,
+    email,
+  }: {
+    postId: string;
+    username: string;
+    email: string;
+  }) => {
     try {
       const response = await fetch("/api/user/whatshot/post/like", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           postId,
-          profileId: localStorage.getItem("logged_in_profile"),
+          profileId: profileId,
+          commenterName: currentName,
+          profileUsername: username,
+          email: email,
         }),
       });
       if (response.ok) {
-        handleWhatshotPosts(); // Refresh posts after like
+        handleWhatshotPosts();
       }
     } catch (error) {
       console.error("Error:", error);
@@ -354,15 +189,12 @@ export default function Whatshot() {
 
   const handleReportSubmit = useCallback(async () => {
     setIsSubmitting(true);
-    const token = localStorage.getItem("loginInfo");
-    const decodeToken = token ? jwtDecode<any>(token) : {};
-    const reportedByName = decodeToken?.profileName || "Me";
 
     try {
       if (reportOptions.reportImage) {
         await reportImageApi({
           reportedById: profileId,
-          reportedByName,
+          reportedByName: currentName,
           reportedUserId: targetId?.UserId,
           reportedUserName: targetId?.Username,
           image: targetId?.Avatar,
@@ -408,18 +240,8 @@ export default function Whatshot() {
     }
   }, [profileId, reportOptions]);
 
-  if (posts.length === 0) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="100vh"
-        bgcolor="#121212"
-      >
-        <LoadingScreen logoSrc="/loading.png"></LoadingScreen>
-      </Box>
-    );
+  if (posts?.length === 0) {
+    return <Loader />;
   }
 
   const handleDeletePost = async (postId: string) => {
@@ -741,7 +563,13 @@ export default function Whatshot() {
                               <Grid item xs={6}>
                                 <Button
                                   fullWidth
-                                  onClick={() => handlePostLike(post?.Id)}
+                                  onClick={() =>
+                                    handlePostLike({
+                                      postId: post?.Id,
+                                      username: post?.Username,
+                                      email: post?.Email,
+                                    })
+                                  }
                                   startIcon={
                                     post?.hasLiked ? (
                                       <Favorite />
@@ -1141,7 +969,13 @@ export default function Whatshot() {
                           <Grid container justifyContent="space-between">
                             <Grid item lg={5} md={5} sm={5} xs={5}>
                               <Button
-                                onClick={() => handlePostLike(post?.Id)}
+                                onClick={() =>
+                                  handlePostLike({
+                                    postId: post?.Id,
+                                    username: post?.Username,
+                                    email: post?.Email,
+                                  })
+                                }
                                 fullWidth
                                 variant="contained"
                                 color="primary"
@@ -1235,15 +1069,6 @@ export default function Whatshot() {
               Report or Block User
             </Typography>
             <FormControlLabel
-              sx={{
-                color: "white",
-                "& .MuiCheckbox-root": {
-                  color: "#9c27b0",
-                },
-                "& .MuiCheckbox-root.Mui-checked": {
-                  color: "#9c27b0",
-                },
-              }}
               control={
                 <Checkbox
                   checked={reportOptions.reportImage}
@@ -1253,11 +1078,17 @@ export default function Whatshot() {
                       reportImage: e.target.checked,
                     }))
                   }
+                  sx={{
+                    color: "#f50057",
+                    "&.Mui-checked": { color: "#f50057" },
+                  }}
                   name="reportImage"
                 />
               }
               label="Inappropriate Image"
+              sx={{ color: "white", display: "block", mb: 1 }}
             />
+
             <FormControlLabel
               control={
                 <Checkbox
@@ -1277,6 +1108,7 @@ export default function Whatshot() {
               label="Report User"
               sx={{ color: "white", display: "block", mb: 1 }}
             />
+
             <FormControlLabel
               control={
                 <Checkbox

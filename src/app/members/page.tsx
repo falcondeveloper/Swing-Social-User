@@ -664,7 +664,6 @@ export default function Home() {
 
       const data = await response.json();
       if (response.ok) {
-        console.log("Location sent successfully:", data);
       } else {
         console.error("Error sending location:", data.message);
       }

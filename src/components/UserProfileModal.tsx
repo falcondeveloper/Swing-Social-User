@@ -128,7 +128,6 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
   const handleAddFriend = async (): Promise<void> => {
     try {
-      const safeFromId = profileId ?? "";
       const safeToId = userid ?? "";
 
       const BASE_URL = "https://swing-social-user.vercel.app";
@@ -490,7 +489,7 @@ If you didn't expect this, ignore this message.
                 {/* Content Section */}
                 <CardContent>
                   <Typography
-                    color="white"
+                    color="#FFFFFF"
                     variant="h5"
                     sx={{
                       fontWeight: "bold",
@@ -530,7 +529,7 @@ If you didn't expect this, ignore this message.
                     variant="subtitle1"
                     dangerouslySetInnerHTML={{ __html: advertiser?.Tagline }}
                     sx={{
-                      color: "#d81160",
+                      color: "#FF1B6B",
                       marginLeft: "15px",
                       fontWeight: "bold",
                       maxWidth: "100%",
@@ -544,7 +543,7 @@ If you didn't expect this, ignore this message.
                   <Typography
                     variant="subtitle1"
                     sx={{
-                      color: "#9c27b0",
+                      color: "#9C27B0",
                       marginLeft: "15px",
                       marginTop: "5px",
                     }}
@@ -554,7 +553,7 @@ If you didn't expect this, ignore this message.
                   <Typography
                     variant="subtitle1"
                     sx={{
-                      color: "#fff",
+                      color: "#FFFFFF",
                       marginLeft: "15px",
                       marginTop: "5px",
                       marginBottom: "5px",
