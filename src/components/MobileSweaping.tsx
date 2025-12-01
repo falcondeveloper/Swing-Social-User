@@ -341,7 +341,8 @@ export default function MobileSweaping() {
     setIsFetchingMore(true);
 
     const MAX_RETRIES = 4;
-    const RETRY_DELAY_MS = 700; // small backoff so DB has a moment to commit
+    const RETRY_DELAY_MS = 700;
+    const PREFETCH_THRESHOLD = 4;
     let attempt = 0;
     let appended = false;
 
@@ -393,7 +394,31 @@ export default function MobileSweaping() {
 
   const processSwipe = useCallback(
     (direction: string, targetProfile: any) => {
-      setCurrentIndex((prevIndex) => prevIndex + 1);
+      // update index using functional updater so we can compute the next index reliably
+      setCurrentIndex((prevIndex) => {
+        const nextIndex = prevIndex + 1;
+
+        // PREFETCH when remaining cards after this swipe are <= threshold
+        const PREFETCH_THRESHOLD = 20;
+        const remaining = Math.max(0, userProfiles.length - nextIndex);
+
+        // If we're near the end (<= threshold) and not already fetching, prefetch
+        if (profileId && !isFetchingMore && remaining <= PREFETCH_THRESHOLD) {
+          fetchNextBatchAndAppend().catch((err) =>
+            console.error("Prefetch failed:", err)
+          );
+        }
+
+        // If we've actually advanced to or past the end, try to fetch more as a fallback
+        if (profileId && nextIndex >= userProfiles.length && !isFetchingMore) {
+          fetchNextBatchAndAppend().catch((err) =>
+            console.error("fetchNextBatch error:", err)
+          );
+        }
+
+        return nextIndex;
+      });
+
       setCardStyles({
         active: {
           transform: "scale(1)",
@@ -420,18 +445,6 @@ export default function MobileSweaping() {
         console.error("Swipe API error:", error);
       });
 
-      if (currentIndex + 1 >= userProfiles.length) {
-        try {
-          fetchNextBatchAndAppend();
-        } catch (err) {
-          console.error("fetchNextBatch error:", err);
-        }
-      }
-
-      // if (currentIndex + 1 >= userProfiles.length) {
-      //   setShowEndPopup(true);
-      // }
-
       if (!isUserPremium() && hasReachedSwipeLimit()) {
         setShowLimitPopup(true);
       } else if (!isUserPremium()) {
@@ -443,7 +456,6 @@ export default function MobileSweaping() {
       setPendingSwipeAction(null);
     },
     [
-      currentIndex,
       userProfiles.length,
       isUserPremium,
       hasReachedSwipeLimit,
@@ -454,6 +466,8 @@ export default function MobileSweaping() {
       setShowEndPopup,
       setCurrentIndex,
       fetchNextBatchAndAppend,
+      isFetchingMore,
+      profileId,
     ]
   );
 
