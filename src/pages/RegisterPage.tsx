@@ -406,7 +406,7 @@ const RegisterPage = () => {
           await fetch("/api/user/screenname/check", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ search: values.user_name }),
+            body: JSON.stringify({ search: values.user_name.trim() }),
           })
         ).json();
 
@@ -431,7 +431,7 @@ const RegisterPage = () => {
           await fetch("/api/user/profile/check", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ search: values.email }),
+            body: JSON.stringify({ search: values.email.trim() }),
           })
         ).json();
 

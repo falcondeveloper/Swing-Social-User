@@ -272,7 +272,7 @@ const LoginPage = () => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              email: normalize(values.email),
+              email: values.email.trim(),
               pwd: values.password.trim(),
               hitid: hitId,
             }),
