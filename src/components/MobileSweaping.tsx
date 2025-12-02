@@ -280,6 +280,7 @@ export default function MobileSweaping() {
   }, []);
 
   const handlePrefsSaved = useCallback(() => {
+    setLoading(true);
     if (profileId) {
       getUserList(profileId);
       setSnack({
@@ -1504,7 +1505,10 @@ export default function MobileSweaping() {
               "You've run out of matches. Adjust your preferences to view more members."}
           </Typography>
           <Button
-            onClick={openPrefs}
+           onClick={() => {
+              openPrefs();
+              setShowEndPopup(false)
+            }}
             variant="outlined"
             sx={{
               mt: 2,

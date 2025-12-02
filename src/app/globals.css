@@ -69,132 +69,6 @@ label {
   border-color: #c2185b !important;
 }
 
-.custom-form-container {
-  border: 1px solid;
-}
-/* Custom CSS */
-.custom-form-container > div > div {
-  background-color: #000 !important; /* Dark background */
-  color: #fff; /* White text */
-  padding: 20px;
-  border-radius: 10px;
-  /* border: 1px solid; */
-}
-.custom-form-container > div > div > div > div {
-  background-color: transparent !important;
-}
-
-.custom-form-container button {
-  background-color: #f50057; /* Custom button background */
-  color: #fff; /* Button text color */
-  border: none;
-  padding: 10px 15px;
-  font-weight: bold;
-}
-
-.custom-form-container button:hover {
-  background-color: #c51162; /* Darker hover background */
-}
-
-/* TinderSwipe.css */
-.tinder-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-  background-color: #f5f5f5;
-  padding-top: 2rem;
-}
-
-.card-container {
-  position: relative;
-  width: 384px;
-  height: 600px;
-}
-
-.swipe-card {
-  width: 384px;
-  height: 600px;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  cursor: grab;
-  position: absolute;
-}
-
-.swipe-card:active {
-  cursor: grabbing;
-}
-
-.profile-image {
-  width: 100%;
-  height: 400px;
-  object-fit: cover;
-}
-
-.profile-info {
-  padding: 1rem;
-}
-
-.profile-name {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #333;
-}
-
-.profile-bio {
-  color: #666;
-  font-size: 1rem;
-}
-
-.button-container {
-  margin-top: 1.5rem;
-  display: flex;
-  gap: 2rem;
-}
-
-.action-button {
-  padding: 1rem;
-  border-radius: 50%;
-  border: none;
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.action-button.dislike {
-  color: #ff4444;
-}
-
-.action-button.like {
-  color: #4caf50;
-}
-
-.action-button.dislike:hover {
-  background-color: #ffebee;
-}
-
-.action-button.like:hover {
-  background-color: #e8f5e9;
-}
-
-.no-more-profiles {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #333;
-  margin-top: 2rem;
-}
-
-.dragging {
-  cursor: grabbing !important;
-}
-
 .react-tinder-card {
   position: absolute;
   will-change: transform;
@@ -262,6 +136,7 @@ label {
   width: 70px;
   height: 70px;
   object-fit: cover;
+  padding: 1rem;
 }
 
 .mobile-sweeping-container .preference_button {
@@ -283,35 +158,4 @@ label {
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;
-}
-
-.about-scrollbox {
-  font-size: 14px;
-  color: #ccc;
-  text-align: left;
-  line-height: 1.5;
-  padding-right: 8px;
-  scrollbar-width: thin;
-  height: 80px;
-  overflow: auto;
-}
-
-.about-scrollbox::-webkit-scrollbar {
-  width: 4px;
-}
-
-.about-scrollbox::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-}
-
-.about-gradient {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 10px;
-  right: 10px;
-  height: 1.5em;
-  background: linear-gradient(to bottom, transparent, black);
-  pointer-events: none;
 }
