@@ -818,7 +818,7 @@ const EditEvent: React.FC = () => {
     return results;
   };
   const getLatLngByLocationName = async (locationName: string) => {
-    const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc"; // Replace with your actual API key
+    const apiKey = "AIzaSyBmCGbN_HvigoBxBdqOWrkl8VAhKPbyNqM"; // Replace with your actual API key
 
     try {
       // Call the Google Maps Geocoding API

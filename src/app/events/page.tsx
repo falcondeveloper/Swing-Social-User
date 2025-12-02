@@ -228,7 +228,7 @@ export default function CalendarView() {
 
   const getLatLngFromAddress = async (address: string) => {
     try {
-      const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc";
+      const apiKey = "AIzaSyBmCGbN_HvigoBxBdqOWrkl8VAhKPbyNqM";
 
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(

@@ -240,7 +240,7 @@ export default function Pineapple() {
   }, [profileId]);
 
   const getLocationName = async (latitude: number, longitude: number) => {
-    const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc";
+    const apiKey = "AIzaSyBmCGbN_HvigoBxBdqOWrkl8VAhKPbyNqM";
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`

@@ -324,7 +324,7 @@ const EditEventForm: React.FC = () => {
   const getLatLngByLocationName = async (locationName: string) => {
     const apiKey =
       process.env.NEXT_PUBLIC_GOOGLE_GEOCODE_KEY ||
-      "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc";
+      "AIzaSyBmCGbN_HvigoBxBdqOWrkl8VAhKPbyNqM";
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(

@@ -396,7 +396,7 @@ export default function ChatPage() {
   };
 
   const getLocationName = async (latitude: number, longitude: number) => {
-    const apiKey = "AIzaSyDv-b2OlvhI1HmMyfHoSEwHkKpPkKlX4vc";
+    const apiKey = "AIzaSyBmCGbN_HvigoBxBdqOWrkl8VAhKPbyNqM";
 
     try {
       const response = await fetch(
