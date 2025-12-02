@@ -1504,7 +1504,7 @@ export default function MobileSweaping() {
               "You've run out of matches. Adjust your preferences to view more members."}
           </Typography>
           <Button
-            onClick={() => router.push("/prefrences")}
+            onClick={openPrefs}
             variant="outlined"
             sx={{
               mt: 2,
