@@ -22,6 +22,9 @@ import {
   DialogContent,
   alpha,
   CircularProgress,
+  IconButton,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import InstructionModal from "@/components/InstructionModal";
 import UserProfileModal from "@/components/UserProfileModal";
@@ -31,6 +34,9 @@ import AboutSection from "@/components/AboutSection";
 import Footer from "./Footer";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
+import TuneIcon from "@mui/icons-material/Tune";
+import PreferencesSheet from "./PreferencesSheet";
+import Loader from "@/commonPage/Loader";
 
 export interface DetailViewHandle {
   open: (id: string) => void;
@@ -141,6 +147,17 @@ export default function MobileSweaping() {
   );
   const [emptyMessage, setEmptyMessage] = useState<string>("");
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+
+  const [prefsOpen, setPrefsOpen] = useState(false);
+
+  const [snack, setSnack] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error" | "info" | "warning",
+  });
+
+  const openPrefs = () => setPrefsOpen(true);
+  const closePrefs = () => setPrefsOpen(false);
 
   const visibleProfiles = useMemo(() => {
     return userProfiles.slice(currentIndex, currentIndex + 2);
@@ -261,6 +278,25 @@ export default function MobileSweaping() {
       setLoading(false);
     }
   }, []);
+
+  const handlePrefsSaved = useCallback(() => {
+    if (profileId) {
+      getUserList(profileId);
+      setSnack({
+        open: true,
+        message: "Preferences updated successfully",
+        severity: "success",
+      });
+    }
+  }, [getUserList, profileId]);
+
+  const handleSnackClose = useCallback(
+    (event?: React.SyntheticEvent | Event, reason?: string) => {
+      if (reason === "clickaway") return;
+      setSnack((prev) => ({ ...prev, open: false }));
+    },
+    []
+  );
 
   const preloadProfileImages = useCallback(
     (profiles: any[]) => {
@@ -731,6 +767,8 @@ export default function MobileSweaping() {
 
   useEffect(() => {
     const handleTouchMove = (e: TouchEvent) => {
+      if (prefsOpen) return;
+
       if (
         window.scrollY === 0 &&
         e.touches &&
@@ -744,7 +782,7 @@ export default function MobileSweaping() {
     return () => {
       window.removeEventListener("touchmove", handleTouchMove);
     };
-  }, []);
+  }, [prefsOpen]);
 
   const handleClose = () => {
     setShowDetail(false);
@@ -897,6 +935,16 @@ export default function MobileSweaping() {
       setIsSubmitting(false);
     }
   }, [currentProfile, profileId, reportOptions]);
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <Loader />
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>
@@ -1108,6 +1156,22 @@ export default function MobileSweaping() {
                   />
                 </div>
 
+                {/* <IconButton
+                  onClick={openPrefs}
+                  aria-label="open preferences"
+                  sx={{
+                    bgcolor: "#ff6fa3",
+                    color: "#121212",
+                    width: 48,
+                    height: 48,
+                    boxShadow: "0 6px 18px rgba(0,0,0,0.45)",
+                    borderRadius: 3,
+                  }}
+                  className="preference_button"
+                >
+                  <TuneIcon />
+                </IconButton> */}
+
                 <img
                   src="/ProfileInfo.png"
                   alt="Profile Info"
@@ -1183,6 +1247,15 @@ export default function MobileSweaping() {
           ))
         )}
       </div>
+
+      <PreferencesSheet
+        open={prefsOpen}
+        onOpen={openPrefs}
+        onClose={closePrefs}
+        profileId={profileId}
+        onSaved={handlePrefsSaved}
+      />
+
       <Footer />
 
       {memberalarm && parseInt(memberalarm) > 2 ? null : <InstructionModal />}
@@ -1447,6 +1520,36 @@ export default function MobileSweaping() {
           </Button>
         </DialogContent>
       </Dialog>
+
+      <Snackbar
+        open={snack.open}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        autoHideDuration={2000}
+        onClose={handleSnackClose}
+      >
+        <Alert
+          onClose={handleSnackClose}
+          severity={snack.severity}
+          variant="filled"
+          sx={{
+            backgroundColor: "white",
+            color: "#fc4c82",
+            fontWeight: "bold",
+            alignItems: "center",
+            borderRight: "5px solid #fc4c82",
+          }}
+          icon={
+            <Box
+              component="img"
+              src="/icon.png"
+              alt="Logo"
+              sx={{ width: 20, height: 20 }}
+            />
+          }
+        >
+          {snack.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

@@ -379,7 +379,6 @@ export default function Preferences() {
           value={formik.values.city}
           onInputChange={(_, newInput) => setCityInput(newInput)}
           onChange={(_, newValue) => {
-            // newValue can be string (freeSolo) or option
             setNested("city", (newValue ?? "") as string);
           }}
           getOptionLabel={(option) =>

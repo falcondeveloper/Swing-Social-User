@@ -62,18 +62,22 @@ const Header = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("loginInfo");
-    if (token) {
-      try {
-        const decodeToken = jwtDecode<any>(token);
-        setAvatar(decodeToken?.avatar || "");
-        setUserName(decodeToken?.profileName || "User");
-      } catch (error) {
-        console.error("Invalid token:", error);
-        router.push("/login");
-      }
-    } else {
+    const storedId = localStorage.getItem("logged_in_profile");
+    if (storedId) setProfileId(storedId);
+
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const { profileId: decodedId } = jwtDecode<any>(token) || {};
+      if (decodedId) setProfileId(decodedId);
+    } catch (err) {
+      console.error("Invalid token:", err);
       router.push("/login");
     }
+
     checkNotificationPermission();
   }, []);
 
@@ -144,11 +148,6 @@ const Header = () => {
 
   // Logout function
   const handleLogout = () => {
-    localStorage.removeItem("loginInfo");
-    localStorage.removeItem("logged_in_profile");
-    localStorage.removeItem("email");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("password");
     router.push("/login");
     localStorage.clear();
   };
@@ -176,10 +175,6 @@ const Header = () => {
     },
   ];
 
-  useEffect(() => {
-    setProfileId(localStorage.getItem("logged_in_profile"));
-  }, [profileId]);
-
   const fetchData = async () => {
     if (!profileId) return;
 
@@ -192,6 +187,8 @@ const Header = () => {
 
       if (advertiserData) {
         setAdvertiser(advertiserData);
+        setAvatar(advertiserData?.Avatar);
+        setUserName(advertiserData?.Username);
       }
     } catch (error: any) {
       console.error("Error fetching data:", error.message);
@@ -269,12 +266,12 @@ const Header = () => {
                   },
                 }}
               >
-                <Avatar
+                <img
                   src={avatar}
                   alt="Profile"
-                  sx={{
+                  style={{
                     width: "100%",
-                    height: "100%",
+                    height: "auto",
                     objectFit: "cover",
                   }}
                 />

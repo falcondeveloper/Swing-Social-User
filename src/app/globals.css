@@ -264,6 +264,14 @@ label {
   object-fit: cover;
 }
 
+.mobile-sweeping-container .preference_button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 2;
+  object-fit: cover;
+}
+
 .mobile-sweeping-container .report-flag {
   position: absolute;
   z-index: 99;
