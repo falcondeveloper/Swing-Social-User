@@ -790,7 +790,7 @@ export default function EventDetail(props: { params: Params }) {
                             color="primary"
                             onClick={() =>
                               router.push(
-                                "/events/update/" + eventDetail.EventId
+                                `/events/edit?q=${eventDetail?.EventId}`
                               )
                             }
                             sx={{
