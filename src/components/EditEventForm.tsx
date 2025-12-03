@@ -183,6 +183,7 @@ const EditEventForm: React.FC = () => {
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [profileId, setProfileId] = useState<any>();
+  const [profileName, setProfileName] = useState<string>("");
   const [activeStep, setActiveStep] = useState(0);
   const [message, setMessage] = useState<string>("");
   const [cityLoading, setCityLoading] = useState(false);
@@ -231,6 +232,7 @@ const EditEventForm: React.FC = () => {
       try {
         const decoded = jwtDecode<any>(token);
         setProfileId(decoded?.profileId || decoded?.id || null);
+        setProfileName(decoded?.profileName || "");
       } catch (e) {
         console.warn("Failed to decode token", e);
       }
@@ -347,7 +349,7 @@ const EditEventForm: React.FC = () => {
         errorMessage: message,
         stack,
         routeName: "getLatLngByLocationName function",
-        userId: profileId,
+        userId: profileName,
       });
       console.error("Error fetching latitude and longitude:", error);
       return null;
@@ -619,7 +621,7 @@ const EditEventForm: React.FC = () => {
           errorMessage: message,
           stack,
           routeName: "Submit event form - update",
-          userId: profileId,
+          userId: profileName,
         });
       } finally {
         setTimeout(() => {

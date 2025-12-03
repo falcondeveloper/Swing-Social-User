@@ -187,6 +187,7 @@ const CreateEventForm: React.FC = () => {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [profileId, setProfileId] = useState<any>();
   const [profileName, setProfileName] = useState<string>("");
+  const [email, setEmail] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState(0);
   const [message, setMessage] = useState<string>("");
   const [cityLoading, setCityLoading] = useState(false);
@@ -206,6 +207,8 @@ const CreateEventForm: React.FC = () => {
   const [stepLoading, setStepLoading] = useState<Record<number, boolean>>({});
   const [stepError, setStepError] = useState<Record<number, string | null>>({});
   const [stepResult, setStepResult] = useState<Record<number, any>>({});
+  const [savedAt, setSavedAt] = useState<Record<number, string | null>>({});
+  const [previewValues, setPreviewValues] = useState<Partial<FormValues>>({});
 
   const callApiForStep = async (
     stepIndex: number,
@@ -221,6 +224,7 @@ const CreateEventForm: React.FC = () => {
       const body = {
         profileId,
         profileName,
+        email, // <-- include email in the payload
         values: extra?.partialValues ?? formik.values,
       };
 
@@ -238,6 +242,7 @@ const CreateEventForm: React.FC = () => {
       }
 
       setStepResult((r) => ({ ...r, [stepIndex]: json }));
+      setSavedAt((s) => ({ ...s, [stepIndex]: new Date().toISOString() }));
       return { ok: true, data: json };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -331,7 +336,7 @@ const CreateEventForm: React.FC = () => {
         errorMessage: message,
         stack,
         routeName: "getLatLngByLocationName function",
-        userId: profileId,
+        userId: profileName,
       });
       console.error("Error fetching latitude and longitude:", error);
       return null;
@@ -441,7 +446,7 @@ const CreateEventForm: React.FC = () => {
         errorMessage: message,
         stack,
         routeName: "uploadCoverImage function",
-        userId: profileId,
+        userId: profileName,
       });
       console.error(error);
       return null;
@@ -513,7 +518,7 @@ const CreateEventForm: React.FC = () => {
         errorMessage: message,
         stack,
         routeName: "uploadEventImage multiple images",
-        userId: profileId,
+        userId: profileName,
       });
       console.error("Error uploading image:", error);
       return null;
@@ -554,7 +559,7 @@ const CreateEventForm: React.FC = () => {
           errorMessage: message,
           stack,
           routeName: "uploadCoverImage",
-          userId: profileId,
+          userId: profileName,
         });
         results.push(null);
         onProgress?.(i + 1, total);
@@ -722,7 +727,7 @@ const CreateEventForm: React.FC = () => {
           errorMessage: message,
           stack,
           routeName: "Submit event form",
-          userId: profileId,
+          userId: profileName,
         });
       } finally {
         setTimeout(() => {
@@ -741,6 +746,22 @@ const CreateEventForm: React.FC = () => {
     ["description"],
     ["coverPhoto", "photos"],
   ];
+
+  useEffect(() => {
+    const toPreview: Partial<FormValues> = {
+      eventName: formik.values.eventName,
+      category: formik.values.category,
+      startTime: formik.values.startTime,
+      endTime: formik.values.endTime,
+      venue: formik.values.venue,
+      hideVenue: formik.values.hideVenue,
+      hideTicketOption: formik.values.hideTicketOption,
+      coverPhoto: formik.values.coverPhoto,
+      photos: formik.values.photos,
+      description: formik.values.description,
+    };
+    setPreviewValues(toPreview);
+  }, [formik.values]);
 
   const handleNext = async () => {
     window.scroll(0, 0);
