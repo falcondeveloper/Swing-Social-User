@@ -36,7 +36,7 @@ export async function POST(req: any) {
 An error occurred in the application:
 
 🔹 Route: ${routeName || "N/A"}
-🔹 User ID: ${userId || "N/A"}
+🔹 User Name: ${userId || "N/A"}
 🔹 Message: ${errorMessage || "No error message provided"}
 🔹 Stack: ${stack || "No stack trace provided"}
 🔹 Time: ${new Date().toISOString()}
