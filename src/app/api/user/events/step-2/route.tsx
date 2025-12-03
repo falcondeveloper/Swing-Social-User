@@ -55,13 +55,18 @@ async function sendMail(
   }
 }
 
-async function sendSuccessEmail(payload: any, eventId: any) {
-  const subject = `✅ Event Step-2 Saved — Event ID: ${eventId}`;
+async function sendSuccessEmail(
+  payload: any,
+  eventId: any,
+  profileName?: string,
+  eventName?: string
+) {
+  const subject = `✅ Event Step-2 Saved — Event Name: ${payload?.values?.eventName}`;
   const body = `
 Event step 2 saved successfully.
 
 Profile Name: ${payload.profileName ?? "N/A"}
-Event Name: ${payload.values?.eventName ?? "N/A"}
+Event Name: ${eventName ?? payload?.values?.eventName ?? "N/A"}
 Description: ${payload.values?.description ? "Provided" : "Not provided"}
 Time: ${new Date().toISOString()}
   `;
@@ -84,8 +89,8 @@ An error occurred:
 
 Route: ${params.routeName ?? "step-2"}
 User ID: ${params.userId ?? "N/A"}
-Profile Name: ${params.profileName ?? "N/A"}
-Event Name: ${params?.eventName ?? "N/A"}
+Profile Name: ${params.profileName ?? params.payload?.profileName ?? "N/A"}
+Event Name: ${params.eventName ?? params.payload?.values?.eventName ?? "N/A"}
 Event ID: ${params.eventId ?? "N/A"}
 Message: ${params.errorMessage ?? "N/A"}
 Stack: ${params.stack ?? "No stack trace"}
@@ -103,9 +108,10 @@ export async function POST(req: Request) {
     payload = await req.json();
 
     profileId = payload.profileId;
+    const profileName = payload.profileName ?? null;
     const values = payload.values || {};
 
-    const { description } = values;
+    const { description, eventName } = values;
 
     if (!profileId) {
       const errorMessage = "Missing required field: profileId";
@@ -115,6 +121,8 @@ export async function POST(req: Request) {
         routeName: "event-step-2",
         userId: profileId,
         payload: payload,
+        profileName,
+        eventName,
       });
 
       return NextResponse.json({ error: errorMessage }, { status: 400 });
@@ -134,6 +142,8 @@ export async function POST(req: Request) {
         routeName: "event-step-2",
         userId: profileId,
         payload: payload,
+        profileName,
+        eventName,
       });
 
       return NextResponse.json({ error: errorMessage }, { status: 500 });
@@ -159,6 +169,8 @@ export async function POST(req: Request) {
       routeName: "event-step-2",
       userId: profileId,
       payload: payload,
+      profileName: payload?.profileName ?? null,
+      eventName: payload?.values?.eventName ?? null,
     });
 
     return NextResponse.json({

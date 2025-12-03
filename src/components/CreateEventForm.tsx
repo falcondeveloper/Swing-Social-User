@@ -660,6 +660,7 @@ const CreateEventForm: React.FC = () => {
           try {
             await callApiForStep(2, {
               partialValues: {
+                eventName: values.eventName,
                 coverPhoto: (values as any)._coverURL ?? null,
                 photos: photoURLs.filter((url) => url !== null) as string[],
                 repeats: values?.repeats,
@@ -679,6 +680,7 @@ const CreateEventForm: React.FC = () => {
           try {
             await callApiForStep(2, {
               partialValues: {
+                eventName: values.eventName,
                 coverPhoto: (values as any)._coverURL ?? null,
                 photos: photoURLs.filter((url) => url !== null) as string[],
                 repeats: values?.repeats,
@@ -767,6 +769,7 @@ const CreateEventForm: React.FC = () => {
             : activeStep === 1
             ? {
                 description: formik.values.description,
+                eventName: formik.values.eventName,
               }
             : {};
 

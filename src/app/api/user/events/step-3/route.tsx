@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { Pool } from "pg";
 export const dynamic = "force-dynamic";
 import FormData from "form-data";
 import Mailgun from "mailgun.js";
+import { Pool } from "pg"; // optional — kept only if you still want to query DB elsewhere
 
+// If you truly don't need DB at all in this file you can remove Pool and its config below.
 const pool = new Pool({
   user: "clark",
   host: "199.244.49.83",
@@ -14,6 +15,7 @@ const pool = new Pool({
 
 async function getMailgunKey(): Promise<string | null> {
   try {
+    // keep reading the key from DB Configuration table (optional)
     const res = await pool.query(
       'SELECT * FROM "Configuration" WHERE "ConfigName" = $1 LIMIT 1',
       ["EmailApi"]
@@ -55,27 +57,33 @@ async function sendMail(
   }
 }
 
-async function sendSuccessEmail(payload: any) {
+async function sendSuccessEmail(
+  payload: any,
+  profileName?: string,
+  eventName?: string
+) {
   const subject = `✅ Event Step-3 Completed`;
+  const values = payload?.values ?? {};
   const body = `
 Event step 3 completed successfully.
 
-Profile Name: ${payload.profileName ?? "N/A"}
-Event Name: ${payload.values?.eventName ?? "N/A"}
-Cover Photo: ${payload.values?.coverPhoto ? "Uploaded" : "Not uploaded"}
-Photos: ${payload.values?.photos?.length || 0} uploaded
-Repeat Type: ${payload.values?.repeats?.type ?? "none"}
-Repeat Interval: ${payload.values?.repeats?.interval ?? 1}
-Stop Condition: ${payload.values?.repeats?.stopCondition ?? "never"}
-Until Date: ${payload.values?.repeats?.untilDate ?? "N/A"}
-Times: ${payload.values?.repeats?.times ?? 1}
+Profile Name: ${profileName ?? payload.profileName ?? "N/A"}
+Event Name: ${eventName ?? values?.eventName ?? "N/A"}
+Cover Photo: ${values?.coverPhoto ? "Uploaded" : "Not uploaded"}
+Photos: ${Array.isArray(values?.photos) ? values.photos.length : 0} uploaded
+Repeat Type: ${values?.repeats?.type ?? "none"}
+Repeat Interval: ${values?.repeats?.interval ?? 1}
+Stop Condition: ${values?.repeats?.stopCondition ?? "never"}
+Until Date: ${values?.repeats?.untilDate ?? "N/A"}
+Times: ${values?.repeats?.times ?? 1}
 Week Days: ${
-    payload.values?.repeats?.weekDays
-      ? JSON.stringify(payload.values.repeats.weekDays)
-      : "N/A"
+    values?.repeats?.weekDays ? JSON.stringify(values.repeats.weekDays) : "N/A"
   }
-Month Day: ${payload.values?.repeats?.monthDay ?? 1}
+Month Day: ${values?.repeats?.monthDay ?? 1}
 Time: ${new Date().toISOString()}
+
+Full payload:
+${JSON.stringify(payload, null, 2)}
   `;
   await sendMail(subject, body);
 }
@@ -94,8 +102,8 @@ async function sendFailureEmail(params: {
 An error occurred:
 
 Route: ${params.routeName ?? "step-3"}
-Profile Name: ${params.profileName ?? "N/A"}
-Event Name: ${params?.eventName ?? "N/A"}
+Profile Name: ${params.profileName ?? params.payload?.profileName ?? "N/A"}
+Event Name: ${params.eventName ?? params.payload?.values?.eventName ?? "N/A"}
 User ID: ${params.userId ?? "N/A"}
 Message: ${params.errorMessage ?? "N/A"}
 Stack: ${params.stack ?? "No stack trace"}
@@ -113,10 +121,11 @@ export async function POST(req: Request) {
     payload = await req.json();
 
     profileId = payload.profileId;
+    const profileName = payload.profileName ?? null;
     const values = payload.values || {};
 
     const {
-      coverPhoto,
+      coverPhoto = null,
       photos = [],
       repeats = {
         type: "none",
@@ -129,6 +138,8 @@ export async function POST(req: Request) {
       },
     } = values;
 
+    const eventName = values?.eventName ?? null;
+
     if (!profileId) {
       const errorMessage = "Missing required field: profileId";
 
@@ -136,22 +147,27 @@ export async function POST(req: Request) {
         errorMessage,
         routeName: "event-step-3",
         userId: profileId,
-        payload: payload,
+        payload,
+        profileName,
+        eventName,
       });
 
       return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
-    await sendSuccessEmail(payload);
+    // No DB persistence — only send email with context
+    await sendSuccessEmail(payload, profileName, eventName);
 
     return NextResponse.json({
-      message: "Your event step 3 is completed successfully!",
+      message: "Your event step 3 is completed and emailed successfully!",
       status: 200,
       data: {
         profileId,
-        coverPhoto: coverPhoto || null,
-        photos: photos || [],
-        repeats: repeats,
+        profileName,
+        eventName,
+        coverPhoto,
+        photos,
+        repeats,
       },
     });
   } catch (error: any) {
@@ -164,7 +180,7 @@ export async function POST(req: Request) {
       stack: error?.stack,
       routeName: "event-step-3",
       userId: profileId,
-      payload: payload,
+      payload,
     });
 
     return NextResponse.json({
