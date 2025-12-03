@@ -60,8 +60,8 @@ async function sendSuccessEmail(payload: any, eventId: any) {
   const body = `
 Event step 2 saved successfully.
 
-Profile ID: ${payload.profileId ?? "N/A"}
-Event ID: ${eventId ?? "N/A"}
+Profile Name: ${payload.profileName ?? "N/A"}
+Event Name: ${payload.values?.eventName ?? "N/A"}
 Description: ${payload.values?.description ? "Provided" : "Not provided"}
 Time: ${new Date().toISOString()}
   `;
@@ -75,6 +75,8 @@ async function sendFailureEmail(params: {
   userId?: any;
   payload?: any;
   eventId?: any;
+  profileName?: any;
+  eventName?: any;
 }) {
   const subject = `🚨 Error in ${params.routeName ?? "step-2 route"}`;
   const body = `
@@ -82,6 +84,8 @@ An error occurred:
 
 Route: ${params.routeName ?? "step-2"}
 User ID: ${params.userId ?? "N/A"}
+Profile Name: ${params.profileName ?? "N/A"}
+Event Name: ${params?.eventName ?? "N/A"}
 Event ID: ${params.eventId ?? "N/A"}
 Message: ${params.errorMessage ?? "N/A"}
 Stack: ${params.stack ?? "No stack trace"}

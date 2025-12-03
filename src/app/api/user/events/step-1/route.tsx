@@ -79,6 +79,8 @@ async function sendFailureEmail(params: {
   routeName?: string;
   userId?: any;
   payload?: any;
+  profileName?: any;
+  eventName?: any;
 }) {
   const subject = `🚨 Error in ${params.routeName ?? "step-1 route"}`;
   const body = `
@@ -86,7 +88,8 @@ An error occurred:
 
 Route: ${params.routeName ?? "step-1"}
 User ID: ${params.userId ?? "N/A"}
-Profile name: ${params.payload?.profileName ?? "N/A"}
+Profile Name: ${params.profileName ?? "N/A"}
+Event Name: ${params?.eventName ?? "N/A"}
 Message: ${params.errorMessage ?? "N/A"}
 Stack: ${params.stack ?? "No stack trace"}
 Payload: ${JSON.stringify(params.payload ?? {}, null, 2)}
