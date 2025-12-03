@@ -332,16 +332,16 @@ export default function PostDetail(props: { params: Params }) {
             </Grid>
 
             {postDetail?.ImageCaption && (
-              <Chip
-                label={postDetail.ImageCaption}
+              <Typography
                 sx={{
                   mt: 2,
-                  bgcolor: "#f50057",
-                  color: "white",
-                  fontSize: "1rem",
-                  borderRadius: 2,
+                  fontStyle: "italic",
+                  fontSize: "1.1rem",
+                  color: "#f50057",
                 }}
-              />
+              >
+                {postDetail.ImageCaption}
+              </Typography>
             )}
           </Box>
 

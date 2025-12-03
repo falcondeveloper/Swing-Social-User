@@ -542,19 +542,23 @@ export default function Whatshot() {
 
                           {/* Content */}
                           <CardContent sx={{ flexGrow: 1, p: 2 }}>
-                            <Chip
-                              label={post?.ImageCaption || "No Caption"}
+                            <Typography
                               sx={{
                                 bgcolor: "rgba(245, 0, 87, 0.1)",
                                 color: "#f50057",
                                 width: "100%",
                                 mb: 2,
                                 fontWeight: "bold",
-                                "& .MuiChip-label": {
-                                  px: 1,
-                                },
+                                px: 1.5,
+                                py: 1,
+                                borderRadius: 1,
+                                textAlign: "center",
+                                fontSize: "0.95rem",
+                                fontStyle: "italic",
                               }}
-                            />
+                            >
+                              {post?.ImageCaption || "No Caption"}
+                            </Typography>
                           </CardContent>
 
                           {/* Actions */}
@@ -944,7 +948,10 @@ export default function Whatshot() {
                             <Typography
                               variant="body1"
                               sx={{
-                                marginBottom: "10px",
+                                marginBottom: "13px",
+                                marginTop: "13px",
+                                fontStyle: "italic",
+                                padding: "10px 0 10px 0",
                                 color: "#fff",
                                 backgroundColor: "#f50057",
                                 textAlign: "center",
