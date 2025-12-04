@@ -1157,7 +1157,7 @@ export default function MobileSweaping() {
                   />
                 </div>
 
-                {/* <IconButton
+                <IconButton
                   onClick={openPrefs}
                   aria-label="open preferences"
                   sx={{
@@ -1171,7 +1171,7 @@ export default function MobileSweaping() {
                   className="preference_button"
                 >
                   <TuneIcon />
-                </IconButton> */}
+                </IconButton>
 
                 <img
                   src="/ProfileInfo.png"
