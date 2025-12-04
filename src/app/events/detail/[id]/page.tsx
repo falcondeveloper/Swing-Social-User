@@ -1085,6 +1085,7 @@ export default function EventDetail(props: { params: Params }) {
                             onTicketsChange={handleTicketsChange}
                             summary={summary}
                             emailDescriptions={emailDescriptionData}
+                            eventDetail={eventDetail}
                           />
                         )}
                       </>

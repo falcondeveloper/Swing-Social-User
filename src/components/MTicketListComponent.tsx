@@ -37,6 +37,7 @@ type TicketListProps = {
   ) => void;
   summary: any;
   emailDescriptions: any;
+  eventDetail: any;
 };
 
 interface TicketQuantities {
@@ -48,7 +49,9 @@ const TicketListComponent: React.FC<TicketListProps> = ({
   onTicketsChange,
   summary,
   emailDescriptions,
+  eventDetail,
 }) => {
+  console.log(eventDetail, "eventDetail");
   const router = useRouter();
   const [isOpen, setIsOpen] = useState<boolean>(true);
   const [ticketQuantities, setTicketQuantities] = useState<TicketQuantities>(
@@ -59,6 +62,7 @@ const TicketListComponent: React.FC<TicketListProps> = ({
   const [selectedTicketName, setSelectedTicketName] = useState<string>("");
   const [selectedTicketType, setSelectedTicketType] = useState<string>("");
   const [selectedEventName, setSelectedEventName] = useState<string>("");
+  const [eventDetails, setEventDetails] = useState<any>(null);
   const [selectedEventDescription, setSelectedEventDescription] =
     useState<string>("");
 
@@ -111,6 +115,7 @@ const TicketListComponent: React.FC<TicketListProps> = ({
       setSelectedTicketType(ticketType);
       setSelectedEventName(eventName);
       setSelectedEventDescription(eventDescription);
+      setEventDetails(eventDetail);
 
       onTicketsChange(quantity, price, ticketName, ticketType);
     };
@@ -127,6 +132,15 @@ const TicketListComponent: React.FC<TicketListProps> = ({
       localStorage.setItem("eventId", tickets[0]?.TicketPackageId || "");
       localStorage.setItem("ticketName", selectedTicketName || "");
       localStorage.setItem("ticketType", selectedTicketType || "");
+      localStorage.setItem("event_details", JSON.stringify(eventDetails) || "");
+
+      localStorage.setItem("event_start_time", eventDetails?.StartTime || "");
+      localStorage.setItem("event_end_time", eventDetails?.EndTime || "");
+      localStorage.setItem("event_venue", eventDetails?.Venue || "");
+      localStorage.setItem(
+        "event_email_description",
+        eventDetails?.EmailDescription || ""
+      );
 
       const ticketDetails = tickets
         .map((ticket) => ({

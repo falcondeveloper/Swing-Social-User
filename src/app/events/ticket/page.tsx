@@ -49,6 +49,7 @@ const BillingUpgrade: any = () => {
   const [eventId, setEventId] = useState<string>("");
   const [storedEventDetails, setStoredEventDetails] = useState<any>([]);
   const [eventDetails, setEventDetails] = useState<any[]>([]);
+  const [allEventDetails, setAllEventDetails] = useState<any>([]);
   const [eventDescription, setEventDescription] = useState<string>("");
   const [userProfile, setUserProfile] = useState<any>({});
   const [isProcessing, setIsProcessing] = useState(false);
@@ -65,6 +66,12 @@ const BillingUpgrade: any = () => {
     expiry: "",
     cvc: "",
   });
+
+  const [eventStartTime, setEventStartTime] = useState<string>("");
+  const [eventEndTime, setEventEndTime] = useState<string>("");
+  const [eventVenue, setEventVenue] = useState<string>("");
+  const [eventEmailDescription, setEventEmailDescription] =
+    useState<string>("");
 
   const handleTicketEmail = async (x: any) => {
     const template = `
@@ -162,6 +169,7 @@ const BillingUpgrade: any = () => {
         city: formData?.qcity,
         streetAddress: formData?.qstreetAddress,
         zipCode: formData?.qzipCode,
+        allEventDetails: allEventDetails || "",
       }),
     });
 
@@ -247,6 +255,11 @@ const BillingUpgrade: any = () => {
     const ticketQuantity = localStorage.getItem("ticketQuantity");
     const storedEventId = localStorage.getItem("eventId");
     const storedEventDetails = localStorage.getItem("ticketDetails");
+    const storedAllEventDetails = localStorage.getItem("event_details");
+    const startTime = localStorage.getItem("event_start_time");
+    const endTime = localStorage.getItem("event_end_time");
+    const venue = localStorage.getItem("event_venue");
+    const emailDescription = localStorage.getItem("event_email_description");
 
     setUsername(localStorage.getItem("profileUsername"));
     if (storedEventName) setEventName(storedEventName);
@@ -261,6 +274,11 @@ const BillingUpgrade: any = () => {
     if (storedEventDetails && typeof storedEventDetails === "string") {
       setEventDetails(JSON.parse(storedEventDetails));
     }
+    if (storedAllEventDetails) setAllEventDetails(storedAllEventDetails);
+    if (startTime) setEventStartTime(startTime);
+    if (endTime) setEventEndTime(endTime);
+    if (venue) setEventVenue(venue);
+    if (emailDescription) setEventEmailDescription(emailDescription);
   }, []);
 
   const validateForm = () => {
@@ -477,6 +495,11 @@ const BillingUpgrade: any = () => {
                     city: formData?.qcity || "",
                     streetAddress: formData?.qstreetAddress || "",
                     zipCode: formData?.qzipCode || "",
+                    allEventDetails: allEventDetails || "",
+                    eventStartTime: eventStartTime || "",
+                    eventEndTime: eventEndTime || "",
+                    eventVenue: eventVenue || "",
+                    eventEmailDescription: eventEmailDescription || "",
                   }),
                 });
                 [
@@ -488,6 +511,11 @@ const BillingUpgrade: any = () => {
                   "ticketName",
                   "ticketType",
                   "ticketDetails",
+                  "event_details",
+                  "event_start_time",
+                  "event_end_time",
+                  "event_venue",
+                  "event_email_description",
                 ].forEach((key) => localStorage.removeItem(key));
                 router.push("/events");
               } else {

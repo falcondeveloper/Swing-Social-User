@@ -40,7 +40,16 @@ export async function POST(req: any) {
       city,
       streetAddress,
       zipCode,
+      allEventDetails,
+
+      eventStartTime,
+      eventEndTime,
+      eventVenue,
+      eventEmailDescription,
     } = data;
+
+    const venueToShow = eventVenue;
+    const emailDescToShow = eventEmailDescription;
 
     const mailgun = new Mailgun(FormData);
     const mg = mailgun.client({
@@ -77,9 +86,27 @@ export async function POST(req: any) {
 
         <h3 style="margin: 20px 0 10px;">Event Details</h3>
         <p><strong>Event:</strong> ${eventName}</p>
+        <p><strong>Event Start:</strong> ${new Intl.DateTimeFormat("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "2-digit",
+          hour: "2-digit",
+          // minute: '2-digit',
+          hour12: true,
+        }).format(new Date(eventStartTime))}</p>
+        <p><strong>Event End:</strong> ${new Intl.DateTimeFormat("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "2-digit",
+          hour: "2-digit",
+          // minute: '2-digit',
+          hour12: true,
+        }).format(new Date(eventEndTime))}</p>
+        <p><strong>Event Address:</strong> ${venueToShow}</p>
+        <p><strong>Email Description</strong> ${emailDescToShow}</p>
         ${
           eventDescription
-            ? `<p><strong>Email Description:</strong> ${eventDescription}</p>`
+            ? `<p><strong>Event Description:</strong> ${eventDescription}</p>`
             : ""
         }
         

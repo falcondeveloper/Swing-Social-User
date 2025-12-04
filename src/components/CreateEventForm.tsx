@@ -651,7 +651,7 @@ const CreateEventForm: React.FC = () => {
             hideTicketOption: values?.hideTicketOption,
             category: values?.category,
             description: values?.description,
-            emailDescription: "test",
+            emailDescription: null,
             latitude: lat,
             longitude: lng,
             repeats: values?.repeats,
