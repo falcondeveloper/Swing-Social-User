@@ -918,11 +918,13 @@ export default function CalendarView() {
                                 {new Intl.DateTimeFormat("en-US", {
                                   month: "short",
                                   day: "2-digit",
-                                  year: "2-digit",
+                                  year: "numeric",
                                   hour: "2-digit",
                                   minute: "2-digit",
                                   hour12: true,
-                                }).format(eventDate)}
+                                  timeZone: "America/New_York",
+                                }).format(new Date(eventDate))}{" "}
+                                <strong>EST</strong>
                               </Typography>
                             </CardContent>
                           </Card>

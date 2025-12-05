@@ -64,6 +64,7 @@ import { jwtDecode } from "jwt-decode";
 import Swal from "sweetalert2";
 import UserProfileModal from "@/components/UserProfileModal";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
+import { formatDateEST } from "@/utils/formatDateEST";
 
 type Params = Promise<{ id: string }>;
 
@@ -708,18 +709,9 @@ export default function EventDetail(props: { params: Params }) {
                     style={{ color: "white" }}
                   >
                     <strong style={{ color: "white" }}>Start at:</strong>
-                    {new Intl.DateTimeFormat("en-US", {
-                      month: "short",
-                      day: "2-digit",
-                      year: "2-digit",
-                      hour: "2-digit",
-                      // minute: '2-digit',
-                      hour12: true,
-                    }).format(
-                      new Date(
-                        eventDetail?.StartTime || "2025-01-12T15:00:26.555Z"
-                      )
-                    )}
+                    <Typography color="white">
+                      {formatDateEST(eventDetail?.StartTime)}
+                    </Typography>
                   </Typography>
                   <Typography
                     variant="body2"
@@ -727,18 +719,9 @@ export default function EventDetail(props: { params: Params }) {
                     style={{ color: "white" }}
                   >
                     <strong style={{ color: "white" }}>End at:</strong>{" "}
-                    {new Intl.DateTimeFormat("en-US", {
-                      month: "short",
-                      day: "2-digit",
-                      year: "2-digit",
-                      hour: "2-digit",
-                      // minute: '2-digit',
-                      hour12: true,
-                    }).format(
-                      new Date(
-                        eventDetail?.EndTime || "2025-01-12T15:00:26.555Z"
-                      )
-                    )}
+                    <Typography color="white">
+                      {formatDateEST(eventDetail?.EndTime)}
+                    </Typography>
                   </Typography>
                 </Box>
 
@@ -856,19 +839,7 @@ export default function EventDetail(props: { params: Params }) {
                           sx={{ backgroundColor: "darkgray", width: "70%" }}
                         >
                           <Typography color="white">
-                            {new Intl.DateTimeFormat("en-US", {
-                              month: "short",
-                              day: "2-digit",
-                              year: "2-digit",
-                              hour: "2-digit",
-                              // minute: '2-digit',
-                              hour12: true,
-                            }).format(
-                              new Date(
-                                eventDetail?.StartTime ||
-                                  "2025-01-12T15:00:26.555Z"
-                              )
-                            )}
+                            {formatDateEST(eventDetail?.StartTime)}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -888,19 +859,7 @@ export default function EventDetail(props: { params: Params }) {
                           sx={{ backgroundColor: "darkgray", width: "70%" }}
                         >
                           <Typography color="white">
-                            {new Intl.DateTimeFormat("en-US", {
-                              month: "short",
-                              day: "2-digit",
-                              year: "2-digit",
-                              hour: "2-digit",
-                              // minute: '2-digit',
-                              hour12: true,
-                            }).format(
-                              new Date(
-                                eventDetail?.EndTime ||
-                                  "2025-01-12T15:00:26.555Z"
-                              )
-                            )}
+                            {formatDateEST(eventDetail?.EndTime)}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -1364,17 +1323,7 @@ export default function EventDetail(props: { params: Params }) {
                       color="white"
                       sx={{ mt: 2, opacity: 0.9 }}
                     >
-                      {new Date(eventDetail?.StartTime).toLocaleString(
-                        "en-US",
-                        {
-                          weekday: "long",
-                          month: "long",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "numeric",
-                          hour12: true,
-                        }
-                      )}
+                      {formatDateEST(eventDetail?.StartTime)}
                     </Typography>
                   </Box>
                 </Fade>
@@ -1736,17 +1685,14 @@ export default function EventDetail(props: { params: Params }) {
                         {
                           icon: <AccessTimeIcon />,
                           label: "Start Time",
-                          value: new Date(
-                            eventDetail?.StartTime
-                          ).toLocaleString(),
+                          value: formatDateEST(eventDetail?.StartTime),
                         },
                         {
                           icon: <AccessTimeIcon />,
                           label: "End Time",
-                          value: new Date(
-                            eventDetail?.EndTime
-                          ).toLocaleString(),
+                          value: formatDateEST(eventDetail?.EndTime),
                         },
+
                         {
                           icon: <LocationOnIcon />,
                           label: "Venue",

@@ -30,6 +30,7 @@ import { ArrowLeft, MapPin } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import CircularProgress from "@mui/material/CircularProgress";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import { formatDateEST } from "@/utils/formatDateEST";
 
 const daysOfWeek = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] as const;
 
@@ -51,15 +52,6 @@ const sameDay = (a: Date, b: Date) =>
   a.getDate() === b.getDate();
 const sameMonth = (a: Date, b: Date) =>
   a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
-const fmtDateTime = (s: string) =>
-  new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  }).format(new Date(s));
 
 export default function EventDesktopList() {
   const router = useRouter();
@@ -795,7 +787,7 @@ export default function EventDesktopList() {
                             variant="body2"
                             sx={{ color: alpha("#fff", 0.7) }}
                           >
-                            {fmtDateTime(ev.StartTime)}
+                            {formatDateEST(ev.StartTime)}
                           </Typography>
                         </Box>
                       </Box>
@@ -1111,14 +1103,13 @@ export default function EventDesktopList() {
                               <AccessTimeIcon
                                 sx={{ fontSize: 16, color: alpha("#fff", 0.7) }}
                               />
+
                               <Typography
                                 variant="body2"
-                                sx={{
-                                  color: alpha("#fff", 0.9),
-                                  fontWeight: 500,
-                                }}
+                                sx={{ color: "rgba(255,255,255,0.8)" }}
                               >
-                                {fmtDateTime(ev.StartTime)}
+                                <strong>Starts:</strong>{" "}
+                                {formatDateEST(ev.StartTime)}
                               </Typography>
                             </Box>
 
