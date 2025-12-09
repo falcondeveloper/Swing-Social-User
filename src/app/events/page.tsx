@@ -140,15 +140,17 @@ export default function CalendarView() {
     const fetchData = async () => {
       setCityLoading(true);
       try {
-        const response = await fetch(`/api/user/city?city=${cityInput}`);
+        const response = await fetch(`/api/usStates?state=${cityInput}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const { cities } = await response.json();
-        const uniqueCities = cities.filter(
-          (city: any, index: any, self: any) =>
-            index === self.findIndex((t: any) => t.City === city.City)
+        const { states } = await response.json();
+
+        const uniqueCities = states.filter(
+          (state: any, index: any, self: any) =>
+            index ===
+            self.findIndex((t: any) => t.StateFull === state.StateFull)
         );
 
         setCityOption(uniqueCities);
@@ -571,15 +573,19 @@ export default function CalendarView() {
                     onOpen={() => setOpenCity(true)}
                     onClose={() => setOpenCity(false)}
                     isOptionEqualToValue={(option, value) =>
-                      option.City === value.City
+                      option.StateFull === value.StateFull
                     }
-                    getOptionLabel={(option) => option.City || ""}
+                    getOptionLabel={(option) =>
+                      option.StateFull && option.State
+                        ? `${option.StateFull} (${option.State})`
+                        : option.StateFull || ""
+                    }
                     options={cityOption}
                     loading={cityLoading}
                     inputValue={cityInput}
                     noOptionsText={
-                      <Typography sx={{ color: "white" }}>
-                        No options
+                      <Typography sx={{ color: "black" }}>
+                        No states found
                       </Typography>
                     }
                     onInputChange={(event, newInputValue) => {
@@ -591,33 +597,54 @@ export default function CalendarView() {
                       }
                     }}
                     onChange={(event, newValue) => {
-                      if (newValue?.City) {
-                        const normalizedCity = newValue.City.replace(
-                          /\s+/g,
-                          " "
-                        ).trim();
-                        const filtered = events.filter((event: any) =>
-                          event.Venue?.toLowerCase().includes(
-                            normalizedCity.toLowerCase()
-                          )
-                        );
+                      if (newValue) {
+                        const stateFull =
+                          newValue.StateFull?.toLowerCase() || "";
+                        const stateAbbr = newValue.State?.toLowerCase() || "";
+
+                        const filtered = events.filter((ev: any) => {
+                          const venue = (ev.Venue || "").toLowerCase();
+
+                          return (
+                            (stateFull && venue.includes(stateFull)) ||
+                            (stateAbbr && venue.includes(`, ${stateAbbr}`)) ||
+                            (stateAbbr && venue.endsWith(` ${stateAbbr}`))
+                          );
+                        });
+
                         setSortedEvents(filtered);
                         setSearchType("city");
                       } else {
                         clearFilters();
                       }
+
                       setOpenFilter(false);
+                    }}
+                    // ✅ White Dropdown Styling
+                    componentsProps={{
+                      paper: {
+                        sx: {
+                          backgroundColor: "#ffffff",
+                          color: "#000",
+                          borderRadius: 2,
+                          border: "1px solid #f50057",
+                          boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
+                        },
+                      },
                     }}
                     ListboxProps={{
                       sx: {
-                        backgroundColor: "#2a2a2a",
-                        color: "#fff",
+                        backgroundColor: "#ffffff",
+                        color: "#000",
                         "& .MuiAutocomplete-option": {
+                          fontSize: 14,
+                          paddingY: 1,
                           "&:hover": {
-                            backgroundColor: "rgba(245,0,87,0.08)",
+                            backgroundColor: "rgba(0,0,0,0.08)",
                           },
                           '&[aria-selected="true"]': {
-                            backgroundColor: "rgba(245,0,87,0.16)",
+                            backgroundColor: "rgba(245,0,87,0.18)",
+                            color: "#000",
                           },
                         },
                       },

@@ -73,36 +73,57 @@ export default function EventDesktopList() {
   const [openCity, setOpenCity] = useState(false);
   const [cityLoading, setCityLoading] = useState(false);
   const [cityOption, setCityOption] = useState<any[]>([]);
-  const [selectedPlace, setSelectedPlace] = useState<string | null>(null);
+  const [selectedState, setSelectedState] = useState<any | null>(null);
+
+  const filterEventsByState = (list: EventItem[], state: any | null) => {
+    if (!state) return list;
+
+    const full = state.StateFull?.toLowerCase() || "";
+    const abbr = state.State?.toLowerCase() || "";
+
+    return list.filter((e) => {
+      const venue = (e.Venue || "").toLowerCase();
+
+      return (
+        (full && venue.includes(full)) ||
+        (abbr && venue.includes(`, ${abbr}`)) ||
+        (abbr && venue.endsWith(` ${abbr}`))
+      );
+    });
+  };
 
   useEffect(() => {
-    if (!openCity || !cityInput) {
-      if (!openCity) setCityOption([]);
+    if (!openCity) {
+      setCityOption([]);
       return;
     }
-    let active = true;
-    (async () => {
+    if (cityInput === "") return;
+
+    const fetchData = async () => {
       setCityLoading(true);
       try {
-        const res = await fetch(
-          `/api/user/city?city=${encodeURIComponent(cityInput)}`
+        const response = await fetch(`/api/usStates?state=${cityInput}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const { states } = await response.json();
+
+        const uniqueStates = states.filter(
+          (state: any, index: number, self: any[]) =>
+            index ===
+            self.findIndex((t: any) => t.StateFull === state.StateFull)
         );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const { cities } = await res.json();
-        const unique = (cities || []).filter(
-          (c: any, i: number, self: any[]) =>
-            i === self.findIndex((t) => t.City === c.City)
-        );
-        if (active) setCityOption(unique);
-      } catch (err) {
-        console.error("Error fetching cities:", err);
+
+        setCityOption(uniqueStates);
+      } catch (error) {
+        console.error("Error fetching states:", error);
       } finally {
         setCityLoading(false);
       }
-    })();
-    return () => {
-      active = false;
     };
+
+    fetchData();
   }, [cityInput, openCity]);
 
   const monthHasAnyEvents = useMemo(() => {
@@ -226,17 +247,13 @@ export default function EventDesktopList() {
     setSearchText(val);
     const v = val.toLowerCase().trim();
 
+    // base list: events of current month
     let baseList = events.filter(
       (e) => e?.StartTime && sameMonth(new Date(e.StartTime), currentDate)
     );
-    if (selectedPlace) {
-      const p = selectedPlace.toLowerCase();
-      baseList = baseList.filter(
-        (e) =>
-          e.Venue?.toLowerCase().includes(p) ||
-          (e as any).City?.toLowerCase().includes(p)
-      );
-    }
+
+    // 🔹 apply state filter if a state is selected
+    baseList = filterEventsByState(baseList, selectedState);
 
     if (!v) {
       setSortedEvents(baseList);
@@ -478,51 +495,76 @@ export default function EventDesktopList() {
             open={openCity}
             onOpen={() => setOpenCity(true)}
             onClose={() => setOpenCity(false)}
-            isOptionEqualToValue={(o, v) => o.City === v.City}
-            getOptionLabel={(o) => o.City || ""}
+            isOptionEqualToValue={(option, value) =>
+              option.StateFull === value.StateFull
+            }
+            getOptionLabel={(option) =>
+              option.StateFull && option.State
+                ? `${option.StateFull} (${option.State})`
+                : option.StateFull || ""
+            }
             options={cityOption}
             loading={cityLoading}
             inputValue={cityInput}
             size="small"
             sx={{ width: { xs: "100%", sm: 200, md: 220 } }}
-            noOptionsText={
-              <Typography sx={{ color: "white" }}>No options</Typography>
-            }
+            noOptionsText="No states found"
             onInputChange={(e, v) => {
               if (e?.type === "change" || e?.type === "click") setCityInput(v);
             }}
             onChange={(_, v) => {
-              if (v?.City) {
-                const place = String(v.City);
-                setSelectedPlace(place);
-                const monthList = events.filter(
-                  (e) =>
-                    e?.StartTime &&
-                    sameMonth(new Date(e.StartTime), currentDate) &&
-                    (e.Venue?.toLowerCase().includes(place.toLowerCase()) ||
-                      (e as any).City?.toLowerCase().includes(
-                        place.toLowerCase()
-                      ))
-                );
-                setSortedEvents(monthList);
-              } else {
-                setSelectedPlace(null);
-                const monthList = events.filter(
-                  (e) =>
-                    e?.StartTime &&
-                    sameMonth(new Date(e.StartTime), currentDate)
-                );
-                setSortedEvents(monthList);
+              setSelectedState(v || null);
+
+              const searchVal = searchText.toLowerCase().trim();
+
+              let baseList = events.filter(
+                (e) =>
+                  e?.StartTime && sameMonth(new Date(e.StartTime), currentDate)
+              );
+
+              baseList = filterEventsByState(baseList, v || null);
+
+              if (!searchVal) {
+                setSortedEvents(baseList);
+                return;
               }
+
+              const filtered = baseList.filter(
+                (e) =>
+                  e.Name?.toLowerCase().includes(searchVal) ||
+                  e.Venue?.toLowerCase().includes(searchVal) ||
+                  e.Description?.toLowerCase().includes(searchVal)
+              );
+              setSortedEvents(filtered);
+            }}
+            // 🔹 Style the dropdown paper + list
+            componentsProps={{
+              paper: {
+                sx: {
+                  bgcolor: "#ffffff",
+                  color: "#000000",
+                  borderRadius: 2,
+                  border: "1px solid #f50057",
+                  boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
+                },
+              },
             }}
             ListboxProps={{
               sx: {
-                backgroundColor: "#2a2a2a",
-                color: "#fff",
+                maxHeight: 260,
+                paddingY: 0.5,
+                backgroundColor: "#ffffff",
+                color: "#000000",
                 "& .MuiAutocomplete-option": {
-                  "&:hover": { backgroundColor: "rgba(245,0,87,0.08)" },
+                  fontSize: 14,
+                  paddingY: 0.75,
+                  color: "#000000",
+                  "&:hover": {
+                    backgroundColor: "rgba(0,0,0,0.08)",
+                  },
                   '&[aria-selected="true"]': {
-                    backgroundColor: "rgba(245,0,87,0.16)",
+                    backgroundColor: "rgba(245,0,87,0.18)",
+                    color: "#000",
                   },
                 },
               },
@@ -537,9 +579,9 @@ export default function EventDesktopList() {
                   startAdornment: <MapPin size={20} color="#f50057" />,
                   endAdornment: (
                     <>
-                      {cityLoading ? (
+                      {cityLoading && (
                         <CircularProgress color="inherit" size={15} />
-                      ) : null}
+                      )}
                       {params.InputProps.endAdornment}
                     </>
                   ),
@@ -554,7 +596,6 @@ export default function EventDesktopList() {
                     "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                       borderColor: "#f50057",
                     },
-
                     "& .MuiInputBase-input::placeholder": {
                       color: "rgba(255,255,255,0.55)",
                       opacity: 1,
@@ -564,6 +605,7 @@ export default function EventDesktopList() {
               />
             )}
           />
+
           <TextField
             placeholder="Search events..."
             variant="outlined"
