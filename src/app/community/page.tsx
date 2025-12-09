@@ -47,7 +47,7 @@ export default function Community() {
           };
         
           const getLocationName = async (latitude: number, longitude: number) => {
-            const apiKey = 'AIzaSyAu91_NBbK3ZbhUcoPoPZAdkuLiaDFGSk0'; // Replace with your actual API key
+            const apiKey = 'AIzaSyBEr0k_aQ_Sns6YbIQ4UBxCUTdPV9AhdF0'; // Replace with your actual API key
           
             try {
               // Call the Google Maps Geocoding API

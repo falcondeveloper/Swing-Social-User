@@ -133,7 +133,7 @@ const DesktopEventCreateCard = () => {
   }, [cityInput, openCity]);
 
   const getLatLngByLocationName = async (locationName: string) => {
-    const apiKey = "AIzaSyAu91_NBbK3ZbhUcoPoPZAdkuLiaDFGSk0";
+    const apiKey = "AIzaSyBEr0k_aQ_Sns6YbIQ4UBxCUTdPV9AhdF0";
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
