@@ -29,9 +29,9 @@ async function sendMail(
   subject: string,
   text: string,
   recipients: string[] = [
-    // "falconsoftmobile@gmail.com",
+    "falconsoftmobile@gmail.com",
     "baldhavansh2505@gmail.com",
-    // "latuttle22@gmail.com",
+    "latuttle22@gmail.com",
   ]
 ) {
   const mailgunKey = await getMailgunKey();

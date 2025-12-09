@@ -20,12 +20,14 @@ import * as Yup from "yup";
 import Cropper from "react-easy-crop";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import Snackbar, { SnackbarCloseReason } from "@mui/material/Snackbar";
+import { useRouter } from "next/navigation";
 
 const ProfileImgCheckerModel = ({
   profileId,
 }: {
   profileId: string | null;
 }) => {
+  const router = useRouter();
   const [openDialog, setOpenDialog] = useState(false);
   const [avatarImage, setAvatarImage] = useState<string | null>(null);
   const [croppedAvatar, setCroppedAvatar] = useState<string | null>(null);
@@ -276,6 +278,11 @@ const ProfileImgCheckerModel = ({
     },
   });
 
+  const handleLogout = () => {
+    localStorage.clear();
+    router.push("/login");
+  };
+
   const handleClose = (
     _: React.SyntheticEvent | Event,
     reason?: SnackbarCloseReason
@@ -340,6 +347,18 @@ const ProfileImgCheckerModel = ({
                 We noticed you haven’t uploaded a profile picture yet. Upload
                 one now to unlock the full experience your photo helps others
                 recognize you and improves content recommendations.
+              </Typography>
+
+              <Typography
+                sx={{
+                  textAlign: "center",
+                  color: "#ffffffcc",
+                  fontSize: { xs: "0.7rem", sm: "0.75rem", md: "0.8rem" },
+                  mb: 2,
+                }}
+              >
+                If you&apos;ve already uploaded an image and still see this
+                message, you can log out and log back in again.
               </Typography>
 
               <Grid item xs={12} sx={{ mt: 2, textAlign: "center" }}>
@@ -430,11 +449,22 @@ const ProfileImgCheckerModel = ({
                   fontSize: { xs: "0.625rem", sm: "0.7rem", md: "0.75rem" },
                 }}
               >
-                Please upload a clear, front-facing photo — no nudity, no
+                Please upload a clear, front-facing photo, no nudity, no
                 cartoons, no objects. Real faces only.
               </Typography>
 
-              <Grid item xs={12} sx={{ textAlign: "center", mt: 4 }}>
+              <Grid
+                item
+                xs={12}
+                sx={{
+                  textAlign: "center",
+                  mt: 4,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 2,
+                }}
+              >
                 <Button
                   type="submit"
                   disabled={uploading}
@@ -452,6 +482,21 @@ const ProfileImgCheckerModel = ({
                   ) : (
                     <ArrowForwardIosIcon />
                   )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="text"
+                  onClick={handleLogout}
+                  sx={{
+                    color: "#ffffffcc",
+                    fontSize: { xs: "0.75rem", sm: "0.8rem" },
+                    textDecoration: "underline",
+                    textUnderlineOffset: "3px",
+                    "&:hover": { color: "#ffffff" },
+                  }}
+                >
+                  Log out and re-login
                 </Button>
               </Grid>
             </Grid>
