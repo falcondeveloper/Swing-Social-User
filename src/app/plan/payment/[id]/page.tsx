@@ -114,7 +114,7 @@ export default function Payment(props: { params: Params }) {
   };
 
   const getLocationName = async (latitude: number, longitude: number) => {
-    const apiKey = "AIzaSyBmCGbN_HvigoBxBdqOWrkl8VAhKPbyNqM";
+    const apiKey = "AIzaSyAu91_NBbK3ZbhUcoPoPZAdkuLiaDFGSk0";
 
     try {
       const response = await fetch(

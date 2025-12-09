@@ -300,7 +300,7 @@ const CreateEventForm: React.FC = () => {
   }, [cityInput, openCity]);
 
   const getLatLngByLocationName = async (locationName: string) => {
-    const apiKey = "AIzaSyBmCGbN_HvigoBxBdqOWrkl8VAhKPbyNqM";
+    const apiKey = "AIzaSyAu91_NBbK3ZbhUcoPoPZAdkuLiaDFGSk0";
 
     try {
       const response = await fetch(

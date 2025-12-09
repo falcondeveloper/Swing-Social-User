@@ -806,7 +806,7 @@ export default function Home() {
   };
 
   const getLocationName = async (latitude: number, longitude: number) => {
-    const apiKey = "AIzaSyBmCGbN_HvigoBxBdqOWrkl8VAhKPbyNqM"; // Replace with your actual API key
+    const apiKey = "AIzaSyAu91_NBbK3ZbhUcoPoPZAdkuLiaDFGSk0"; // Replace with your actual API key
 
     try {
       // Call the Google Maps Geocoding API
