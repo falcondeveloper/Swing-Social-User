@@ -31,12 +31,11 @@ import UserProfileModal from "@/components/UserProfileModal";
 import { Flag } from "@mui/icons-material";
 import Header from "@/components/Header";
 import AboutSection from "@/components/AboutSection";
-import Footer from "./Footer";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
 import TuneIcon from "@mui/icons-material/Tune";
-import PreferencesSheet from "./PreferencesSheet";
 import Loader from "@/commonPage/Loader";
+import PreferencesSheet from "@/components/PreferencesSheet";
 
 export interface DetailViewHandle {
   open: (id: string) => void;
@@ -103,7 +102,7 @@ const SwipeIndicator = ({ type, opacity }: any) => {
   );
 };
 
-export default function MobileSweaping() {
+const SwipeCardComponent: React.FC = () => {
   const lastSwipeTimeRef = useRef<number>(0);
   const SWIPE_THROTTLE_MS = 0;
   const currentCardRef = useRef<HTMLDivElement | null>(null);
@@ -942,311 +941,204 @@ export default function MobileSweaping() {
       <>
         <Header />
         <Loader />
-        <Footer />
       </>
     );
   }
 
   return (
-    <>
-      <Header />
-      <div style={{ display: "none" }}>
-        {preloadProfiles.map((profile, index) =>
-          profile?.Avatar ? (
-            <div
-              key={`preload-${index}`}
-              style={{
-                position: "relative",
-              }}
-            >
-              <img
-                src={profile.Avatar}
-                alt="preload"
-                sizes="1px"
-                onLoad={() => {
-                  setPreloadedImages((prev) => {
-                    const updated = new Set(prev);
-                    updated.add(profile.Avatar);
-                    return updated;
-                  });
-                }}
-                style={{ objectFit: "cover" }}
-              />
-            </div>
-          ) : null
-        )}
-      </div>
-
+    <Box
+      sx={{
+        position: "relative",
+        height: "calc(100vh - 60px)",
+        width: "100%",
+        overflow: "hidden",
+      }}
+    >
       <div className="mobile-sweeping-container">
-        {idParam !== null ? (
-          <Card
-            elevation={0}
-            sx={{
-              border: "none",
-              width: "100%",
-              maxWidth: "100vw",
-              minWidth: "100%",
-              marginLeft: 0,
-              marginRight: 0,
-              height: "calc(100vh - 180px)",
-              marginTop: { sm: "20px" },
-              boxShadow: "none",
-              position: "absolute",
-              left: 0,
-              right: 0,
-              zIndex: 2,
-              backgroundColor: "#121212",
-              color: "white",
+        {visibleProfiles.map((profile: any, index: number) => (
+          <div
+            key={profile.Id}
+            ref={index === 0 ? currentCardRef : null}
+            className="swipe-card"
+            style={{
+              transform:
+                index === 0
+                  ? cardStyles.active.transform
+                  : cardStyles.next.transform,
+              transition:
+                index === 0
+                  ? cardStyles.active.transition
+                  : cardStyles.next.transition,
+              zIndex: index === 0 ? 2 : 1,
+            }}
+            onTransitionEnd={(e) => {
+              if (
+                index === 0 &&
+                isExiting &&
+                e.propertyName === "transform" &&
+                pendingSwipeAction
+              ) {
+                const actionMap: { [key: string]: string } = {
+                  delete: "left",
+                  like: "right",
+                  maybe: "down",
+                };
+                const direction = actionMap[pendingSwipeAction];
+                if (currentProfile) {
+                  processSwipe(direction, currentProfile);
+                }
+              }
             }}
           >
-            <Box
-              position="relative"
-              width="100%"
-              sx={{
-                height: {
-                  lg: 450,
-                  md: 380,
-                  sm: 380,
-                  xs: "calc(100vh - 210px)",
-                  mb: 15,
-                },
-              }}
-            >
-              <img
-                src={selectedUserProfile?.Avatar || "/fallback-avatar.png"}
-                alt={selectedUserProfile?.Username || "Unknown"}
-                sizes="(max-width: 768px) 100vw, 100vw"
-                style={{ objectFit: "cover" }}
-              />
+            <div className="profile-main-box">
+              {index === 0 && cardStyles.active && (
+                <SwipeIndicator
+                  type={cardStyles.active.swipeType}
+                  opacity={cardStyles.active.swipeOpacity}
+                />
+              )}
 
-              <Box
-                position="absolute"
-                top="120px"
-                right="-10px"
-                sx={{
-                  transform: "translate(-50%, -50%)",
-                  width: "40px", // Adjust the size as needed
-                  height: "auto",
-                  zIndex: 2,
-                }}
+              {/* Profile Image with gradient overlay */}
+              <div className="profile-img-container">
+                <img
+                  src={profile?.Avatar || "/fallback-avatar.png"}
+                  alt={profile?.Username || "Unknown"}
+                  className="profile-img"
+                />
+                {/* Gradient overlay for better text readability */}
+                <div className="image-gradient-overlay"></div>
+              </div>
+
+              {/* Top Left Settings Button */}
+              <button
+                onClick={openPrefs}
+                aria-label="open preferences"
+                className="settings-button"
+              >
+                <svg
+                  className="settings-icon"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M19.14 12.94C19.18 12.64 19.2 12.33 19.2 12C19.2 11.67 19.18 11.36 19.14 11.06L21.16 9.45C21.34 9.29 21.39 9.03 21.29 8.82L19.35 5.12C19.25 4.91 19.01 4.82 18.8 4.88L16.42 5.64C15.95 5.27 15.43 4.97 14.87 4.74L14.5 2.28C14.46 2.06 14.28 1.9 14.06 1.9H9.96C9.74 1.9 9.56 2.06 9.52 2.28L9.15 4.74C8.59 4.97 8.07 5.27 7.6 5.64L5.22 4.88C5.01 4.82 4.77 4.91 4.67 5.12L2.73 8.82C2.63 9.03 2.68 9.29 2.86 9.45L4.88 11.06C4.84 11.36 4.82 11.67 4.82 12C4.82 12.33 4.84 12.64 4.88 12.94L2.86 14.55C2.68 14.71 2.63 14.97 2.73 15.18L4.67 18.88C4.77 19.09 5.01 19.18 5.22 19.12L7.6 18.36C8.07 18.73 8.59 19.03 9.15 19.26L9.52 21.72C9.56 21.94 9.74 22.1 9.96 22.1H14.06C14.28 22.1 14.46 21.94 14.5 21.72L14.87 19.26C15.43 19.03 15.95 18.73 16.42 18.36L18.8 19.12C19.01 19.18 19.25 19.09 19.35 18.88L21.29 15.18C21.39 14.97 21.34 14.71 21.16 14.55L19.14 12.94ZM12 15.6C10.34 15.6 9 14.26 9 12.6C9 10.94 10.34 9.6 12 9.6C13.66 9.6 15 10.94 15 12.6C15 14.26 13.66 15.6 12 15.6Z"
+                    fill="white"
+                  />
+                </svg>
+              </button>
+
+              {/* Top Right Info Button */}
+              <button
                 onClick={() => {
                   setShowDetail(true);
                   setSelectedUserId(userProfiles[currentIndex]?.Id);
                 }}
+                aria-label="view profile details"
+                className="info-button"
               >
-                <img
-                  src="/ProfileInfo.png"
-                  alt="Profile Info"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                  }}
-                />
-              </Box>
+                <svg
+                  className="info-icon"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V11H13V17ZM13 9H11V7H13V9Z"
+                    fill="white"
+                  />
+                </svg>
+              </button>
 
-              <Box
-                position="absolute"
-                bottom={8}
-                bgcolor="rgba(0,0,0,0.6)"
-                color="white"
-                p={1}
-                borderRadius={1}
-                fontSize={12}
-                sx={{
-                  cursor: "pointer",
-                  right: { sm: 20, xs: 20, lg: 8, md: 8 },
-                }}
+              {/* Bottom Right Report Button */}
+              <button
+                className="report-button"
                 onClick={handleReportModalToggle}
               >
-                <Flag sx={{ color: "#9c27b0" }} />
-              </Box>
-            </Box>
-            <CardContent>
-              <Typography variant="h6" component="div" gutterBottom>
-                {selectedUserProfile?.Username || "Unknown"} ,{" "}
-                {selectedUserProfile?.DateOfBirth
-                  ? new Date().getFullYear() -
-                    new Date(selectedUserProfile.DateOfBirth).getFullYear()
-                  : ""}
-                {selectedUserProfile?.Gender === "Male"
-                  ? "M"
-                  : selectedUserProfile?.Gender === "Female"
-                  ? "F"
-                  : ""}
-                {selectedUserProfile?.PartnerDateOfBirth && (
-                  <>
-                    {" | "}
-                    {new Date().getFullYear() -
-                      new Date(
-                        selectedUserProfile.PartnerDateOfBirth
-                      ).getFullYear()}
-                    {selectedUserProfile?.PartnerGender === "Male"
-                      ? "M"
-                      : selectedUserProfile?.PartnerGender === "Female"
-                      ? "F"
-                      : ""}
-                  </>
-                )}
-              </Typography>
-              <Typography variant="body2" color="#C2185B">
-                {selectedUserProfile?.Location?.replace(", USA", "") || ""}
-              </Typography>
-              <AboutSection aboutText={selectedUserProfile?.About} />
-            </CardContent>
-          </Card>
-        ) : (
-          visibleProfiles.map((profile: any, index: number) => (
-            <Card
-              key={profile.Id}
-              ref={index === 0 ? currentCardRef : null}
-              elevation={0}
-              sx={{
-                border: "none",
-                width: "100%",
-                maxWidth: "100vw",
-                minWidth: "100%",
-                height: "calc(100vh - 120px)",
-                marginTop: { sm: "30px" },
-                boxShadow: "none",
-                position: "absolute",
-                left: 0,
-                right: 0,
-                backgroundColor: "#121212",
-                color: "white",
-                transform:
-                  index === 0
-                    ? cardStyles.active.transform
-                    : cardStyles.next.transform,
-                transition:
-                  index === 0
-                    ? cardStyles.active.transition
-                    : cardStyles.next.transition,
-                zIndex: index === 0 ? 2 : 1,
-              }}
-              onTransitionEnd={(e) => {
-                if (
-                  index === 0 &&
-                  isExiting &&
-                  e.propertyName === "transform" &&
-                  pendingSwipeAction
-                ) {
-                  const actionMap: { [key: string]: string } = {
-                    delete: "left",
-                    like: "right",
-                    maybe: "down",
-                  };
-                  const direction = actionMap[pendingSwipeAction];
-                  if (currentProfile) {
-                    processSwipe(direction, currentProfile);
-                  }
-                }
-              }}
-            >
-              <div className="profile-main-box">
-                {index === 0 && cardStyles.active && (
-                  <SwipeIndicator
-                    type={cardStyles.active.swipeType}
-                    opacity={cardStyles.active.swipeOpacity}
-                  />
-                )}
-                <div className="profile-img" style={{ position: "relative" }}>
-                  <img
-                    src={profile?.Avatar || "/fallback-avatar.png"}
-                    alt={profile?.Username || "Unknown"}
-                    className="profile-img"
-                  />
-                </div>
-
-                <IconButton
-                  onClick={openPrefs}
-                  aria-label="open preferences"
-                  sx={{
-                    bgcolor: "#ff6fa3",
-                    color: "#121212",
-                    width: 48,
-                    height: 48,
-                    boxShadow: "0 6px 18px rgba(0,0,0,0.45)",
-                    borderRadius: 3,
-                  }}
-                  className="preference_button"
+                <svg
+                  className="flag-icon"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <TuneIcon />
-                </IconButton>
+                  <path
+                    d="M14.4 6L14 4H5V21H7V14H12.6L13 16H20V6H14.4Z"
+                    fill="#9c27b0"
+                  />
+                </svg>
+              </button>
 
-                <img
-                  src="/ProfileInfo.png"
-                  alt="Profile Info"
-                  onClick={() => {
-                    setShowDetail(true);
-                    setSelectedUserId(userProfiles[currentIndex]?.Id);
-                  }}
-                  className="profile-info"
-                />
-                <div className="report-flag" onClick={handleReportModalToggle}>
-                  <Flag sx={{ color: "#9c27b0" }} />
-                </div>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    left: 0,
-                    width: "100%",
-                    background:
-                      "linear-gradient(to top, rgb(18, 18, 18) 3%, rgba(18, 18, 18, 0.25) 25%, rgba(18, 18, 18, 0) 40%)",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "flex-end",
-                  }}
-                >
-                  <Typography
-                    variant="h5"
-                    component="div"
-                    style={{ paddingLeft: "10px", fontWeight: 800 }}
-                  >
-                    {profile?.Username || "Unknown"} ,{" "}
+              {/* Profile Details Container */}
+              <div className="profile-details-container">
+                {/* Name and Age with gender symbols */}
+                <div className="profile-header">
+                  <h1 className="profile-name">
+                    {profile?.Username || "Unknown"},{" "}
                     {profile?.DateOfBirth
                       ? new Date().getFullYear() -
                         new Date(profile.DateOfBirth).getFullYear()
                       : ""}
-                    {profile?.Gender === "Male"
-                      ? "M"
-                      : profile?.Gender === "Female"
-                      ? "F"
-                      : ""}
+                    <span className="gender-symbol">
+                      {profile?.Gender === "Male"
+                        ? " ♂"
+                        : profile?.Gender === "Female"
+                        ? " ♀"
+                        : ""}
+                    </span>
                     {profile?.PartnerDateOfBirth && (
                       <>
-                        {" | "}
-                        {new Date().getFullYear() -
-                          new Date(
-                            profile.PartnerDateOfBirth
-                          ).getFullYear()}{" "}
-                        {profile?.PartnerGender === "Male"
-                          ? "M"
-                          : profile?.PartnerGender === "Female"
-                          ? "F"
-                          : ""}
+                        <span className="partner-info">
+                          {" "}
+                          {new Date().getFullYear() -
+                            new Date(profile.PartnerDateOfBirth).getFullYear()}
+                          {profile?.PartnerGender === "Male"
+                            ? " ♂"
+                            : profile?.PartnerGender === "Female"
+                            ? " ♀"
+                            : ""}
+                        </span>
                       </>
                     )}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="#C2185B"
-                    style={{
-                      fontSize: "1.0rem",
-                      fontWeight: "bold",
-                      paddingLeft: "10px",
-                    }}
+                  </h1>
+                </div>
+
+                {/* Location with pin icon */}
+                <div className="profile-location">
+                  <svg
+                    className="pin-icon"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
                   >
-                    {profile?.Location?.replace(", USA", "") || ""}
-                  </Typography>
-                  <AboutSection aboutText={profile?.About} />
+                    <path
+                      d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z"
+                      fill="#C2185B"
+                    />
+                  </svg>
+                  <span className="location-text">
+                    {profile?.Location?.replace(", USA", "") ||
+                      "Location not specified"}
+                  </span>
+                </div>
+
+                {/* About section */}
+                <div className="profile-about">
+                  <p className="about-text">
+                    {profile?.About || "No description available."}
+                  </p>
                 </div>
               </div>
-            </Card>
-          ))
-        )}
+            </div>
+          </div>
+        ))}
       </div>
 
       <PreferencesSheet
@@ -1503,9 +1395,9 @@ export default function MobileSweaping() {
               "You've run out of matches. Adjust your preferences to view more members."}
           </Typography>
           <Button
-           onClick={() => {
+            onClick={() => {
               openPrefs();
-              setShowEndPopup(false)
+              setShowEndPopup(false);
             }}
             variant="outlined"
             sx={{
@@ -1552,6 +1444,8 @@ export default function MobileSweaping() {
           {snack.message}
         </Alert>
       </Snackbar>
-    </>
+    </Box>
   );
-}
+};
+
+export default SwipeCardComponent;
