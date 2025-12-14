@@ -954,7 +954,7 @@ const SwipeCardComponent: React.FC = () => {
         overflow: "hidden",
       }}
     >
-      <div className="mobile-sweeping-container">
+      <div className="new-mobile-sweeping-container">
         {visibleProfiles.map((profile: any, index: number) => (
           <div
             key={profile.Id}
