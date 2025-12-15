@@ -201,6 +201,7 @@ export default function ChatPage(props: { params: Params }) {
           console.error("Advertiser not found");
         } else {
           setUserProfile(userData);
+          console.log("userData", userData);
         }
       } catch (error: any) {
         console.error("Error fetching data:", error.message);
@@ -241,7 +242,6 @@ export default function ChatPage(props: { params: Params }) {
     : -1;
 
   const sendNotification = async (message: any) => {
-    const params = await props.params;
     const response = await fetch("/api/user/notification/requestfriend", {
       method: "POST",
       headers: {

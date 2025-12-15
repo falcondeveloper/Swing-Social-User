@@ -30,6 +30,8 @@ export async function POST(req: Request) {
     for (const row of result.rows) {
       const deviceToken = row.devicetoken;
 
+      console.log("row", row);
+
       const message = {
         token: deviceToken,
         notification: {
