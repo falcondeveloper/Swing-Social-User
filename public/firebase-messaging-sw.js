@@ -22,34 +22,47 @@ messaging.onBackgroundMessage(function (payload) {
   const title =
     payload.notification?.title || payload.data?.title || "New Notification";
 
+  const clickUrl = payload.fcmOptions?.link || payload.data?.url || "/";
+
   const options = {
     body:
       payload.notification?.body || payload.data?.body || "You have a message",
-    icon: "/icon.png",
+    icon: "/logo.png",
+    badge: "/logo.png",
     data: {
-      url: payload.data?.url || "/",
+      url: clickUrl,
     },
+    requireInteraction: false,
+    tag: "notification-" + Date.now(),
   };
 
   self.registration.showNotification(title, options);
 });
 
 self.addEventListener("notificationclick", function (event) {
+  console.log("🖱️ Notification clicked:", event.notification);
+
   event.notification.close();
 
-  const url = event.notification?.data?.url;
+  const clickUrl = event.notification.data?.url || "/";
+
+  const targetUrl = clickUrl.startsWith("http")
+    ? clickUrl
+    : `${self.location.origin}${clickUrl}`;
+
+  console.log("🔗 Opening URL:", targetUrl);
 
   event.waitUntil(
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
         for (const client of clientList) {
-          if (client.url === url && "focus" in client) {
+          if (client.url === targetUrl && "focus" in client) {
             return client.focus();
           }
         }
-        if (clients.openWindow && url) {
-          return clients.openWindow(url);
+        if (clients.openWindow) {
+          return clients.openWindow(targetUrl);
         }
       })
   );
