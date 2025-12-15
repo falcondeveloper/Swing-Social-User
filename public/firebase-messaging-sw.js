@@ -19,8 +19,15 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage(function (payload) {
   console.log("📩 Background message:", payload);
 
-  self.registration.showNotification(payload.notification.title, {
-    body: payload.notification.body,
+  const title =
+    payload.notification?.title || payload.data?.title || "New Notification";
+
+  const options = {
+    body:
+      payload.notification?.body || payload.data?.body || "You have a message",
     icon: "/icon.png",
-  });
+    data: payload.data || {},
+  };
+
+  self.registration.showNotification(title, options);
 });
