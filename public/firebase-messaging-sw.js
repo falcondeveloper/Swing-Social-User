@@ -1,31 +1,26 @@
 importScripts(
-  "https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"
+  "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"
 );
 importScripts(
-  "https://www.gstatic.com/firebasejs/9.1.0/firebase-messaging-compat.js"
+  "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"
 );
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBYKNIOcbbHKjS2ukuLMlriac7Lu_cw10c",
-  authDomain: "swing-social-website.firebaseapp.com",
-  projectId: "swing-social-website",
-  storageBucket: "swing-social-website.firebasestorage.app",
-  messagingSenderId: "620697559766",
-  appId: "1:620697559766:web:50d93c8b21d8e79f9f9f77",
-};
+firebase.initializeApp({
+  apiKey: "AIzaSyBB16_SMij8I2BCG0qU4mtwrkUjov8gZvE",
+  authDomain: "swing-social-website-37364.firebaseapp.com",
+  projectId: "swing-social-website-37364",
+  messagingSenderId: "24751189898",
+  appId: "1:24751189898:web:d2a0204a0d6cb75cf66273",
+  measurementId: "G-JJGVNRTWPY",
+});
 
-firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-messaging.onBackgroundMessage((payload) => {
-  console.log(
-    "[firebase-messaging-sw.js] Received background message ",
-    payload
-  );
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
+messaging.onBackgroundMessage(function (payload) {
+  console.log("📩 Background message:", payload);
+
+  self.registration.showNotification(payload.notification.title, {
     body: payload.notification.body,
-    icon: "/firebase-logo.png",
-  };
-  self.registration.showNotification(notificationTitle, notificationOptions);
+    icon: "/icon.png",
+  });
 });

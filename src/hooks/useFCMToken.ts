@@ -1,51 +1,47 @@
 "use client";
 
-import { messaging } from "../utils/firebase";
-import { getToken, onMessage } from "firebase/messaging";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getToken, onMessage, Messaging } from "firebase/messaging";
+import { messaging } from "@/lib/firebase";
 
-export default function NotificationHandler() {
-  console.log("NotificationHandler mounted");
+export const useFCMToken = () => {
+  const [token, setToken] = useState<string | null>(null);
   useEffect(() => {
-    console.log("NotificationHandler useEffect running");
-    // only run in browser
-    if (typeof window === "undefined") return;
+    if (!messaging) return;
+    if (!("serviceWorker" in navigator)) return;
+    if (!window.isSecureContext) return;
 
-    console.log("NotificationHandler running in browser");
+    const fcm: Messaging = messaging;
 
-    const requestPermission = async () => {
-      console.log("Requesting notification permission");
-      const permission = await Notification.requestPermission();
-      if (permission === "granted") {
-        console.log("Notification permission granted.");
-        try {
-          console.log("Retrieving FCM token");
-          const token = await getToken(messaging, {
-            vapidKey:
-              "BJ2LuvuUBEElBNqs8rJPepxQ-KmxZgkNF8kJoUbzGXCCNHlkymaQL1TxVE0j69NWcipcez1Xc4n1CpFcpBBOobQ",
-          });
-          console.log("FCM Token:", token);
-        } catch (error) {
-          console.log("Error retrieving token:", error);
+    const register = async () => {
+      try {
+        const reg = await navigator.serviceWorker.register(
+          "/firebase-messaging-sw.js"
+        );
+        console.log("✅ SW registered", reg);
+
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") return;
+
+        const fcmToken = await getToken(fcm, {
+          vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+          serviceWorkerRegistration: reg,
+        });
+
+        if (fcmToken) {
+          console.log("🔥 FCM TOKEN:", fcmToken);
+          setToken(fcmToken);
         }
-      } else {
-        console.warn("Notification permission denied.");
-        console.log("Notification permission was not granted by the user.");
+      } catch (err) {
+        console.error("❌ FCM ERROR:", err);
       }
     };
 
-    requestPermission();
+    register();
 
-    console.log("NotificationHandler set up foreground message listener");
-
-    // Listen for foreground messages
-    onMessage(messaging, (payload) => {
-      console.log("Foreground message received:", payload);
-      new Notification(payload?.notification?.title || "New Message", {
-        body: payload?.notification?.body,
-      });
+    onMessage(fcm, (payload) => {
+      console.log("📩 Foreground:", payload);
     });
   }, []);
-
-  return null;
-}
+  return token;
+};

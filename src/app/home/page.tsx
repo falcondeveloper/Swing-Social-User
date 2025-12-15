@@ -25,6 +25,7 @@ import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import { io } from "socket.io-client";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
+import { useFCMToken } from "@/hooks/useFCMToken";
 
 const categories = [
   {
@@ -71,6 +72,7 @@ const socket = io("https://api.nomolive.com/");
 
 const Home = () => {
   const router = useRouter();
+  const fcmToken = useFCMToken();
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
 
   const [profileId, setProfileId] = useState<any>();
@@ -293,65 +295,74 @@ const Home = () => {
   // }, [notificationPermissionStatus]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const id = localStorage.getItem("logged_in_profile");
-    const urlParams = new URLSearchParams(window.location.search);
-    const aff = urlParams.get("aff");
-    const refer = urlParams.get("refer");
 
-    const getOS = () => {
-      const userAgent = window.navigator.userAgent;
+    const saveFcmToken = async () => {
+      if (!fcmToken || !id) return;
 
-      if (userAgent.indexOf("Win") !== -1) return "Windows";
-      if (userAgent.indexOf("Mac") !== -1) return "MacOS";
-      if (userAgent.indexOf("Android") !== -1) return "Android";
-      if (/iPad|iPhone|iPod/.test(userAgent)) return "iOS";
-      if (userAgent.indexOf("Linux") !== -1) return "Linux";
-
-      return "Unknown";
+      try {
+        await fetch("/api/user/notification-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileId: id,
+            token: fcmToken,
+          }),
+        });
+      } catch (err) {
+        console.warn("Notification token save failed:", err);
+      }
     };
 
-    const currentUrl = window.location.href;
-    const currentPage = "home";
+    const trackUser = async () => {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const aff = urlParams.get("aff");
+        const refer = urlParams.get("refer");
 
-    fetch("https://ipapi.co/json")
-      .then((res) => res.json())
-      .then((ipData) => {
-        const ipv4 = ipData.ip;
+        const getOS = () => {
+          const ua = window.navigator.userAgent;
+          if (ua.includes("Win")) return "Windows";
+          if (ua.includes("Mac")) return "MacOS";
+          if (ua.includes("Android")) return "Android";
+          if (/iPad|iPhone|iPod/.test(ua)) return "iOS";
+          if (ua.includes("Linux")) return "Linux";
+          return "Unknown";
+        };
+
+        const ipRes = await fetch("https://ipapi.co/json");
+        const ipData = await ipRes.json();
 
         const payload = {
           affiliate: aff,
           referral: refer,
           OS: getOS(),
-          page: currentPage,
-          url: currentUrl,
+          page: "home",
+          url: window.location.href,
           userid: id || null,
-          ip: ipData?.ip,
-          city: ipData?.city,
-          region: ipData?.region,
-          country_name: ipData?.country_name,
+          ip: ipData?.ip || null,
+          city: ipData?.city || null,
+          region: ipData?.region || null,
+          country_name: ipData?.country_name || null,
         };
 
-        if (id) {
-          setProfileId(id);
-        }
+        if (id) setProfileId(id);
 
-        fetch("/api/user/tracking", {
+        await fetch("/api/user/tracking", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        })
-          .then((res) => res.json())
-          .then((data) => {})
-          .catch((err) => {
-            console.error("Failed to save tracking:", err);
-          });
-      })
-      .catch((err) => {
-        console.error("Failed to fetch IP:", err);
-      });
-  }, []);
+        });
+      } catch (err) {
+        console.error("❌ Tracking failed:", err);
+      }
+    };
+
+    saveFcmToken();
+    trackUser();
+  }, [fcmToken]);
 
   return (
     <>

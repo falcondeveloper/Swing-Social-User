@@ -54,6 +54,7 @@ import { useFormik } from "formik";
 import Link from "next/link";
 import PhoneInput, { CountryData } from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
+import { useFCMToken } from "@/hooks/useFCMToken";
 
 const theme = createTheme({
   palette: {
@@ -213,6 +214,7 @@ const ParticleField = memo(() => {
 });
 
 const RegisterPage = () => {
+  const fcmToken = useFCMToken();
   const router = useRouter();
   const emailRef = useRef<HTMLInputElement | null>(null);
   const userNameRef = useRef<HTMLInputElement | null>(null);
@@ -472,6 +474,21 @@ const RegisterPage = () => {
           localStorage.setItem("logged_in_profile", data.profileId);
           localStorage.setItem("userName", values.user_name);
           localStorage.setItem("phone", values.phone);
+
+          try {
+            if (fcmToken) {
+              await fetch("/api/user/notification-token", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  profileId: data.profileId,
+                  token: fcmToken,
+                }),
+              });
+            }
+          } catch (err) {
+            console.warn("Notification token save failed:", err);
+          }
 
           setProfileId(data.profileId);
           setIsUploading(false);
