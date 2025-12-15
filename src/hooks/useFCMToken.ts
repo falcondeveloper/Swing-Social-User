@@ -24,7 +24,7 @@ export const useFCMToken = () => {
         if (permission !== "granted") return;
 
         const fcmToken = await getToken(fcm, {
-          vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+          vapidKey: "BIDy2RbO49rCl4PiCwOEjNbG-iewNN5s19EohjSo5CeGiiMJsS-isosbF2J0Rb7FiSv_3yhJageGnXP5f6N6nag",
           serviceWorkerRegistration: reg,
         });
 
