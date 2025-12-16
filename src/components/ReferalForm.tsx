@@ -308,22 +308,26 @@ const ReferalForm = ({
           await Swal.fire({
             title: "Partial success",
             html: `
-            <p>Your affiliate application was submitted successfully.</p>
-            <p>However, we couldn't update your affiliate status automatically. Please refresh or contact support.</p>
-          `,
+      <p>Your affiliate application was submitted successfully.</p>
+      <p>However, we couldn't update your affiliate status automatically.</p>
+    `,
             icon: "warning",
             confirmButtonText: "OK",
           });
+
+          window.location.reload();
         } else {
           await Swal.fire({
             title: "Welcome to the Affiliate Program!",
             html: `
-            <p>Your affiliate application was submitted successfully.</p>
-            <p>You’ll be redirected to your dashboard shortly.</p>
-          `,
+      <p>Your affiliate application was submitted successfully.</p>
+      <p>You’ll be redirected to your dashboard shortly.</p>
+    `,
             icon: "success",
             confirmButtonText: "Continue",
           });
+
+          window.location.reload();
         }
 
         resetForm();
