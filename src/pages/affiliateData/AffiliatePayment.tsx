@@ -20,6 +20,8 @@ import {
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { motion, AnimatePresence } from "framer-motion";
+import PhoneInput, { CountryData } from "react-phone-input-2";
+import "react-phone-input-2/lib/material.css";
 
 const affiliatePaymentSchema = Yup.object({
   yourName: Yup.string()
@@ -31,14 +33,24 @@ const affiliatePaymentSchema = Yup.object({
     )
     .required("Your name is required"),
 
-  businessName: Yup.string().max(150).optional(),
+  businessName: Yup.string().when("makePayableTo", {
+    is: "business",
+    then: (schema) =>
+      schema
+        .min(2, "Business name must be at least 2 characters")
+        .required("Business name is required"),
+    otherwise: (schema) => schema.notRequired(),
+  }),
 
   makePayableTo: Yup.string()
     .oneOf(["business", "your"])
     .required("Please select who to make payment payable to"),
 
   email: Yup.string().email().required(),
-  phone: Yup.string().min(8).max(20).required(),
+  phone: Yup.string()
+    .matches(/^[0-9]{10}$/, "Please enter a valid phone number (10 digits)")
+    .required("Phone is required"),
+
   address: Yup.string().min(5).required(),
   country: Yup.string().required(),
   city: Yup.string().required(),
@@ -84,11 +96,57 @@ const textFieldSx = {
     borderRadius: "12px",
     "& fieldset": { borderColor: "rgba(255,255,255,0.2)" },
     "&:hover fieldset": { borderColor: "rgba(255,255,255,0.4)" },
-    "&.Mui-focused fieldset": { borderColor: "#2196f3" },
   },
   "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.7)" },
-  "& .MuiInputLabel-root.Mui-focused": { color: "#2196f3" },
-  "& .MuiFormHelperText-root": { marginLeft: 0 },
+};
+
+const phoneFieldSx = {
+  "& .react-tel-input": {
+    width: "100%",
+  },
+
+  "& .react-tel-input .form-control": {
+    width: "100%",
+    height: "56px",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    color: "white",
+    borderRadius: "12px",
+    border: "1px solid rgba(255,255,255,0.2)",
+    fontSize: "16px",
+    paddingLeft: "58px",
+    transition: "border-color 0.2s ease",
+  },
+
+  /* Hover (same as MUI hover) */
+  "& .react-tel-input .form-control:hover": {
+    borderColor: "rgba(255,255,255,0.4)",
+  },
+
+  /* Focus (same as MUI focused field) */
+  "& .react-tel-input .form-control:focus": {
+    outline: "none",
+    borderColor: "rgba(255,255,255,0.4)",
+  },
+
+  "& .react-tel-input .flag-dropdown": {
+    background: "transparent",
+    border: "none",
+    borderRadius: "12px 0 0 12px",
+  },
+
+  "& .react-tel-input .selected-flag": {
+    background: "transparent",
+  },
+
+  "& .react-tel-input .selected-flag:hover": {
+    background: "rgba(255,255,255,0.08)",
+  },
+
+  "& .react-tel-input .country-list": {
+    backgroundColor: "#11111b",
+    color: "white",
+    borderRadius: "12px",
+  },
 };
 
 const SuccessOverlay = ({
@@ -168,7 +226,7 @@ const SuccessOverlay = ({
               }}
             >
               We’ll review your request and send updates to your
-              <strong> registered email address</strong>.
+              <strong> entered email address</strong>.
               <br />
               Please keep an eye on your inbox 💌
             </Typography>
@@ -202,20 +260,29 @@ const SuccessOverlay = ({
   );
 };
 
-const AffiliatePayment = () => {
+interface AffiliatePaymentProps {
+  profileId: string;
+  affiliateCode: string | null;
+}
+
+const AffiliatePayment = ({
+  profileId,
+  affiliateCode,
+}: AffiliatePaymentProps) => {
   const [submitStatus, setSubmitStatus] = useState("");
   const [isLocked, setIsLocked] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const formik = useFormik({
     initialValues: {
-      affiliateId: "AFF-12345",
+      affiliateId: affiliateCode ? affiliateCode : "-",
       minThreshold: "$50",
       businessName: "",
       yourName: "",
-      makePayableTo: "",
+      makePayableTo: "your",
       email: "",
       phone: "",
+      countryCode: "",
       address: "",
       country: "",
       city: "",
@@ -239,20 +306,45 @@ const AffiliatePayment = () => {
         setSubmitStatus("submitting");
         setIsLocked(true);
 
-        console.log("✅ Submitted values:", values);
+        console.log("values", values);
 
+        const res = await fetch("/api/user/affiliate/request-payment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...values,
+            profileId,
+            affiliateCode,
+            makePayableName: payableToName,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data?.success) {
+          throw new Error(data?.message || "Request failed");
+        }
+        setSubmitStatus("success");
         setTimeout(() => {
           setShowSuccess(true);
           resetForm();
           setSubmitStatus("");
           setIsLocked(false);
         }, 800);
-      } catch (error) {
+      } catch (error: any) {
+        console.error("Affiliate payout error:", error);
+
         setSubmitStatus("error");
         setIsLocked(false);
       }
     },
   });
+
+  const payableToName =
+    formik.values.makePayableTo === "business"
+      ? formik.values.businessName
+      : formik.values.yourName;
 
   return (
     <Box
@@ -339,26 +431,74 @@ const AffiliatePayment = () => {
       <Box component="div">
         <form onSubmit={formik.handleSubmit}>
           <Grid container spacing={3}>
-            {/* Business Name & Your Name */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Business Name (Optional)"
-                name="businessName"
-                value={formik.values.businessName}
+            {/* Make Payable To */}
+            <Grid item xs={12}>
+              <Typography
+                variant="body1"
+                sx={{ color: "white", mb: 1, fontWeight: 500 }}
+              >
+                Make Payable To <span style={{ color: "#f44336" }}>*</span>
+              </Typography>
+
+              <RadioGroup
+                row
+                name="makePayableTo"
+                value={formik.values.makePayableTo}
                 onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={
-                  formik.touched.businessName &&
-                  Boolean(formik.errors.businessName)
-                }
-                helperText={
-                  formik.touched.businessName && formik.errors.businessName
-                }
-                sx={textFieldSx}
-              />
+                sx={{ gap: 2 }}
+              >
+                {[
+                  { value: "your", label: "Your Name" },
+                  { value: "business", label: "Business Name" },
+                ].map((option) => {
+                  const selected = formik.values.makePayableTo === option.value;
+
+                  return (
+                    <FormControlLabel
+                      key={option.value}
+                      value={option.value}
+                      control={<Radio sx={{ display: "none" }} />}
+                      sx={{ m: 0 }}
+                      label={
+                        <Box
+                          sx={{
+                            minWidth: 160,
+                            textAlign: "center",
+                            px: 3,
+                            py: 1.5,
+                            borderRadius: 2,
+                            cursor: "pointer",
+                            fontWeight: 600,
+                            color: selected ? "#ff5fa2" : "white",
+                            border: "1px solid",
+                            borderColor: selected
+                              ? "#ff5fa2"
+                              : "rgba(255,255,255,0.25)",
+                            backgroundColor: selected
+                              ? "rgba(255,95,162,0.12)"
+                              : "transparent",
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                              borderColor: "#ff5fa2",
+                            },
+                          }}
+                        >
+                          {option.label}
+                        </Box>
+                      }
+                    />
+                  );
+                })}
+              </RadioGroup>
+
+              {formik.touched.makePayableTo && formik.errors.makePayableTo && (
+                <FormHelperText sx={{ color: "#f44336", mt: 0.5 }}>
+                  {formik.errors.makePayableTo}
+                </FormHelperText>
+              )}
             </Grid>
 
+            {/*Your Name & Business Name */}
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -376,60 +516,32 @@ const AffiliatePayment = () => {
               />
             </Grid>
 
-            {/* Make Payable To */}
-            <Grid item xs={12}>
-              <Typography
-                variant="body1"
-                sx={{ color: "white", mb: 1, fontWeight: 500 }}
-              >
-                Make Payable To <span style={{ color: "#f44336" }}>*</span>
-              </Typography>
-              <RadioGroup
-                row
-                name="makePayableTo"
-                value={formik.values.makePayableTo}
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Business Name"
+                name="businessName"
+                disabled={formik.values.makePayableTo !== "business"}
+                required={formik.values.makePayableTo === "business"}
+                value={formik.values.businessName}
                 onChange={formik.handleChange}
-              >
-                <FormControlLabel
-                  value="business"
-                  control={
-                    <Radio
-                      sx={{
-                        color: "rgba(255,255,255,0.6)",
-                        "&.Mui-checked": { color: "#2196f3" },
-                      }}
-                    />
-                  }
-                  label={
-                    <Typography sx={{ color: "white" }}>
-                      Business Name
-                    </Typography>
-                  }
-                />
-                <FormControlLabel
-                  value="your"
-                  control={
-                    <Radio
-                      sx={{
-                        color: "rgba(255,255,255,0.6)",
-                        "&.Mui-checked": { color: "#2196f3" },
-                      }}
-                    />
-                  }
-                  label={
-                    <Typography sx={{ color: "white" }}>Your Name</Typography>
-                  }
-                />
-              </RadioGroup>
-              {formik.touched.makePayableTo && formik.errors.makePayableTo && (
-                <FormHelperText error>
-                  {formik.errors.makePayableTo}
-                </FormHelperText>
-              )}
+                onBlur={formik.handleBlur}
+                error={
+                  formik.touched.businessName &&
+                  Boolean(formik.errors.businessName)
+                }
+                helperText={
+                  formik.touched.businessName && formik.errors.businessName
+                }
+                sx={{
+                  ...textFieldSx,
+                  opacity: formik.values.makePayableTo === "business" ? 1 : 0.6,
+                }}
+              />
             </Grid>
 
             {/* Email & Phone */}
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
                 required
@@ -440,36 +552,59 @@ const AffiliatePayment = () => {
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 error={formik.touched.email && Boolean(formik.errors.email)}
-                helperText={formik.touched.email && formik.errors.email}
-                sx={textFieldSx}
+                helperText={
+                  formik.touched.email && formik.errors.email
+                    ? formik.errors.email
+                    : "We’ll send payout confirmations and updates to this email"
+                }
+                sx={{
+                  ...textFieldSx,
+                  "& .MuiFormHelperText-root": {
+                    color:
+                      formik.touched.email && formik.errors.email
+                        ? "#f44336"
+                        : "rgba(255,180,210,0.85)",
+                    fontSize: "0.75rem",
+                    mt: 0.5,
+                  },
+                }}
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                required
-                label="Phone Number"
-                name="phone"
-                type="tel"
-                value={formik.values.phone}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.phone && Boolean(formik.errors.phone)}
-                helperText={formik.touched.phone && formik.errors.phone}
-                sx={textFieldSx}
-              />
+            <Grid item xs={12} md={4}>
+              <Box sx={phoneFieldSx}>
+                <PhoneInput
+                  country={"us"}
+                  value={formik.values.countryCode + formik.values.phone}
+                  onChange={(value, country) => {
+                    const c = country as CountryData;
+                    formik.setFieldValue("countryCode", `+${c.dialCode}`);
+                    const numberWithoutCode = value.replace(c.dialCode, "");
+                    formik.setFieldValue("phone", numberWithoutCode);
+                  }}
+                  onBlur={() => formik.setFieldTouched("phone", true)}
+                  inputProps={{
+                    name: "phone",
+                    required: true,
+                  }}
+                  specialLabel=""
+                />
+
+                {formik.touched.phone && formik.errors.phone && (
+                  <FormHelperText sx={{ color: "#f44336", mt: 0.5 }}>
+                    {formik.errors.phone}
+                  </FormHelperText>
+                )}
+              </Box>
             </Grid>
 
             {/* Address */}
-            <Grid item xs={12}>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
                 required
                 label="Mailing Address"
                 name="address"
-                multiline
-                rows={3}
                 value={formik.values.address}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
@@ -531,8 +666,12 @@ const AffiliatePayment = () => {
                 required
                 label="Postal Code"
                 name="postal"
+                placeholder="12345"
                 value={formik.values.postal}
-                onChange={formik.handleChange}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "").slice(0);
+                  formik.setFieldValue("postal", value);
+                }}
                 onBlur={formik.handleBlur}
                 error={formik.touched.postal && Boolean(formik.errors.postal)}
                 helperText={formik.touched.postal && formik.errors.postal}

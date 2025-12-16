@@ -17,6 +17,7 @@ import {
   ListItem,
   ListItemText,
   Divider,
+  Grid,
 } from "@mui/material";
 import React, { memo, useEffect, useMemo, useState } from "react";
 import { useFormik } from "formik";
@@ -36,7 +37,7 @@ const theme = createTheme({
 });
 
 const fieldSx = {
-  mb: 2,
+  mb: 3,
   "& .MuiOutlinedInput-root": {
     color: "white",
     backgroundColor: "rgba(255,255,255,0.05)",
@@ -111,6 +112,104 @@ const validationSchema = Yup.object().shape({
     "You must agree to the terms before submitting"
   ),
 });
+
+const AffiliateProgramInfo = () => {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        mt: 4,
+        p: { xs: 2.5, md: 3 },
+        borderRadius: 3,
+        background:
+          "linear-gradient(135deg, rgba(255,95,162,0.15), rgba(255,0,110,0.12))",
+        border: "1px solid rgba(255,255,255,0.15)",
+        color: "#fff",
+      }}
+    >
+      <Typography variant="body1" sx={{ opacity: 0.95, mb: 2, maxWidth: 720 }}>
+        Earn <strong>recurring monthly income</strong> by referring new members
+        to <strong>swingsocial.co</strong>.
+      </Typography>
+
+      <Divider sx={{ mb: 3, borderColor: "rgba(255,255,255,0.15)" }} />
+
+      {/* How You Earn */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
+            💸 How You Earn
+          </Typography>
+
+          <Typography variant="body2" sx={{ mb: 0.8 }}>
+            • Earn <strong>up to 50% commission</strong> on signup
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 0.8 }}>
+            • Earn <strong>$4 every month</strong> for each active referral
+          </Typography>
+          <Typography variant="body2">
+            • Get paid for{" "}
+            <strong>as long as your referral stays active</strong>
+          </Typography>
+        </Grid>
+
+        {/* Retention */}
+        <Grid item xs={12} md={6}>
+          <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
+            🔁 Long-Term Earnings
+          </Typography>
+
+          <Typography variant="body2" sx={{ mb: 0.8 }}>
+            Swing Social is an alternative lifestyle platform for couples and
+            singles looking to spice up their love life.
+          </Typography>
+
+          <Typography variant="body2">
+            ⭐ <strong>80% of users stay active</strong> with an average paid
+            membership of <strong>5 years</strong>.
+          </Typography>
+        </Grid>
+      </Grid>
+
+      <Divider sx={{ my: 3, borderColor: "rgba(255,255,255,0.15)" }} />
+
+      {/* Earnings Breakdown */}
+      <Box
+        sx={{
+          p: 3,
+          borderRadius: 2,
+          background: "rgba(0,0,0,0.35)",
+        }}
+      >
+        <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
+          💰 What You Can Earn
+        </Typography>
+
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body2">
+              <strong>1 referral</strong> → $4/month × 5 years ={" "}
+              <strong>$240</strong>
+            </Typography>
+            <Typography variant="body2">
+              <strong>10 referrals</strong> → <strong>$2,400 total</strong>
+            </Typography>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body2">
+              <strong>100 referrals</strong> → <strong>$400/month</strong>
+            </Typography>
+            <Typography variant="body2">
+              = <strong>$4,800/year</strong> or{" "}
+              <strong>$24,000 in 5 years</strong>
+            </Typography>
+          </Grid>
+        </Grid>
+      </Box>
+    </Paper>
+  );
+};
 
 const ReferalForm = ({
   onSuccess,
@@ -491,23 +590,7 @@ const ReferalForm = ({
                 </Box>
 
                 <Box sx={{ mt: 2 }}>
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={700}
-                    sx={{ mb: 1, color: "#fff" }}
-                  >
-                    Example
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "rgba(255,255,255,0.95)" }}
-                  >
-                    If you refer a friend who purchases a $4 plan and the
-                    commission rate is 50%, you will earn $2. The sale is
-                    counted only if your friend signs up using your referral
-                    code or clicks your special link within the cookie validity
-                    period
-                  </Typography>
+                  <AffiliateProgramInfo />
                 </Box>
 
                 <Divider
@@ -584,7 +667,6 @@ const ReferalForm = ({
                   </Typography>
                   <Box
                     sx={{
-                      // maxWidth: "1000px",
                       mx: "auto",
                       borderRadius: "20px",
                       mb: 8,
@@ -666,7 +748,7 @@ const ReferalForm = ({
                         helperText={
                           formik.touched.firstName && formik.errors.firstName
                         }
-                        margin="normal"
+                        //
                         sx={fieldSx}
                       />
                       <TextField
@@ -683,7 +765,6 @@ const ReferalForm = ({
                         helperText={
                           formik.touched.lastName && formik.errors.lastName
                         }
-                        margin="normal"
                         sx={fieldSx}
                       />
                     </Box>
@@ -706,7 +787,6 @@ const ReferalForm = ({
                           formik.touched.email && Boolean(formik.errors.email)
                         }
                         helperText={formik.touched.email && formik.errors.email}
-                        margin="normal"
                         sx={fieldSx}
                       />
                       <TextField
@@ -724,7 +804,6 @@ const ReferalForm = ({
                           formik.touched.mobilePhone &&
                           formik.errors.mobilePhone
                         }
-                        margin="normal"
                         sx={fieldSx}
                       />
                     </Box>
@@ -742,7 +821,6 @@ const ReferalForm = ({
                       helperText={
                         formik.touched.address && formik.errors.address
                       }
-                      margin="normal"
                       sx={fieldSx}
                     />
 
@@ -764,7 +842,6 @@ const ReferalForm = ({
                             formik.touched.city && Boolean(formik.errors.city)
                           }
                           helperText={formik.touched.city && formik.errors.city}
-                          margin="normal"
                           sx={fieldSx}
                           fullWidth
                         />
@@ -785,7 +862,6 @@ const ReferalForm = ({
                           helperText={
                             formik.touched.country && formik.errors.country
                           }
-                          margin="normal"
                           sx={fieldSx}
                         />
                       </Box>
@@ -801,7 +877,6 @@ const ReferalForm = ({
                             formik.touched.zip && Boolean(formik.errors.zip)
                           }
                           helperText={formik.touched.zip && formik.errors.zip}
-                          margin="normal"
                           sx={fieldSx}
                           fullWidth
                         />
@@ -815,7 +890,6 @@ const ReferalForm = ({
                       value={formik.values.website}
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
-                      margin="normal"
                       sx={fieldSx}
                     />
 
@@ -835,7 +909,6 @@ const ReferalForm = ({
                         formik.touched.paymentMethod &&
                         formik.errors.paymentMethod
                       }
-                      margin="normal"
                       sx={fieldSx}
                     >
                       <MenuItem value="paypal">PayPal</MenuItem>
@@ -858,7 +931,6 @@ const ReferalForm = ({
                           formik.touched.paypalEmail &&
                           formik.errors.paypalEmail
                         }
-                        margin="normal"
                         sx={fieldSx}
                       />
                     )}

@@ -86,30 +86,166 @@ export async function POST(req: Request) {
       key: mailgunKey,
     });
 
+    const LOGO_URL = "https://swing-social-user.vercel.app/logo.png";
+
     const emailHtml = `
-      <html>
-        <body style="font-family: Arial, sans-serif; color: #333;">
-          <h2>Welcome to the SwingSocial Affiliate Program 🎉</h2>
-          <p>Hi <strong>${firstName || ""} ${lastName || ""}</strong>,</p>
-          <p>Thank you for completing your affiliate registration. Your affiliate account is now active.</p>
-          <p>Visit your <strong>Affiliate Dashboard</strong> to:</p>
-          <ul>
-            <li>Find your referral links</li>
-            <li>Track referred users and conversions</li>
-            <li>Monitor your earnings and payouts</li>
-          </ul>
-          <p>If you need help getting started, reply to this email or contact support at <a href="mailto:info@swingsocial.co">info@swingsocial.co</a>.</p>
-          <br/>
-          <p>Best regards,</p>
-          <p><strong>Team SwingSocial</strong></p>
-          <hr/>
-          <p style="font-size: 12px; color: #777;">
-            Need help? Contact us anytime at 
-            <a href="mailto:info@swingsocial.co">info@swingsocial.co</a>.
-          </p>
-        </body>
-      </html>
-    `;
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+</head>
+
+<body style="
+  margin:0;
+  padding:0;
+  background:#0b0b12;
+  font-family:Arial, Helvetica, sans-serif;
+  color:#ffffff;
+">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:16px 8px;">
+  <tr>
+    <td align="center">
+
+      <!-- CARD -->
+      <table width="100%" cellpadding="0" cellspacing="0"
+        style="
+          max-width:560px;
+          background:#11111b;
+          border-radius:18px;
+          overflow:hidden;
+          border:1px solid rgba(255,255,255,0.08);
+        "
+      >
+
+        <!-- HEADER -->
+        <tr>
+          <td style="
+            background:linear-gradient(135deg,#ff5fa2,#ff006e);
+            padding:20px 16px;
+            text-align:center;
+          ">
+            <img
+              src="${LOGO_URL}"
+              alt="SwingSocial"
+              width="170"
+              style="display:block;margin:0 auto 10px;"
+            />
+
+            <div style="font-size:32px;line-height:1;">🎉</div>
+
+            <h2 style="
+              margin:8px 0 4px;
+              font-size:20px;
+              font-weight:700;
+              color:#ffffff;
+            ">
+              Welcome to the Affiliate Program
+            </h2>
+
+            <p style="margin:0;font-size:13px;opacity:0.95;">
+              Your Swing Social affiliate account is now active
+            </p>
+          </td>
+        </tr>
+
+        <!-- BODY -->
+        <tr>
+          <td style="padding:20px 18px;">
+
+            <p style="margin-top:0;font-size:14px;">
+              Hi <strong>${firstName || ""} ${lastName || ""}</strong>,
+            </p>
+
+            <p style="
+              color:#d6d6e0;
+              font-size:13px;
+              line-height:1.6;
+              margin-bottom:16px;
+            ">
+              Thank you for completing your affiliate registration.
+              You’re officially part of the <strong>Swing Social Affiliate Program</strong> 💖
+            </p>
+
+            <!-- INFO CARD -->
+            <table width="100%" cellpadding="0" cellspacing="0"
+              style="
+                background:#16162a;
+                border-radius:12px;
+                padding:14px;
+                margin-bottom:18px;
+              "
+            >
+              <tr>
+                <td style="font-size:13px;color:#ff9fc9;font-weight:600;">
+                  What you can do now
+                </td>
+              </tr>
+              <tr>
+                <td style="font-size:13px;color:#ffffff;line-height:1.6;padding-top:6px;">
+                  • Access your affiliate dashboard<br/>
+                  • Get your unique referral links<br/>
+                  • Track referrals & conversions<br/>
+                  • Monitor earnings and payouts
+                </td>
+              </tr>
+            </table>
+
+            <!-- CTA -->
+            <div style="text-align:center;margin-bottom:18px;">
+              <a href="https://swing-social-user.vercel.app/earn-money-referrals"
+                 style="
+                   display:inline-block;
+                   background:linear-gradient(135deg,#ff5fa2,#ff006e);
+                   color:#ffffff;
+                   text-decoration:none;
+                   padding:12px 22px;
+                   border-radius:999px;
+                   font-size:14px;
+                   font-weight:700;
+                 ">
+                Go to Affiliate Dashboard →
+              </a>
+            </div>
+
+            <p style="font-size:13px;color:#d6d6e0;line-height:1.6;">
+              If you need help getting started, just reply to this email or reach
+              us anytime at
+              <a href="mailto:info@swingsocial.co" style="color:#ff5fa2;">
+                info@swingsocial.co
+              </a>.
+            </p>
+
+            <p style="margin-top:18px;font-size:13px;">
+              With love,<br/>
+              <strong>Team SwingSocial 💕</strong>
+            </p>
+
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="
+            text-align:center;
+            padding:12px;
+            font-size:11px;
+            color:#a0a0b5;
+            background:#0b0b12;
+          ">
+            © ${new Date().getFullYear()} SwingSocial · All rights reserved
+          </td>
+        </tr>
+
+      </table>
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
+`;
 
     const recipients = [
       "falconsoftmobile@gmail.com",

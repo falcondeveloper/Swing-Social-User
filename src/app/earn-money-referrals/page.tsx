@@ -258,7 +258,13 @@ const page = () => {
 
             <Box sx={{ mt: { xs: 1, sm: 2 } }}>
               {tabIndex === 0 && <AffiliateHistory />}
-              {tabIndex === 1 && <AffiliatePayment />}
+              {tabIndex === 1 && (
+                <AffiliatePayment
+                  profileId={profileId}
+                  affiliateCode={affiliateCode}
+                />
+              )}
+
               {tabIndex === 2 && (
                 <AffiliateBanners affiliateCode={affiliateCode} />
               )}
