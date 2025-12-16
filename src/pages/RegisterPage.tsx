@@ -337,7 +337,7 @@ const RegisterPage = () => {
     validationSchema,
     onSubmit: async (values, { setSubmitting, setErrors }) => {
       const urlParams = new URLSearchParams(window.location.search);
-      const src = urlParams.get("src");
+      const src = urlParams.get("refer");
       const aff = urlParams.get("aff");
 
       const getOS = () => {
@@ -502,6 +502,14 @@ const RegisterPage = () => {
       }
     },
   });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const ref = document.referrer;
+      // setReferrer(ref && ref.length > 0 ? ref : "direct");
+      console.log(ref, "reder");
+    }
+  }, []);
 
   const handleContinue = async () => {
     const countryCode = formik.values.countryCode.replace("+", "");
