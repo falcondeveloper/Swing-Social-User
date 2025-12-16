@@ -26,6 +26,8 @@ export async function POST(req: Request) {
       );
     }
 
+    const targetUrl = url || "/";
+
     const responses = [];
     for (const row of result.rows) {
       const deviceToken = row.devicetoken;
@@ -39,12 +41,23 @@ export async function POST(req: Request) {
           body: body || "You have a new notification",
         },
         webpush: {
+          fcmOptions: {
+            link: targetUrl,
+          },
           notification: {
             icon: "/logo.png",
           },
         },
         data: {
-          url: url || "/",
+          url: targetUrl,
+          timestamp: Date.now().toString(),
+          title: title || "SwingSocial",
+          body: body || "You have a new notification",
+        },
+        android: {
+          notification: {
+            clickAction: "FLUTTER_NOTIFICATION_CLICK",
+          },
         },
       };
 

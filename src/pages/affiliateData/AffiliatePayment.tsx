@@ -397,7 +397,7 @@ const AffiliatePayment = ({
       ? formik.values.businessName
       : formik.values.yourName;
 
-  const MIN_PAYOUT = 1;
+  const MIN_PAYOUT = 50;
 
   const totalIncomeFormatted = formatEarningsFromApi(affiliateData);
   const totalIncomeNumber = parseAmount(totalIncomeFormatted);
