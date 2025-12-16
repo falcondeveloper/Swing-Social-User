@@ -553,11 +553,29 @@ export default function ChatPage(props: { params: Params }) {
     }
   };
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const keyboardHeight =
+          window.innerHeight - window.visualViewport.height;
+
+        document.documentElement.style.setProperty(
+          "--keyboard-offset",
+          `${Math.max(keyboardHeight, 0)}px`
+        );
+      }
+    };
+
+    window.visualViewport?.addEventListener("resize", handleResize);
+    return () =>
+      window.visualViewport?.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <Box
       sx={{
         bgcolor: "#0A0A0A",
-        height: "100dvh",
+        height: "100vh",
         color: "white",
         display: "flex",
         flexDirection: "column",
@@ -572,8 +590,8 @@ export default function ChatPage(props: { params: Params }) {
               flex: 1,
               display: "flex",
               flexDirection: "column",
-              pt: "60px", // header height
-              pb: "64px", // footer height
+              pt: "60px",
+              // pb: "64px",
             }}
           >
             <Box
@@ -583,7 +601,8 @@ export default function ChatPage(props: { params: Params }) {
                 flexDirection: "column",
                 bgcolor: "#121212",
                 borderRadius: 2,
-                overflow: "auto",
+                flex: 1,
+                overflow: "hidden",
                 boxShadow: 3,
               }}
             >
@@ -634,8 +653,9 @@ export default function ChatPage(props: { params: Params }) {
                   flex: 1,
                   overflowY: "auto",
                   WebkitOverflowScrolling: "touch",
+                  pb: "140px",
                   "&::-webkit-scrollbar": {
-                    width: "8px",
+                    width: "6px",
                   },
                   "&::-webkit-scrollbar-thumb": {
                     backgroundColor: "#555",
@@ -754,13 +774,13 @@ export default function ChatPage(props: { params: Params }) {
                 }}
                 sx={{
                   position: "fixed",
-                  bottom: {
-                    xs: "64px",
-                    sm: "72px",
-                  },
                   left: 0,
                   right: 0,
-                  zIndex: 1200,
+                  bottom: {
+                    xs: "calc(64px + var(--keyboard-offset, 0px))",
+                    sm: "calc(72px + var(--keyboard-offset, 0px))",
+                  },
+                  zIndex: 1300,
                   display: "flex",
                   alignItems: "center",
                   gap: 1,
