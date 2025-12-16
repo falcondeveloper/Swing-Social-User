@@ -280,6 +280,7 @@ const Header = () => {
             </Toolbar>
           </AppBar>
 
+          {/* Modern Mobile Drawer */}
           <Drawer
             anchor="left"
             open={mobileMenuOpen}
@@ -502,6 +503,7 @@ const Header = () => {
           </Drawer>
         </>
       ) : (
+        // Header for Desktop
         <AppBar
           position="fixed"
           elevation={0}
@@ -787,6 +789,18 @@ const Header = () => {
           </Toolbar>
         </AppBar>
       )}
+
+      {/* Spacer to push content below fixed header */}
+      {(() => {
+        const pathsWithoutSpacer = ["/members", "/messaging"];
+        const currentPath =
+          typeof window !== "undefined" ? window.location.pathname : "";
+        return (
+          !pathsWithoutSpacer.includes(currentPath) && (
+            <Box sx={{ height: isMobile ? "60.8px" : "90.5px" }} />
+          )
+        );
+      })()}
     </>
   );
 };

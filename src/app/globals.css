@@ -12,11 +12,9 @@
 
 html,
 body {
-  width: 100%;
-  height: 100%;
-  margin: 0;
+  max-width: 100vw;
   overflow-x: hidden;
-  overflow-y: hidden;
+  background: #121212;
 }
 
 body {
@@ -349,6 +347,8 @@ label {
 .swipe-card {
   animation: fadeIn 0.3s ease-out;
 }
+
+
 
 .mobile-sweeping-container {
   position: relative;
