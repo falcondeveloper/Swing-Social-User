@@ -11,7 +11,6 @@ import {
   useMediaQuery,
   Stack,
 } from "@mui/material";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { jwtDecode } from "jwt-decode";
 import Swal from "sweetalert2";
@@ -21,6 +20,7 @@ import AffiliatePayment from "@/pages/affiliateData/AffiliatePayment";
 import ReferalForm from "@/components/ReferalForm";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 import Loader from "@/commonPage/Loader";
+import Header from "@/components/Header";
 
 const theme = createTheme({
   palette: {
@@ -232,6 +232,7 @@ const page = () => {
                 sx={{
                   mr: { md: 3 },
                   fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.5rem" },
+                  textAlign: { xs: "center", md: "left" },
                 }}
               >
                 Affiliate Center

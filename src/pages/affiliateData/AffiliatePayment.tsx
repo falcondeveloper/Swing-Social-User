@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -8,349 +10,801 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  Stack,
   Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  useMediaQuery,
-  useTheme,
+  Alert,
+  Divider,
+  Chip,
+  FormHelperText,
+  Snackbar,
 } from "@mui/material";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { motion, AnimatePresence } from "framer-motion";
 
-const yourTextFieldSx = {
-  mb: 2,
+const affiliatePaymentSchema = Yup.object({
+  yourName: Yup.string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name is too long")
+    .matches(
+      /^[a-zA-Z\s'-]+$/,
+      "Name can only contain letters, spaces, hyphens, and apostrophes"
+    )
+    .required("Your name is required"),
+
+  businessName: Yup.string().max(150).optional(),
+
+  makePayableTo: Yup.string()
+    .oneOf(["business", "your"])
+    .required("Please select who to make payment payable to"),
+
+  email: Yup.string().email().required(),
+  phone: Yup.string().min(8).max(20).required(),
+  address: Yup.string().min(5).required(),
+  country: Yup.string().required(),
+  city: Yup.string().required(),
+  state: Yup.string().required(),
+  postal: Yup.string().required(),
+
+  paymentEmail: Yup.string().email().required(),
+
+  taxIndividual: Yup.object({
+    part1: Yup.string().when("makePayableTo", {
+      is: "your",
+      then: (schema) => schema.required("Required"),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+    part2: Yup.string().when("makePayableTo", {
+      is: "your",
+      then: (schema) => schema.required("Required"),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+    part3: Yup.string().when("makePayableTo", {
+      is: "your",
+      then: (schema) => schema.required("Required"),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+  }),
+
+  taxBusiness: Yup.object({
+    ein: Yup.string().when("makePayableTo", {
+      is: "business",
+      then: (schema) =>
+        schema
+          .matches(/^\d{9}$/, "EIN must be 9 digits")
+          .required("EIN is required"),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+  }),
+});
+
+const textFieldSx = {
   "& .MuiOutlinedInput-root": {
     color: "white",
     backgroundColor: "rgba(255,255,255,0.05)",
     borderRadius: "12px",
     "& fieldset": { borderColor: "rgba(255,255,255,0.2)" },
     "&:hover fieldset": { borderColor: "rgba(255,255,255,0.4)" },
+    "&.Mui-focused fieldset": { borderColor: "#2196f3" },
   },
   "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.7)" },
-} as const;
+  "& .MuiInputLabel-root.Mui-focused": { color: "#2196f3" },
+  "& .MuiFormHelperText-root": { marginLeft: 0 },
+};
 
-const AffiliatePayment: React.FC = () => {
-  const theme = useTheme();
-  const isSm = useMediaQuery(theme.breakpoints.down("sm"));
-
-  const [paymentInfo, setPaymentInfo] = React.useState({
-    affiliateId: "",
-    minThreshold: "$50",
-    businessName: "",
-    yourName: "",
-    makePayableTo: "",
-    email: "",
-    phone: "",
-    address: "",
-    country: "",
-    city: "",
-    state: "",
-    postal: "",
-    taxIndividual: { part1: "", part2: "", part3: "" },
-    taxBusiness: { ein: "" },
-    paymentEmail: "",
-  });
-
-  const handlePaymentChange = (field: string, value: any) => {
-    setPaymentInfo((s) => ({ ...s, [field]: value }));
-  };
-
+const SuccessOverlay = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => {
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: { xs: 2, sm: 3 },
-        borderRadius: 2,
-        bgcolor: "background.paper",
-        border: "1px solid rgba(255,255,255,0.04)",
-        maxWidth: "900px",
-        mx: "auto",
-      }}
-    >
-      <Typography
-        variant="h6"
-        sx={{
-          mb: { xs: 1.5, sm: 2 },
-          fontSize: { xs: "1rem", sm: "1.125rem" },
-        }}
-      >
-        Your Payment Information
-      </Typography>
-
-      <Typography variant="body2" sx={{ mb: 1 }}>
-        Affiliate ID: <strong>{paymentInfo.affiliateId}</strong>
-      </Typography>
-      <Typography variant="body2" sx={{ mb: { xs: 1.5, sm: 2 } }}>
-        Minimum Payment Threshold: <strong>{paymentInfo.minThreshold}</strong>
-      </Typography>
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Business Name (optional)"
-            fullWidth
-            value={paymentInfo.businessName}
-            onChange={(e) =>
-              handlePaymentChange("businessName", e.target.value)
-            }
-            sx={yourTextFieldSx}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Your Name"
-            fullWidth
-            value={paymentInfo.yourName}
-            onChange={(e) => handlePaymentChange("yourName", e.target.value)}
-            sx={yourTextFieldSx}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            Make Payable to
-          </Typography>
-          <RadioGroup
-            row={!isSm}
-            value={paymentInfo.makePayableTo}
-            onChange={(e) =>
-              handlePaymentChange("makePayableTo", e.target.value)
-            }
-            sx={{
-              flexDirection: isSm ? "column" : "row",
-              gap: isSm ? 1 : 2,
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "rgba(10, 10, 20, 0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backdropFilter: "blur(6px)",
+          }}
+        >
+          <motion.div
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 180, damping: 18 }}
+            style={{
+              background: "linear-gradient(135deg, #ff5fa2, #ff006e)",
+              borderRadius: 24,
+              padding: "40px 32px",
+              textAlign: "center",
+              color: "white",
+              maxWidth: 420,
+              width: "90%",
+              boxShadow: "0 30px 80px rgba(255, 0, 110, 0.45)",
             }}
           >
-            <FormControlLabel
-              value="business"
-              control={<Radio />}
-              label="Business Name"
-            />
-            <FormControlLabel
-              value="your"
-              control={<Radio />}
-              label="Your Name"
-            />
-          </RadioGroup>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Email"
-            fullWidth
-            value={paymentInfo.email}
-            onChange={(e) => handlePaymentChange("email", e.target.value)}
-            sx={yourTextFieldSx}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Phone"
-            fullWidth
-            value={paymentInfo.phone}
-            onChange={(e) => handlePaymentChange("phone", e.target.value)}
-            sx={yourTextFieldSx}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            label="Mailing Address"
-            fullWidth
-            value={paymentInfo.address}
-            onChange={(e) => handlePaymentChange("address", e.target.value)}
-            sx={yourTextFieldSx}
-            multiline
-            rows={isSm ? 2 : 1}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <TextField
-            label="Country"
-            fullWidth
-            value={paymentInfo.country}
-            onChange={(e) => handlePaymentChange("country", e.target.value)}
-            sx={yourTextFieldSx}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <TextField
-            label="City"
-            fullWidth
-            value={paymentInfo.city}
-            onChange={(e) => handlePaymentChange("city", e.target.value)}
-            sx={yourTextFieldSx}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <TextField
-            label="State / Province"
-            fullWidth
-            value={paymentInfo.state}
-            onChange={(e) => handlePaymentChange("state", e.target.value)}
-            sx={yourTextFieldSx}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <TextField
-            label="Zip / Postal Code"
-            fullWidth
-            value={paymentInfo.postal}
-            onChange={(e) => handlePaymentChange("postal", e.target.value)}
-            sx={yourTextFieldSx}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Paper
-            variant="outlined"
-            sx={{
-              p: { xs: 1.5, sm: 2.5 },
-              bgcolor: "transparent",
-              borderColor: "rgba(255,255,255,0.04)",
-              borderRadius: 2,
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{ display: "block", mb: 1, fontSize: { xs: 12, sm: 13 } }}
+            {/* Floating Heart */}
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              style={{ fontSize: 42, marginBottom: 14 }}
             >
-              Tax ID: (only needed if payments are sent to US located
-              individuals or businesses.)
+              💖
+            </motion.div>
+
+            {/* Title */}
+            <Typography variant="h5" fontWeight={800} mb={1}>
+              Payment Request Sent
             </Typography>
 
-            <Grid container spacing={1} mt={2}>
-              <Grid item xs={12} md={12}>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  If you are an individual
-                </Typography>
+            {/* Main Message */}
+            <Typography
+              variant="body1"
+              sx={{
+                opacity: 0.95,
+                mb: 1.5,
+                lineHeight: 1.6,
+              }}
+            >
+              Your affiliate payout request has been submitted successfully.
+            </Typography>
 
-                <Stack
-                  direction={isSm ? "column" : "row"}
-                  spacing={1}
-                  sx={{ mt: 1 }}
-                >
-                  <TextField
-                    label="Part 1"
-                    value={paymentInfo.taxIndividual.part1}
-                    onChange={(e) =>
-                      setPaymentInfo((s) => ({
-                        ...s,
-                        taxIndividual: {
-                          ...s.taxIndividual,
-                          part1: e.target.value,
-                        },
-                      }))
-                    }
-                    sx={yourTextFieldSx}
-                  />
-                  <TextField
-                    label="Part 2"
-                    value={paymentInfo.taxIndividual.part2}
-                    onChange={(e) =>
-                      setPaymentInfo((s) => ({
-                        ...s,
-                        taxIndividual: {
-                          ...s.taxIndividual,
-                          part2: e.target.value,
-                        },
-                      }))
-                    }
-                    sx={yourTextFieldSx}
-                  />
-                  <TextField
-                    label="Part 3"
-                    value={paymentInfo.taxIndividual.part3}
-                    onChange={(e) =>
-                      setPaymentInfo((s) => ({
-                        ...s,
-                        taxIndividual: {
-                          ...s.taxIndividual,
-                          part3: e.target.value,
-                        },
-                      }))
-                    }
-                    sx={yourTextFieldSx}
-                  />
-                </Stack>
-              </Grid>
-
-              <Grid item xs={12} md={12} mt={2}>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  If you are a business
-                </Typography>
-                <TextField
-                  label="EIN"
-                  value={paymentInfo.taxBusiness.ein}
-                  onChange={(e) =>
-                    setPaymentInfo((s) => ({
-                      ...s,
-                      taxBusiness: { ein: e.target.value },
-                    }))
-                  }
-                  sx={yourTextFieldSx}
-                />
-              </Grid>
-            </Grid>
-
+            {/* Reassurance Message */}
             <Typography
               variant="body2"
               sx={{
-                mt: 2,
-                fontSize: { xs: 12, sm: 13 },
-                color: "rgba(255,255,255,0.75)",
-                lineHeight: 1.5,
-                whiteSpace: "pre-line",
-                userSelect: "text",
+                opacity: 0.9,
+                lineHeight: 1.6,
+                mb: 3,
               }}
             >
-              {`Substitute W9: Under penalties of perjury I hereby certify that the Tax ID number shown above is my/our correct taxpayer identification number and that I am/we are not subject to backup withholding and that I am/we are a U.S. person (including a U.S. resident alien). I will inform you immediately if I become subject to backup withholding.`}
+              We’ll review your request and send updates to your
+              <strong> registered email address</strong>.
+              <br />
+              Please keep an eye on your inbox 💌
             </Typography>
-          </Paper>
-        </Grid>
 
-        <Grid item xs={12}>
-          <TextField
-            label="Payments are sent via email - Enter your email here"
-            fullWidth
-            value={paymentInfo.paymentEmail}
-            onChange={(e) =>
-              handlePaymentChange("paymentEmail", e.target.value)
-            }
-            sx={yourTextFieldSx}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2,
-              flexDirection: { xs: "column", sm: "row" },
-              alignItems: { xs: "stretch", sm: "center" },
-            }}
-          >
+            {/* Done Button */}
             <Button
-              variant="outlined"
+              onClick={onClose}
+              variant="contained"
               sx={{
+                px: 5,
+                py: 1.2,
+                fontWeight: 700,
+                borderRadius: 99,
                 textTransform: "none",
-                width: { xs: "100%", sm: "auto" },
-                px: { xs: 2, sm: 3 },
+                background: "white",
+                color: "#ff006e",
+                minWidth: 140,
+                "&:hover": {
+                  background: "#ffe3ef",
+                  transform: "translateY(-1px)",
+                },
+                transition: "all 0.25s ease",
               }}
             >
-              Request Payout
+              Got it 💕
             </Button>
-          </Box>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const AffiliatePayment = () => {
+  const [submitStatus, setSubmitStatus] = useState("");
+  const [isLocked, setIsLocked] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const formik = useFormik({
+    initialValues: {
+      affiliateId: "AFF-12345",
+      minThreshold: "$50",
+      businessName: "",
+      yourName: "",
+      makePayableTo: "",
+      email: "",
+      phone: "",
+      address: "",
+      country: "",
+      city: "",
+      state: "",
+      postal: "",
+      taxIndividual: {
+        part1: "",
+        part2: "",
+        part3: "",
+      },
+      taxBusiness: {
+        ein: "",
+      },
+      paymentEmail: "",
+    },
+    validationSchema: affiliatePaymentSchema,
+    validateOnChange: true,
+    validateOnBlur: true,
+    onSubmit: async (values, { resetForm }) => {
+      try {
+        setSubmitStatus("submitting");
+        setIsLocked(true);
+
+        console.log("✅ Submitted values:", values);
+
+        setTimeout(() => {
+          setShowSuccess(true);
+          resetForm();
+          setSubmitStatus("");
+          setIsLocked(false);
+        }, 800);
+      } catch (error) {
+        setSubmitStatus("error");
+        setIsLocked(false);
+      }
+    },
+  });
+
+  return (
+    <Box
+      sx={{
+        minHeight: "100vh",
+        pb: { xs: 8, md: 0 },
+      }}
+    >
+      <SuccessOverlay
+        open={showSuccess}
+        onClose={() => {
+          setShowSuccess(false);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
+      <Divider sx={{ mb: 2, borderColor: "rgba(255,255,255,0.1)" }} />
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 800,
+            background:
+              "linear-gradient(135deg, #ff5fa2 0%, #ff2f92 50%, #ff006e 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            textShadow: "0 4px 18px rgba(255, 0, 110, 0.35)",
+            mb: 1,
+            fontSize: { xs: "1.75rem", md: "2.125rem" },
+            textAlign: "center",
+          }}
+        >
+          Payment Information
+        </Typography>
+
+        <Typography
+          variant="body1"
+          sx={{
+            textAlign: "center",
+            color: "rgba(255, 180, 210, 0.9)",
+            letterSpacing: "0.3px",
+          }}
+        >
+          Complete your affiliate payout details
+        </Typography>
+      </Box>
+
+      <Divider sx={{ mb: 4, borderColor: "rgba(255,255,255,0.1)" }} />
+
+      <Paper
+        sx={{
+          p: 2,
+          mb: 4,
+          bgcolor: "rgba(33, 150, 243, 0.1)",
+          border: "1px solid rgba(33, 150, 243, 0.3)",
+          borderRadius: 2,
+        }}
+      >
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <Typography
+              variant="caption"
+              sx={{ color: "rgba(255,255,255,0.6)" }}
+            >
+              Affiliate ID
+            </Typography>
+            <Typography variant="h6" sx={{ color: "#2196f3", fontWeight: 600 }}>
+              {formik.values.affiliateId}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography
+              variant="caption"
+              sx={{ color: "rgba(255,255,255,0.6)" }}
+            >
+              Minimum Payment Threshold
+            </Typography>
+            <Typography variant="h6" sx={{ color: "#2196f3", fontWeight: 600 }}>
+              {formik.values.minThreshold}
+            </Typography>
+          </Grid>
         </Grid>
-      </Grid>
-    </Paper>
+      </Paper>
+
+      <Box component="div">
+        <form onSubmit={formik.handleSubmit}>
+          <Grid container spacing={3}>
+            {/* Business Name & Your Name */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Business Name (Optional)"
+                name="businessName"
+                value={formik.values.businessName}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={
+                  formik.touched.businessName &&
+                  Boolean(formik.errors.businessName)
+                }
+                helperText={
+                  formik.touched.businessName && formik.errors.businessName
+                }
+                sx={textFieldSx}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                required
+                label="Your Name"
+                name="yourName"
+                value={formik.values.yourName}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={
+                  formik.touched.yourName && Boolean(formik.errors.yourName)
+                }
+                helperText={formik.touched.yourName && formik.errors.yourName}
+                sx={textFieldSx}
+              />
+            </Grid>
+
+            {/* Make Payable To */}
+            <Grid item xs={12}>
+              <Typography
+                variant="body1"
+                sx={{ color: "white", mb: 1, fontWeight: 500 }}
+              >
+                Make Payable To <span style={{ color: "#f44336" }}>*</span>
+              </Typography>
+              <RadioGroup
+                row
+                name="makePayableTo"
+                value={formik.values.makePayableTo}
+                onChange={formik.handleChange}
+              >
+                <FormControlLabel
+                  value="business"
+                  control={
+                    <Radio
+                      sx={{
+                        color: "rgba(255,255,255,0.6)",
+                        "&.Mui-checked": { color: "#2196f3" },
+                      }}
+                    />
+                  }
+                  label={
+                    <Typography sx={{ color: "white" }}>
+                      Business Name
+                    </Typography>
+                  }
+                />
+                <FormControlLabel
+                  value="your"
+                  control={
+                    <Radio
+                      sx={{
+                        color: "rgba(255,255,255,0.6)",
+                        "&.Mui-checked": { color: "#2196f3" },
+                      }}
+                    />
+                  }
+                  label={
+                    <Typography sx={{ color: "white" }}>Your Name</Typography>
+                  }
+                />
+              </RadioGroup>
+              {formik.touched.makePayableTo && formik.errors.makePayableTo && (
+                <FormHelperText error>
+                  {formik.errors.makePayableTo}
+                </FormHelperText>
+              )}
+            </Grid>
+
+            {/* Email & Phone */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                required
+                label="Email Address"
+                name="email"
+                type="email"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.email && Boolean(formik.errors.email)}
+                helperText={formik.touched.email && formik.errors.email}
+                sx={textFieldSx}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                required
+                label="Phone Number"
+                name="phone"
+                type="tel"
+                value={formik.values.phone}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.phone && Boolean(formik.errors.phone)}
+                helperText={formik.touched.phone && formik.errors.phone}
+                sx={textFieldSx}
+              />
+            </Grid>
+
+            {/* Address */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                required
+                label="Mailing Address"
+                name="address"
+                multiline
+                rows={3}
+                value={formik.values.address}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.address && Boolean(formik.errors.address)}
+                helperText={formik.touched.address && formik.errors.address}
+                sx={textFieldSx}
+              />
+            </Grid>
+
+            {/* Location Details */}
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                required
+                label="Country"
+                name="country"
+                value={formik.values.country}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.country && Boolean(formik.errors.country)}
+                helperText={formik.touched.country && formik.errors.country}
+                sx={textFieldSx}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                required
+                label="City"
+                name="city"
+                value={formik.values.city}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.city && Boolean(formik.errors.city)}
+                helperText={formik.touched.city && formik.errors.city}
+                sx={textFieldSx}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                required
+                label="State/Province"
+                name="state"
+                value={formik.values.state}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.state && Boolean(formik.errors.state)}
+                helperText={formik.touched.state && formik.errors.state}
+                sx={textFieldSx}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                required
+                label="Postal Code"
+                name="postal"
+                value={formik.values.postal}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.postal && Boolean(formik.errors.postal)}
+                helperText={formik.touched.postal && formik.errors.postal}
+                sx={textFieldSx}
+              />
+            </Grid>
+
+            {/* Payment Email */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                required
+                label="Payment Email (Payments are sent via email)"
+                name="paymentEmail"
+                type="email"
+                value={formik.values.paymentEmail}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={
+                  formik.touched.paymentEmail &&
+                  Boolean(formik.errors.paymentEmail)
+                }
+                helperText={
+                  formik.touched.paymentEmail && formik.errors.paymentEmail
+                }
+                sx={textFieldSx}
+              />
+            </Grid>
+
+            {/* Tax Information Section */}
+            <Grid item xs={12}>
+              <Paper
+                sx={{
+                  p: 2,
+                  bgcolor: "rgba(255, 193, 7, 0.05)",
+                  border: "1px solid rgba(255, 193, 7, 0.2)",
+                  borderRadius: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 2,
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{ color: "white", fontWeight: 600 }}
+                  >
+                    Tax Information
+                  </Typography>
+                  <Chip
+                    label="US Only"
+                    size="small"
+                    sx={{
+                      bgcolor: "rgba(255, 193, 7, 0.2)",
+                      color: "#ffc107",
+                    }}
+                  />
+                </Box>
+
+                <Typography
+                  variant="body2"
+                  sx={{ color: "rgba(255,255,255,0.6)", mb: 3 }}
+                >
+                  Only required for US-based individuals or businesses
+                </Typography>
+
+                {/* Individual Tax ID */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ color: "white", mb: 2 }}
+                  >
+                    Individual Tax ID (SSN)
+                    {formik.values.makePayableTo === "your" && (
+                      <span style={{ color: "#f44336" }}> *</span>
+                    )}
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={4}>
+                      <TextField
+                        fullWidth
+                        label="XXX"
+                        name="taxIndividual.part1"
+                        inputProps={{ maxLength: 3 }}
+                        value={formik.values.taxIndividual.part1}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        error={
+                          formik.touched.taxIndividual?.part1 &&
+                          Boolean(formik.errors.taxIndividual?.part1)
+                        }
+                        helperText={
+                          formik.touched.taxIndividual?.part1 &&
+                          formik.errors.taxIndividual?.part1
+                        }
+                        sx={textFieldSx}
+                      />
+                    </Grid>
+                    <Grid item xs={4}>
+                      <TextField
+                        fullWidth
+                        label="XX"
+                        name="taxIndividual.part2"
+                        inputProps={{ maxLength: 2 }}
+                        value={formik.values.taxIndividual.part2}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        error={
+                          formik.touched.taxIndividual?.part2 &&
+                          Boolean(formik.errors.taxIndividual?.part2)
+                        }
+                        helperText={
+                          formik.touched.taxIndividual?.part2 &&
+                          formik.errors.taxIndividual?.part2
+                        }
+                        sx={textFieldSx}
+                      />
+                    </Grid>
+                    <Grid item xs={4}>
+                      <TextField
+                        fullWidth
+                        label="XXXX"
+                        name="taxIndividual.part3"
+                        inputProps={{ maxLength: 4 }}
+                        value={formik.values.taxIndividual.part3}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        error={
+                          formik.touched.taxIndividual?.part3 &&
+                          Boolean(formik.errors.taxIndividual?.part3)
+                        }
+                        helperText={
+                          formik.touched.taxIndividual?.part3 &&
+                          formik.errors.taxIndividual?.part3
+                        }
+                        sx={textFieldSx}
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                {/* Business EIN */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ color: "white", mb: 2 }}
+                  >
+                    Business EIN
+                    {formik.values.makePayableTo === "business" && (
+                      <span style={{ color: "#f44336" }}> *</span>
+                    )}
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    label="XX-XXXXXXX"
+                    name="taxBusiness.ein"
+                    value={formik.values.taxBusiness.ein}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={
+                      formik.touched.taxBusiness?.ein &&
+                      Boolean(formik.errors.taxBusiness?.ein)
+                    }
+                    helperText={
+                      formik.touched.taxBusiness?.ein &&
+                      formik.errors.taxBusiness?.ein
+                    }
+                    sx={textFieldSx}
+                  />
+                </Box>
+
+                {/* W-9 Statement */}
+                <Alert
+                  severity="info"
+                  sx={{
+                    bgcolor: "rgba(33, 150, 243, 0.1)",
+                    color: "rgba(255,255,255,0.8)",
+                    "& .MuiAlert-icon": { color: "#2196f3" },
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{ fontSize: "0.875rem", lineHeight: 1.6 }}
+                  >
+                    <strong>Substitute W-9:</strong> Under penalties of perjury,
+                    I hereby certify that the Tax ID number shown above is
+                    my/our correct taxpayer identification number and that I
+                    am/we are not subject to backup withholding and that I am/we
+                    are a U.S. person (including a U.S. resident alien). I will
+                    inform you immediately if I become subject to backup
+                    withholding.
+                  </Typography>
+                </Alert>
+              </Paper>
+            </Grid>
+          </Grid>
+
+          {submitStatus && (
+            <Box sx={{ mt: 3 }}>
+              {submitStatus === "success" && (
+                <Alert severity="success" sx={{ borderRadius: 2 }}>
+                  Payment request submitted successfully!
+                </Alert>
+              )}
+              {submitStatus === "error" && (
+                <Alert severity="error" sx={{ borderRadius: 2 }}>
+                  An error occurred. Please try again.
+                </Alert>
+              )}
+            </Box>
+          )}
+          <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+            <Button
+              type="submit"
+              size="large"
+              variant="contained"
+              disabled={submitStatus === "submitting" || isLocked}
+              sx={{
+                py: 1,
+                px: 6,
+                fontSize: "1.1rem",
+                fontWeight: 700,
+                textTransform: "none",
+                borderRadius: 3,
+                width: {
+                  xs: "100%",
+                  sm: "auto",
+                },
+                maxWidth: {
+                  xs: "100%",
+                  sm: 360,
+                },
+                background:
+                  "linear-gradient(135deg, #ff5fa2 0%, #ff2f92 50%, #ff006e 100%)",
+                "&:hover": {
+                  background:
+                    "linear-gradient(135deg, #ff6fb1 0%, #ff3fa0 50%, #ff1f80 100%)",
+                  transform: "translateY(-1px)",
+                },
+                "&:active": {
+                  transform: "translateY(0)",
+                  boxShadow: "0 8px 24px rgba(255, 0, 110, 0.5)",
+                },
+                "&:disabled": {
+                  background: "linear-gradient(135deg, #ffb3d1, #ff99c8)",
+                  boxShadow: "none",
+                  color: "rgba(255,255,255,0.8)",
+                },
+                transition: "all 0.25s ease",
+              }}
+            >
+              {submitStatus === "submitting"
+                ? "Processing..."
+                : "Request Payout"}
+            </Button>
+
+            {!formik.isValid && formik.submitCount > 0 && (
+              <Typography
+                variant="body2"
+                sx={{ color: "#ff4d8d", textAlign: "center", mt: 2 }}
+              >
+                Please fix the errors above before submitting
+              </Typography>
+            )}
+          </Box>
+        </form>
+      </Box>
+    </Box>
   );
 };
 

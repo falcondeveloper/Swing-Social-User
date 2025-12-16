@@ -561,7 +561,7 @@ export default function ChatPage(props: { params: Params }) {
         color: "white",
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden",
+        overflow: "auto",
       }}
     >
       <Header />
@@ -572,10 +572,9 @@ export default function ChatPage(props: { params: Params }) {
               width: "100%",
               display: "flex",
               flexDirection: "column",
-              // height: "calc(100vh - 60px)",
               bgcolor: "#121212",
               borderRadius: 2,
-              overflow: "hidden",
+              overflow: "auto",
               boxShadow: 3,
             }}
           >
@@ -625,7 +624,7 @@ export default function ChatPage(props: { params: Params }) {
               sx={{
                 flex: 1,
                 overflowY: "auto",
-                p: 2,
+                // p: 2,
                 "&::-webkit-scrollbar": {
                   width: "8px",
                 },
@@ -646,7 +645,7 @@ export default function ChatPage(props: { params: Params }) {
                             ? "flex-end"
                             : "flex-start",
                         alignItems: "flex-start",
-                        gap: 1,
+                        // gap: 1,
                         transition: "all 0.3s ease",
                       }}
                     >
@@ -1095,7 +1094,7 @@ export default function ChatPage(props: { params: Params }) {
         </Box>
       )}
 
-      {/* {isMobile === true ? <Footer /> : <></>} */}
+      {isMobile === true ? <Footer /> : <></>}
 
       <UserProfileModal
         handleGrantAccess={handleGrantAccess}

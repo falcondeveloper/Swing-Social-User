@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 
-// Detect platform + browser
 const detectBrowser = () => {
   const ua = navigator.userAgent;
 
@@ -30,7 +29,6 @@ const detectBrowser = () => {
 
 type BrowserKey = keyof typeof instructions;
 
-// Browser-specific instructions
 const instructions = {
   "android-chrome": "⋮ > Settings > Site settings > Notifications > Allow this site",
   "android-firefox": "⋮ > Settings > Site permissions > Notifications > Allow",

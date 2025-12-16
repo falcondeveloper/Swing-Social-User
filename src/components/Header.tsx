@@ -30,6 +30,7 @@ import {
   LogOut,
   Calendar,
 } from "lucide-react";
+import NotificationModalPrompt from "./NotificationModalPrompt";
 
 const socket = io("https://api.nomolive.com/");
 
@@ -201,7 +202,7 @@ const Header = () => {
 
   return (
     <>
-      {/* <NotificationModalPrompt /> */}
+      <NotificationModalPrompt />
       {isMobile ? (
         <>
           <AppBar
