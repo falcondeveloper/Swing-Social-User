@@ -40,19 +40,15 @@ const Header = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const [avatar, setAvatar] = useState<string>("");
+  const [avatar, setAvatar] = useState<any>("");
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [userName, setUserName] = useState<string>("");
   const [isNotificationModalOpen, setNotificationModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [advertiser, setAdvertiser] = useState<any>([]);
-  const [isNewMessage, setNewMessage] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("isNewMessage") === "true";
-    }
-    return false;
-  });
+  const [isNewMessage, setNewMessage] = useState<boolean>(false);
   const [profileId, setProfileId] = useState<any>();
+  const [pathname, setPathname] = useState("");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -61,6 +57,20 @@ const Header = () => {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setPathname(pathname);
+    }
+  }, []);
+
+  useEffect(() => {
+    const storedId = localStorage.getItem("logged_in_profile");
+    const storedMsg = localStorage.getItem("isNewMessage");
+
+    if (storedId) setProfileId(storedId);
+    if (storedMsg === "true") setNewMessage(true);
   }, []);
 
   useEffect(() => {
@@ -277,7 +287,7 @@ const Header = () => {
                 }}
               >
                 <img
-                  src={avatar}
+                  src={avatar || null}
                   alt="Profile"
                   style={{
                     width: "100%",
@@ -350,7 +360,7 @@ const Header = () => {
                   onClick={() => router.push("/profile")}
                 >
                   <Avatar
-                    src={avatar}
+                    src={avatar || undefined}
                     sx={{
                       width: 48,
                       height: 48,
@@ -380,7 +390,7 @@ const Header = () => {
                   {mobileNavItems.map((item, index) => {
                     const isActive =
                       typeof window !== "undefined" &&
-                      window.location.pathname === item.path;
+                      pathname === item.path;
 
                     return (
                       <ListItem
@@ -580,7 +590,7 @@ const Header = () => {
                   const Icon = item.icon;
                   const isActive =
                     typeof window !== "undefined" &&
-                    window.location.pathname === item.path;
+                    pathname === item.path;
 
                   return (
                     <Box key={item.label} sx={{ position: "relative" }}>
@@ -803,7 +813,7 @@ const Header = () => {
       {(() => {
         const pathsWithoutSpacer = ["/members", "/messaging"];
         const currentPath =
-          typeof window !== "undefined" ? window.location.pathname : "";
+          typeof window !== "undefined" ? pathname : "";
         return (
           !pathsWithoutSpacer.includes(currentPath) && (
             <Box sx={{ height: isMobile ? "60.8px" : "90.5px" }} />

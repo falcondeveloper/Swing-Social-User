@@ -258,8 +258,6 @@ const LoginPage = () => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const ref = document.referrer;
-      // setReferrer(ref && ref.length > 0 ? ref : "direct");
-      console.log(ref, "reder");
     }
   }, []);
 

@@ -18,7 +18,6 @@ export const useFCMToken = () => {
         const reg = await navigator.serviceWorker.register(
           "/firebase-messaging-sw.js"
         );
-        console.log("✅ SW registered", reg);
 
         const permission = await Notification.requestPermission();
         if (permission !== "granted") return;
@@ -29,18 +28,32 @@ export const useFCMToken = () => {
         });
 
         if (fcmToken) {
-          console.log("🔥 FCM TOKEN:", fcmToken);
           setToken(fcmToken);
         }
       } catch (err) {
-        console.error("❌ FCM ERROR:", err);
+        console.error("FCM ERROR:", err);
       }
     };
 
     register();
 
     onMessage(fcm, (payload) => {
-      console.log("📩 Foreground:", payload);
+      console.log("🔥 Foreground notification:", payload);
+
+      const title =
+        payload.notification?.title ||
+        payload.data?.title ||
+        "New Notification";
+
+      const body =
+        payload.notification?.body ||
+        payload.data?.body ||
+        "You have a new message";
+
+      new Notification(title, {
+        body,
+        icon: "/logo.png",
+      });
     });
   }, []);
   return token;
