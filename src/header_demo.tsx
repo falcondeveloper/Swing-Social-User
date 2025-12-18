@@ -34,7 +34,7 @@ import {
   CheckCheck,
   Trash2,
 } from "lucide-react";
-import NotificationModalPrompt from "./NotificationModalPrompt";
+import NotificationModalPrompt from "./components/NotificationModalPrompt";
 
 const socket = io("https://api.nomolive.com/");
 
