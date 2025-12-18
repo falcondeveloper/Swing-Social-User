@@ -10,6 +10,7 @@ const firebaseConfig = {
 };
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+export { app };
 
 export const messaging =
     typeof window !== "undefined" ? getMessaging(app) : null;
