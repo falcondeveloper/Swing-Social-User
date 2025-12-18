@@ -454,7 +454,7 @@ export default function NotificationSettingsPage() {
             mt: 3,
           }}
         >
-          <Button
+          {/* <Button
             variant="contained"
             onClick={handleTestNotification}
             fullWidth={isMobile}
@@ -478,7 +478,7 @@ export default function NotificationSettingsPage() {
             }}
           >
             {saving ? "Saving..." : "Send Test Notification"}
-          </Button>
+          </Button> */}
 
           <Button
             variant="outlined"

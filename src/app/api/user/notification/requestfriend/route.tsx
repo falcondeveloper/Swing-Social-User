@@ -1,84 +1,3 @@
-// import { messaging } from "@/lib/firebase/admin";
-// import { NextResponse } from "next/server";
-// import { Pool } from "pg";
-
-// const pool = new Pool({
-//   user: "clark",
-//   host: "199.244.49.83",
-//   database: "swingsocialdb",
-//   password: "Bmw740il#$",
-//   port: 5432,
-// });
-
-// export async function POST(req: Request) {
-//   try {
-//     const { id, title, body, url } = await req.json();
-
-//     const result = await pool.query(
-//       "SELECT deviceToken FROM public.web_get_devicetoken($1)",
-//       [id]
-//     );
-
-//     if (!result.rows.length) {
-//       return NextResponse.json(
-//         { message: "No device tokens found." },
-//         { status: 404 }
-//       );
-//     }
-
-//     const targetUrl = url || "/";
-
-//     const responses = [];
-//     for (const row of result.rows) {
-//       const deviceToken = row.devicetoken;
-
-//       console.log("row", row);
-
-//       const message = {
-//         token: deviceToken,
-//         notification: {
-//           title: title || "SwingSocial",
-//           body: body || "You have a new notification",
-//         },
-//         webpush: {
-//           fcmOptions: {
-//             link: targetUrl,
-//           },
-//           notification: {
-//             icon: "/logo.png",
-//           },
-//         },
-//         data: {
-//           url: targetUrl,
-//           timestamp: Date.now().toString(),
-//           title: title || "SwingSocial",
-//           body: body || "You have a new notification",
-//         },
-//         android: {
-//           notification: {
-//             clickAction: "FLUTTER_NOTIFICATION_CLICK",
-//           },
-//         },
-//       };
-
-//       try {
-//         const response = await messaging.send(message);
-//         responses.push({ token: deviceToken, status: "success", response });
-//       } catch (err: any) {
-//         responses.push({
-//           token: deviceToken,
-//           status: "error",
-//           error: err.message,
-//         });
-//       }
-//     }
-
-//     return NextResponse.json({ results: responses });
-//   } catch (err: any) {
-//     return NextResponse.json({ error: err.message }, { status: 500 });
-//   }
-// }
-
 import { NextRequest, NextResponse } from "next/server";
 import { messaging } from "@/lib/firebase/admin";
 import { Pool } from "pg";
@@ -116,23 +35,26 @@ export async function POST(req: NextRequest) {
       [userId]
     );
 
-    console.log("preferencesResult", preferencesResult);
-
     if (preferencesResult.rows.length === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const preferences =
-      preferencesResult.rows[0].notification_preferences || {};
+    const preferences = preferencesResult.rows[0].preferences || {};
 
-    // Check if user has enabled this type of notification
     const notificationEnabled = {
       new_match: preferences.newMatches !== false,
       message: preferences.messages !== false,
       like: preferences.likes !== false,
-      request: preferences.requests || false,
+      request: preferences.requests !== false,
       friend_request: preferences.friendRequests !== false,
     };
+
+    if (preferences.pushNotifications === false) {
+      return NextResponse.json({
+        success: true,
+        message: "Notification skipped - user disabled push notifications",
+      });
+    }
 
     if (type && !notificationEnabled[type as NotificationType]) {
       return NextResponse.json({
@@ -142,7 +64,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Fetch device tokens
     const result = await pool.query(
       "SELECT deviceToken FROM public.web_get_devicetoken($1)",
       [userId]
