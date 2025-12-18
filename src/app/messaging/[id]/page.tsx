@@ -201,7 +201,6 @@ export default function ChatPage(props: { params: Params }) {
           console.error("Advertiser not found");
         } else {
           setUserProfile(userData);
-          console.log("userData", userData);
         }
       } catch (error: any) {
         console.error("Error fetching data:", error.message);
