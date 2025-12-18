@@ -17,8 +17,6 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(function (payload) {
-  console.log("📩 Background message:", payload);
-
   const title =
     payload.notification?.title || payload.data?.title || "New Notification";
 
@@ -49,8 +47,6 @@ self.addEventListener("notificationclick", function (event) {
   const targetUrl = clickUrl.startsWith("http")
     ? clickUrl
     : `${self.location.origin}${clickUrl}`;
-
-  console.log("🔗 Opening URL:", targetUrl);
 
   event.waitUntil(
     clients

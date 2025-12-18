@@ -1,4 +1,4 @@
-"use client"; // This directive is crucial
+"use client";
 
 import { useEffect } from "react";
 import { messaging } from "@/lib/firebase";
@@ -10,33 +10,60 @@ export default function ClientLayout({
   children: React.ReactNode;
 }) {
   useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      if (Notification.permission !== "granted") {
-        Notification.requestPermission().then((permission) => {
-          if (permission === "granted") {
-            console.log("Notification permission granted.");
-          }
-        });
+    const initForeground = async () => {
+      if (typeof window === "undefined") return;
+
+      if ("serviceWorker" in navigator) {
+        const reg = await navigator.serviceWorker.register(
+          "/firebase-messaging-sw.js"
+        );
+        console.log("SW registered:", reg);
       }
-    }
 
-    if (messaging) {
-      const unsubscribe = onMessage(messaging, (payload) => {
-        console.log("Foreground Message received:", payload);
+      if (Notification.permission !== "granted") {
+        await Notification.requestPermission();
+      }
 
-        const title = payload.notification?.title || "New Message";
-        const body =
-          payload.notification?.body || "You have a new notification";
-        const icon = "/logo.png";
+      if (messaging) {
+        const unsub = onMessage(messaging, (payload) => {
+          console.log("Foreground Message received:", payload);
 
-        new Notification(title, {
-          body: body,
-          icon: icon,
+          const title =
+            payload.notification?.title ||
+            payload.data?.title ||
+            "New Notification";
+
+          const clickUrl = payload.fcmOptions?.link || payload.data?.url || "/";
+
+          const options: NotificationOptions = {
+            body:
+              payload.notification?.body ||
+              payload.data?.body ||
+              "You have a message",
+            icon: "/logo.png",
+            badge: "/logo.png",
+            data: {
+              url: clickUrl,
+            },
+            requireInteraction: false,
+            tag: `notification-${Date.now()}`,
+          };
+
+          const notification = new Notification(title, options);
+
+          notification.onclick = () => {
+            window.focus();
+            if (clickUrl) {
+              window.location.href = clickUrl;
+            }
+          };
         });
-      });
 
-      return () => unsubscribe();
-    }
+        return unsub;
+      }
+    };
+
+    initForeground();
   }, []);
 
   return <>{children}</>;
