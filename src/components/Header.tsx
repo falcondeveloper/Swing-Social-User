@@ -1145,7 +1145,7 @@ const Header = () => {
       )}
 
       {/* Spacer to push content below fixed header */}
-      {/* {(() => {
+      {(() => {
         const pathsWithoutSpacer = ["/members", "/messaging"];
         const currentPath = typeof window !== "undefined" ? pathname : "";
         return (
@@ -1153,7 +1153,7 @@ const Header = () => {
             <Box sx={{ height: isMobile ? "60.8px" : "90.5px" }} />
           )
         );
-      })()} */}
+      })()}
     </>
   );
 };
