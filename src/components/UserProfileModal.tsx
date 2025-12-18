@@ -218,26 +218,25 @@ If you didn't expect this, ignore this message.
         throw new Error(`Failed to send email. Status: ${mailResponse.status}`);
       }
 
-      toast.success("Friend request sent 🎉", { autoClose: 2000 });
+      toast.success("Friend request sent 🎉", { autoClose: 1000 });
 
-      // const notifyResponse = await fetch(
-      //   "/api/user/notification/requestfriend",
-      //   {
-      //     method: "POST",
-      //     headers: { "Content-Type": "application/json" },
-      //     body: JSON.stringify({
-      //       id: userid,
-      //       title: "New Friend Request!",
-      //       body: `${userName} sent you a friend request!`,
-      //       image: "https://example.com/path/to/image.jpg",
-      //       url: `https://swing-social-user.vercel.app/mailbox/${userid}`,
-      //     }),
-      //   }
-      // );
-
-      // if (!notifyResponse.ok) {
-      //   throw new Error(`Failed to notify. Status: ${notifyResponse.status}`);
-      // }
+      const notifyResponse = await fetch(
+        "/api/user/notification/requestfriend",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: userid,
+            title: "New Friend Request!",
+            body: `${userName} sent you a friend request!`,
+            type: "friend_request",
+            url: `https://swing-social-user.vercel.app/mailbox/${userid}`,
+          }),
+        }
+      );
+      if (!notifyResponse.ok) {
+        throw new Error(`Failed to notify. Status: ${notifyResponse.status}`);
+      }
     } catch (error: any) {
       console.error("Error:", error);
       toast.error(error?.message ?? "Something went wrong", {

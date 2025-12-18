@@ -250,7 +250,8 @@ export default function ChatPage(props: { params: Params }) {
       body: JSON.stringify({
         userId: userProfile.Id,
         body: message,
-        image: "https://example.com/path/to/image.jpg",
+        title: "New Message",
+        type: "message",
         url: `https://swing-social-user.vercel.app/messaging/${userProfile.Id}`,
       }),
     });

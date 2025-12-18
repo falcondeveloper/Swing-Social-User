@@ -237,15 +237,17 @@ export default function MobileAttendeeSwing() {
 
   const sendNotification = async (message: any) => {
     const id = userProfiles[currentIndex]?.Id;
-    const response = await fetch("/api/user/notification", {
+
+    const response = await fetch("/api/user/notification/requestfriend", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        id: id,
+        userId: id,
+        title: "❤️ New Match!",
         body: message,
-        image: "https://example.com/path/to/image.jpg",
+        type: "new_match",
         url: `https://swing-social-user.vercel.app/members/${profileId}`,
       }),
     });

@@ -570,40 +570,26 @@ export default function Home() {
     }
   };
 
-  const sendNotification = async (message: any) => {
-    if (idParam != null) {
-      const id = idParam;
-      const response = await fetch("/api/user/notification", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: id,
-          body: message,
-          image: "https://example.com/path/to/image.jpg",
-          url: `https://swing-social-user.vercel.app/members/${profileId}`,
-        }),
-      });
+  const sendNotification = async (message: string) => {
+    const targetId = idParam ?? userProfiles[currentIndex]?.Id;
 
-      const result = await response.json();
-    } else {
-      const id = userProfiles[currentIndex]?.Id;
-      const response = await fetch("/api/user/notification", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: id,
-          body: message,
-          image: "https://example.com/path/to/image.jpg",
-          url: `https://swing-social-user.vercel.app/members/${profileId}`,
-        }),
-      });
+    if (!targetId) return;
 
-      return await response.json();
-    }
+    const response = await fetch("/api/user/notification/requestfriend", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: targetId,
+        title: "❤️ New Match!",
+        body: message,
+       type: "new_match", 
+        url: `https://swing-social-user.vercel.app/members/${profileId}`,
+      }),
+    });
+
+    return await response.json();
   };
 
   const handleUpdateLikeMatch = async () => {

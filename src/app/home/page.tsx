@@ -86,7 +86,6 @@ const Home = () => {
         const decodeToken = jwtDecode<any>(tokenDevice);
         setCurrentName(decodeToken?.profileName);
         setProfileId(decodeToken?.profileId);
-        console.log("decodeToken?.profileId", decodeToken?.profileId);
         setProfile(decodeToken);
       }
     }

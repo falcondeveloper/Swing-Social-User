@@ -19,7 +19,7 @@ type NotificationType =
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, title, body, type, data } = await req.json();
+    const { userId, title, body, type, url } = await req.json();
 
     if (!userId) {
       return NextResponse.json(
@@ -52,14 +52,14 @@ export async function POST(req: NextRequest) {
     if (preferences.pushNotifications === false) {
       return NextResponse.json({
         success: true,
-        message: "Notification skipped - user disabled push notifications",
+        message: "Notification skipped - push disabled",
       });
     }
 
-    if (type && !notificationEnabled[type as NotificationType]) {
+    if (!type || !notificationEnabled[type as NotificationType]) {
       return NextResponse.json({
         success: true,
-        message: "Notification skipped - user disabled this type",
+        message: "Notification skipped - type disabled",
         type,
       });
     }
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     }
 
     const responses = [];
-    const targetUrl = data?.url || "/";
+    const targetUrl = url || "/";
 
     for (const row of result.rows) {
       const deviceToken = row.devicetoken;
@@ -101,8 +101,7 @@ export async function POST(req: NextRequest) {
           timestamp: Date.now().toString(),
           title: title || "SwingSocial",
           body: body || "You have a new notification",
-          type: type || "general",
-          ...data,
+          type: type,
         },
         android: {
           notification: {

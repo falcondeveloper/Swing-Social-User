@@ -73,12 +73,19 @@ const Header = () => {
       return;
     }
 
-    try {
-      const { profileId: decodedId } = jwtDecode<any>(token) || {};
-      if (decodedId) setProfileId(decodedId);
-    } catch (err) {
-      console.error("Invalid token:", err);
-      router.push("/login");
+    if (token) {
+      try {
+        const decodeToken = jwtDecode<any>(token);
+
+        if (decodeToken.profileId) {
+          setProfileId(decodeToken.profileId);
+        }
+      } catch (err) {
+        console.error("Invalid token:", err);
+        localStorage.removeItem("loginInfo");
+        router.push("/login");
+        return;
+      }
     }
 
     checkNotificationPermission();
