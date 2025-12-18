@@ -109,11 +109,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Fetch user's notification preferences
     const preferencesResult = await pool.query(
-      `SELECT notification_preferences FROM users WHERE id = $1`,
+      `SELECT preferences 
+       FROM notification_preferences 
+       WHERE user_id = $1`,
       [userId]
     );
+
+    console.log("preferencesResult", preferencesResult);
 
     if (preferencesResult.rows.length === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
