@@ -1,5 +1,86 @@
+// import { messaging } from "@/lib/firebase/admin";
+// import { NextResponse } from "next/server";
+// import { Pool } from "pg";
+
+// const pool = new Pool({
+//   user: "clark",
+//   host: "199.244.49.83",
+//   database: "swingsocialdb",
+//   password: "Bmw740il#$",
+//   port: 5432,
+// });
+
+// export async function POST(req: Request) {
+//   try {
+//     const { id, title, body, url } = await req.json();
+
+//     const result = await pool.query(
+//       "SELECT deviceToken FROM public.web_get_devicetoken($1)",
+//       [id]
+//     );
+
+//     if (!result.rows.length) {
+//       return NextResponse.json(
+//         { message: "No device tokens found." },
+//         { status: 404 }
+//       );
+//     }
+
+//     const targetUrl = url || "/";
+
+//     const responses = [];
+//     for (const row of result.rows) {
+//       const deviceToken = row.devicetoken;
+
+//       console.log("row", row);
+
+//       const message = {
+//         token: deviceToken,
+//         notification: {
+//           title: title || "SwingSocial",
+//           body: body || "You have a new notification",
+//         },
+//         webpush: {
+//           fcmOptions: {
+//             link: targetUrl,
+//           },
+//           notification: {
+//             icon: "/logo.png",
+//           },
+//         },
+//         data: {
+//           url: targetUrl,
+//           timestamp: Date.now().toString(),
+//           title: title || "SwingSocial",
+//           body: body || "You have a new notification",
+//         },
+//         android: {
+//           notification: {
+//             clickAction: "FLUTTER_NOTIFICATION_CLICK",
+//           },
+//         },
+//       };
+
+//       try {
+//         const response = await messaging.send(message);
+//         responses.push({ token: deviceToken, status: "success", response });
+//       } catch (err: any) {
+//         responses.push({
+//           token: deviceToken,
+//           status: "error",
+//           error: err.message,
+//         });
+//       }
+//     }
+
+//     return NextResponse.json({ results: responses });
+//   } catch (err: any) {
+//     return NextResponse.json({ error: err.message }, { status: 500 });
+//   }
+// }
+
+import { NextRequest, NextResponse } from "next/server";
 import { messaging } from "@/lib/firebase/admin";
-import { NextResponse } from "next/server";
 import { Pool } from "pg";
 
 const pool = new Pool({
@@ -10,13 +91,58 @@ const pool = new Pool({
   port: 5432,
 });
 
-export async function POST(req: Request) {
-  try {
-    const { id, title, body, url } = await req.json();
+type NotificationType =
+  | "new_match"
+  | "message"
+  | "like"
+  | "request"
+  | "friend_request";
 
+export async function POST(req: NextRequest) {
+  try {
+    const { userId, title, body, type, data } = await req.json();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Fetch user's notification preferences
+    const preferencesResult = await pool.query(
+      `SELECT notification_preferences FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    if (preferencesResult.rows.length === 0) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const preferences =
+      preferencesResult.rows[0].notification_preferences || {};
+
+    // Check if user has enabled this type of notification
+    const notificationEnabled = {
+      new_match: preferences.newMatches !== false,
+      message: preferences.messages !== false,
+      like: preferences.likes !== false,
+      request: preferences.requests || false,
+      friend_request: preferences.friendRequests !== false,
+    };
+
+    if (type && !notificationEnabled[type as NotificationType]) {
+      return NextResponse.json({
+        success: true,
+        message: "Notification skipped - user disabled this type",
+        type,
+      });
+    }
+
+    // Fetch device tokens
     const result = await pool.query(
       "SELECT deviceToken FROM public.web_get_devicetoken($1)",
-      [id]
+      [userId]
     );
 
     if (!result.rows.length) {
@@ -26,13 +152,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const targetUrl = url || "/";
-
     const responses = [];
+    const targetUrl = data?.url || "/";
+
     for (const row of result.rows) {
       const deviceToken = row.devicetoken;
-
-      console.log("row", row);
 
       const message = {
         token: deviceToken,
@@ -53,6 +177,8 @@ export async function POST(req: Request) {
           timestamp: Date.now().toString(),
           title: title || "SwingSocial",
           body: body || "You have a new notification",
+          type: type || "general",
+          ...data,
         },
         android: {
           notification: {
@@ -63,17 +189,27 @@ export async function POST(req: Request) {
 
       try {
         const response = await messaging.send(message);
-        responses.push({ token: deviceToken, status: "success", response });
+        responses.push({
+          token: deviceToken,
+          status: "success",
+          response,
+          type,
+        });
       } catch (err: any) {
         responses.push({
           token: deviceToken,
           status: "error",
           error: err.message,
+          type,
         });
       }
     }
 
-    return NextResponse.json({ results: responses });
+    return NextResponse.json({
+      success: true,
+      results: responses,
+      preferences,
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

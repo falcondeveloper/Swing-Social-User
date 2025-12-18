@@ -20,7 +20,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import UserBottomNavigation from "@/components/BottomNavigation";
 import { getMessaging, onMessage } from "firebase/messaging";
-import app from "../../../firebase";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import { io } from "socket.io-client";
@@ -87,6 +86,7 @@ const Home = () => {
         const decodeToken = jwtDecode<any>(tokenDevice);
         setCurrentName(decodeToken?.profileName);
         setProfileId(decodeToken?.profileId);
+        console.log("decodeToken?.profileId", decodeToken?.profileId);
         setProfile(decodeToken);
       }
     }

@@ -67,6 +67,7 @@ import {
   Check,
   AlertCircle,
   Settings2,
+  Bell,
 } from "lucide-react";
 import Cropper, { Area } from "react-easy-crop";
 import getCroppedImg from "../../utils/cropImage";
@@ -1888,6 +1889,11 @@ const ProfileDetail: React.FC = () => {
                       icon={<LogOut size={14} />}
                       label="Logout"
                       onClick={handleLogout}
+                    />
+                    <ActionChip
+                      icon={<Bell size={14} />}
+                      label="Notifications"
+                      onClick={() => router.push("/notifications")}
                     />
                   </Box>
                 </Box>

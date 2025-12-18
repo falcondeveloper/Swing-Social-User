@@ -12,12 +12,13 @@ import {
   ListItemText,
   Avatar,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import { jwtDecode } from "jwt-decode"; // Import jwt-decode properly
-import { useIsMobile } from "@/hooks/useResponsive";
+import { jwtDecode } from "jwt-decode";
+
 import {
   Home,
   Users,
@@ -37,7 +38,8 @@ const socket = io("https://api.nomolive.com/");
 const Header = () => {
   const router = useRouter();
   const theme = useTheme();
-  const isMobile = useIsMobile();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const [avatar, setAvatar] = useState<string>("");
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [userName, setUserName] = useState<string>("");
