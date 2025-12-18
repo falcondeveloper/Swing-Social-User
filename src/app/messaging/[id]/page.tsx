@@ -585,246 +585,173 @@ export default function ChatPage(props: { params: Params }) {
       <Header />
       {isMobile ? (
         <>
+          {/* Chat Header */}
           <Box
             sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              bgcolor: "#1A1A1A",
+              px: 2,
+              py: 2,
+              borderBottom: "1px solid #333",
+              position: "sticky",
+              top: 0,
+              zIndex: 20,
+            }}
+          >
+            <Avatar
+              sx={{
+                width: 48,
+                height: 48,
+                border: "2px solid",
+                borderColor: userProfile?.isOnline ? "#4CAF50" : "#FF1B6B",
+              }}
+              alt={userProfile?.Username}
+              src={userProfile?.Avatar}
+            />
+            <Box>
+              <Typography variant="h6" color="white">
+                {userProfile?.Username || "User"}
+              </Typography>
+              <Typography variant="body2" color="#FF1B6B">
+                {userProfile?.LastOnline
+                  ? dayjs(userProfile.LastOnline).fromNow()
+                  : "N/A"}
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Messages List */}
+          <List
+            sx={{
               flex: 1,
+              overflowY: "auto",
+              px: 2,
+              py: 2,
               display: "flex",
               flexDirection: "column",
-              pt: "60px",
-              // pb: "64px",
+              gap: 1.5,
+              // pb: "60px",
             }}
+          >
+            {messages?.map(
+              (m: any, i: number) =>
+                m?.ChatId && (
+                  <ListItem
+                    key={i}
+                    disableGutters
+                    sx={{
+                      justifyContent:
+                        m?.MemberIdFrom === profileId
+                          ? "flex-end"
+                          : "flex-start",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        bgcolor:
+                          m?.MemberIdFrom === profileId ? "#1976D2" : "#262626",
+                        px: 2,
+                        py: 1,
+                        borderRadius: 2,
+                        color: "white",
+                        maxWidth: "75%",
+                        whiteSpace: "pre-wrap",
+                        boxShadow: 1,
+                      }}
+                    >
+                      <Typography
+                        component="div"
+                        dangerouslySetInnerHTML={{
+                          __html: m?.Conversation,
+                        }}
+                      />
+                    </Box>
+                  </ListItem>
+                )
+            )}
+
+            {messages?.length === 0 && (
+              <Typography textAlign="center" color="gray">
+                No messages found
+              </Typography>
+            )}
+
+            <div ref={messagesEndRef} />
+          </List>
+
+          <Box
+            component="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessage();
+            }}
+            sx={{
+              position: "sticky",
+              bottom: 0,
+              bgcolor: "#1A1A1A",
+              px: 2,
+              py: 1.5,
+              borderTop: "1px solid #333",
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              zIndex: 2000,
+            }}
+          >
+            <IconButton
+              sx={{ color: "#FF1B6B" }}
+              onClick={() => setEmojiPickerOpen(true)}
+            >
+              <EmojiIcon />
+            </IconButton>
+
+            <TextField
+              fullWidth
+              variant="standard"
+              placeholder="Type a message..."
+              InputProps={{ disableUnderline: true }}
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              sx={{ input: { color: "white" } }}
+            />
+
+            <IconButton component="label">
+              <ImageIcon />
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={handleImageUpload}
+              />
+            </IconButton>
+
+            <IconButton onClick={handleSendMessage}>
+              <SendIcon />
+            </IconButton>
+          </Box>
+
+          <Modal
+            open={emojiPickerOpen}
+            onClose={() => setEmojiPickerOpen(false)}
           >
             <Box
               sx={{
-                width: "100%",
-                display: "flex",
-                flexDirection: "column",
-                bgcolor: "#121212",
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                bgcolor: "white",
                 borderRadius: 2,
-                flex: 1,
-                overflow: "hidden",
+                p: 2,
                 boxShadow: 3,
               }}
             >
-              {/* Chat Header */}
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  bgcolor: "#1A1A1A",
-                  p: 2,
-                  boxShadow: 2,
-                  borderBottom: "1px solid #333",
-                }}
-                onClick={() => {
-                  setShowDetail(true);
-                  setSelectedUserId(userProfile?.Id);
-                }}
-              >
-                <Avatar
-                  sx={{
-                    width: 50,
-                    height: 50,
-                    border: "2px solid",
-                    borderColor: userProfile?.isOnline ? "#4CAF50" : "#FF1B6B", // Green for online, pink for offline
-                  }}
-                  alt={userProfile?.Username}
-                  src={userProfile?.Avatar}
-                />
-                <Box>
-                  <Typography variant="h6" color="white">
-                    {userProfile?.Username || "User"}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color={userProfile?.LastOnline ? "#FF1B6B" : "#FF1B6B"}
-                  >
-                    {userProfile?.LastOnline
-                      ? dayjs(userProfile.LastOnline).fromNow()
-                      : "N/A"}
-                  </Typography>
-                </Box>
-              </Box>
-
-              {/* Messages List */}
-              <List
-                sx={{
-                  flex: 1,
-                  overflowY: "auto",
-                  WebkitOverflowScrolling: "touch",
-                  pb: "140px",
-                  "&::-webkit-scrollbar": {
-                    width: "6px",
-                  },
-                  "&::-webkit-scrollbar-thumb": {
-                    backgroundColor: "#555",
-                    borderRadius: "4px",
-                  },
-                }}
-              >
-                {messages.map(
-                  (message: any, index: number) =>
-                    message?.ChatId && (
-                      <ListItem
-                        key={index}
-                        sx={{
-                          justifyContent:
-                            message?.MemberIdFrom === profileId
-                              ? "flex-end"
-                              : "flex-start",
-                          alignItems: "flex-start",
-                          // gap: 1,
-                          transition: "all 0.3s ease",
-                        }}
-                      >
-                        {/* Display Avatar only if the message is from another user */}
-                        {message?.MemberIdFrom !== profileId && (
-                          <ListItemAvatar>
-                            <Avatar
-                              sx={{
-                                border: "2px solid",
-                                borderColor: "#FF1B6B",
-                              }}
-                              alt={message?.ToUsername || "User"}
-                              src={userProfile?.Avatar || "/noavatar.png"}
-                              onClick={() => {
-                                setShowDetail(true);
-                                setSelectedUserId(userProfile?.Id);
-                              }}
-                            />
-                          </ListItemAvatar>
-                        )}
-
-                        {/* Message Content */}
-                        <Box
-                          sx={{
-                            bgcolor:
-                              message?.MemberIdFrom === profileId
-                                ? "#1976D2"
-                                : "#333",
-                            color: "white",
-                            px: 2,
-                            py: 1,
-                            borderRadius: 2,
-                            maxWidth: "70%",
-                            wordWrap: "break-word",
-                            boxShadow: 3,
-                            animation: "fadeIn 0.5s ease",
-                            "@keyframes fadeIn": {
-                              from: { opacity: 0 },
-                              to: { opacity: 1 },
-                            },
-                          }}
-                        >
-                          <Typography
-                            component="div"
-                            className="message-content"
-                            dangerouslySetInnerHTML={{
-                              __html: message?.Conversation,
-                            }}
-                          />
-                        </Box>
-                      </ListItem>
-                    )
-                )}
-
-                {/* Display No Messages Found */}
-                {messages.length === 0 && (
-                  <Typography
-                    variant="body2"
-                    color="gray"
-                    textAlign="center"
-                    sx={{ py: 2 }}
-                  >
-                    No Messages Found
-                  </Typography>
-                )}
-
-                {/* Scroll to bottom anchor */}
-                <div ref={messagesEndRef} />
-              </List>
-
-              {/* Emoji Picker Modal */}
-              <Modal
-                open={emojiPickerOpen}
-                onClose={() => setEmojiPickerOpen(false)}
-              >
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    bgcolor: "white",
-                    borderRadius: 2,
-                    p: 2,
-                    boxShadow: 3,
-                  }}
-                >
-                  <Picker onEmojiClick={handleEmojiClick} />
-                </Box>
-              </Modal>
-              {/* Input Box */}
-              <Box
-                component="form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSendMessage();
-                }}
-                sx={{
-                  position: "fixed",
-                  left: 0,
-                  right: 0,
-                  bottom: {
-                    xs: "calc(64px + var(--keyboard-offset, 0px))",
-                    sm: "calc(72px + var(--keyboard-offset, 0px))",
-                  },
-                  zIndex: 1300,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  bgcolor: "#1A1A1A",
-                  px: 2,
-                  py: 1,
-                  borderTop: "1px solid #333",
-                }}
-              >
-                <IconButton
-                  sx={{ color: "#FF1B6B" }}
-                  onClick={() => setEmojiPickerOpen(true)}
-                >
-                  <EmojiIcon sx={{ color: "#FF1B6B" }} />
-                </IconButton>
-                <TextField
-                  fullWidth
-                  variant="standard"
-                  placeholder="Type a message..."
-                  InputProps={{
-                    disableUnderline: true,
-                    style: { color: "white" },
-                  }}
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  sx={{
-                    input: { color: "white" },
-                  }}
-                />
-                <IconButton component="label">
-                  <ImageIcon />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={handleImageUpload}
-                  />
-                </IconButton>
-                <IconButton color="primary" onClick={handleSendMessage}>
-                  <SendIcon />
-                </IconButton>
-              </Box>
+              <Picker onEmojiClick={handleEmojiClick} />
             </Box>
-          </Box>
+          </Modal>
+
           <Footer />
         </>
       ) : (
