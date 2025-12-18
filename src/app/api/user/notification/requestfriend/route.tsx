@@ -128,6 +128,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    await pool.query(
+      `INSERT INTO notifications 
+    (user_id, type, title, body, url, is_read, created_at)
+   VALUES ($1, $2, $3, $4, $5, false, NOW())`,
+      [
+        userId,
+        type || "general",
+        title || "SwingSocial",
+        body || "You have a new notification",
+        targetUrl,
+      ]
+    );
+
     return NextResponse.json({
       success: true,
       results: responses,
