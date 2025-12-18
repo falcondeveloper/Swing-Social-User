@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect } from "react";
 import { messaging } from "@/lib/firebase";
 import { onMessage } from "firebase/messaging";
@@ -13,8 +12,10 @@ export default function ClientLayout({
     const initForeground = async () => {
       if (typeof window === "undefined") return;
 
+      let reg: ServiceWorkerRegistration | undefined;
+
       if ("serviceWorker" in navigator) {
-        const reg = await navigator.serviceWorker.register(
+        reg = await navigator.serviceWorker.register(
           "/firebase-messaging-sw.js"
         );
         console.log("SW registered:", reg);
@@ -24,15 +25,14 @@ export default function ClientLayout({
         await Notification.requestPermission();
       }
 
-      if (messaging) {
-        const unsub = onMessage(messaging, (payload) => {
+      if (messaging && reg) {
+        const unsub = onMessage(messaging, async (payload) => {
           console.log("Foreground Message received:", payload);
 
           const title =
             payload.notification?.title ||
             payload.data?.title ||
             "New Notification";
-
           const clickUrl = payload.fcmOptions?.link || payload.data?.url || "/";
 
           const options: NotificationOptions = {
@@ -48,21 +48,13 @@ export default function ClientLayout({
             requireInteraction: false,
             tag: `notification-${Date.now()}`,
           };
-
-          const notification = new Notification(title, options);
-
-          notification.onclick = () => {
-            window.focus();
-            if (clickUrl) {
-              window.location.href = clickUrl;
-            }
-          };
+          if (reg) {
+            await reg.showNotification(title, options);
+          }
         });
-
         return unsub;
       }
     };
-
     initForeground();
   }, []);
 
