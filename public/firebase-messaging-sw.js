@@ -38,7 +38,6 @@ messaging.onBackgroundMessage(function (payload) {
 });
 
 self.addEventListener("notificationclick", function (event) {
-  console.log("🖱️ Notification clicked:", event.notification);
 
   event.notification.close();
 

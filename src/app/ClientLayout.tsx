@@ -18,7 +18,6 @@ export default function ClientLayout({
         reg = await navigator.serviceWorker.register(
           "/firebase-messaging-sw.js"
         );
-        console.log("SW registered:", reg);
       }
 
       if (Notification.permission !== "granted") {
@@ -27,7 +26,6 @@ export default function ClientLayout({
 
       if (messaging && reg) {
         const unsub = onMessage(messaging, async (payload) => {
-          console.log("Foreground Message received:", payload);
 
           const title =
             payload.notification?.title ||
