@@ -743,7 +743,7 @@ export default function ChatPage() {
                     textAlign="center"
                     sx={{ py: 2 }}
                   >
-                    No Chats Found
+                    No Mail found
                   </Typography>
                 )}
 
