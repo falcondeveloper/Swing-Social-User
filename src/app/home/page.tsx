@@ -20,7 +20,6 @@ import Footer from "@/components/Footer";
 import UserBottomNavigation from "@/components/BottomNavigation";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
-import { io } from "socket.io-client";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 import { useFCMToken } from "@/hooks/useFCMToken";
 
@@ -65,15 +64,12 @@ const categories = [
   },
 ];
 
-const socket = io("https://api.nomolive.com/");
-
 const Home = () => {
   const router = useRouter();
   const fcmToken = useFCMToken();
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
 
   const [profileId, setProfileId] = useState<any>();
-  const [profile, setProfile] = useState<any>();
   const [value, setValue] = useState(0);
   const [currentName, setCurrentName] = useState<any>("");
   const [isNewMessage, setNewMessage] = useState<boolean>(() => {
@@ -101,30 +97,8 @@ const Home = () => {
         const decodeToken = jwtDecode<any>(tokenDevice);
         setCurrentName(decodeToken?.profileName);
         setProfileId(decodeToken?.profileId);
-        setProfile(decodeToken);
       }
     }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    socket.on("message", (message) => {
-      const profileid = localStorage.getItem("logged_in_profile");
-      if (message?.from === profileid || message?.to === profileid) {
-        setNewMessage(true);
-        localStorage.setItem("isNewMessage", "true");
-      }
-    });
-
-    socket.on("error", (error) => {
-      console.error("WebSocket error:", error);
-    });
-
-    return () => {
-      socket.off("message");
-      socket.off("error");
-    };
   }, []);
 
   const resetNewMessage = () => {
@@ -233,77 +207,8 @@ const Home = () => {
     }
   };
 
-  // useEffect(() => {
-  //   if (profileId && token) {
-  //     const handleUpdateDeviceToken = async (token: any, profileId: any) => {
-  //       const payload = {
-  //         token: token,
-  //         profile: profile,
-  //       };
-  //       try {
-  //         const response = await fetch("/api/user/devicetoken", {
-  //           method: "POST",
-  //           headers: {
-  //             "Content-Type": "application/json",
-  //           },
-  //           body: JSON.stringify(payload),
-  //         });
-  //         if (!response.ok) {
-  //           console.error(
-  //             "❌ Error sending device token:",
-  //             await response.json()
-  //           );
-  //         }
-  //       } catch (error) {
-  //         console.error("❌ Network error while sending device token:", error);
-  //       }
-  //     };
-  //     handleUpdateDeviceToken(token, profileId);
-  //   }
-  // }, [token, profileId]);
-
-  // useEffect(() => {
-  //   if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-  //     const messaging = getMessaging(app);
-  //     const unsubscribe = onMessage(messaging, (payload: any) => {});
-  //     return () => {
-  //       unsubscribe();
-  //     };
-  //   }
-  // }, [notificationPermissionStatus]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/firebase-messaging-sw.js")
-        .then((registration) => {})
-        .catch((error) => {
-          console.error("Service Worker registration failed:", error);
-        });
-    }
-  }, []);
-
-  // useEffect(() => {
-  //   if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-  //     const messaging = getMessaging(app);
-
-  //     const unsubscribe = onMessage(messaging, async (payload: any) => {
-  //       const registration = await navigator.serviceWorker.ready;
-  //       if (registration.active) {
-  //         registration.active.postMessage({
-  //           type: "SHOW_NOTIFICATION",
-  //           payload,
-  //         });
-  //       }
-  //     });
-
-  //     return () => unsubscribe();
-  //   }
-  // }, [notificationPermissionStatus]);
-
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     const id = localStorage.getItem("logged_in_profile");
 
     const saveFcmToken = async () => {
