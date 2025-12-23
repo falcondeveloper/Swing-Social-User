@@ -33,14 +33,12 @@ import {
   notificationService,
   NotificationSettings,
 } from "@/services/notificationService";
-import { useFCMToken } from "@/hooks/useFCMToken";
 import Loader from "@/commonPage/Loader";
 
 export default function NotificationSettingsPage() {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const fcmToken = useFCMToken();
 
   const [notifications, setNotifications] = useState<NotificationSettings>(
     notificationService.getDefaultPreferences()
@@ -158,9 +156,9 @@ export default function NotificationSettingsPage() {
       description: "Receive push notifications on your device",
       icon: <Bell size={20} />,
       color: "#FF1B6B",
-      subDescription: fcmToken
-        ? "Device registered"
-        : "Enable browser notifications",
+      // subDescription: fcmToken
+      //   ? "Device registered"
+      //   : "Enable browser notifications",
     },
     {
       key: "newMatches",
@@ -268,7 +266,7 @@ export default function NotificationSettingsPage() {
         </Box>
 
         {/* Status Alert */}
-        {!fcmToken && (
+        {/* {!fcmToken && (
           <Alert
             severity="warning"
             sx={{ mb: 3, bgcolor: "rgba(255, 193, 7, 0.1)" }}
@@ -276,7 +274,7 @@ export default function NotificationSettingsPage() {
             Browser notifications are disabled. Enable them to receive push
             notifications.
           </Alert>
-        )}
+        )} */}
 
         {!userId && (
           <Alert
@@ -351,7 +349,7 @@ export default function NotificationSettingsPage() {
                         sx={{ color: "#aaaaaa", fontSize: "0.875rem" }}
                       >
                         {item.description}
-                        {item.subDescription && (
+                        {/* {item.subDescription && (
                           <Typography
                             component="span"
                             variant="caption"
@@ -363,7 +361,7 @@ export default function NotificationSettingsPage() {
                           >
                             {item.subDescription}
                           </Typography>
-                        )}
+                        )} */}
                       </Typography>
                     </Box>
                   </Box>

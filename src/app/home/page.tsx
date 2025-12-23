@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Box,
   Card,
@@ -21,7 +21,8 @@ import UserBottomNavigation from "@/components/BottomNavigation";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
-import { useFCMToken } from "@/hooks/useFCMToken";
+import { PushNotificationsContext } from "@/components/PushNotificationsProvider";
+import { getToken } from "firebase/messaging";
 
 const categories = [
   {
@@ -66,9 +67,8 @@ const categories = [
 
 const Home = () => {
   const router = useRouter();
-  const fcmToken = useFCMToken();
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
-
+  const messaging = useContext(PushNotificationsContext);
   const [profileId, setProfileId] = useState<any>();
   const [value, setValue] = useState(0);
   const [currentName, setCurrentName] = useState<any>("");
@@ -79,6 +79,91 @@ const Home = () => {
     return false;
   });
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (!messaging) {
+      console.error("Messaging not initialized");
+      return;
+    }
+
+    let isMounted = true;
+
+    const initFCM = async () => {
+      try {
+        if (Notification.permission !== "granted") {
+          setProgress(10);
+          const result = await Notification.requestPermission();
+          setProgress(20);
+
+          if (result !== "granted") {
+            throw new Error("Notifications are not allowed.");
+          }
+        }
+
+        if (!("serviceWorker" in navigator)) {
+          throw new Error("Service Workers are not supported in this browser");
+        }
+
+        let registration = await navigator.serviceWorker.getRegistration("/");
+
+        setProgress(40);
+
+        if (!registration) {
+          registration = await navigator.serviceWorker.register(
+            "/firebase-messaging-sw.js",
+            { scope: "/" }
+          );
+        }
+
+        setProgress(60);
+        await navigator.serviceWorker.ready;
+
+        setProgress(80);
+        const firebaseToken = await getToken(messaging, {
+          vapidKey:
+            "BIDy2RbO49rCl4PiCwOEjNbG-iewNN5s19EohjSo5CeGiiMJsS-isosbF2J0Rb7FiSv_3yhJageGnXP5f6N6nag",
+          serviceWorkerRegistration: registration,
+        });
+
+        if (!firebaseToken) {
+          throw new Error("Failed to get FCM token");
+        }
+
+        if (isMounted) {
+          console.log("firebaseToken:", firebaseToken);
+          setProgress(100);
+
+          const id = localStorage.getItem("logged_in_profile");
+
+          try {
+            await fetch("/api/user/notification-token", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                profileId: id,
+                token: firebaseToken,
+              }),
+            });
+          } catch (err) {
+            console.warn("Notification token save failed:", err);
+          }
+        }
+      } catch (error) {
+        console.error("FCM init error:", error);
+      } finally {
+        if (isMounted) {
+          setTimeout(() => setProgress(0), 500);
+        }
+      }
+    };
+
+    initFCM();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [profileId, messaging]);
 
   useEffect(() => {
     const seenPopup = localStorage.getItem("seenNotificationPopup");
@@ -211,23 +296,6 @@ const Home = () => {
     if (typeof window === "undefined") return;
     const id = localStorage.getItem("logged_in_profile");
 
-    const saveFcmToken = async () => {
-      if (!fcmToken || !id) return;
-
-      try {
-        await fetch("/api/user/notification-token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            profileId: id,
-            token: fcmToken,
-          }),
-        });
-      } catch (err) {
-        console.warn("Notification token save failed:", err);
-      }
-    };
-
     const trackUser = async () => {
       try {
         const urlParams = new URLSearchParams(window.location.search);
@@ -272,9 +340,8 @@ const Home = () => {
       }
     };
 
-    saveFcmToken();
     trackUser();
-  }, [fcmToken]);
+  }, []);
 
   return (
     <>

@@ -1,64 +1,62 @@
 importScripts(
-  "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"
+  "https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"
 );
 importScripts(
-  "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"
+  "https://www.gstatic.com/firebasejs/10.1.0/firebase-messaging-compat.js"
 );
 
-firebase.initializeApp({
+const firebaseConfig = {
   apiKey: "AIzaSyBB16_SMij8I2BCG0qU4mtwrkUjov8gZvE",
   authDomain: "swing-social-website-37364.firebaseapp.com",
   projectId: "swing-social-website-37364",
+  storageBucket: "swing-social-website-37364.firebasestorage.app",
   messagingSenderId: "24751189898",
   appId: "1:24751189898:web:d2a0204a0d6cb75cf66273",
-  measurementId: "G-JJGVNRTWPY",
-});
+};
 
-const messaging = firebase.messaging();
+const app = firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging(app);
 
-messaging.onBackgroundMessage(function (payload) {
-  const title =
-    payload.notification?.title || payload.data?.title || "New Notification";
-
-  const clickUrl = payload.fcmOptions?.link || payload.data?.url || "/";
-
-  const options = {
-    body:
-      payload.notification?.body || payload.data?.body || "You have a message",
+messaging.onBackgroundMessage(messaging, async (payload) => {
+  const { notification, data } = payload;
+  const notificationOptions = {
+    body: notification?.body,
     icon: "/logo.png",
-    badge: "/logo.png",
-    data: {
-      url: clickUrl,
-    },
-    requireInteraction: false,
-    tag: "notification-" + Date.now(),
+    data: { url: data?.url || "/" },
   };
 
-  self.registration.showNotification(title, options);
+  await self.registration.showNotification(
+    payload.notification.title,
+    notificationOptions
+  );
 });
 
-self.addEventListener("notificationclick", function (event) {
+self.addEventListener("install", (event) => {
+  event.waitUntil(self.skipWaiting());
+});
 
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const clickUrl = event.notification.data?.url || "/";
-
-  const targetUrl = clickUrl.startsWith("http")
-    ? clickUrl
-    : `${self.location.origin}${clickUrl}`;
-
-  event.waitUntil(
-    clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .then((clientList) => {
-        for (const client of clientList) {
-          if (client.url === targetUrl && "focus" in client) {
-            return client.focus();
+  const url = event.notification.data?.url;
+  if (url) {
+    event.waitUntil(
+      clients
+        .matchAll({ type: "window", includeUncontrolled: true })
+        .then((clientList) => {
+          for (const client of clientList) {
+            if (client.url === url && "focus" in client) {
+              return client.focus();
+            }
           }
-        }
-        if (clients.openWindow) {
-          return clients.openWindow(targetUrl);
-        }
-      })
-  );
+          if (clients.openWindow) {
+            return clients.openWindow(url);
+          }
+        })
+    );
+  }
 });

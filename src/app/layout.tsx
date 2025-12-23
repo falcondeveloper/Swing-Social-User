@@ -5,6 +5,7 @@ import ClientLayout from "./ClientLayout";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Analytics from "./analytics";
+import PushNotificationsProvider from "@/components/PushNotificationsProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -76,7 +77,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ToastContainer />
-        <ClientLayout>{children}</ClientLayout>
+        <ClientLayout>
+          <PushNotificationsProvider>{children}</PushNotificationsProvider>
+        </ClientLayout>
         <Analytics />
       </body>
     </html>

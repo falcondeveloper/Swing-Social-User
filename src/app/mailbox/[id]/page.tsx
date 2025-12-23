@@ -91,8 +91,6 @@ export default function MailboxCreate(props: { params: Params }) {
     }
   }, [profileId]);
 
-  // const { token, notificationPermissionStatus } = useFcmToken();
-
   useEffect(() => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("loginInfo");

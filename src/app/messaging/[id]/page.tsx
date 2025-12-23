@@ -177,22 +177,21 @@ export default function ChatPage(props: { params: Params }) {
 
   const sendNotification = async (message: any) => {
     if (!myProfile?.Id || !userProfile?.Id) return;
-    console.log("userProfile", userProfile);
-    // const response = await fetch("/api/user/notification/requestfriend", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({
-    //     userId: userProfile.Id,
-    //     body: message,
-    //     title: myProfile?.Username || "New message",
-    //     type: "message",
-    //     url: `https://swing-social-user.vercel.app/messaging/${myProfile.Id}`,
-    //   }),
-    // });
+    const response = await fetch("/api/user/notification/requestfriend", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: userProfile.Id,
+        body: message,
+        title: myProfile?.Username || "New message",
+        type: "message",
+        url: `https://swing-social-user.vercel.app/messaging/${myProfile.Id}`,
+      }),
+    });
 
-    // const result = await response.json();
+    const result = await response.json();
   };
 
   const handleSendMessage = async () => {
