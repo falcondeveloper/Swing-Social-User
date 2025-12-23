@@ -40,20 +40,8 @@ export const useFCMToken = () => {
     onMessage(fcm, (payload) => {
       console.log("🔥 Foreground notification:", payload);
 
-      const title =
-        payload.notification?.title ||
-        payload.data?.title ||
-        "New Notification";
-
-      const body =
-        payload.notification?.body ||
-        payload.data?.body ||
-        "You have a new message";
-
-      new Notification(title, {
-        body,
-        icon: "/logo.png",
-      });
+      // Notification display is handled by the service worker
+      // Use this handler to update app UI, refresh data, etc.
     });
   }, []);
   return token;
