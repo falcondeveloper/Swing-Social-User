@@ -340,7 +340,12 @@ const Header: React.FC = () => {
               },
             }}
           >
-            <Avatar src={avatar} sx={{ width: "100%", height: "100%" }} />
+            <Avatar
+              src={avatar || undefined}
+              sx={{ width: "100%", height: "100%" }}
+            >
+              {!avatar && userName?.charAt(0)}
+            </Avatar>
           </Box>
         </Toolbar>
       </AppBar>

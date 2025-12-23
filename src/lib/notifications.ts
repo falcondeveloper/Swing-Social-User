@@ -1,6 +1,5 @@
-import { toast, ToastOptions, TypeOptions } from 'react-toastify';
+import { toast, ToastOptions } from 'react-toastify';
 
-// Brand-consistent toast configuration
 const defaultOptions: ToastOptions = {
   position: "top-right",
   autoClose: 4000,
@@ -30,13 +29,11 @@ const mobileOptions: ToastOptions = {
   },
 };
 
-// Check if mobile device
 const isMobile = () => {
   if (typeof window === 'undefined') return false;
   return window.innerWidth <= 768;
 };
 
-// Custom notification service following SwingSocial branding
 export const notify = {
   success: (message: string, options?: Partial<ToastOptions>) => {
     const config = isMobile() ? mobileOptions : defaultOptions;
@@ -55,7 +52,7 @@ export const notify = {
     const config = isMobile() ? mobileOptions : defaultOptions;
     return toast.error(message, {
       ...config,
-      autoClose: 5000, // Keep errors visible longer
+      autoClose: 5000,
       style: {
         ...config.style,
         borderColor: "#FF1B6B",
@@ -91,7 +88,6 @@ export const notify = {
     });
   },
 
-  // Custom branded notification
   swingSocial: (message: string, options?: Partial<ToastOptions>) => {
     const config = isMobile() ? mobileOptions : defaultOptions;
     return toast(message, {
@@ -106,7 +102,6 @@ export const notify = {
     });
   },
 
-  // Geolocation specific notifications
   location: {
     denied: () => {
       const config = isMobile() ? mobileOptions : defaultOptions;
@@ -173,33 +168,10 @@ export const notify = {
       });
     },
   },
-
-  // Dismiss all toasts
   dismissAll: () => toast.dismiss(),
 };
+export const handleGeolocationError = (error: GeolocationPositionError) => { };
 
-// Geolocation error handler
-export const handleGeolocationError = (error: GeolocationPositionError) => {
-        /// removed
-  /* console.warn("Geolocation error:", error);
-  
-  switch (error.code) {
-    case error.PERMISSION_DENIED:
-      notify.location.denied();
-      break;
-    case error.POSITION_UNAVAILABLE:
-      notify.location.unavailable();
-      break;
-    case error.TIMEOUT:
-      notify.location.timeout();
-      break;
-    default:
-      notify.error("An error occurred while getting your location.");
-      break;
-  } */
-};
-
-// Check geolocation support
 export const checkGeolocationSupport = () => {
   if (!navigator.geolocation) {
     notify.location.notSupported();

@@ -20,7 +20,6 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import Header from "@/components/Header";
-import UserBottomNavigation from "@/components/BottomNavigation";
 import Picker from "emoji-picker-react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
@@ -49,7 +48,6 @@ export default function ChatPage(props: { params: Params }) {
   const [userId, setUserId] = useState<any>(null);
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const [membership, setMembership] = useState(0);
   const [showDetail, setShowDetail] = useState<any>(false);
   const [selectedUserId, setSelectedUserId] = useState<any>(null);
   const [activeUsers, setActiveUsers] = useState<any>({});
@@ -84,11 +82,6 @@ export default function ChatPage(props: { params: Params }) {
 
   useEffect(() => {
     setProfileId(localStorage.getItem("logged_in_profile"));
-    const token = localStorage.getItem("loginInfo");
-    if (token) {
-      const decodeToken = jwtDecode<any>(token);
-      setMembership(decodeToken?.membership);
-    }
   }, []);
 
   useEffect(() => {
@@ -601,7 +594,7 @@ export default function ChatPage(props: { params: Params }) {
                 display: "flex",
                 flexDirection: "column",
                 bgcolor: "#121212",
-                minHeight: 0, // <-- critical for inner scroll
+                minHeight: 0,
               }}
             >
               <Box

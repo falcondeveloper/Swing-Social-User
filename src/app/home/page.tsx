@@ -9,7 +9,6 @@ import {
   Container,
   Typography,
   Chip,
-  useTheme,
   useMediaQuery,
   Grid,
   alpha,
@@ -19,7 +18,6 @@ import Swal from "sweetalert2";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import UserBottomNavigation from "@/components/BottomNavigation";
-import { getMessaging, onMessage } from "firebase/messaging";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import { io } from "socket.io-client";
@@ -78,6 +76,23 @@ const Home = () => {
   const [profile, setProfile] = useState<any>();
   const [value, setValue] = useState(0);
   const [currentName, setCurrentName] = useState<any>("");
+  const [isNewMessage, setNewMessage] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("isNewMessage") === "true";
+    }
+    return false;
+  });
+  const [showNotificationPopup, setShowNotificationPopup] = useState(false);
+
+  useEffect(() => {
+    const seenPopup = localStorage.getItem("seenNotificationPopup");
+    if (!seenPopup) {
+      setTimeout(() => {
+        setShowNotificationPopup(true);
+        localStorage.setItem("seenNotificationPopup", "true");
+      }, 1200);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -90,13 +105,6 @@ const Home = () => {
       }
     }
   }, []);
-
-  const [isNewMessage, setNewMessage] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("isNewMessage") === "true";
-    }
-    return false;
-  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -849,6 +857,96 @@ const Home = () => {
 
       {profileId && <ProfileImgCheckerModel profileId={profileId} />}
       <Footer />
+
+      {showNotificationPopup && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.65)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <Box
+            sx={{
+              width: "90%",
+              maxWidth: 400,
+              bgcolor: "#1a1a1a",
+              color: "white",
+              borderRadius: 4,
+              p: 3,
+              textAlign: "center",
+              boxShadow: "0px 4px 25px rgba(255,27,107,.4)",
+              animation: "popupScale .3s ease-out",
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+              🔔 Enable Notifications
+            </Typography>
+
+            <Typography variant="body2" sx={{ opacity: 0.85, mb: 3 }}>
+              Stay updated with messages & activity instantly.
+            </Typography>
+
+            <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
+              <button
+                onClick={() => {
+                  Notification.requestPermission();
+                  setShowNotificationPopup(false);
+                }}
+                style={{
+                  background: "#FF1B6B",
+                  padding: "10px 16px",
+                  borderRadius: 8,
+                  border: "none",
+                  color: "white",
+                  fontWeight: "bold",
+                }}
+              >
+                Allow
+              </button>
+
+              <button
+                onClick={() => {
+                  router.push("/notifications");
+                  setShowNotificationPopup(false);
+                }}
+                style={{
+                  background: "transparent",
+                  padding: "10px 16px",
+                  borderRadius: 8,
+                  border: "1px solid white",
+                  color: "white",
+                }}
+              >
+                Settings
+              </button>
+            </Box>
+
+            <Box sx={{ mt: 2 }}>
+              <button
+                onClick={() => setShowNotificationPopup(false)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "gray",
+                  fontSize: "12px",
+                  textDecoration: "underline",
+                  marginTop: 8,
+                }}
+              >
+                Not now
+              </button>
+            </Box>
+          </Box>
+        </Box>
+      )}
     </>
   );
 };

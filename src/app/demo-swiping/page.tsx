@@ -1,3 +1,5 @@
+"use client";
+
 import SwipeCardComponent from "@/swiping-card/Card";
 import Header from "@/swiping-card/Header";
 import { Box } from "@mui/material";

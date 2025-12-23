@@ -87,7 +87,6 @@ class NotificationService {
             const result = await response.json();
             if (result.success) {
                 this.preferences = preferences;
-                // this.showLocalNotification('Success', 'Notification preferences saved', 'success');
                 return true;
             } else {
                 this.showLocalNotification('Error', result.error || 'Failed to save preferences', 'error');
@@ -117,13 +116,8 @@ class NotificationService {
     }
 
     isEnabled(type: NotificationType): boolean {
-        // Always allow general notifications
         if (type === 'general') return true;
-
-        // Check if push notifications are enabled globally
         if (!this.preferences.pushNotifications) return false;
-
-        // Check specific notification type
         switch (type) {
             case 'new_match':
                 return this.preferences.newMatches !== false;
@@ -181,7 +175,6 @@ class NotificationService {
         }
     }
 
-    // Convenience methods for specific notification types
     async sendNewMatch(matchName: string, matchId: string): Promise<boolean> {
         return this.sendNotification(
             'New Match! 🎉',
@@ -253,7 +246,6 @@ class NotificationService {
         );
     }
 
-    // Show local notification (in-app toast)
     showLocalNotification(
         title: string,
         message: string,
@@ -275,7 +267,6 @@ class NotificationService {
         }
     }
 
-    // Test notification
     async sendTestNotification(): Promise<boolean> {
         return this.sendNotification(
             'Test Notification ✅',

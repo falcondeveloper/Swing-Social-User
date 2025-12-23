@@ -34,6 +34,7 @@ import {
   NotificationSettings,
 } from "@/services/notificationService";
 import { useFCMToken } from "@/hooks/useFCMToken";
+import Loader from "@/commonPage/Loader";
 
 export default function NotificationSettingsPage() {
   const router = useRouter();
@@ -106,8 +107,6 @@ export default function NotificationSettingsPage() {
     };
 
     setNotifications(updatedSettings);
-
-    // Save to backend
     await savePreferences(updatedSettings);
   };
 
@@ -150,51 +149,6 @@ export default function NotificationSettingsPage() {
     const defaultSettings = notificationService.getDefaultPreferences();
     setNotifications(defaultSettings);
     await savePreferences(defaultSettings);
-  };
-
-  const handleTestNotification = async () => {
-    if (!userId) {
-      setSnackbar({
-        open: true,
-        message: "User not found. Please log in again.",
-        severity: "error",
-      });
-      return;
-    }
-
-    if (!notifications.pushNotifications) {
-      setSnackbar({
-        open: true,
-        message: "Enable push notifications first",
-        severity: "warning",
-      });
-      return;
-    }
-
-    try {
-      const success = await notificationService.sendTestNotification();
-
-      if (success) {
-        setSnackbar({
-          open: true,
-          message: "Test notification sent successfully",
-          severity: "success",
-        });
-      } else {
-        setSnackbar({
-          open: true,
-          message: "Test notification may not have been sent",
-          severity: "info",
-        });
-      }
-    } catch (error) {
-      console.error("Error sending test notification:", error);
-      setSnackbar({
-        open: true,
-        message: "Failed to send test notification",
-        severity: "error",
-      });
-    }
   };
 
   const notificationItems = [
@@ -252,17 +206,11 @@ export default function NotificationSettingsPage() {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          backgroundColor: "#121212",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <CircularProgress sx={{ color: "#FF1B6B" }} />
-      </Box>
+      <>
+        <Header />
+        <Loader />
+        <Footer />
+      </>
     );
   }
 
@@ -454,32 +402,6 @@ export default function NotificationSettingsPage() {
             mt: 3,
           }}
         >
-          {/* <Button
-            variant="contained"
-            onClick={handleTestNotification}
-            fullWidth={isMobile}
-            disabled={saving || !notifications.pushNotifications || !userId}
-            sx={{
-              backgroundColor: notifications.pushNotifications
-                ? "#03dac5"
-                : "#666",
-              borderRadius: "12px",
-              py: 1.5,
-              fontSize: isMobile ? "0.875rem" : "1rem",
-              fontWeight: 600,
-              textTransform: "none",
-              minWidth: isMobile ? "auto" : "200px",
-              "&:hover": {
-                backgroundColor: notifications.pushNotifications
-                  ? "#00c9b2"
-                  : "#666",
-              },
-              "&.Mui-disabled": { backgroundColor: "#444", color: "#888" },
-            }}
-          >
-            {saving ? "Saving..." : "Send Test Notification"}
-          </Button> */}
-
           <Button
             variant="outlined"
             onClick={handleReset}
