@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useEffect, useMemo, useState, useRef, memo } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  memo,
+  useContext,
+} from "react";
 import {
   Box,
   Container,
@@ -31,6 +38,8 @@ import * as Yup from "yup";
 import PhoneInput, { CountryData } from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
 import { jwtDecode } from "jwt-decode";
+import { PushNotificationsContext } from "@/components/PushNotificationsProvider";
+import { getToken } from "firebase/messaging";
 
 const theme = createTheme({
   palette: {
@@ -168,6 +177,7 @@ const trackHit = async ({
 
 const LoginPage = () => {
   const router = useRouter();
+  const messaging = useContext(PushNotificationsContext);
   const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<"email" | "phone">("email");
   const [loginMethod, setLoginMethod] = useState<"password" | "otp">(
@@ -254,12 +264,66 @@ const LoginPage = () => {
       }),
     [loginMethod, mode]
   );
-  
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const ref = document.referrer;
     }
   }, []);
+
+  const initFCMAndSaveToken = async (profileId: string) => {
+    if (!messaging) {
+      console.error("Messaging not initialized");
+      return;
+    }
+
+    try {
+      if (Notification.permission !== "granted") {
+        const result = await Notification.requestPermission();
+        if (result !== "granted") {
+          throw new Error("Notifications are not allowed.");
+        }
+      }
+
+      if (!("serviceWorker" in navigator)) {
+        throw new Error("Service Workers are not supported");
+      }
+
+      let registration = await navigator.serviceWorker.getRegistration("/");
+
+      if (!registration) {
+        registration = await navigator.serviceWorker.register(
+          "/firebase-messaging-sw.js",
+          { scope: "/" }
+        );
+      }
+
+      await navigator.serviceWorker.ready;
+
+      const firebaseToken = await getToken(messaging, {
+        vapidKey:
+          "BIDy2RbO49rCl4PiCwOEjNbG-iewNN5s19EohjSo5CeGiiMJsS-isosbF2J0Rb7FiSv_3yhJageGnXP5f6N6nag",
+        serviceWorkerRegistration: registration,
+      });
+
+      if (!firebaseToken) {
+        throw new Error("Failed to get FCM token");
+      }
+
+      console.log("FCM Token:", firebaseToken);
+
+      await fetch("/api/user/notification-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profileId,
+          token: firebaseToken,
+        }),
+      });
+    } catch (error) {
+      console.error("FCM init error:", error);
+    }
+  };
 
   const formik = useFormik({
     initialValues: { email: "", countryCode: "", phone: "", password: "" },
@@ -299,6 +363,7 @@ const LoginPage = () => {
           localStorage.setItem("profileUsername", data.currentuserName);
           localStorage.setItem("memberalarm", data.memberAlarm);
           localStorage.setItem("memberShip", data.memberShip);
+          await initFCMAndSaveToken(data.currentProfileId);
           router.push("/home");
         } else if (mode === "email") {
           const code = Math.floor(1000 + Math.random() * 9000);

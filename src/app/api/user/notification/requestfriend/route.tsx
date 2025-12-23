@@ -107,28 +107,11 @@ export async function POST(req: NextRequest) {
           title: title || "SwingSocial",
           body: body || "You have a new notification",
         },
-        data: {
-          url: targetUrl,
-          type: type || "general",
-          timestamp: Date.now().toString(),
-        },
+        data: body.url ? { url: body.url } : undefined,
         token: firebaseToken,
       };
 
-      try {
-        const response = await admin.messaging().send(payload);
-        responses.push({
-          token: firebaseToken,
-          status: "success",
-          response,
-        });
-      } catch (error: any) {
-        responses.push({
-          token: firebaseToken,
-          status: "error",
-          error: error.message,
-        });
-      }
+      await admin.messaging().send(payload);
     }
 
     await pool.query(
@@ -148,6 +131,7 @@ export async function POST(req: NextRequest) {
       success: true,
       results: responses,
       preferences,
+      message: "Notification sent successfully.",
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
