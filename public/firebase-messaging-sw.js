@@ -19,10 +19,16 @@ const messaging = firebase.messaging(app);
 
 messaging.onBackgroundMessage(messaging, async (payload) => {
   const { notification, data } = payload;
+
+  const url = data?.url || "/";
+
+  console.log("[SW] Background message received");
+  console.log("[SW] Notification URL:", url);
+
   const notificationOptions = {
     body: notification?.body,
     icon: "/logo.png",
-    data: { url: data?.url || "/" },
+    data: { url },
   };
 
   await self.registration.showNotification(
@@ -42,7 +48,10 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const url = event.notification.data?.url;
+  const url = event.notification.data?.url || "/";
+
+  console.log("[SW] Notification clicked");
+  console.log("[SW] Click URL:", url);
   if (url) {
     event.waitUntil(
       clients
