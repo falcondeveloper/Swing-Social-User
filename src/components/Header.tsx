@@ -243,6 +243,12 @@ const Header = () => {
       badge: isNewMessage,
     },
     { icon: Heart, label: "Matches", path: "/matches" },
+    {
+      icon: Bell,
+      label: "Notifications",
+      path: "/notifications",
+      badge: notificationCount > 0,
+    },
     { icon: Calendar, label: "Events", path: "/events" },
     {
       icon: "/images/dollar_img.png",
@@ -540,27 +546,17 @@ const Header = () => {
                       <ListItem
                         key={item.label}
                         onClick={() => {
-                          router.push(item.path);
+                          if (item.label === "Notifications") {
+                            setMobileMenuOpen(false);
+                            handleNotificationClick();
+                            return;
+                          }
                           if (item.label === "Messaging") {
                             resetNewMessage();
                           }
+
+                          router.push(item.path);
                           setMobileMenuOpen(false);
-                        }}
-                        sx={{
-                          borderRadius: "12px",
-                          mb: 1,
-                          cursor: "pointer",
-                          backgroundColor: isActive
-                            ? "rgba(255, 27, 107, 0.1)"
-                            : "transparent",
-                          border: isActive
-                            ? "1px solid rgba(255, 27, 107, 0.2)"
-                            : "1px solid transparent",
-                          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                          "&:hover": {
-                            backgroundColor: "rgba(255, 27, 107, 0.05)",
-                            transform: "translateX(4px)",
-                          },
                         }}
                       >
                         <ListItemIcon sx={{ minWidth: 40 }}>
@@ -969,241 +965,238 @@ const Header = () => {
               </Box>
             </Toolbar>
           </AppBar>
-          <Drawer
-            anchor="right"
-            open={notificationDrawerOpen}
-            onClose={() => setNotificationDrawerOpen(false)}
-            PaperProps={{
-              sx: {
-                width: isMobile ? "100%" : 420,
-                bgcolor: "rgba(14,14,14,0.98)",
-                backdropFilter: "blur(18px)",
-                borderLeft: "1px solid rgba(255,255,255,0.06)",
-              },
-            }}
-          >
-            <AnimatePresence mode="wait">
-              {notificationDrawerOpen && (
-                <motion.div
-                  variants={drawerMotion}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  style={{
-                    height: "100vh",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  {/* ================= HEADER ================= */}
-                  <Box
+        </>
+      )}
+
+      <Drawer
+        anchor="right"
+        open={notificationDrawerOpen}
+        onClose={() => setNotificationDrawerOpen(false)}
+        PaperProps={{
+          sx: {
+            width: isMobile ? "100%" : 420,
+            bgcolor: "rgba(14,14,14,0.98)",
+            backdropFilter: "blur(18px)",
+            borderLeft: "1px solid rgba(255,255,255,0.06)",
+          },
+        }}
+      >
+        <AnimatePresence mode="wait">
+          {notificationDrawerOpen && (
+            <motion.div
+              variants={drawerMotion}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              style={{
+                height: "100vh",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {/* ================= HEADER ================= */}
+              <Box
+                sx={{
+                  px: 3,
+                  py: 2,
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  bgcolor: "rgba(14,14,14,0.95)",
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography sx={{ color: "#fff", fontWeight: 600 }}>
+                    Notifications
+                  </Typography>
+                  {notificationCount > 0 && (
+                    <Chip
+                      label={notificationCount}
+                      size="small"
+                      sx={{
+                        bgcolor: "#FF1B6B",
+                        color: "#fff",
+                        fontWeight: 600,
+                        height: 20,
+                      }}
+                    />
+                  )}
+                </Box>
+
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  {/* Preferences */}
+                  <IconButton
+                    onClick={() => router.push("/notifications")}
                     sx={{
-                      px: 3,
-                      py: 2,
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 10,
-                      bgcolor: "rgba(14,14,14,0.95)",
-                      borderBottom: "1px solid rgba(255,255,255,0.06)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
+                      color: "rgba(255,255,255,0.7)",
+                      "&:hover": {
+                        color: "#FF1B6B",
+                        bgcolor: "rgba(255,27,107,0.12)",
+                      },
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography sx={{ color: "#fff", fontWeight: 600 }}>
-                        Notifications
-                      </Typography>
-                      {notificationCount > 0 && (
-                        <Chip
-                          label={notificationCount}
-                          size="small"
+                    <Sliders size={18} />
+                  </IconButton>
+
+                  {/* Close */}
+                  <IconButton
+                    onClick={() => setNotificationDrawerOpen(false)}
+                    sx={{
+                      color: "rgba(255,255,255,0.7)",
+                      "&:hover": {
+                        color: "#FF1B6B",
+                        bgcolor: "rgba(255,27,107,0.12)",
+                      },
+                    }}
+                  >
+                    <X size={18} />
+                  </IconButton>
+                </Box>
+              </Box>
+
+              {/* ================= ACTION BAR ================= */}
+              {notifications.length > 0 && (
+                <Box
+                  sx={{
+                    px: 2,
+                    py: 1.5,
+                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  }}
+                >
+                  <Button
+                    fullWidth
+                    size="small"
+                    startIcon={<CheckCheck size={16} />}
+                    onClick={handleMarkAllRead}
+                    sx={{
+                      justifyContent: "flex-start",
+                      color: "#FF1B6B",
+                      fontWeight: 500,
+                      "&:hover": {
+                        bgcolor: "rgba(255,27,107,0.12)",
+                      },
+                    }}
+                  >
+                    Mark all as read
+                  </Button>
+                </Box>
+              )}
+
+              {/* ================= LIST ================= */}
+              <Box sx={{ flex: 1, overflowY: "auto", px: 2, py: 2 }}>
+                {/* 🔹 Skeleton Loader */}
+                {notificationsLoading && (
+                  <>
+                    {[...Array(5)].map((_, i) => (
+                      <Box
+                        key={i}
+                        sx={{
+                          p: 2,
+                          mb: 2,
+                          borderRadius: 2,
+                          border: "1px solid rgba(255,255,255,0.05)",
+                        }}
+                      >
+                        <Skeleton width="40%" height={16} />
+                        <Skeleton width="100%" height={14} />
+                        <Skeleton width="70%" height={14} />
+                      </Box>
+                    ))}
+                  </>
+                )}
+
+                {/* 🔹 Empty State */}
+                {!notificationsLoading && notifications.length === 0 && (
+                  <Box sx={{ textAlign: "center", py: 10 }}>
+                    <Bell size={44} color="rgba(255,255,255,0.25)" />
+                    <Typography sx={{ color: "rgba(255,255,255,0.6)", mt: 2 }}>
+                      You're all caught up
+                    </Typography>
+                  </Box>
+                )}
+
+                {/* 🔹 Notification Items */}
+                {!notificationsLoading &&
+                  notifications.map((notif) => (
+                    <Box
+                      key={notif.id}
+                      onClick={() => handleNotificationClickOpen(notif)}
+                      sx={{
+                        p: 2,
+                        mb: 1.5,
+                        borderRadius: 2,
+                        cursor: "pointer",
+                        position: "relative",
+                        bgcolor: notif.is_read
+                          ? "rgba(255,255,255,0.03)"
+                          : "rgba(255,27,107,0.08)",
+                        border: notif.is_read
+                          ? "1px solid rgba(255,255,255,0.05)"
+                          : "1px solid rgba(255,27,107,0.25)",
+                        "&:hover": {
+                          bgcolor: "rgba(255,27,107,0.12)",
+                        },
+                      }}
+                    >
+                      {!notif.is_read && (
+                        <Box
                           sx={{
+                            position: "absolute",
+                            top: 12,
+                            right: 12,
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
                             bgcolor: "#FF1B6B",
-                            color: "#fff",
-                            fontWeight: 600,
-                            height: 20,
                           }}
                         />
                       )}
-                    </Box>
 
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                      {/* Preferences */}
-                      <IconButton
-                        onClick={() => router.push("/notifications")}
+                      <Typography
+                        sx={{ color: "#fff", fontWeight: 600, mb: 0.5 }}
+                      >
+                        {notif.title}
+                      </Typography>
+
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "rgba(255,255,255,0.7)" }}
+                      >
+                        {notif.body}
+                      </Typography>
+
+                      <Box
                         sx={{
-                          color: "rgba(255,255,255,0.7)",
-                          "&:hover": {
-                            color: "#FF1B6B",
-                            bgcolor: "rgba(255,27,107,0.12)",
-                          },
+                          display: "flex",
+                          justifyContent: "flex-end",
+                          mt: 1,
                         }}
                       >
-                        <Sliders size={18} />
-                      </IconButton>
-
-                      {/* Close */}
-                      <IconButton
-                        onClick={() => setNotificationDrawerOpen(false)}
-                        sx={{
-                          color: "rgba(255,255,255,0.7)",
-                          "&:hover": {
-                            color: "#FF1B6B",
-                            bgcolor: "rgba(255,27,107,0.12)",
-                          },
-                        }}
-                      >
-                        <X size={18} />
-                      </IconButton>
-                    </Box>
-                  </Box>
-
-                  {/* ================= ACTION BAR ================= */}
-                  {notifications.length > 0 && (
-                    <Box
-                      sx={{
-                        px: 2,
-                        py: 1.5,
-                        borderBottom: "1px solid rgba(255,255,255,0.06)",
-                      }}
-                    >
-                      <Button
-                        fullWidth
-                        size="small"
-                        startIcon={<CheckCheck size={16} />}
-                        onClick={handleMarkAllRead}
-                        sx={{
-                          justifyContent: "flex-start",
-                          color: "#FF1B6B",
-                          fontWeight: 500,
-                          "&:hover": {
-                            bgcolor: "rgba(255,27,107,0.12)",
-                          },
-                        }}
-                      >
-                        Mark all as read
-                      </Button>
-                    </Box>
-                  )}
-
-                  {/* ================= LIST ================= */}
-                  <Box sx={{ flex: 1, overflowY: "auto", px: 2, py: 2 }}>
-                    {/* 🔹 Skeleton Loader */}
-                    {notificationsLoading && (
-                      <>
-                        {[...Array(5)].map((_, i) => (
-                          <Box
-                            key={i}
-                            sx={{
-                              p: 2,
-                              mb: 2,
-                              borderRadius: 2,
-                              border: "1px solid rgba(255,255,255,0.05)",
-                            }}
-                          >
-                            <Skeleton width="40%" height={16} />
-                            <Skeleton width="100%" height={14} />
-                            <Skeleton width="70%" height={14} />
-                          </Box>
-                        ))}
-                      </>
-                    )}
-
-                    {/* 🔹 Empty State */}
-                    {!notificationsLoading && notifications.length === 0 && (
-                      <Box sx={{ textAlign: "center", py: 10 }}>
-                        <Bell size={44} color="rgba(255,255,255,0.25)" />
-                        <Typography
-                          sx={{ color: "rgba(255,255,255,0.6)", mt: 2 }}
-                        >
-                          You're all caught up
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {/* 🔹 Notification Items */}
-                    {!notificationsLoading &&
-                      notifications.map((notif) => (
-                        <Box
-                          key={notif.id}
-                          onClick={() => handleNotificationClickOpen(notif)}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => handleDeleteNotification(e, notif)}
                           sx={{
-                            p: 2,
-                            mb: 1.5,
-                            borderRadius: 2,
-                            cursor: "pointer",
-                            position: "relative",
-                            bgcolor: notif.is_read
-                              ? "rgba(255,255,255,0.03)"
-                              : "rgba(255,27,107,0.08)",
-                            border: notif.is_read
-                              ? "1px solid rgba(255,255,255,0.05)"
-                              : "1px solid rgba(255,27,107,0.25)",
+                            color: "rgba(255,255,255,0.4)",
                             "&:hover": {
-                              bgcolor: "rgba(255,27,107,0.12)",
+                              color: "#F44336",
+                              bgcolor: "rgba(244,67,54,0.12)",
                             },
                           }}
                         >
-                          {!notif.is_read && (
-                            <Box
-                              sx={{
-                                position: "absolute",
-                                top: 12,
-                                right: 12,
-                                width: 8,
-                                height: 8,
-                                borderRadius: "50%",
-                                bgcolor: "#FF1B6B",
-                              }}
-                            />
-                          )}
-
-                          <Typography
-                            sx={{ color: "#fff", fontWeight: 600, mb: 0.5 }}
-                          >
-                            {notif.title}
-                          </Typography>
-
-                          <Typography
-                            variant="body2"
-                            sx={{ color: "rgba(255,255,255,0.7)" }}
-                          >
-                            {notif.body}
-                          </Typography>
-
-                          <Box
-                            sx={{
-                              display: "flex",
-                              justifyContent: "flex-end",
-                              mt: 1,
-                            }}
-                          >
-                            <IconButton
-                              size="small"
-                              onClick={(e) =>
-                                handleDeleteNotification(e, notif)
-                              }
-                              sx={{
-                                color: "rgba(255,255,255,0.4)",
-                                "&:hover": {
-                                  color: "#F44336",
-                                  bgcolor: "rgba(244,67,54,0.12)",
-                                },
-                              }}
-                            >
-                              <Trash2 size={15} />
-                            </IconButton>
-                          </Box>
-                        </Box>
-                      ))}
-                  </Box>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </Drawer>
-        </>
-      )}
+                          <Trash2 size={15} />
+                        </IconButton>
+                      </Box>
+                    </Box>
+                  ))}
+              </Box>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Drawer>
 
       {/* Spacer to push content below fixed header */}
       {(() => {
