@@ -1,9 +1,11 @@
-const http = require("http");
 const { Server } = require("socket.io");
+const http = require("http");
 
 const server = http.createServer((req, res) => {
   res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("Socket server running\n");
+  const message = "It works!\n";
+  const version = `NodeJS ${process.versions.node}\n`;
+  res.end(`${message}${version}`);
 });
 
 const io = new Server(server, {
@@ -14,32 +16,20 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("🟢 User connected:", socket.id);
-
-  socket.on("join-room", (roomId) => {
-    socket.join(roomId);
-    console.log(`📥 Socket ${socket.id} joined room ${roomId}`);
+  console.log("A user connected");
+  socket.on("message", (msg) => {
+    socket.broadcast.emit("message", msg);
+    console.log("messaging event");
   });
-
-  socket.on("send-message", (payload) => {
-    const { roomId } = payload;
-
-    if (!roomId) return;
-
-    socket.to(roomId).emit("receive-message", payload);
-
-    console.log("💬 Message sent to room:", roomId);
-  });
-
   socket.on("disconnect", () => {
-    console.log("🔴 User disconnected:", socket.id);
+    console.log("A user disconnected");
   });
 });
 
 const broadcastMessage = (message) => {
-  io.emit("receive-message", message);
+  io.emit("message", message);
 };
 
 server.listen(3001, () => {
-  console.log("🚀 Socket server running on port 3001");
+  console.log("Server is running on port 3001");
 });
