@@ -1890,7 +1890,11 @@ const ProfileDetail: React.FC = () => {
                       label="Logout"
                       onClick={handleLogout}
                     />
+<<<<<<< HEAD
                     <ActionChip
+=======
+                   <ActionChip
+>>>>>>> ed943f8e641231435ab0b4a35b8630c80a274059
                       icon={<Bell size={14} />}
                       label="Notifications"
                       onClick={() => router.push("/notifications")}
