@@ -36,11 +36,11 @@ import Footer from "@/components/Footer";
 
 dayjs.extend(relativeTime);
 
-const socket = io("https://api.nomolive.com/");
-
 type Params = Promise<{ id: string }>;
 
 export default function ChatPage(props: { params: Params }) {
+  const socketRef = useRef<any>(null);
+
   const router = useRouter();
   const [userProfile, setUserProfile] = useState<any>({});
   const [myProfile, setMyProfile] = useState<any>({});
@@ -59,6 +59,10 @@ export default function ChatPage(props: { params: Params }) {
   const [userDeviceToken, setUserDeviceToken] = useState(null);
   const [profileId, setProfileId] = useState<any>();
 
+  const [isTyping, setIsTyping] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     const handleImageClick = (e: any) => {
       if (e.target.tagName === "IMG") {
@@ -67,7 +71,6 @@ export default function ChatPage(props: { params: Params }) {
     };
 
     const containers = document.querySelectorAll(".message-content");
-
     containers.forEach((container) =>
       container.addEventListener("click", handleImageClick)
     );
@@ -88,65 +91,97 @@ export default function ChatPage(props: { params: Params }) {
   }, [messages]);
 
   useEffect(() => {
-    socket.on("connect", () => {
-      setActiveUsers((prevActiveUsers: any) => ({
-        ...prevActiveUsers,
-        [userId]: true,
-      }));
-    });
+    if (!profileId) return;
 
-    socket.on("disconnect", () => {
-      setActiveUsers((prevActiveUsers: any) => ({
-        ...prevActiveUsers,
-        [userId]: false,
-      }));
-    });
+    if (!socketRef.current) {
+      socketRef.current = io("http://localhost:3001", {
+        transports: ["websocket"],
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+      });
 
-    socket.on("message", (message) => {
-      const newUserMessage = {
-        AvatarFrom: myProfile?.Avatar || "/noavatar.png",
-        AvatarTo: userProfile?.Avatar,
-        ChatId: "temporary-chat-id",
-        Conversation: message?.message,
-        ConversationId: "temporary-conversation-id",
-        CreatedAt: new Date().toISOString(),
-        FromUsername: userProfile?.Username || "You",
-        MemberIdFrom: message?.from,
-        MemberIdTo: message?.to,
-        ToUsername: userProfile?.Username || "Recipient",
-        lastcommentinserted: 1,
-      };
-      setRealTimeMessage(newUserMessage);
-      fetchAllChats();
-    });
-    socket.on("error", (error) => {
-      console.error("WebSocket error:", error);
-    });
+      socketRef.current.on("connect", () => {
+        console.log("✅ Socket connected:", socketRef.current.id);
+        setIsConnected(true);
+        socketRef.current.emit("user:join", profileId);
+      });
+
+      socketRef.current.on("disconnect", () => {
+        console.log("❌ Socket disconnected");
+        setIsConnected(false);
+      });
+
+      socketRef.current.on("message:receive", (data: any) => {
+        if (data.from === userId) {
+          setMessages((prev: any) => [
+            ...prev,
+            {
+              AvatarFrom: userProfile?.Avatar || "/noavatar.png",
+              AvatarTo: myProfile?.Avatar,
+              ChatId: data.roomId,
+              Conversation: data.message,
+              ConversationId: `temp-${Date.now()}`,
+              CreatedAt: data.timestamp,
+              FromUsername: userProfile?.Username || "User",
+              MemberIdFrom: data.from,
+              MemberIdTo: data.to,
+            },
+          ]);
+        }
+      });
+
+      socketRef.current.on("typing:start", ({ from }: any) => {
+        if (from === userId) setIsTyping(true);
+      });
+
+      socketRef.current.on("typing:stop", ({ from }: any) => {
+        if (from === userId) setIsTyping(false);
+      });
+    }
 
     return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("message");
+      // ❗ DO NOT DISCONNECT HERE
     };
-  }, []);
+  }, [profileId, userId]);
 
-  useEffect(() => {
-    if (
-      realtimeMessage?.MemberIdTo === myProfile?.Id &&
-      realtimeMessage?.MemberIdFrom === userProfile?.Id
-    ) {
-      setMessages([...messages, realtimeMessage]);
+  const sendMessage = (messageContent: string) => {
+    const socket = socketRef.current;
+    if (!socket || !socket.connected) {
+      console.warn("⏳ Socket not ready, message skipped");
+      return;
     }
-  }, [realtimeMessage]);
 
-  const sendMessage = () => {
-    const messageData = {
-      message: newMessage,
+    const roomId = [profileId, userId].sort().join("-");
+
+    socket.emit("message:send", {
+      message: messageContent,
       from: profileId,
-      to: userProfile?.Id,
-    };
-    socket.emit("message", messageData);
-    setNewMessage("");
+      to: userId,
+      roomId,
+      timestamp: new Date().toISOString(),
+    });
+
+    socket.emit("typing:stop", { to: userId, from: profileId });
+  };
+
+  const handleTyping = (value: string) => {
+    setNewMessage(value);
+
+    const socket = socketRef.current;
+    if (!socket || !socket.connected) return;
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+    if (value.length > 0) {
+      socket.emit("typing:start", { to: userId, from: profileId });
+
+      typingTimeoutRef.current = setTimeout(() => {
+        socket.emit("typing:stop", { to: userId, from: profileId });
+      }, 1500);
+    } else {
+      socket.emit("typing:stop", { to: userId, from: profileId });
+    }
   };
 
   const handleClose = () => {
@@ -253,62 +288,94 @@ export default function ChatPage(props: { params: Params }) {
   };
 
   const handleSendMessage = async () => {
-    if (newMessage.trim()) {
-      sendMessage();
-      const newUserMessage = {
-        AvatarFrom: myProfile?.Avatar || "/noavatar.png",
-        AvatarTo: userProfile?.Avatar,
-        ChatId: "temporary-chat-id",
-        Conversation: newMessage,
-        ConversationId: "temporary-conversation-id",
-        CreatedAt: new Date().toISOString(),
-        FromUsername: myProfile?.Username || "You",
-        MemberIdFrom: profileId,
-        MemberIdTo: userProfile?.Id,
-        ToUsername: userProfile?.Username || "Recipient",
-        lastcommentinserted: 1,
-      };
+    if (!newMessage.trim()) return;
 
-      setMessages([...messages, newUserMessage]);
+    // Create optimistic message
+    const optimisticMessage = {
+      AvatarFrom: myProfile?.Avatar || "/noavatar.png",
+      AvatarTo: userProfile?.Avatar,
+      ChatId: [profileId, userId].sort().join("-"),
+      Conversation: newMessage,
+      ConversationId: `temp-${Date.now()}`,
+      CreatedAt: new Date().toISOString(),
+      FromUsername: myProfile?.Username || "You",
+      MemberIdFrom: profileId,
+      MemberIdTo: userId,
+      ToUsername: userProfile?.Username || "Recipient",
+      lastcommentinserted: 1,
+      sending: true,
+    };
 
-      if (userDeviceToken) {
-        sendNotification(newUserMessage?.Conversation);
+    // Add to UI immediately
+    setMessages((prev: any) => [...prev, optimisticMessage]);
+
+    // Send via socket
+    sendMessage(newMessage);
+
+    // Send notification if user has device token
+    if (userDeviceToken) {
+      sendNotification(newMessage);
+    }
+
+    // Save to database
+    const payload = {
+      chatid:
+        existingChatIndex === -1 ? 0 : chatList[existingChatIndex]?.ChatId,
+      ProfileIdfrom: myProfile?.Id,
+      ProfileIDto: userProfile?.Id,
+      Conversation: newMessage,
+    };
+
+    setNewMessage("");
+
+    try {
+      const response = await fetch("/api/user/messaging", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Message saved to DB:", result);
+
+        // Update message with actual chat ID
+        setMessages((prev: any) =>
+          prev.map((msg: any) =>
+            msg.ConversationId === optimisticMessage.ConversationId
+              ? { ...msg, ChatId: result.ChatId, sending: false }
+              : msg
+          )
+        );
+
+        // Refresh chat list
+        fetchAllChats();
+      } else {
+        const errorData = await response.json();
+        console.error("Error saving message:", errorData);
+
+        // Mark message as failed
+        setMessages((prev: any) =>
+          prev.map((msg: any) =>
+            msg.ConversationId === optimisticMessage.ConversationId
+              ? { ...msg, failed: true, sending: false }
+              : msg
+          )
+        );
       }
-      const payload = {
-        chatid:
-          existingChatIndex === -1 ? 0 : chatList[existingChatIndex]?.ChatId,
-        ProfileIdfrom: myProfile?.Id,
-        ProfileIDto: userProfile?.Id,
-        Conversation: newMessage,
-      };
+    } catch (error) {
+      console.error("Network error while sending message:", error);
 
-      setNewMessage("");
-
-      try {
-        const response = await fetch("/api/user/messaging", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-        } else {
-          const errorData = await response.json();
-          console.error("Error sending message:", errorData);
-        }
-      } catch (error) {
-        console.error("Network error while sending message:", error);
-        setMessages((prevMessages: any) => [
-          ...prevMessages,
-          {
-            sender: "error",
-            text: "Failed to send message. Please try again.",
-          },
-        ]);
-      }
+      // Mark message as failed
+      setMessages((prev: any) =>
+        prev.map((msg: any) =>
+          msg.ConversationId === optimisticMessage.ConversationId
+            ? { ...msg, failed: true, sending: false }
+            : msg
+        )
+      );
     }
   };
 
@@ -339,77 +406,80 @@ export default function ChatPage(props: { params: Params }) {
 
   const handleImageUpload = async (event: any) => {
     const file = event.target.files[0];
-    if (file) {
-      const reader: any = new FileReader();
-      reader.onload = () => {
-        const newUserMessage = {
-          AvatarFrom: myProfile?.Avatar || "/noavatar.png",
-          AvatarTo: userProfile?.Avatar,
-          ChatId: "temporary-chat-id",
-          Conversation: `<img src="${
-            reader.result &&
-            typeof reader.result === "string" &&
-            reader.result.trim() !== ""
-              ? reader.result
-              : "/noavatar.png"
-          }" alt="Uploaded" style="max-width:"100px";border-radius:"8px"/>`,
-          ConversationId: "temporary-conversation-id",
-          CreatedAt: new Date().toISOString(),
-          FromUsername: userProfile?.Username || "You",
-          MemberIdFrom: profileId,
-          MemberIdTo: userProfile?.Id,
-          ToUsername: userProfile?.Username || "Recipient",
-          lastcommentinserted: 1,
-        };
+    if (!file) return;
 
-        setMessages([...messages, newUserMessage]);
+    // Upload image first
+    const imageUrl = await uploadImage(file);
+    if (!imageUrl) {
+      console.error("Failed to upload image");
+      return;
+    }
 
-        if (userDeviceToken) {
-          sendNotification(newUserMessage?.Conversation);
-        }
-      };
-      reader.readAsDataURL(file);
-      let imageUrl: any = await uploadImage(file);
-      const messageData = {
-        message: `<img src="${imageUrl}" alt="Uploaded" style="max-width:"100px";border-radius:"8px"/>`,
-        from: profileId,
-        to: userProfile?.Id,
-      };
-      socket.emit("message", messageData);
-      setNewMessage("");
-      const payload = {
-        chatid:
-          existingChatIndex === -1 ? 0 : chatList[existingChatIndex]?.ChatId,
-        ProfileIdfrom: myProfile?.Id,
-        ProfileIDto: userProfile?.Id,
-        Conversation: `<img src="${imageUrl}" alt="Uploaded" style="max-width:"100px";border-radius:"8px"/>`,
-      };
-      setNewMessage("");
+    const imageHtml = `<img src="${imageUrl}" alt="Uploaded" style="max-width:100px;border-radius:8px"/>`;
 
-      try {
-        const response: any = await fetch("/api/user/messaging", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-        if (response.ok) {
-          const result = response.json();
-        } else {
-          const errorData = response.json();
-          console.error("Error sending message:", errorData);
-        }
-      } catch (error) {
-        console.error("Network error while sending message:", error);
-        setMessages((prevMessages: any) => [
-          ...prevMessages,
-          {
-            sender: "error",
-            text: "Failed to send message. Please try again.",
-          },
-        ]);
+    // Create optimistic message
+    const optimisticMessage = {
+      AvatarFrom: myProfile?.Avatar || "/noavatar.png",
+      AvatarTo: userProfile?.Avatar,
+      ChatId: [profileId, userId].sort().join("-"),
+      Conversation: imageHtml,
+      ConversationId: `temp-${Date.now()}`,
+      CreatedAt: new Date().toISOString(),
+      FromUsername: myProfile?.Username || "You",
+      MemberIdFrom: profileId,
+      MemberIdTo: userId,
+      ToUsername: userProfile?.Username || "Recipient",
+      lastcommentinserted: 1,
+      sending: true,
+    };
+
+    setMessages((prev: any) => [...prev, optimisticMessage]);
+
+    // Send via socket
+    sendMessage(imageHtml);
+
+    // Send notification
+    if (userDeviceToken) {
+      sendNotification("📷 Sent an image");
+    }
+
+    // Save to database
+    const payload = {
+      chatid:
+        existingChatIndex === -1 ? 0 : chatList[existingChatIndex]?.ChatId,
+      ProfileIdfrom: myProfile?.Id,
+      ProfileIDto: userProfile?.Id,
+      Conversation: imageHtml,
+    };
+
+    try {
+      const response = await fetch("/api/user/messaging", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Image message saved:", result);
+
+        setMessages((prev: any) =>
+          prev.map((msg: any) =>
+            msg.ConversationId === optimisticMessage.ConversationId
+              ? { ...msg, ChatId: result.ChatId, sending: false }
+              : msg
+          )
+        );
+
+        fetchAllChats();
+      } else {
+        const errorData = await response.json();
+        console.error("Error saving image message:", errorData);
       }
+    } catch (error) {
+      console.error("Network error while sending image:", error);
     }
   };
 
@@ -577,6 +647,22 @@ export default function ChatPage(props: { params: Params }) {
       }}
     >
       <Header />
+
+      {!isConnected && (
+        <Box
+          sx={{
+            bgcolor: "#FF9800",
+            color: "white",
+            py: 0.5,
+            px: 2,
+            textAlign: "center",
+            fontSize: "12px",
+          }}
+        >
+          Reconnecting...
+        </Box>
+      )}
+
       {isMobile ? (
         <>
           {/* Chat Header */}
@@ -626,10 +712,14 @@ export default function ChatPage(props: { params: Params }) {
                   <Typography variant="h6" color="white">
                     {userProfile?.Username || "User"}
                   </Typography>
-                  <Typography variant="body2" color="#FF1B6B">
-                    {userProfile?.LastOnline
+                  <Typography variant="body2" color="#FF1B6B" fontSize="12px">
+                    {isTyping
+                      ? "typing..."
+                      : activeUsers[userId]
+                      ? "online"
+                      : userProfile?.LastOnline
                       ? dayjs(userProfile.LastOnline).fromNow()
-                      : "N/A"}
+                      : "offline"}
                   </Typography>
                 </Box>
               </Box>
@@ -689,6 +779,11 @@ export default function ChatPage(props: { params: Params }) {
                               __html: m?.Conversation,
                             }}
                           />
+                          {m?.failed && (
+                            <Typography fontSize="10px" color="error">
+                              Failed to send
+                            </Typography>
+                          )}
                         </Box>
                       </ListItem>
                     )
@@ -696,7 +791,7 @@ export default function ChatPage(props: { params: Params }) {
 
                 {messages?.length === 0 && (
                   <Typography textAlign="center" color="gray">
-                    No messages found
+                    No messages yet. Start the conversation!
                   </Typography>
                 )}
 
