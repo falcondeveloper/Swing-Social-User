@@ -22,7 +22,6 @@ import axios from "axios";
 import Header from "@/components/Header";
 import Picker from "emoji-picker-react";
 import { useRouter } from "next/navigation";
-import { jwtDecode } from "jwt-decode";
 import {
   Send as SendIcon,
   EmojiEmotions as EmojiIcon,
@@ -234,6 +233,9 @@ export default function ChatPage(props: { params: Params }) {
     : -1;
 
   const sendNotification = async (message: any) => {
+    console.log("myProfile?.Id", myProfile?.Id);
+    if (!myProfile?.Id || !userProfile?.Id) return;
+    console.log("userProfile", userProfile);
     const response = await fetch("/api/user/notification/requestfriend", {
       method: "POST",
       headers: {
@@ -244,7 +246,7 @@ export default function ChatPage(props: { params: Params }) {
         body: message,
         title: "New Message",
         type: "message",
-        url: `https://swing-social-user.vercel.app/messaging/${userProfile.Id}`,
+        url: `https://swing-social-user.vercel.app/messaging/${myProfile.Id}`,
       }),
     });
 
