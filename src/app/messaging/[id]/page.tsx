@@ -27,7 +27,6 @@ import {
   EmojiEmotions as EmojiIcon,
   Image as ImageIcon,
 } from "@mui/icons-material";
-import io from "socket.io-client";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import UserProfileModal from "@/components/UserProfileModal";
@@ -36,8 +35,6 @@ import Footer from "@/components/Footer";
 
 dayjs.extend(relativeTime);
 
-const socket = io("https://api.nomolive.com/");
-
 type Params = Promise<{ id: string }>;
 
 export default function ChatPage(props: { params: Params }) {
@@ -45,18 +42,15 @@ export default function ChatPage(props: { params: Params }) {
   const [userProfile, setUserProfile] = useState<any>({});
   const [myProfile, setMyProfile] = useState<any>({});
   const [userId, setUserId] = useState<any>(null);
-  const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
+  const isMobile = useMediaQuery("(max-width: 480px)");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const [showDetail, setShowDetail] = useState<any>(false);
+  const [showDetail, setShowDetail] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<any>(null);
-  const [activeUsers, setActiveUsers] = useState<any>({});
   const [messages, setMessages] = useState<any>([]);
   const [openImage, setOpenImage] = useState<string | null>(null);
   const [chatList, setChatList] = useState<any>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [realtimeMessage, setRealTimeMessage] = useState<any>();
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-  const [userDeviceToken, setUserDeviceToken] = useState(null);
   const [profileId, setProfileId] = useState<any>();
 
   useEffect(() => {
@@ -67,7 +61,6 @@ export default function ChatPage(props: { params: Params }) {
     };
 
     const containers = document.querySelectorAll(".message-content");
-
     containers.forEach((container) =>
       container.addEventListener("click", handleImageClick)
     );
@@ -88,139 +81,79 @@ export default function ChatPage(props: { params: Params }) {
   }, [messages]);
 
   useEffect(() => {
-    socket.on("connect", () => {
-      setActiveUsers((prevActiveUsers: any) => ({
-        ...prevActiveUsers,
-        [userId]: true,
-      }));
-    });
-
-    socket.on("disconnect", () => {
-      setActiveUsers((prevActiveUsers: any) => ({
-        ...prevActiveUsers,
-        [userId]: false,
-      }));
-    });
-
-    socket.on("message", (message) => {
-      const newUserMessage = {
-        AvatarFrom: myProfile?.Avatar || "/noavatar.png",
-        AvatarTo: userProfile?.Avatar,
-        ChatId: "temporary-chat-id",
-        Conversation: message?.message,
-        ConversationId: "temporary-conversation-id",
-        CreatedAt: new Date().toISOString(),
-        FromUsername: userProfile?.Username || "You",
-        MemberIdFrom: message?.from,
-        MemberIdTo: message?.to,
-        ToUsername: userProfile?.Username || "Recipient",
-        lastcommentinserted: 1,
-      };
-      setRealTimeMessage(newUserMessage);
-      fetchAllChats();
-    });
-    socket.on("error", (error) => {
-      console.error("WebSocket error:", error);
-    });
-
-    return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("message");
-    };
-  }, []);
-
-  useEffect(() => {
-    if (
-      realtimeMessage?.MemberIdTo === myProfile?.Id &&
-      realtimeMessage?.MemberIdFrom === userProfile?.Id
-    ) {
-      setMessages([...messages, realtimeMessage]);
-    }
-  }, [realtimeMessage]);
-
-  const sendMessage = () => {
-    const messageData = {
-      message: newMessage,
-      from: profileId,
-      to: userProfile?.Id,
-    };
-    socket.emit("message", messageData);
-    setNewMessage("");
-  };
-
-  const handleClose = () => {
-    setShowDetail(false);
-    setSelectedUserId(null);
-  };
-
-  const handleGrantAccess = async () => {
-    try {
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
-  useEffect(() => {
     const getIdFromParam = async () => {
       const params = await props.params;
-      const pid: any = params.id;
-      setUserId(pid);
+      setUserId(params.id);
     };
     getIdFromParam();
   }, [props]);
 
   useEffect(() => {
-    if (userProfile) {
-      setUserDeviceToken(userProfile?.Device_Token);
+    if (profileId) {
+      getMyProfile(profileId);
+      fetchAllChats();
     }
-  }, [userProfile]);
+  }, [profileId]);
+
+  useEffect(() => {
+    if (profileId && userId) {
+      fetchChatConversation(profileId, userId);
+      getUserProfile(userId);
+    }
+  }, [profileId, userId]);
 
   const getUserProfile = async (userId: string) => {
-    if (userId) {
-      try {
-        const response = await fetch(`/api/user/sweeping/user?id=${userId}`);
-        if (!response.ok) {
-          console.error(
-            "Failed to fetch advertiser data:",
-            response.statusText
-          );
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
+    if (!userId) return;
+    try {
+      const response = await fetch(`/api/user/sweeping/user?id=${userId}`);
+      if (response.ok) {
         const { user: userData } = await response.json();
-        if (!userData) {
-          console.error("Advertiser not found");
-        } else {
-          setUserProfile(userData);
-        }
-      } catch (error: any) {
-        console.error("Error fetching data:", error.message);
+        setUserProfile(userData);
       }
+    } catch (error: any) {
+      console.error("Error fetching user profile:", error.message);
     }
   };
 
   const getMyProfile = async (userId: string) => {
-    if (userId) {
-      try {
-        const response = await fetch(`/api/user/sweeping/user?id=${userId}`);
-        if (!response.ok) {
-          console.error(
-            "Failed to fetch advertiser data:",
-            response.statusText
-          );
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
+    if (!userId) return;
+    try {
+      const response = await fetch(`/api/user/sweeping/user?id=${userId}`);
+      if (response.ok) {
         const { user: userData } = await response.json();
-        if (!userData) {
-          console.error("Advertiser not found");
-        } else {
-          setMyProfile(userData);
-        }
-      } catch (error: any) {
-        console.error("Error fetching data:", error.message);
+        setMyProfile(userData);
       }
+    } catch (error: any) {
+      console.error("Error fetching my profile:", error.message);
+    }
+  };
+
+  const fetchAllChats = async () => {
+    try {
+      const profileid = localStorage.getItem("logged_in_profile");
+      const response = await axios.get(
+        `/api/user/messaging?profileid=${profileid}`
+      );
+      setChatList(response.data.data);
+    } catch (err: any) {
+      console.error("Error fetching chats:", err);
+    }
+  };
+
+  const fetchChatConversation = async (profileId: any, userId: any) => {
+    try {
+      const payload = { ProfileIdfrom: profileId, ProfileIDto: userId };
+      const response = await fetch("/api/user/messaging/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        setMessages(result?.data || []);
+      }
+    } catch (err: any) {
+      console.error("Error fetching conversation:", err);
     }
   };
 
@@ -234,12 +167,9 @@ export default function ChatPage(props: { params: Params }) {
 
   const sendNotification = async (message: any) => {
     if (!myProfile?.Id || !userProfile?.Id) return;
-    console.log("userProfile", userProfile);
-    const response = await fetch("/api/user/notification/requestfriend", {
+    await fetch("/api/user/notification/requestfriend", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         userId: userProfile.Id,
         body: message,
@@ -248,322 +178,113 @@ export default function ChatPage(props: { params: Params }) {
         url: `https://swing-social-user.vercel.app/messaging/${myProfile.Id}`,
       }),
     });
-
-    const result = await response.json();
   };
 
   const handleSendMessage = async () => {
-    if (newMessage.trim()) {
-      sendMessage();
-      const newUserMessage = {
-        AvatarFrom: myProfile?.Avatar || "/noavatar.png",
-        AvatarTo: userProfile?.Avatar,
-        ChatId: "temporary-chat-id",
-        Conversation: newMessage,
-        ConversationId: "temporary-conversation-id",
-        CreatedAt: new Date().toISOString(),
-        FromUsername: myProfile?.Username || "You",
-        MemberIdFrom: profileId,
-        MemberIdTo: userProfile?.Id,
-        ToUsername: userProfile?.Username || "Recipient",
-        lastcommentinserted: 1,
-      };
+    if (!newMessage.trim()) return;
 
-      setMessages([...messages, newUserMessage]);
+    const newUserMessage = {
+      AvatarFrom: myProfile?.Avatar || "/noavatar.png",
+      AvatarTo: userProfile?.Avatar,
+      ChatId: "temporary-chat-id",
+      Conversation: newMessage,
+      ConversationId: "temporary-conversation-id",
+      CreatedAt: new Date().toISOString(),
+      FromUsername: myProfile?.Username || "You",
+      MemberIdFrom: profileId,
+      MemberIdTo: userProfile?.Id,
+      ToUsername: userProfile?.Username || "Recipient",
+      lastcommentinserted: 1,
+    };
 
-      if (userDeviceToken) {
-        sendNotification(newUserMessage?.Conversation);
-      }
-      const payload = {
-        chatid:
-          existingChatIndex === -1 ? 0 : chatList[existingChatIndex]?.ChatId,
-        ProfileIdfrom: myProfile?.Id,
-        ProfileIDto: userProfile?.Id,
-        Conversation: newMessage,
-      };
+    setMessages([...messages, newUserMessage]);
+    sendNotification(newMessage);
 
-      setNewMessage("");
+    const payload = {
+      chatid:
+        existingChatIndex === -1 ? 0 : chatList[existingChatIndex]?.ChatId,
+      ProfileIdfrom: myProfile?.Id,
+      ProfileIDto: userProfile?.Id,
+      Conversation: newMessage,
+    };
 
-      try {
-        const response = await fetch("/api/user/messaging", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+    setNewMessage("");
 
-        if (response.ok) {
-          const result = await response.json();
-        } else {
-          const errorData = await response.json();
-          console.error("Error sending message:", errorData);
-        }
-      } catch (error) {
-        console.error("Network error while sending message:", error);
-        setMessages((prevMessages: any) => [
-          ...prevMessages,
-          {
-            sender: "error",
-            text: "Failed to send message. Please try again.",
-          },
-        ]);
-      }
+    try {
+      await fetch("/api/user/messaging", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      console.error("Error sending message:", error);
     }
   };
 
-  const handleEmojiClick = (emoji: any) => {
-    setNewMessage((prev) => prev + emoji.emoji);
-  };
-
-  const uploadImage = async (imageData: string): Promise<string | null> => {
+  const uploadImage = async (file: File): Promise<string | null> => {
     try {
       const formData = new FormData();
-      formData.append("image", imageData);
+      formData.append("image", file);
       const response = await fetch("/api/user/upload", {
         method: "POST",
         body: formData,
       });
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to upload image");
-      }
-
       return data?.blobUrl || null;
     } catch (error) {
-      console.error("Error during image upload:", error);
+      console.error("Error uploading image:", error);
       return null;
     }
   };
 
   const handleImageUpload = async (event: any) => {
     const file = event.target.files[0];
-    if (file) {
-      const reader: any = new FileReader();
-      reader.onload = () => {
-        const newUserMessage = {
-          AvatarFrom: myProfile?.Avatar || "/noavatar.png",
-          AvatarTo: userProfile?.Avatar,
-          ChatId: "temporary-chat-id",
-          Conversation: `<img src="${
-            reader.result &&
-            typeof reader.result === "string" &&
-            reader.result.trim() !== ""
-              ? reader.result
-              : "/noavatar.png"
-          }" alt="Uploaded" style="max-width:"100px";border-radius:"8px"/>`,
-          ConversationId: "temporary-conversation-id",
-          CreatedAt: new Date().toISOString(),
-          FromUsername: userProfile?.Username || "You",
-          MemberIdFrom: profileId,
-          MemberIdTo: userProfile?.Id,
-          ToUsername: userProfile?.Username || "Recipient",
-          lastcommentinserted: 1,
-        };
+    if (!file) return;
 
-        setMessages([...messages, newUserMessage]);
+    const imageUrl = await uploadImage(file);
+    if (!imageUrl) return;
 
-        if (userDeviceToken) {
-          sendNotification(newUserMessage?.Conversation);
-        }
-      };
-      reader.readAsDataURL(file);
-      let imageUrl: any = await uploadImage(file);
-      const messageData = {
-        message: `<img src="${imageUrl}" alt="Uploaded" style="max-width:"100px";border-radius:"8px"/>`,
-        from: profileId,
-        to: userProfile?.Id,
-      };
-      socket.emit("message", messageData);
-      setNewMessage("");
-      const payload = {
-        chatid:
-          existingChatIndex === -1 ? 0 : chatList[existingChatIndex]?.ChatId,
-        ProfileIdfrom: myProfile?.Id,
-        ProfileIDto: userProfile?.Id,
-        Conversation: `<img src="${imageUrl}" alt="Uploaded" style="max-width:"100px";border-radius:"8px"/>`,
-      };
-      setNewMessage("");
+    const imageHtml = `<img src="${imageUrl}" alt="Uploaded" style="max-width:100px;border-radius:8px"/>`;
 
-      try {
-        const response: any = await fetch("/api/user/messaging", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-        if (response.ok) {
-          const result = response.json();
-        } else {
-          const errorData = response.json();
-          console.error("Error sending message:", errorData);
-        }
-      } catch (error) {
-        console.error("Network error while sending message:", error);
-        setMessages((prevMessages: any) => [
-          ...prevMessages,
-          {
-            sender: "error",
-            text: "Failed to send message. Please try again.",
-          },
-        ]);
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (profileId) {
-      getCurrentLocation();
-      getMyProfile(profileId);
-      fetchAllChats();
-    }
-  }, [profileId]);
-
-  const fetchAllChats = async () => {
-    try {
-      let profileid = await localStorage.getItem("logged_in_profile");
-      const response = await axios.get(
-        `/api/user/messaging?profileid=${profileid}`
-      );
-      setChatList(response.data.data);
-    } catch (err: any) {
-      console.error("Error fetching chats:", err);
-    }
-  };
-
-  useEffect(() => {
-    if (profileId && userId) {
-      fetchChatConversation(profileId, userId);
-    }
-  }, [profileId, userId]);
-
-  const fetchChatConversation = async (profileId: any, userId: any) => {
-    try {
-      const payload = {
-        ProfileIdfrom: profileId,
-        ProfileIDto: userId,
-      };
-      const response = await fetch("/api/user/messaging/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        const result = await response.json();
-        setMessages((prevMessages: any) => [...prevMessages, ...result?.data]);
-      } else {
-        const errorData = await response.json();
-        console.error("Error sending message:", errorData);
-      }
-    } catch (err: any) {
-      console.error("Error fetching chats:", err);
-    }
-  };
-
-  useEffect(() => {
-    if (userId) {
-      getUserProfile(userId);
-    }
-  }, [userId]);
-
-  const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          const locationName = await getLocationName(latitude, longitude);
-          await sendLocationToAPI(locationName, latitude, longitude);
-        },
-        (error: any) => {
-          console.error("Geolocation error:", error);
-        }
-      );
-    } else {
-      console.error("Geolocation is not supported by this browser.");
-    }
-  };
-
-  const getLocationName = async (latitude: number, longitude: number) => {
-    const apiKey = "AIzaSyBEr0k_aQ_Sns6YbIQ4UBxCUTdPV9AhdF0";
-
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      if (data.status === "OK" && data.results.length > 0) {
-        return data.results[0].formatted_address;
-      }
-
-      console.error("No results found or status not OK:", data);
-      return "Unknown Location";
-    } catch (error) {
-      console.error("Error fetching location name:", error);
-      return "Unknown Location";
-    }
-  };
-
-  const sendLocationToAPI = async (
-    locationName: string,
-    latitude: number,
-    longitude: number
-  ) => {
-    if (!profileId) {
-      console.error("Profile ID is missing.");
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/user/location", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          profileId,
-          locationName,
-          latitude,
-          longitude,
-        }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-      } else {
-        console.error("Error sending location:", data.message);
-      }
-    } catch (error) {
-      console.error("Error sending location to API:", error);
-    }
-  };
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.visualViewport) {
-        const keyboardHeight =
-          window.innerHeight - window.visualViewport.height;
-
-        document.documentElement.style.setProperty(
-          "--keyboard-offset",
-          `${Math.max(keyboardHeight, 0)}px`
-        );
-      }
+    const newUserMessage = {
+      AvatarFrom: myProfile?.Avatar || "/noavatar.png",
+      AvatarTo: userProfile?.Avatar,
+      ChatId: "temporary-chat-id",
+      Conversation: imageHtml,
+      ConversationId: "temporary-conversation-id",
+      CreatedAt: new Date().toISOString(),
+      FromUsername: myProfile?.Username || "You",
+      MemberIdFrom: profileId,
+      MemberIdTo: userProfile?.Id,
+      ToUsername: userProfile?.Username || "Recipient",
+      lastcommentinserted: 1,
     };
 
-    window.visualViewport?.addEventListener("resize", handleResize);
-    return () =>
-      window.visualViewport?.removeEventListener("resize", handleResize);
-  }, []);
+    setMessages([...messages, newUserMessage]);
+    sendNotification(imageHtml);
+
+    const payload = {
+      chatid:
+        existingChatIndex === -1 ? 0 : chatList[existingChatIndex]?.ChatId,
+      ProfileIdfrom: myProfile?.Id,
+      ProfileIDto: userProfile?.Id,
+      Conversation: imageHtml,
+    };
+
+    try {
+      await fetch("/api/user/messaging", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      console.error("Error sending image:", error);
+    }
+  };
+
+  const handleEmojiClick = (emoji: any) => {
+    setNewMessage((prev) => prev + emoji.emoji);
+  };
 
   return (
     <Box
@@ -579,7 +300,6 @@ export default function ChatPage(props: { params: Params }) {
       <Header />
       {isMobile ? (
         <>
-          {/* Chat Header */}
           <Box
             sx={{
               flex: 1,
@@ -634,7 +354,6 @@ export default function ChatPage(props: { params: Params }) {
                 </Box>
               </Box>
 
-              {/* Messages List */}
               <List
                 sx={{
                   flex: 1,
@@ -644,7 +363,6 @@ export default function ChatPage(props: { params: Params }) {
                   display: "flex",
                   flexDirection: "column",
                   gap: 1.5,
-                  // pb: "60px",
                 }}
               >
                 {messages?.map(
@@ -693,13 +411,11 @@ export default function ChatPage(props: { params: Params }) {
                       </ListItem>
                     )
                 )}
-
                 {messages?.length === 0 && (
                   <Typography textAlign="center" color="gray">
                     No messages found
                   </Typography>
                 )}
-
                 <div ref={messagesEndRef} />
               </List>
 
@@ -728,7 +444,6 @@ export default function ChatPage(props: { params: Params }) {
                 >
                   <EmojiIcon />
                 </IconButton>
-
                 <TextField
                   fullWidth
                   variant="standard"
@@ -738,7 +453,6 @@ export default function ChatPage(props: { params: Params }) {
                   onChange={(e) => setNewMessage(e.target.value)}
                   sx={{ input: { color: "white" } }}
                 />
-
                 <IconButton component="label">
                   <ImageIcon />
                   <input
@@ -748,7 +462,6 @@ export default function ChatPage(props: { params: Params }) {
                     onChange={handleImageUpload}
                   />
                 </IconButton>
-
                 <IconButton onClick={handleSendMessage}>
                   <SendIcon />
                 </IconButton>
@@ -775,19 +488,12 @@ export default function ChatPage(props: { params: Params }) {
               </Modal>
             </Box>
           </Box>
-
           <Footer />
         </>
       ) : (
         <Box
-          sx={{
-            flex: 1,
-            minHeight: 0,
-            display: "flex",
-            overflow: "hidden",
-          }}
+          sx={{ flex: 1, minHeight: 0, display: "flex", overflow: "hidden" }}
         >
-          {/* Left Sidebar (Chat List) */}
           <Drawer
             variant="permanent"
             sx={{
@@ -804,7 +510,6 @@ export default function ChatPage(props: { params: Params }) {
               },
             }}
           >
-            {/* Sidebar Header */}
             <Box
               sx={{
                 display: "flex",
@@ -843,7 +548,6 @@ export default function ChatPage(props: { params: Params }) {
               </Typography>
             </Box>
 
-            {/* Chat List (only this scrolls) */}
             <List
               sx={{
                 overflowY: "auto",
@@ -918,10 +622,9 @@ export default function ChatPage(props: { params: Params }) {
               display: "flex",
               flexDirection: "column",
               bgcolor: "#121212",
-              minHeight: 0, // <-- critical for inner scroll
+              minHeight: 0,
             }}
           >
-            {/* Chat Header - FIXED inside panel */}
             <Box
               sx={{
                 position: "sticky",
@@ -958,7 +661,6 @@ export default function ChatPage(props: { params: Params }) {
               </Box>
             </Box>
 
-            {/* Messages - ONLY this scrolls */}
             <List
               sx={{
                 flex: 1,
@@ -978,7 +680,6 @@ export default function ChatPage(props: { params: Params }) {
                   No messages yet
                 </Typography>
               )}
-
               {messages.map((message: any, index: number) => (
                 <ListItem
                   key={index}
@@ -1028,7 +729,6 @@ export default function ChatPage(props: { params: Params }) {
               <div ref={messagesEndRef} />
             </List>
 
-            {/* Message Input - FIXED inside panel */}
             <Box
               component="form"
               onSubmit={(e) => {
@@ -1080,8 +780,11 @@ export default function ChatPage(props: { params: Params }) {
       )}
 
       <UserProfileModal
-        handleGrantAccess={handleGrantAccess}
-        handleClose={handleClose}
+        handleGrantAccess={() => {}}
+        handleClose={() => {
+          setShowDetail(false);
+          setSelectedUserId(null);
+        }}
         open={showDetail}
         userid={selectedUserId}
       />
@@ -1124,9 +827,7 @@ export default function ChatPage(props: { params: Params }) {
               right: 8,
               color: "white",
               backgroundColor: "rgba(0,0,0,0.4)",
-              "&:hover": {
-                backgroundColor: "rgba(255,255,255,0.1)",
-              },
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
               zIndex: 2,
             }}
           >
