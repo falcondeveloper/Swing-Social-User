@@ -107,7 +107,9 @@ export async function POST(req: NextRequest) {
           title: title || "SwingSocial",
           body: body || "You have a new notification",
         },
-        data: body.url ? { url: body.url } : undefined,
+        data: {
+          url: url || "/",
+        },
         token: firebaseToken,
       };
 
