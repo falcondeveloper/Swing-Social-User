@@ -39,9 +39,6 @@ export const useFCMToken = () => {
 
     onMessage(fcm, (payload) => {
       console.log("🔥 Foreground notification:", payload);
-
-      // Notification display is handled by the service worker
-      // Use this handler to update app UI, refresh data, etc.
     });
   }, []);
   return token;
