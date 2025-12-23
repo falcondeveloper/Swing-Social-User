@@ -559,7 +559,7 @@ const Header = () => {
                           setMobileMenuOpen(false);
                         }}
                       >
-                        <ListItemIcon sx={{ minWidth: 40, color: "#FF1B6B" }}>
+                        <ListItemIcon sx={{ minWidth: 40 }}>
                           <Box sx={{ position: "relative" }}>
                             <ListItemIcon sx={{ minWidth: 40 }}>
                               {typeof item.icon === "string" && item.icon ? (
@@ -570,7 +570,7 @@ const Header = () => {
                                   height={20}
                                 />
                               ) : typeof item.icon !== "string" ? (
-                                <item.icon size={20} color="#FF1B6B" />
+                                <item.icon size={20} />
                               ) : null}
                             </ListItemIcon>
 

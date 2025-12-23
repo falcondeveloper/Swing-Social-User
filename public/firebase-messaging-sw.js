@@ -38,6 +38,7 @@ messaging.onBackgroundMessage(function (payload) {
 });
 
 self.addEventListener("notificationclick", function (event) {
+
   event.notification.close();
 
   const clickUrl = event.notification.data?.url || "/";

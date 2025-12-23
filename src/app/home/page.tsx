@@ -233,6 +233,74 @@ const Home = () => {
     }
   };
 
+  // useEffect(() => {
+  //   if (profileId && token) {
+  //     const handleUpdateDeviceToken = async (token: any, profileId: any) => {
+  //       const payload = {
+  //         token: token,
+  //         profile: profile,
+  //       };
+  //       try {
+  //         const response = await fetch("/api/user/devicetoken", {
+  //           method: "POST",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //           },
+  //           body: JSON.stringify(payload),
+  //         });
+  //         if (!response.ok) {
+  //           console.error(
+  //             "❌ Error sending device token:",
+  //             await response.json()
+  //           );
+  //         }
+  //       } catch (error) {
+  //         console.error("❌ Network error while sending device token:", error);
+  //       }
+  //     };
+  //     handleUpdateDeviceToken(token, profileId);
+  //   }
+  // }, [token, profileId]);
+
+  // useEffect(() => {
+  //   if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  //     const messaging = getMessaging(app);
+  //     const unsubscribe = onMessage(messaging, (payload: any) => {});
+  //     return () => {
+  //       unsubscribe();
+  //     };
+  //   }
+  // }, [notificationPermissionStatus]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/firebase-messaging-sw.js")
+        .then((registration) => {})
+        .catch((error) => {
+          console.error("Service Worker registration failed:", error);
+        });
+    }
+  }, []);
+
+  // useEffect(() => {
+  //   if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  //     const messaging = getMessaging(app);
+
+  //     const unsubscribe = onMessage(messaging, async (payload: any) => {
+  //       const registration = await navigator.serviceWorker.ready;
+  //       if (registration.active) {
+  //         registration.active.postMessage({
+  //           type: "SHOW_NOTIFICATION",
+  //           payload,
+  //         });
+  //       }
+  //     });
+
+  //     return () => unsubscribe();
+  //   }
+  // }, [notificationPermissionStatus]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
