@@ -673,6 +673,14 @@ export default function ChatPage(props: { params: Params }) {
                             maxWidth: "75%",
                             whiteSpace: "pre-wrap",
                             boxShadow: 1,
+                            "& img": {
+                              width: "100%",
+                              height: "auto",
+                              borderRadius: "8px",
+                              marginTop: "6px",
+                              display: "block",
+                              objectFit: "contain",
+                            },
                           }}
                         >
                           <Typography
