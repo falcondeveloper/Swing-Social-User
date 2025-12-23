@@ -19,7 +19,6 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { jwtDecode } from "jwt-decode";
-
 import {
   Home,
   Users,
@@ -34,7 +33,6 @@ import {
   CheckCheck,
   Trash2,
 } from "lucide-react";
-import NotificationModalPrompt from "./components/NotificationModalPrompt";
 
 const socket = io("https://api.nomolive.com/");
 
@@ -42,7 +40,6 @@ const Header = () => {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
   const [avatar, setAvatar] = useState<any>("");
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [userName, setUserName] = useState<string>("");
@@ -285,7 +282,7 @@ const Header = () => {
 
   return (
     <>
-      <NotificationModalPrompt />
+      {/* <NotificationModalPromptdalPrompt /> */}
       {isMobile ? (
         <>
           <AppBar

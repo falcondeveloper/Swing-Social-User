@@ -14,12 +14,12 @@ import {
   Typography,
   useMediaQuery,
   Chip,
+  Skeleton,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { jwtDecode } from "jwt-decode";
-
 import {
   Home,
   Users,
@@ -33,8 +33,34 @@ import {
   Calendar,
   CheckCheck,
   Trash2,
+  Sliders,
 } from "lucide-react";
 import NotificationModalPrompt from "./NotificationModalPrompt";
+import { motion, AnimatePresence } from "framer-motion";
+
+const drawerMotion = {
+  hidden: {
+    x: "100%",
+    opacity: 0,
+  },
+  visible: {
+    x: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 260,
+      damping: 28,
+    },
+  },
+  exit: {
+    x: "100%",
+    opacity: 0,
+    transition: {
+      duration: 0.25,
+      ease: "easeInOut",
+    },
+  },
+};
 
 const socket = io("https://api.nomolive.com/");
 
@@ -43,34 +69,30 @@ const Header = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const [avatar, setAvatar] = useState<any>("");
+  const [avatar, setAvatar] = useState<string | null>(null);
+
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [userName, setUserName] = useState<string>("");
   const [isNotificationModalOpen, setNotificationModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [advertiser, setAdvertiser] = useState<any>([]);
-  const [isNewMessage, setNewMessage] = useState<boolean>(false);
+  const [isNewMessage, setNewMessage] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("isNewMessage") === "true";
+    }
+    return false;
+  });
   const [profileId, setProfileId] = useState<any>();
-  const [pathname, setPathname] = useState("");
   const [notificationCount, setNotificationCount] = useState<number>(0);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notificationDrawerOpen, setNotificationDrawerOpen] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    socket.on("notification", (notification) => {
-      setNotifications((prev) => [notification, ...prev]);
-      setNotificationCount((prev) => prev + 1);
-    });
-
-    return () => {
-      socket.off("notification");
-    };
-  }, []);
+  const [notificationsLoading, setNotificationsLoading] =
+    useState<boolean>(false);
 
   const fetchNotifications = async () => {
     if (!profileId) return;
+
+    setNotificationsLoading(true);
 
     try {
       const response = await fetch(
@@ -83,6 +105,8 @@ const Header = () => {
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
+    } finally {
+      setNotificationsLoading(false);
     }
   };
 
@@ -92,10 +116,6 @@ const Header = () => {
     }
   }, [profileId]);
 
-  const handleNotificationClick = () => {
-    setNotificationDrawerOpen(true);
-  };
-
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -103,20 +123,6 @@ const Header = () => {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setPathname(pathname);
-    }
-  }, []);
-
-  useEffect(() => {
-    const storedId = localStorage.getItem("logged_in_profile");
-    const storedMsg = localStorage.getItem("isNewMessage");
-
-    if (storedId) setProfileId(storedId);
-    if (storedMsg === "true") setNewMessage(true);
   }, []);
 
   useEffect(() => {
@@ -149,24 +155,13 @@ const Header = () => {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     socket.on("connect", () => {});
     socket.on("disconnect", () => {});
-
     socket.on("message", (message) => {
       const profileid = localStorage.getItem("logged_in_profile");
       if (message?.from === profileid || message?.to === profileid) {
         setNewMessage(true);
         localStorage.setItem("isNewMessage", "true");
-      }
-    });
-
-    // Add notification listener
-    socket.on("notification", (notification) => {
-      const profileid = localStorage.getItem("logged_in_profile");
-      if (notification?.userId === profileid) {
-        setNotificationCount((prev) => prev + 1);
-        setNotifications((prev) => [notification, ...prev]);
       }
     });
 
@@ -178,7 +173,6 @@ const Header = () => {
       socket.off("connect");
       socket.off("disconnect");
       socket.off("message");
-      socket.off("notification");
       socket.off("error");
     };
   }, []);
@@ -188,6 +182,10 @@ const Header = () => {
     if (typeof window !== "undefined") {
       localStorage.setItem("isNewMessage", "false");
     }
+  };
+
+  const handleNotificationClick = () => {
+    setNotificationDrawerOpen(true);
   };
 
   const checkNotificationPermission = () => {
@@ -245,12 +243,6 @@ const Header = () => {
       badge: isNewMessage,
     },
     { icon: Heart, label: "Matches", path: "/matches" },
-    {
-      icon: Bell,
-      label: "Notifications",
-      path: "/notifications",
-      badge: notificationCount > 0,
-    },
     { icon: Calendar, label: "Events", path: "/events" },
     {
       icon: "/images/dollar_img.png",
@@ -282,6 +274,89 @@ const Header = () => {
   useEffect(() => {
     fetchData();
   }, [profileId]);
+
+  const handleDeleteNotification = async (
+    e: React.MouseEvent,
+    notif: { id: string; is_read: boolean }
+  ) => {
+    e.stopPropagation();
+
+    try {
+      await fetch(`/api/user/notification/notifications-list?id=${notif.id}`, {
+        method: "DELETE",
+      });
+
+      setNotifications((prev) => prev.filter((n) => n.id !== notif.id));
+
+      if (!notif.is_read) {
+        setNotificationCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch (error) {
+      console.error("Failed to delete notification:", error);
+    }
+  };
+
+  const handleNotificationClickOpen = async (notif: {
+    id: string;
+    is_read: boolean;
+    url?: string;
+  }) => {
+    try {
+      if (!notif.is_read) {
+        await fetch("/api/user/notification/notifications-list", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            notificationIds: [notif.id],
+          }),
+        });
+
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
+        );
+
+        setNotificationCount((prev) => Math.max(0, prev - 1));
+      }
+
+      if (notif.url) {
+        router.push(notif.url);
+      }
+      setNotificationDrawerOpen(false);
+    } catch (error) {
+      console.error("Failed to handle notification click:", error);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    if (!profileId || notifications.length === 0) return;
+
+    try {
+      const response = await fetch(
+        "/api/user/notification/notifications-list",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileId,
+            markAllAsRead: true,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+        setNotificationCount(0);
+      }
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (notificationDrawerOpen) {
+      fetchNotifications();
+    }
+  }, [notificationDrawerOpen]);
 
   return (
     <>
@@ -350,15 +425,17 @@ const Header = () => {
                   },
                 }}
               >
-                <img
-                  src={avatar || null}
-                  alt="Profile"
-                  style={{
-                    width: "100%",
-                    height: "auto",
-                    objectFit: "cover",
-                  }}
-                />
+                {avatar ? (
+                  <img
+                    src={avatar}
+                    alt="Profile"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : null}
               </Box>
             </Toolbar>
           </AppBar>
@@ -430,7 +507,10 @@ const Header = () => {
                       height: 48,
                       border: "2px solid #FF1B6B",
                     }}
-                  />
+                  >
+                    {!avatar && userName?.charAt(0)}
+                  </Avatar>
+
                   <Box>
                     <Typography
                       variant="subtitle1"
@@ -453,7 +533,8 @@ const Header = () => {
                 <List sx={{ px: 2 }}>
                   {mobileNavItems.map((item, index) => {
                     const isActive =
-                      typeof window !== "undefined" && pathname === item.path;
+                      typeof window !== "undefined" &&
+                      window.location.pathname === item.path;
 
                     return (
                       <ListItem
@@ -485,28 +566,16 @@ const Header = () => {
                         <ListItemIcon sx={{ minWidth: 40 }}>
                           <Box sx={{ position: "relative" }}>
                             <ListItemIcon sx={{ minWidth: 40 }}>
-                              {typeof item.icon === "string" ? (
+                              {typeof item.icon === "string" && item.icon ? (
                                 <img
                                   src={item.icon}
                                   alt={item.label}
                                   width={20}
                                   height={20}
-                                  style={{
-                                    filter: isActive
-                                      ? "none"
-                                      : "brightness(0.8)",
-                                  }}
                                 />
-                              ) : (
-                                <item.icon
-                                  size={20}
-                                  color={
-                                    isActive
-                                      ? "#FF1B6B"
-                                      : "rgba(255, 255, 255, 0.7)"
-                                  }
-                                />
-                              )}
+                              ) : typeof item.icon !== "string" ? (
+                                <item.icon size={20} />
+                              ) : null}
                             </ListItemIcon>
 
                             {item.badge && (
@@ -652,7 +721,8 @@ const Header = () => {
                   ].map((item, index) => {
                     const Icon = item.icon;
                     const isActive =
-                      typeof window !== "undefined" && pathname === item.path;
+                      typeof window !== "undefined" &&
+                      window.location.pathname === item.path;
 
                     return (
                       <Box key={item.label} sx={{ position: "relative" }}>
@@ -882,16 +952,18 @@ const Header = () => {
                       overflow: "hidden",
                     }}
                   >
-                    <img
-                      src={avatar}
-                      alt="Avatar"
-                      style={{
-                        objectFit: "cover",
-                        borderRadius: "10px",
-                        width: "100%",
-                        height: "100%",
-                      }}
-                    />
+                    {avatar ? (
+                      <img
+                        src={avatar}
+                        alt="Avatar"
+                        style={{
+                          objectFit: "cover",
+                          borderRadius: "10px",
+                          width: "100%",
+                          height: "100%",
+                        }}
+                      />
+                    ) : null}
                   </Box>
                 </Box>
               </Box>
@@ -903,212 +975,232 @@ const Header = () => {
             onClose={() => setNotificationDrawerOpen(false)}
             PaperProps={{
               sx: {
-                width: isMobile ? "100%" : 400,
-                background: "rgba(16, 16, 16, 0.95)",
-                backdropFilter: "blur(20px)",
-                border: "1px solid rgba(255, 255, 255, 0.05)",
+                width: isMobile ? "100%" : 420,
+                bgcolor: "rgba(14,14,14,0.98)",
+                backdropFilter: "blur(18px)",
+                borderLeft: "1px solid rgba(255,255,255,0.06)",
               },
             }}
           >
-            <Box
-              sx={{ height: "100vh", display: "flex", flexDirection: "column" }}
-            >
-              <Box
-                sx={{
-                  p: 3,
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{ color: "#FFFFFF", fontWeight: 600 }}
-                >
-                  Notifications
-                  {notificationCount > 0 && (
-                    <Chip
-                      label={notificationCount}
-                      size="small"
-                      sx={{
-                        ml: 1,
-                        bgcolor: "#FF1B6B",
-                        color: "white",
-                        fontWeight: 600,
-                      }}
-                    />
-                  )}
-                </Typography>
-                <IconButton
-                  onClick={() => setNotificationDrawerOpen(false)}
-                  sx={{
-                    color: "rgba(255, 255, 255, 0.7)",
-                    "&:hover": {
-                      color: "#FF1B6B",
-                      bgcolor: "rgba(255, 27, 107, 0.1)",
-                    },
+            <AnimatePresence mode="wait">
+              {notificationDrawerOpen && (
+                <motion.div
+                  variants={drawerMotion}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  style={{
+                    height: "100vh",
+                    display: "flex",
+                    flexDirection: "column",
                   }}
                 >
-                  <X size={20} />
-                </IconButton>
-              </Box>
-
-              {notifications.length > 0 && (
-                <Box
-                  sx={{
-                    p: 2,
-                    borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-                  }}
-                >
-                  <Button
-                    fullWidth
-                    startIcon={<CheckCheck size={16} />}
-                    onClick={async () => {
-                      const response = await fetch(
-                        "/api/user/notification/notifications-list",
-                        {
-                          method: "PATCH",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            profileId: profileId,
-                            markAllAsRead: true,
-                          }),
-                        }
-                      );
-                      if (response.ok) {
-                        setNotifications((prev) =>
-                          prev.map((n) => ({ ...n, is_read: true }))
-                        );
-                        setNotificationCount(0);
-                      }
-                    }}
+                  {/* ================= HEADER ================= */}
+                  <Box
                     sx={{
-                      color: "#FF1B6B",
-                      justifyContent: "flex-start",
-                      "&:hover": { bgcolor: "rgba(255, 27, 107, 0.1)" },
+                      px: 3,
+                      py: 2,
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
+                      bgcolor: "rgba(14,14,14,0.95)",
+                      borderBottom: "1px solid rgba(255,255,255,0.06)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
                     }}
                   >
-                    Mark all as read
-                  </Button>
-                </Box>
-              )}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography sx={{ color: "#fff", fontWeight: 600 }}>
+                        Notifications
+                      </Typography>
+                      {notificationCount > 0 && (
+                        <Chip
+                          label={notificationCount}
+                          size="small"
+                          sx={{
+                            bgcolor: "#FF1B6B",
+                            color: "#fff",
+                            fontWeight: 600,
+                            height: 20,
+                          }}
+                        />
+                      )}
+                    </Box>
 
-              <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
-                {notifications.length === 0 ? (
-                  <Box sx={{ textAlign: "center", py: 8 }}>
-                    <Bell size={48} color="rgba(255, 255, 255, 0.2)" />
-                    <Typography
-                      sx={{ color: "rgba(255, 255, 255, 0.6)", mt: 2 }}
-                    >
-                      No notifications
-                    </Typography>
-                  </Box>
-                ) : (
-                  notifications.map((notif) => (
-                    <Box
-                      key={notif.id}
-                      sx={{
-                        p: 2,
-                        mb: 2,
-                        borderRadius: "12px",
-                        bgcolor: notif.is_read
-                          ? "rgba(255, 255, 255, 0.02)"
-                          : "rgba(255, 27, 107, 0.05)",
-                        border: `1px solid ${
-                          notif.is_read
-                            ? "rgba(255, 255, 255, 0.05)"
-                            : "rgba(255, 27, 107, 0.2)"
-                        }`,
-                        cursor: "pointer",
-                        "&:hover": {
-                          bgcolor: "rgba(255, 27, 107, 0.08)",
-                        },
-                      }}
-                      onClick={async () => {
-                        if (!notif.is_read) {
-                          await fetch(
-                            "/api/user/notification/notifications-list",
-                            {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                notificationIds: [notif.id],
-                              }),
-                            }
-                          );
-                          setNotifications((prev) =>
-                            prev.map((n) =>
-                              n.id === notif.id ? { ...n, is_read: true } : n
-                            )
-                          );
-                          setNotificationCount((prev) => Math.max(0, prev - 1));
-                        }
-                        if (notif.url) router.push(notif.url);
-                        setNotificationDrawerOpen(false);
-                      }}
-                    >
-                      <Typography
-                        variant="subtitle2"
-                        sx={{ color: "#FFFFFF", fontWeight: 600, mb: 0.5 }}
-                      >
-                        {notif.title}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: "rgba(255, 255, 255, 0.7)" }}
-                      >
-                        {notif.body}
-                      </Typography>
-                      <Box
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      {/* Preferences */}
+                      <IconButton
+                        onClick={() => router.push("/notifications")}
                         sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          mt: 1,
+                          color: "rgba(255,255,255,0.7)",
+                          "&:hover": {
+                            color: "#FF1B6B",
+                            bgcolor: "rgba(255,27,107,0.12)",
+                          },
                         }}
                       >
+                        <Sliders size={18} />
+                      </IconButton>
+
+                      {/* Close */}
+                      <IconButton
+                        onClick={() => setNotificationDrawerOpen(false)}
+                        sx={{
+                          color: "rgba(255,255,255,0.7)",
+                          "&:hover": {
+                            color: "#FF1B6B",
+                            bgcolor: "rgba(255,27,107,0.12)",
+                          },
+                        }}
+                      >
+                        <X size={18} />
+                      </IconButton>
+                    </Box>
+                  </Box>
+
+                  {/* ================= ACTION BAR ================= */}
+                  {notifications.length > 0 && (
+                    <Box
+                      sx={{
+                        px: 2,
+                        py: 1.5,
+                        borderBottom: "1px solid rgba(255,255,255,0.06)",
+                      }}
+                    >
+                      <Button
+                        fullWidth
+                        size="small"
+                        startIcon={<CheckCheck size={16} />}
+                        onClick={handleMarkAllRead}
+                        sx={{
+                          justifyContent: "flex-start",
+                          color: "#FF1B6B",
+                          fontWeight: 500,
+                          "&:hover": {
+                            bgcolor: "rgba(255,27,107,0.12)",
+                          },
+                        }}
+                      >
+                        Mark all as read
+                      </Button>
+                    </Box>
+                  )}
+
+                  {/* ================= LIST ================= */}
+                  <Box sx={{ flex: 1, overflowY: "auto", px: 2, py: 2 }}>
+                    {/* 🔹 Skeleton Loader */}
+                    {notificationsLoading && (
+                      <>
+                        {[...Array(5)].map((_, i) => (
+                          <Box
+                            key={i}
+                            sx={{
+                              p: 2,
+                              mb: 2,
+                              borderRadius: 2,
+                              border: "1px solid rgba(255,255,255,0.05)",
+                            }}
+                          >
+                            <Skeleton width="40%" height={16} />
+                            <Skeleton width="100%" height={14} />
+                            <Skeleton width="70%" height={14} />
+                          </Box>
+                        ))}
+                      </>
+                    )}
+
+                    {/* 🔹 Empty State */}
+                    {!notificationsLoading && notifications.length === 0 && (
+                      <Box sx={{ textAlign: "center", py: 10 }}>
+                        <Bell size={44} color="rgba(255,255,255,0.25)" />
                         <Typography
-                          variant="caption"
-                          sx={{ color: "rgba(255, 255, 255, 0.5)" }}
+                          sx={{ color: "rgba(255,255,255,0.6)", mt: 2 }}
                         >
-                          {new Date(notif.created_at).toLocaleString()}
+                          You're all caught up
                         </Typography>
-                        <IconButton
-                          size="small"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            await fetch(
-                              `/api/user/notification/notifications-list?id=${notif.id}`,
-                              {
-                                method: "DELETE",
-                              }
-                            );
-                            setNotifications((prev) =>
-                              prev.filter((n) => n.id !== notif.id)
-                            );
-                            if (!notif.is_read) {
-                              setNotificationCount((prev) =>
-                                Math.max(0, prev - 1)
-                              );
-                            }
-                          }}
+                      </Box>
+                    )}
+
+                    {/* 🔹 Notification Items */}
+                    {!notificationsLoading &&
+                      notifications.map((notif) => (
+                        <Box
+                          key={notif.id}
+                          onClick={() => handleNotificationClickOpen(notif)}
                           sx={{
-                            color: "rgba(255, 255, 255, 0.5)",
+                            p: 2,
+                            mb: 1.5,
+                            borderRadius: 2,
+                            cursor: "pointer",
+                            position: "relative",
+                            bgcolor: notif.is_read
+                              ? "rgba(255,255,255,0.03)"
+                              : "rgba(255,27,107,0.08)",
+                            border: notif.is_read
+                              ? "1px solid rgba(255,255,255,0.05)"
+                              : "1px solid rgba(255,27,107,0.25)",
                             "&:hover": {
-                              color: "#F44336",
-                              bgcolor: "rgba(244, 67, 54, 0.1)",
+                              bgcolor: "rgba(255,27,107,0.12)",
                             },
                           }}
                         >
-                          <Trash2 size={16} />
-                        </IconButton>
-                      </Box>
-                    </Box>
-                  ))
-                )}
-              </Box>
-            </Box>
+                          {!notif.is_read && (
+                            <Box
+                              sx={{
+                                position: "absolute",
+                                top: 12,
+                                right: 12,
+                                width: 8,
+                                height: 8,
+                                borderRadius: "50%",
+                                bgcolor: "#FF1B6B",
+                              }}
+                            />
+                          )}
+
+                          <Typography
+                            sx={{ color: "#fff", fontWeight: 600, mb: 0.5 }}
+                          >
+                            {notif.title}
+                          </Typography>
+
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "rgba(255,255,255,0.7)" }}
+                          >
+                            {notif.body}
+                          </Typography>
+
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "flex-end",
+                              mt: 1,
+                            }}
+                          >
+                            <IconButton
+                              size="small"
+                              onClick={(e) =>
+                                handleDeleteNotification(e, notif)
+                              }
+                              sx={{
+                                color: "rgba(255,255,255,0.4)",
+                                "&:hover": {
+                                  color: "#F44336",
+                                  bgcolor: "rgba(244,67,54,0.12)",
+                                },
+                              }}
+                            >
+                              <Trash2 size={15} />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                      ))}
+                  </Box>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </Drawer>
         </>
       )}
@@ -1116,7 +1208,8 @@ const Header = () => {
       {/* Spacer to push content below fixed header */}
       {(() => {
         const pathsWithoutSpacer = ["/members", "/messaging"];
-        const currentPath = typeof window !== "undefined" ? pathname : "";
+        const currentPath =
+          typeof window !== "undefined" ? window.location.pathname : "";
         return (
           !pathsWithoutSpacer.includes(currentPath) && (
             <Box sx={{ height: isMobile ? "60.8px" : "90.5px" }} />

@@ -233,7 +233,6 @@ export default function ChatPage(props: { params: Params }) {
     : -1;
 
   const sendNotification = async (message: any) => {
-    console.log("myProfile?.Id", myProfile?.Id);
     if (!myProfile?.Id || !userProfile?.Id) return;
     console.log("userProfile", userProfile);
     const response = await fetch("/api/user/notification/requestfriend", {
@@ -244,7 +243,7 @@ export default function ChatPage(props: { params: Params }) {
       body: JSON.stringify({
         userId: userProfile.Id,
         body: message,
-        title: "New Message",
+        title: myProfile?.Username || "New message",
         type: "message",
         url: `https://swing-social-user.vercel.app/messaging/${myProfile.Id}`,
       }),
