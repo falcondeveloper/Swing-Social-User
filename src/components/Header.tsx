@@ -537,7 +537,7 @@ const Header = () => {
               {/* Navigation Items */}
               <Box sx={{ flex: 1, py: 2 }}>
                 <List sx={{ px: 2 }}>
-                  {mobileNavItems.map((item, index) => {
+                  {mobileNavItems.map((item) => {
                     const isActive =
                       typeof window !== "undefined" &&
                       window.location.pathname === item.path;
@@ -558,22 +558,38 @@ const Header = () => {
                           router.push(item.path);
                           setMobileMenuOpen(false);
                         }}
+                        sx={{
+                          borderRadius: "14px",
+                          mb: 0.5,
+                          cursor: "pointer",
+                          background: isActive
+                            ? "linear-gradient(135deg, #FF1B6B, #FF6FA5)"
+                            : "transparent",
+                          "&:hover": {
+                            background: isActive
+                              ? "linear-gradient(135deg, #FF1B6B, #FF6FA5)"
+                              : "rgba(255, 27, 107, 0.15)",
+                          },
+                          transition: "all 0.25s ease",
+                        }}
                       >
                         <ListItemIcon sx={{ minWidth: 40 }}>
-                          <Box sx={{ position: "relative" }}>
-                            <ListItemIcon sx={{ minWidth: 40 }}>
-                              {typeof item.icon === "string" && item.icon ? (
-                                <img
-                                  src={item.icon}
-                                  alt={item.label}
-                                  width={20}
-                                  height={20}
-                                />
-                              ) : typeof item.icon !== "string" ? (
-                                <item.icon size={20} />
-                              ) : null}
-                            </ListItemIcon>
-
+                          <Box
+                            sx={{
+                              position: "relative",
+                              color: isActive ? "#fff" : "#FF6FA5",
+                            }}
+                          >
+                            {typeof item.icon === "string" && item.icon ? (
+                              <img
+                                src={item.icon}
+                                alt={item.label}
+                                width={20}
+                                height={20}
+                              />
+                            ) : typeof item.icon !== "string" ? (
+                              <item.icon size={20} />
+                            ) : null}
                             {item.badge && (
                               <Box
                                 sx={{
@@ -584,18 +600,8 @@ const Header = () => {
                                   height: 8,
                                   bgcolor: "#FF1B6B",
                                   borderRadius: "50%",
-                                  animation: "pulse 2s infinite",
-                                  "@keyframes pulse": {
-                                    "0%": { transform: "scale(1)", opacity: 1 },
-                                    "50%": {
-                                      transform: "scale(1.3)",
-                                      opacity: 0.7,
-                                    },
-                                    "100%": {
-                                      transform: "scale(1)",
-                                      opacity: 1,
-                                    },
-                                  },
+                                  boxShadow: "0 0 6px rgba(255, 27, 107, 0.9)",
+                                  animation: "pulse 1.8s infinite",
                                 }}
                               />
                             )}
@@ -604,8 +610,8 @@ const Header = () => {
                         <ListItemText
                           primary={item.label}
                           primaryTypographyProps={{
-                            color: isActive ? "#FF1B6B" : "#FFFFFF",
-                            fontWeight: isActive ? 600 : 500,
+                            color: isActive ? "#FFFFFF" : "#FFD1E1",
+                            fontWeight: isActive ? 700 : 500,
                             fontSize: "15px",
                           }}
                         />
