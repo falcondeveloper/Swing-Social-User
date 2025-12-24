@@ -28,18 +28,16 @@ messaging.onBackgroundMessage((payload) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || "/";
-
   event.waitUntil(
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientsArr) => {
         for (const client of clientsArr) {
-          if (client.url.includes(url)) {
+          if (client.url.includes(event.notification.data.url)) {
             return client.focus();
           }
         }
-        return clients.openWindow(url);
+        return clients.openWindow(event.notification.data.url);
       })
   );
 });

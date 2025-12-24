@@ -128,13 +128,13 @@ export async function POST(req: NextRequest) {
     }
 
     const payload = {
+      token: firebaseToken,
       data: {
         title: title ?? "SwingSocial",
-        body: body ?? "New notification From Vansh",
+        body: body ?? "New notification",
         url: url ?? "/",
         icon: "/logo.svg",
       },
-      token: firebaseToken,
     };
 
     try {
