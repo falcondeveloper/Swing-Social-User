@@ -310,6 +310,8 @@ const LoginPage = () => {
         throw new Error("Failed to get FCM token");
       }
 
+      console.log("FCM Token:", firebaseToken);
+
       await fetch("/api/user/notification-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
