@@ -7,22 +7,14 @@ export default function ClientLayout({
   children: React.ReactNode;
 }) {
   useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
+    if (!("serviceWorker" in navigator)) return;
 
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/firebase-messaging-sw.js").then(
-          (registration) => {
-            console.log("SW registered: ", registration);
-          },
-          (error) => {
-            console.log("SW registration failed: ", error);
-          }
-        );
-      });
-    }
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data?.type === "NAVIGATE" && event.data.url) {
+        window.location.href = event.data.url;
+      }
+    });
   }, []);
+
   return <>{children}</>;
 }

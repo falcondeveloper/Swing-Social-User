@@ -28,16 +28,27 @@ messaging.onBackgroundMessage((payload) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+
+  const url = event.notification.data?.url || "/";
+
   event.waitUntil(
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
-      .then((clientsArr) => {
-        for (const client of clientsArr) {
-          if (client.url.includes(event.notification.data.url)) {
+      .then((clientList) => {
+        // 🔹 If any tab is already open
+        for (const client of clientList) {
+          if (client.url.startsWith(self.location.origin)) {
+            // 🔔 Tell the page to navigate
+            client.postMessage({
+              type: "NAVIGATE",
+              url,
+            });
             return client.focus();
           }
         }
-        return clients.openWindow(event.notification.data.url);
+
+        // 🔹 Otherwise open new tab
+        return clients.openWindow(url);
       })
   );
 });
