@@ -1,4 +1,3 @@
-// firebase-messaging-sw.js
 importScripts(
   "https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"
 );
@@ -18,7 +17,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// Fixed: removed duplicate 'messaging' parameter
 messaging.onBackgroundMessage(async (payload) => {
   const { data } = payload;
 
@@ -50,13 +48,11 @@ self.addEventListener("notificationclick", (event) => {
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
-        // Try to focus existing window with matching URL
         for (const client of clientList) {
           if (client.url.includes(url) && "focus" in client) {
             return client.focus();
           }
         }
-        // Open new window if none found
         return clients.openWindow(url);
       })
   );
