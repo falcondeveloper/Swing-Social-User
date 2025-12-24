@@ -52,8 +52,22 @@ const PushNotificationsProvider: React.FC<PropsWithChildren> = ({
           const messagingInstance = getMessaging(app);
           setMessaging(messagingInstance);
 
-          const unsubscribe = onMessage(messagingInstance, (payload) => {
+          const unsubscribe = onMessage(messagingInstance, async (payload) => {
             console.log("Foreground FCM payload:", payload);
+
+            if (Notification.permission !== "granted") return;
+
+            const title = payload.data?.title || "SwingSocial";
+            const body = payload.data?.body || "New notification";
+            const url = payload.data?.url || "/";
+
+            const registration = await navigator.serviceWorker.ready;
+
+            registration.showNotification(title, {
+              body,
+              icon: "/logo.png",
+              data: { url },
+            });
           });
 
           return () => unsubscribe();
