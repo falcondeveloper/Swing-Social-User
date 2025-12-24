@@ -21,7 +21,6 @@ import UserBottomNavigation from "@/components/BottomNavigation";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
-import { PushNotificationsContext } from "@/components/PushNotificationsProvider";
 
 const categories = [
   {
@@ -67,7 +66,6 @@ const categories = [
 const Home = () => {
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
-  const messaging = useContext(PushNotificationsContext);
   const [profileId, setProfileId] = useState<any>();
   const [value, setValue] = useState(0);
   const [currentName, setCurrentName] = useState<any>("");

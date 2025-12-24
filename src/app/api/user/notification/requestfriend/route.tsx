@@ -103,11 +103,9 @@ export async function POST(req: NextRequest) {
       const firebaseToken = row.devicetoken;
 
       const payload = {
-        notification: {
+        data: {
           title: title || "SwingSocial",
           body: body || "You have a new notification",
-        },
-        data: {
           url: url || "/",
         },
         token: firebaseToken,
