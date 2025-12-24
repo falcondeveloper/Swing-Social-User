@@ -40,6 +40,7 @@ import "react-phone-input-2/lib/material.css";
 import { jwtDecode } from "jwt-decode";
 import { PushNotificationsContext } from "@/components/PushNotificationsProvider";
 import { getToken } from "firebase/messaging";
+import { DeviceTypes, isPWA, useDevice } from "@/utils/useDevice";
 
 const theme = createTheme({
   palette: {
@@ -176,6 +177,7 @@ const trackHit = async ({
 };
 
 const LoginPage = () => {
+  const device = useDevice();
   const router = useRouter();
   const messaging = useContext(PushNotificationsContext);
   const [showPassword, setShowPassword] = useState(false);
@@ -278,15 +280,21 @@ const LoginPage = () => {
     }
 
     try {
+      if (device === DeviceTypes.IOS && !isPWA()) {
+        throw new Error(
+          'On iPhone, please install the app using "Add to Home Screen"'
+        );
+      }
+
       if (Notification.permission !== "granted") {
-        const result = await Notification.requestPermission();
-        if (result !== "granted") {
-          throw new Error("Notifications are not allowed.");
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") {
+          throw new Error("Notifications permission denied");
         }
       }
 
       if (!("serviceWorker" in navigator)) {
-        throw new Error("Service Workers are not supported");
+        throw new Error("Service Workers not supported");
       }
 
       let registration = await navigator.serviceWorker.getRegistration("/");
@@ -313,8 +321,6 @@ const LoginPage = () => {
       if (!firebaseToken || typeof firebaseToken !== "string") {
         throw new Error("Invalid FCM token received");
       }
-
-      console.log("FCM Token:", firebaseToken);
 
       await fetch("/api/user/notification-token", {
         method: "POST",

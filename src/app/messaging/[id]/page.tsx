@@ -32,6 +32,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import UserProfileModal from "@/components/UserProfileModal";
 import { X } from "lucide-react";
 import Footer from "@/components/Footer";
+import { sendNotification } from "@/utils/notifications";
 
 dayjs.extend(relativeTime);
 
@@ -175,23 +176,16 @@ export default function ChatPage(props: { params: Params }) {
     ? findExistingChatIndex(userProfile.Username)
     : -1;
 
-  const sendNotification = async (message: any) => {
+  const sendNotifications = async (message: any) => {
     if (!myProfile?.Id || !userProfile?.Id) return;
-    const response = await fetch("/api/user/notification/requestfriend", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        userId: userProfile.Id,
-        body: message,
-        title: myProfile?.Username || "New message",
-        type: "message",
-        url: `https://swing-social-user.vercel.app/messaging/${myProfile.Id}`,
-      }),
-    });
 
-    const result = await response.json();
+    await sendNotification({
+      userId: userProfile.Id,
+      body: message,
+      title: myProfile?.Username || "New message",
+      type: "message",
+      url: `https://swing-social-user.vercel.app/messaging/${myProfile.Id}`,
+    });
   };
 
   const handleSendMessage = async () => {
@@ -213,7 +207,7 @@ export default function ChatPage(props: { params: Params }) {
       setMessages([...messages, newUserMessage]);
 
       if (userDeviceToken) {
-        sendNotification(newUserMessage?.Conversation);
+        sendNotifications(newUserMessage?.Conversation);
       }
       const payload = {
         chatid:
@@ -306,7 +300,7 @@ export default function ChatPage(props: { params: Params }) {
         setMessages([...messages, newUserMessage]);
 
         if (userDeviceToken) {
-          sendNotification(newUserMessage?.Conversation);
+          sendNotifications(newUserMessage?.Conversation);
         }
       };
       reader.readAsDataURL(file);

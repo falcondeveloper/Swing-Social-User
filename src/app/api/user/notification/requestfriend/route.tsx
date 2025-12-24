@@ -37,28 +37,16 @@ type NotificationType =
   | "request"
   | "friend_request";
 
-interface TokenResult {
-  token: string;
-  tokenPreview: string;
-  isValid: boolean;
-  sent: boolean;
-  messageId?: string;
-  error?: string;
-  errorCode?: string;
+function maskToken(token: string) {
+  return token ? `${token.slice(0, 10)}...${token.slice(-10)}` : "INVALID";
 }
 
-function maskToken(token: string): string {
-  if (!token || token.length < 20) return "INVALID_TOKEN_FORMAT";
-  return `${token.substring(0, 10)}...${token.substring(token.length - 10)}`;
-}
-
-function isInvalidTokenError(error: any): boolean {
-  const invalidTokenCodes = [
+function isInvalidTokenError(error: any) {
+  return [
     "messaging/invalid-registration-token",
     "messaging/registration-token-not-registered",
     "messaging/invalid-argument",
-  ];
-  return invalidTokenCodes.includes(error?.code);
+  ].includes(error?.code);
 }
 
 export async function POST(req: NextRequest) {
@@ -72,20 +60,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const preferencesResult = await pool.query(
-      `SELECT preferences 
-       FROM notification_preferences 
-       WHERE user_id = $1`,
+    const prefRes = await pool.query(
+      `SELECT preferences FROM notification_preferences WHERE user_id = $1`,
       [userId]
     );
 
-    if (preferencesResult.rows.length === 0) {
+    if (!prefRes.rows.length) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const preferences = preferencesResult.rows[0].preferences || {};
+    const preferences = prefRes.rows[0].preferences || {};
 
-    const notificationEnabled = {
+    if (preferences.pushNotifications === false) {
+      return NextResponse.json({
+        success: true,
+        message: "Push notifications disabled",
+      });
+    }
+
+    const enabledMap: Record<NotificationType, boolean> = {
       new_match: preferences.newMatches !== false,
       message: preferences.messages !== false,
       like: preferences.likes !== false,
@@ -100,7 +93,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (!type || !notificationEnabled[type as NotificationType]) {
+    if (!type || !enabledMap[type as NotificationType]) {
       return NextResponse.json({
         success: true,
         message: "Notification skipped - type disabled",
@@ -115,118 +108,68 @@ export async function POST(req: NextRequest) {
 
     if (!tokenRes.rows.length) {
       return NextResponse.json(
-        { message: "No device tokens found" },
+        { error: "No device token found" },
         { status: 404 }
       );
     }
 
-    const targetUrl = url || "/";
-    const notificationTitle = title || "SwingSocial";
-    const notificationBody = body || "You have a new notification";
+    const firebaseToken = tokenRes.rows[0].devicetoken;
+    const tokenPreview = maskToken(firebaseToken);
 
-    const tokenResults: TokenResult[] = [];
-    let successCount = 0;
-    let failureCount = 0;
-    let invalidTokenCount = 0;
-
-    for (let i = 0; i < tokenRes.rows.length; i++) {
-      const row = tokenRes.rows[i];
-      const firebaseToken = row.devicetoken;
-      const tokenPreview = maskToken(firebaseToken);
-      if (
-        !firebaseToken ||
-        typeof firebaseToken !== "string" ||
-        firebaseToken.length < 100
-      ) {
-        tokenResults.push({
-          token: firebaseToken,
+    if (!firebaseToken || firebaseToken.length < 100) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid FCM token format",
           tokenPreview,
-          isValid: false,
-          sent: false,
-          error: "Invalid token format",
-          errorCode: "INVALID_FORMAT",
-        });
-        failureCount++;
-        invalidTokenCount++;
-        continue;
-      }
-
-      const payload = {
-        data: {
-          title: notificationTitle,
-          body: notificationBody,
-          url: targetUrl,
         },
-        webpush: {
-          fcmOptions: {
-            link: targetUrl,
-          },
-        },
-        token: firebaseToken,
-      };
-
-      try {
-        const messageId = await admin.messaging().send(payload);
-
-        tokenResults.push({
-          token: firebaseToken,
-          tokenPreview,
-          isValid: true,
-          sent: true,
-          messageId,
-        });
-        successCount++;
-      } catch (error: any) {
-        const isInvalid = isInvalidTokenError(error);
-
-        tokenResults.push({
-          token: firebaseToken,
-          tokenPreview,
-          isValid: !isInvalid,
-          sent: false,
-          error: error.message,
-          errorCode: error.code,
-        });
-        failureCount++;
-      }
+        { status: 400 }
+      );
     }
 
-    await pool.query(
-      `INSERT INTO notifications 
-        (user_id, type, title, body, url, is_read, created_at)
-       VALUES ($1, $2, $3, $4, $5, false, NOW())`,
-      [
-        userId,
-        type || "general",
-        notificationTitle,
-        notificationBody,
-        targetUrl,
-      ]
-    );
-
-    return NextResponse.json({
-      success: true,
-      summary: {
-        totalTokens: tokenRes.rows.length,
-        successCount,
-        failureCount,
-        invalidTokenCount,
+    const payload = {
+      data: {
+        title: title ?? "SwingSocial",
+        body: body ?? "New notification From Vansh",
+        url: url ?? "/",
+        icon: "/logo.svg",
       },
-      tokenResults: tokenResults.map((r) => ({
-        tokenPreview: r.tokenPreview,
-        isValid: r.isValid,
-        sent: r.sent,
-        messageId: r.messageId,
-        error: r.error,
-        errorCode: r.errorCode,
-      })),
-      message:
-        failureCount === 0
-          ? "All notifications sent successfully"
-          : `${successCount} sent, ${failureCount} failed`,
-    });
+      token: firebaseToken,
+    };
+
+    try {
+      const messageId = await admin.messaging().send(payload);
+
+      await pool.query(
+        `INSERT INTO notifications
+         (user_id, type, title, body, url, is_read, created_at)
+         VALUES ($1, $2, $3, $4, $5, false, NOW())`,
+        [userId, type || "general", title, body, url]
+      );
+
+      return NextResponse.json({
+        success: true,
+        message: "Notification sent successfully",
+        messageId,
+        tokenPreview,
+      });
+    } catch (error: any) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: error.message,
+          errorCode: error.code,
+          isInvalidToken: isInvalidTokenError(error),
+          tokenPreview,
+        },
+        { status: 500 }
+      );
+    }
   } catch (err: any) {
-    console.error(`[ERROR] Unexpected error:`, err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("[NOTIFICATION_ERROR]", err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

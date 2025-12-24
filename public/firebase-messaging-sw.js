@@ -5,53 +5,37 @@ importScripts(
   "https://www.gstatic.com/firebasejs/10.1.0/firebase-messaging-compat.js"
 );
 
-const firebaseConfig = {
+firebase.initializeApp({
   apiKey: "AIzaSyBB16_SMij8I2BCG0qU4mtwrkUjov8gZvE",
   authDomain: "swing-social-website-37364.firebaseapp.com",
   projectId: "swing-social-website-37364",
-  storageBucket: "swing-social-website-37364.firebasestorage.app",
   messagingSenderId: "24751189898",
   appId: "1:24751189898:web:d2a0204a0d6cb75cf66273",
-};
+});
 
-firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-messaging.onBackgroundMessage(async (payload) => {
-  const title = payload.data?.title || "SwingSocial";
-  const body = payload.data?.body || "New notification";
-  const url = payload.data?.url || "/";
+messaging.onBackgroundMessage((payload) => {
+  const { title, body, url, icon } = payload.data || {};
 
-  await self.registration.showNotification(title, {
-    body,
-    icon: "/logo.png",
-    data: { url },
+  self.registration.showNotification(title || "SwingSocial", {
+    body: body || "New notification",
+    icon: icon || "/logo.svg",
+    badge: "/logo.svg",
+    data: { url: url || "/" },
   });
 });
 
-self.addEventListener("install", (event) => {
-  console.log("[SW] Installing...");
-  event.waitUntil(self.skipWaiting());
-});
-
-self.addEventListener("activate", (event) => {
-  console.log("[SW] Activating...");
-  event.waitUntil(self.clients.claim());
-});
-
 self.addEventListener("notificationclick", (event) => {
-  console.log("[SW] Notification clicked:", event.notification);
   event.notification.close();
-
   const url = event.notification.data?.url || "/";
-  console.log("[SW] Opening URL:", url);
 
   event.waitUntil(
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
-      .then((clientList) => {
-        for (const client of clientList) {
-          if (client.url.includes(url) && "focus" in client) {
+      .then((clientsArr) => {
+        for (const client of clientsArr) {
+          if (client.url.includes(url)) {
             return client.focus();
           }
         }
@@ -59,3 +43,6 @@ self.addEventListener("notificationclick", (event) => {
       })
   );
 });
+
+self.skipWaiting();
+self.clients.claim();

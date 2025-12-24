@@ -1,12 +1,13 @@
 "use client";
+
 import React, {
   createContext,
   PropsWithChildren,
   useEffect,
   useState,
 } from "react";
+import { initializeApp, getApps } from "firebase/app";
 import { getMessaging, Messaging, onMessage } from "firebase/messaging";
-import { initializeApp } from "firebase/app";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBB16_SMij8I2BCG0qU4mtwrkUjov8gZvE",
@@ -24,65 +25,59 @@ export const PushNotificationsContext = createContext<Messaging | undefined>(
 const PushNotificationsProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
-  const [isClient, setIsClient] = useState(false);
-  const [messaging, setMessaging] = useState<Messaging | undefined>(undefined);
+  const [messaging, setMessaging] = useState<Messaging>();
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    if (
+      typeof window === "undefined" ||
+      !("serviceWorker" in navigator) ||
+      !("Notification" in window)
+    ) {
+      return;
+    }
 
-  useEffect(() => {
     const init = async () => {
       try {
-        if (
-          isClient &&
-          "serviceWorker" in navigator &&
-          "Notification" in window
-        ) {
-          if (!navigator.serviceWorker.controller) {
-            await navigator.serviceWorker.register(
-              "/firebase-messaging-sw.js",
-              { scope: "/" }
-            );
-          }
+        // 🔒 Ask permission once
+        if (Notification.permission === "default") {
+          await Notification.requestPermission();
+        }
 
-          await navigator.serviceWorker.ready;
+        if (Notification.permission !== "granted") return;
 
-          const app = initializeApp(firebaseConfig);
-          const messagingInstance = getMessaging(app);
-          setMessaging(messagingInstance);
+        // 🔥 Init Firebase once
+        const app =
+          getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-          const unsubscribe = onMessage(messagingInstance, async (payload) => {
-            console.log("Foreground FCM payload:", payload);
+        const messagingInstance = getMessaging(app);
+        setMessaging(messagingInstance);
 
-            if (Notification.permission !== "granted") return;
+        const unsubscribe = onMessage(messagingInstance, (payload) => {
+          const data = payload.data;
 
-            const title = payload.data?.title || "SwingSocial";
-            const body = payload.data?.body || "New notification";
-            const url = payload.data?.url || "/";
+          // ✅ Type guard (fixes TS18048)
+          if (!data) return;
 
-            const registration = await navigator.serviceWorker.ready;
-
-            registration.showNotification(title, {
-              body,
-              icon: "/logo.png",
-              data: { url },
+          navigator.serviceWorker.ready.then((registration) => {
+            registration.showNotification(data.title ?? "SwingSocial", {
+              body: data.body ?? "New notification",
+              icon: data.icon ?? "/logo.svg",
+              badge: "/logo.svg",
+              data: {
+                url: data.url ?? "/",
+              },
             });
           });
+        });
 
-          return () => unsubscribe();
-        }
-      } catch (error) {
-        console.error("Firebase init error:", error);
+        return unsubscribe;
+      } catch (err) {
+        console.error("FCM init error:", err);
       }
     };
 
     init();
-  }, [isClient]);
-
-  if (!isClient) {
-    return <>{children}</>;
-  }
+  }, []);
 
   return (
     <PushNotificationsContext.Provider value={messaging}>
