@@ -18,12 +18,14 @@ firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(async (payload) => {
-  const { data } = payload;
+  const title = payload.data?.title || "SwingSocial";
+  const body = payload.data?.body || "New notification";
+  const url = payload.data?.url || "/";
 
-  await self.registration.showNotification(data.title, {
-    body: data.body,
+  await self.registration.showNotification(title, {
+    body,
     icon: "/logo.png",
-    data: { url: data.url || "/" },
+    data: { url },
   });
 });
 

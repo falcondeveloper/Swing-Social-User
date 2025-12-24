@@ -152,11 +152,9 @@ export async function POST(req: NextRequest) {
       }
 
       const payload = {
-        notification: {
+        data: {
           title: notificationTitle,
           body: notificationBody,
-        },
-        data: {
           url: targetUrl,
         },
         webpush: {

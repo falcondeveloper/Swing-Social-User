@@ -32,39 +32,38 @@ const PushNotificationsProvider: React.FC<PropsWithChildren> = ({
   }, []);
 
   useEffect(() => {
-    try {
-      if (
-        isClient &&
-        "serviceWorker" in navigator &&
-        "Notification" in window
-      ) {
-        const app = initializeApp(firebaseConfig);
-        const messagingInstance = getMessaging(app);
-        setMessaging(messagingInstance);
-
-        const unsubscribe = onMessage(messagingInstance, async (payload) => {
-          if (Notification.permission === "granted" && payload.notification) {
-            const url = payload.data?.url || "/";
-            const registration = await navigator.serviceWorker.ready;
-            await registration.showNotification(
-              payload?.notification?.title || "",
-              {
-                body: payload.notification?.body,
-                icon: "/logo.png",
-                data: { url },
-              }
+    const init = async () => {
+      try {
+        if (
+          isClient &&
+          "serviceWorker" in navigator &&
+          "Notification" in window
+        ) {
+          if (!navigator.serviceWorker.controller) {
+            await navigator.serviceWorker.register(
+              "/firebase-messaging-sw.js",
+              { scope: "/" }
             );
           }
-        });
 
-        return () => unsubscribe();
-      } else {
-        console.log("Not supported");
+          await navigator.serviceWorker.ready;
+
+          const app = initializeApp(firebaseConfig);
+          const messagingInstance = getMessaging(app);
+          setMessaging(messagingInstance);
+
+          const unsubscribe = onMessage(messagingInstance, (payload) => {
+            console.log("Foreground FCM payload:", payload);
+          });
+
+          return () => unsubscribe();
+        }
+      } catch (error) {
+        console.error("Firebase init error:", error);
       }
-    } catch (error) {
-      alert(`Error initializing Firebase: ${error}`);
-      console.log("Error initializing Firebase:", error);
-    }
+    };
+
+    init();
   }, [isClient]);
 
   if (!isClient) {
