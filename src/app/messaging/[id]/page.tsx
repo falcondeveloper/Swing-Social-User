@@ -903,7 +903,7 @@ export default function ChatPage(props: { params: Params }) {
                 }}
                 sx={{
                   position: "fixed",
-                  bottom: 65,
+                  bottom: 64,
                   bgcolor: "#1A1A1A",
                   px: 2,
                   py: 1.5,
