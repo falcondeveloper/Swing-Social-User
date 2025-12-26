@@ -755,7 +755,6 @@ export default function ChatPage(props: { params: Params }) {
               minHeight: 0,
               display: "flex",
               overflow: "hidden",
-              mb: "64px",
             }}
           >
             <Box
@@ -779,6 +778,11 @@ export default function ChatPage(props: { params: Params }) {
                   position: "sticky",
                   top: 0,
                   zIndex: 20,
+                  cursor: "pointer",
+                }}
+                onClick={() => {
+                  setShowDetail(true);
+                  setSelectedUserId(userProfile?.Id);
                 }}
               >
                 <Avatar
@@ -829,10 +833,10 @@ export default function ChatPage(props: { params: Params }) {
                   overflowY: "auto",
                   px: 2,
                   py: 2,
+                  pb: "140px",
                   display: "flex",
                   flexDirection: "column",
                   gap: 1.5,
-                  // pb: "60px",
                 }}
               >
                 {messages?.map(
@@ -898,8 +902,8 @@ export default function ChatPage(props: { params: Params }) {
                   handleSendMessage();
                 }}
                 sx={{
-                  position: "sticky",
-                  bottom: 0,
+                  position: "fixed",
+                  bottom: 65,
                   bgcolor: "#1A1A1A",
                   px: 2,
                   py: 1.5,
@@ -907,7 +911,8 @@ export default function ChatPage(props: { params: Params }) {
                   display: "flex",
                   alignItems: "center",
                   gap: 1.5,
-                  zIndex: 2000,
+                  // zIndex: 1400,
+                  width: "100%",
                 }}
               >
                 <IconButton
@@ -1121,6 +1126,11 @@ export default function ChatPage(props: { params: Params }) {
                 borderBottom: "1px solid #333",
                 bgcolor: "#181818",
                 flexShrink: 0,
+                cursor: "pointer",
+              }}
+              onClick={() => {
+                setShowDetail(true);
+                setSelectedUserId(userProfile?.Id);
               }}
             >
               <Avatar
@@ -1178,15 +1188,20 @@ export default function ChatPage(props: { params: Params }) {
                   }}
                 >
                   {message?.MemberIdFrom !== profileId && (
-                    <Avatar
-                      src={userProfile?.Avatar || "/noavatar.png"}
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        border: "2px solid #FF1B6B",
-                        mr: 1,
-                      }}
-                    />
+                    <ListItemAvatar>
+                      <Avatar
+                        sx={{
+                          border: "2px solid",
+                          borderColor: "#FF1B6B",
+                        }}
+                        alt={message?.ToUsername || "User"}
+                        src={userProfile?.Avatar || "/noavatar.png"}
+                        onClick={() => {
+                          setShowDetail(true);
+                          setSelectedUserId(userProfile?.Id);
+                        }}
+                      />
+                    </ListItemAvatar>
                   )}
                   <Box
                     sx={{
