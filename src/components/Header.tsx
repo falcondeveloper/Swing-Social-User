@@ -1193,7 +1193,7 @@ const Header = () => {
                             },
                           }}
                         >
-                          <Trash2 size={15} />
+                          <Trash2 size={22} />
                         </IconButton>
                       </Box>
                     </Box>

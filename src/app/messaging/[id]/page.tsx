@@ -33,6 +33,36 @@ import UserProfileModal from "@/components/UserProfileModal";
 import { X } from "lucide-react";
 import Footer from "@/components/Footer";
 import { sendNotification } from "@/utils/notifications";
+import { getSocket } from "@/lib/socket";
+
+const typingDots = (
+  <Box sx={{ display: "inline-flex", ml: 0.5 }}>
+    {[0, 1, 2].map((i) => (
+      <Box
+        key={i}
+        sx={{
+          width: 4,
+          height: 4,
+          bgcolor: "#4CAF50",
+          borderRadius: "50%",
+          mx: 0.3,
+          animation: "typing 1.4s infinite",
+          animationDelay: `${i * 0.2}s`,
+        }}
+      />
+    ))}
+
+    <style>
+      {`
+        @keyframes typing {
+          0% { opacity: 0.3; }
+          20% { opacity: 1; }
+          100% { opacity: 0.3; }
+        }
+      `}
+    </style>
+  </Box>
+);
 
 dayjs.extend(relativeTime);
 
@@ -51,10 +81,141 @@ export default function ChatPage(props: { params: Params }) {
   const [openImage, setOpenImage] = useState<string | null>(null);
   const [chatList, setChatList] = useState<any>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [realtimeMessage, setRealTimeMessage] = useState<any>();
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [userDeviceToken, setUserDeviceToken] = useState(null);
   const [profileId, setProfileId] = useState<any>();
+  const [isTyping, setIsTyping] = useState(false);
+  const [isOnline, setIsOnline] = useState(false);
+  const [lastSeen, setLastSeen] = useState<string | null>(null);
+  const listenersSetupRef = useRef(false);
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    const setupSocketListeners = () => {
+      if (listenersSetupRef.current) return;
+
+      socket.on("connect", () => {
+        console.log("✅ Socket connected:", socket.id);
+        // Re-emit online status when reconnecting
+        if (profileId) {
+          socket.emit("user:online", profileId);
+        }
+      });
+
+      socket.on("disconnect", () => {
+        console.log("❌ Socket disconnected");
+      });
+
+      // Online/offline status
+      socket.on("user:status", ({ userId, online, lastSeen }) => {
+        console.log("📡 user:status event received:", {
+          userId,
+          online,
+          lastSeen,
+        });
+        if (userId === userProfile?.Id) {
+          setIsOnline(online);
+          setLastSeen(lastSeen);
+          setUserProfile((prev: any) => ({
+            ...prev,
+            isOnline: online,
+            LastOnline: online ? null : lastSeen,
+          }));
+        }
+      });
+
+      // Typing indicators
+      socket.on("typing:start", ({ from }) => {
+        console.log("⌨️ typing:start from:", from);
+        if (from === userProfile?.Id) {
+          setIsTyping(true);
+        }
+      });
+
+      socket.on("typing:stop", ({ from }) => {
+        console.log("⌨️ typing:stop from:", from);
+        if (from === userProfile?.Id) {
+          setIsTyping(false);
+        }
+      });
+
+      // Live messages
+      socket.on("chat:receive", (msg) => {
+        console.log("📩 chat:receive event:", msg);
+        setMessages((prev: any) => [...prev, msg]);
+
+        // Mark as read immediately if we're the recipient
+        if (msg.MemberIdTo === profileId) {
+          setTimeout(() => {
+            socket.emit("message:read", {
+              from: profileId,
+              to: msg.MemberIdFrom,
+              messageIds: [msg.ConversationId || Date.now().toString()],
+            });
+          }, 500);
+        }
+      });
+
+      // Read receipts
+      socket.on("message:read", ({ messageIds, readAt }) => {
+        console.log("✓✓ message:read event:", { messageIds, readAt });
+        setMessages((prev: any[]) =>
+          prev.map((m) =>
+            messageIds.includes(m.ConversationId) ? { ...m, readAt } : m
+          )
+        );
+      });
+
+      listenersSetupRef.current = true;
+    };
+
+    setupSocketListeners();
+
+    return () => {
+      // Don't remove all listeners on cleanup to maintain connection
+      // Just remove specific ones if needed
+      socket.off("chat:receive");
+      socket.off("typing:start");
+      socket.off("typing:stop");
+      socket.off("message:read");
+      listenersSetupRef.current = false;
+    };
+  }, [profileId, userProfile?.Id]);
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    const onReceive = (msg: any) => {
+      setMessages((prev: any[]) => {
+        // prevent duplicates
+        if (prev.some((m) => m.ConversationId === msg.ConversationId)) {
+          return prev;
+        }
+        return [...prev, msg];
+      });
+    };
+
+    socket.on("chat:receive", onReceive);
+
+    return () => {
+      socket.off("chat:receive", onReceive);
+    };
+  }, []);
+
+  // Emit online status when profileId is available
+  useEffect(() => {
+    if (!profileId) return;
+
+    const socket = getSocket();
+    if (socket.connected) {
+      socket.emit("user:online", profileId);
+    } else {
+      socket.once("connect", () => {
+        socket.emit("user:online", profileId);
+      });
+    }
+  }, [profileId]);
 
   useEffect(() => {
     const handleImageClick = (e: any) => {
@@ -77,21 +238,15 @@ export default function ChatPage(props: { params: Params }) {
   }, [messages]);
 
   useEffect(() => {
-    setProfileId(localStorage.getItem("logged_in_profile"));
+    const storedProfileId = localStorage.getItem("logged_in_profile");
+    if (storedProfileId) {
+      setProfileId(storedProfileId);
+    }
   }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  useEffect(() => {
-    if (
-      realtimeMessage?.MemberIdTo === myProfile?.Id &&
-      realtimeMessage?.MemberIdFrom === userProfile?.Id
-    ) {
-      setMessages([...messages, realtimeMessage]);
-    }
-  }, [realtimeMessage]);
 
   const handleClose = () => {
     setShowDetail(false);
@@ -112,7 +267,7 @@ export default function ChatPage(props: { params: Params }) {
       setUserId(pid);
     };
     getIdFromParam();
-  }, [props]);
+  }, [props.params]);
 
   useEffect(() => {
     if (userProfile) {
@@ -188,62 +343,87 @@ export default function ChatPage(props: { params: Params }) {
     });
   };
 
+  const handleTyping = (value: string) => {
+    const socket = getSocket();
+    setNewMessage(value);
+
+    if (!userProfile?.Id) return;
+
+    socket.emit("typing:start", {
+      from: profileId,
+      to: userProfile?.Id,
+    });
+
+    clearTimeout((window as any).__typingTimer);
+    (window as any).__typingTimer = setTimeout(() => {
+      socket.emit("typing:stop", {
+        from: profileId,
+        to: userProfile?.Id,
+      });
+    }, 800);
+  };
+
   const handleSendMessage = async () => {
-    if (newMessage.trim()) {
-      const newUserMessage = {
-        AvatarFrom: myProfile?.Avatar || "/noavatar.png",
-        AvatarTo: userProfile?.Avatar,
-        ChatId: "temporary-chat-id",
-        Conversation: newMessage,
-        ConversationId: "temporary-conversation-id",
-        CreatedAt: new Date().toISOString(),
-        FromUsername: myProfile?.Username || "You",
-        MemberIdFrom: profileId,
-        MemberIdTo: userProfile?.Id,
-        ToUsername: userProfile?.Username || "Recipient",
-        lastcommentinserted: 1,
-      };
+    if (!newMessage.trim() || !profileId || !userProfile?.Id || !myProfile)
+      return;
 
-      setMessages([...messages, newUserMessage]);
+    const socket = getSocket();
+    const tempConversationId = `temp-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
 
-      if (userDeviceToken) {
-        sendNotifications(newUserMessage?.Conversation);
+    const newUserMessage = {
+      AvatarFrom: myProfile?.Avatar || "/noavatar.png",
+      AvatarTo: userProfile?.Avatar,
+      ChatId: "temporary-chat-id",
+      Conversation: newMessage,
+      ConversationId: tempConversationId,
+      CreatedAt: new Date().toISOString(),
+      FromUsername: myProfile?.Username || "You",
+      MemberIdFrom: profileId,
+      MemberIdTo: userProfile?.Id,
+      ToUsername: userProfile?.Username || "Recipient",
+      lastcommentinserted: 1,
+      readAt: null,
+    };
+
+    // Optimistic update
+    setMessages((prev: any) => [...prev, newUserMessage]);
+    setNewMessage("");
+
+    // Emit socket message
+    socket.emit("chat:send", {
+      ...newUserMessage,
+      ConversationId: tempConversationId,
+    });
+
+    // Send notification if needed
+    if (userDeviceToken) {
+      sendNotifications(newMessage);
+    }
+
+    // Save to database
+    const payload = {
+      chatid:
+        existingChatIndex === -1 ? 0 : chatList[existingChatIndex]?.ChatId,
+      ProfileIdfrom: myProfile?.Id,
+      ProfileIDto: userProfile?.Id,
+      Conversation: newMessage,
+    };
+
+    try {
+      const response = await fetch("/api/user/messaging", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error saving message:", errorData);
       }
-      const payload = {
-        chatid:
-          existingChatIndex === -1 ? 0 : chatList[existingChatIndex]?.ChatId,
-        ProfileIdfrom: myProfile?.Id,
-        ProfileIDto: userProfile?.Id,
-        Conversation: newMessage,
-      };
-
-      setNewMessage("");
-
-      try {
-        const response = await fetch("/api/user/messaging", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-        } else {
-          const errorData = await response.json();
-          console.error("Error sending message:", errorData);
-        }
-      } catch (error) {
-        console.error("Network error while sending message:", error);
-        setMessages((prevMessages: any) => [
-          ...prevMessages,
-          {
-            sender: "error",
-            text: "Failed to send message. Please try again.",
-          },
-        ]);
-      }
+    } catch (error) {
+      console.error("Network error while sending message:", error);
     }
   };
 
@@ -499,6 +679,62 @@ export default function ChatPage(props: { params: Params }) {
       window.visualViewport?.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    const socket = getSocket();
+
+    socket.on("typing:start", ({ from }) => {
+      if (from === userProfile?.Id) {
+        setIsTyping(true);
+      }
+    });
+
+    socket.on("typing:stop", ({ from }) => {
+      if (from === userProfile?.Id) {
+        setIsTyping(false);
+      }
+    });
+
+    return () => {
+      socket.off("typing:start");
+      socket.off("typing:stop");
+    };
+  }, [userProfile?.Id]);
+
+  useEffect(() => {
+    if (!profileId || !userProfile?.Id) return;
+
+    const unreadIds = messages
+      .filter((m: any) => m.MemberIdFrom === userProfile.Id && !m.readAt)
+      .map((m: any) => m.ConversationId);
+
+    if (!unreadIds.length) return;
+
+    const socket = getSocket();
+    socket.emit("message:read", {
+      from: profileId,
+      to: userProfile.Id,
+      messageIds: unreadIds,
+    });
+  }, [messages.length]);
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    const handler = ({ messageIds, readAt }: any) => {
+      setMessages((prev: any) =>
+        prev.map((m: any) =>
+          messageIds.includes(m.ConversationId) ? { ...m, readAt } : m
+        )
+      );
+    };
+
+    socket.on("message:read", handler);
+
+    return () => {
+      socket.off("message:read", handler);
+    };
+  }, []);
+
   return (
     <Box
       sx={{
@@ -559,10 +795,29 @@ export default function ChatPage(props: { params: Params }) {
                   <Typography variant="h6" color="white">
                     {userProfile?.Username || "User"}
                   </Typography>
-                  <Typography variant="body2" color="#FF1B6B">
-                    {userProfile?.LastOnline
-                      ? dayjs(userProfile.LastOnline).fromNow()
-                      : "N/A"}
+                  <Typography
+                    variant="body2"
+                    color={isTyping ? "#4CAF50" : isOnline ? "#4CAF50" : "gray"}
+                    sx={{ minHeight: 18 }}
+                  >
+                    {isTyping ? (
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <Typography fontSize={13} color="#4CAF50">
+                          typing
+                        </Typography>
+                        {typingDots}
+                      </Box>
+                    ) : isOnline ? (
+                      <Typography fontSize={13} color="#4CAF50">
+                        Online
+                      </Typography>
+                    ) : (
+                      <Typography fontSize={13} color="gray">
+                        {lastSeen
+                          ? `Last seen ${dayjs(lastSeen).fromNow()}`
+                          : "Offline"}
+                      </Typography>
+                    )}
                   </Typography>
                 </Box>
               </Box>
@@ -668,7 +923,7 @@ export default function ChatPage(props: { params: Params }) {
                   placeholder="Type a message..."
                   InputProps={{ disableUnderline: true }}
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  onChange={(e) => handleTyping(e.target.value)}
                   sx={{ input: { color: "white" } }}
                 />
 
@@ -955,6 +1210,18 @@ export default function ChatPage(props: { params: Params }) {
                       }}
                     />
                   </Box>
+                  {message?.MemberIdFrom === profileId && (
+                    <Typography
+                      fontSize={10}
+                      sx={{
+                        textAlign: "right",
+                        mt: 0.3,
+                        color: message.readAt ? "#4FC3F7" : "gray",
+                      }}
+                    >
+                      {message.readAt ? "✓✓ Seen" : "✓ Sent"}
+                    </Typography>
+                  )}
                 </ListItem>
               ))}
               <div ref={messagesEndRef} />
@@ -985,7 +1252,7 @@ export default function ChatPage(props: { params: Params }) {
                 placeholder="Type a message..."
                 variant="outlined"
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={(e) => handleTyping(e.target.value)}
                 sx={{
                   input: { color: "white" },
                   "& .MuiOutlinedInput-root": {

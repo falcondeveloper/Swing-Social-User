@@ -6,6 +6,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Analytics from "./analytics";
 import PushNotificationsProvider from "@/components/PushNotificationsProvider";
+import { SocketProvider } from "@/context/SocketProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -73,12 +74,19 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const profileId =
+    typeof window !== "undefined"
+      ? localStorage.getItem("logged_in_profile") ?? undefined
+      : undefined;
+
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ToastContainer />
         <ClientLayout>
-          <PushNotificationsProvider>{children}</PushNotificationsProvider>
+          <SocketProvider profileId={profileId}>
+            <PushNotificationsProvider>{children}</PushNotificationsProvider>
+          </SocketProvider>
         </ClientLayout>
         <Analytics />
       </body>
