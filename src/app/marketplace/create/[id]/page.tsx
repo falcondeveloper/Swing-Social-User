@@ -8,6 +8,8 @@ import CreateProductModal from "../../../../components/CreateProductModal";
 import ChangeImageModal from "../../../../components/ChangeImageModal";
 import { toast } from "react-toastify";
 import { Add } from "@mui/icons-material";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 type Params = Promise<{ id: string }>;
 
@@ -819,7 +821,7 @@ export default function ResponsivePage(props: { params: Params }) {
           </div>
         )}
       </div>
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
     </>
   );
 }

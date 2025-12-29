@@ -18,7 +18,6 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { io } from "socket.io-client";
 import { jwtDecode } from "jwt-decode";
 import {
   Home,
@@ -62,7 +61,6 @@ const drawerMotion = {
   },
 };
 
-const socket = io("https://api.nomolive.com/");
 
 const Header = () => {
   const router = useRouter();
@@ -153,29 +151,6 @@ const Header = () => {
     checkNotificationPermission();
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    socket.on("connect", () => {});
-    socket.on("disconnect", () => {});
-    socket.on("message", (message) => {
-      const profileid = localStorage.getItem("logged_in_profile");
-      if (message?.from === profileid || message?.to === profileid) {
-        setNewMessage(true);
-        localStorage.setItem("isNewMessage", "true");
-      }
-    });
-
-    socket.on("error", (error) => {
-      console.error("WebSocket error:", error);
-    });
-
-    return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("message");
-      socket.off("error");
-    };
-  }, []);
 
   const resetNewMessage = () => {
     setNewMessage(false);

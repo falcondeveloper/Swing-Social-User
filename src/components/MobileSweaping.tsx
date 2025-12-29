@@ -942,7 +942,7 @@
 //       <>
 //         <Header />
 //         <Loader />
-//         <Footer />
+//         {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
 //       </>
 //     );
 //   }
@@ -1583,6 +1583,7 @@ import {
   IconButton,
   Snackbar,
   Alert,
+  useMediaQuery,
 } from "@mui/material";
 import InstructionModal from "@/components/InstructionModal";
 import UserProfileModal from "@/components/UserProfileModal";
@@ -1595,6 +1596,8 @@ import { toast } from "react-toastify";
 import TuneIcon from "@mui/icons-material/Tune";
 import PreferencesSheet from "./PreferencesSheet";
 import Loader from "@/commonPage/Loader";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 export interface DetailViewHandle {
   open: (id: string) => void;
@@ -1662,6 +1665,8 @@ const SwipeIndicator = ({ type, opacity }: any) => {
 };
 
 export default function MobileSweaping() {
+  const isMobile = useMediaQuery("(max-width:768px)");
+
   const lastSwipeTimeRef = useRef<number>(0);
   const SWIPE_THROTTLE_MS = 0;
   const currentCardRef = useRef<HTMLDivElement | null>(null);
@@ -2501,7 +2506,7 @@ export default function MobileSweaping() {
       <>
         <Header />
         <Loader />
-        <Footer />
+        {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
       </>
     );
   }
@@ -2816,7 +2821,7 @@ export default function MobileSweaping() {
         onSaved={handlePrefsSaved}
       />
 
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
 
       {memberalarm && parseInt(memberalarm) > 2 ? null : <InstructionModal />}
 

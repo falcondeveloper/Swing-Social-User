@@ -21,6 +21,8 @@ import styled from "@emotion/styled";
 import { useTheme } from "@emotion/react";
 import { toast } from "react-toastify";
 import { Email } from "@mui/icons-material";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 type Params = Promise<{ id: string }>;
 
@@ -202,7 +204,7 @@ export default function ResponsivePage(props: { params: Params }) {
             </Typography>
           </Box>
         </LoaderContainer>
-        <Footer />
+        {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
       </PageContainer>
     );
   }
@@ -225,7 +227,7 @@ export default function ResponsivePage(props: { params: Params }) {
             </Button>
           </Box>
         </LoaderContainer>
-        <Footer />
+        {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
       </PageContainer>
     );
   }
@@ -239,7 +241,7 @@ export default function ResponsivePage(props: { params: Params }) {
             Product not found
           </Typography>
         </LoaderContainer>
-        <Footer />
+        {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
       </PageContainer>
     );
   }
@@ -444,7 +446,7 @@ export default function ResponsivePage(props: { params: Params }) {
         </Grid>
       </Container>
       <Box sx={{ height: { xs: "72px", sm: "80px" } }} />
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
     </>
   );
 }

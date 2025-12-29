@@ -34,6 +34,8 @@ import {
   NotificationSettings,
 } from "@/services/notificationService";
 import Loader from "@/commonPage/Loader";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 export default function NotificationSettingsPage() {
   const router = useRouter();
@@ -207,7 +209,7 @@ export default function NotificationSettingsPage() {
       <>
         <Header />
         <Loader />
-        <Footer />
+        {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
       </>
     );
   }
@@ -453,7 +455,7 @@ export default function NotificationSettingsPage() {
         </Alert>
       </Snackbar>
 
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
     </Box>
   );
 }

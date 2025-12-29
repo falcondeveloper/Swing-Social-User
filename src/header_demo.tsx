@@ -17,7 +17,6 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { io } from "socket.io-client";
 import { jwtDecode } from "jwt-decode";
 import {
   Home,
@@ -33,8 +32,6 @@ import {
   CheckCheck,
   Trash2,
 } from "lucide-react";
-
-const socket = io("https://api.nomolive.com/");
 
 const Header = () => {
   const router = useRouter();
@@ -52,19 +49,6 @@ const Header = () => {
   const [notificationCount, setNotificationCount] = useState<number>(0);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notificationDrawerOpen, setNotificationDrawerOpen] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    socket.on("notification", (notification) => {
-      setNotifications((prev) => [notification, ...prev]);
-      setNotificationCount((prev) => prev + 1);
-    });
-
-    return () => {
-      socket.off("notification");
-    };
-  }, []);
 
   const fetchNotifications = async () => {
     if (!profileId) return;
@@ -142,42 +126,6 @@ const Header = () => {
     }
 
     checkNotificationPermission();
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    socket.on("connect", () => {});
-    socket.on("disconnect", () => {});
-
-    socket.on("message", (message) => {
-      const profileid = localStorage.getItem("logged_in_profile");
-      if (message?.from === profileid || message?.to === profileid) {
-        setNewMessage(true);
-        localStorage.setItem("isNewMessage", "true");
-      }
-    });
-
-    // Add notification listener
-    socket.on("notification", (notification) => {
-      const profileid = localStorage.getItem("logged_in_profile");
-      if (notification?.userId === profileid) {
-        setNotificationCount((prev) => prev + 1);
-        setNotifications((prev) => [notification, ...prev]);
-      }
-    });
-
-    socket.on("error", (error) => {
-      console.error("WebSocket error:", error);
-    });
-
-    return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("message");
-      socket.off("notification");
-      socket.off("error");
-    };
   }, []);
 
   const resetNewMessage = () => {

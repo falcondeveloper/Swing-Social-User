@@ -34,6 +34,8 @@ import { X } from "lucide-react";
 import Footer from "@/components/Footer";
 import { sendNotification } from "@/utils/notifications";
 import { getSocket } from "@/lib/socket";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 const typingDots = (
   <Box sx={{ display: "inline-flex", ml: 0.5 }}>
@@ -911,7 +913,6 @@ export default function ChatPage(props: { params: Params }) {
                   display: "flex",
                   alignItems: "center",
                   gap: 1.5,
-                  // zIndex: 1400,
                   width: "100%",
                 }}
               >
@@ -968,7 +969,7 @@ export default function ChatPage(props: { params: Params }) {
               </Modal>
             </Box>
           </Box>
-          <Footer />
+          {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
         </>
       ) : (
         <Box

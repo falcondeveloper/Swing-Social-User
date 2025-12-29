@@ -39,6 +39,8 @@ import { useMediaQuery } from "@mui/material";
 import ProfileCard from "@/components/ProfileCard";
 import { jwtDecode } from "jwt-decode";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 export default function Home() {
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
@@ -1162,7 +1164,7 @@ export default function Home() {
           </Box>
         </Box>
       </Container>
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
       <UserProfileModal
         handleGrantAccess={handleGrantAccess}
         handleClose={handleClose}

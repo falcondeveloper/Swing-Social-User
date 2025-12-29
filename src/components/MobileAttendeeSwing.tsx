@@ -25,6 +25,7 @@ import {
   MenuItem,
   DialogActions,
   alpha,
+  useMediaQuery,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import InstructionModal from "@/components/InstructionModal";
@@ -37,11 +38,14 @@ import "react-toastify/dist/ReactToastify.css";
 import { toast, ToastContainer } from "react-toastify";
 import Footer from "./Footer";
 import { jwtDecode } from "jwt-decode";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 export interface DetailViewHandle {
   open: (id: string) => void;
 }
 
 export default function MobileAttendeeSwing() {
+  const isMobile = useMediaQuery("(max-width:768px)");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userProfiles, setUserProfiles] = useState<any>([]); // User profiles fetched from API
   const [loading, setLoading] = useState(true); // Tracks loading state
@@ -1334,8 +1338,8 @@ export default function MobileAttendeeSwing() {
           </Button>
         </DialogContent>
       </Dialog>
-      {/* Bottom Navigation Bar */}
-      <Footer />
+
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
     </>
   );
 }

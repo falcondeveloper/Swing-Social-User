@@ -14,6 +14,7 @@ import {
   Chip,
   Container,
   IconButton,
+  useMediaQuery,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -28,6 +29,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Select from "react-select";
 import { jwtDecode } from "jwt-decode";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 interface Product {
   Id: string;
@@ -44,6 +47,7 @@ interface Product {
 
 const Marketplace: React.FC = () => {
   const router = useRouter();
+  const isMobile = useMediaQuery("(max-width:768px)");
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [isClient, setIsClient] = useState(false);
@@ -626,7 +630,7 @@ const Marketplace: React.FC = () => {
 
       <Box sx={{ height: { xs: "72px", sm: "80px" } }} />
 
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
     </>
   );
 };

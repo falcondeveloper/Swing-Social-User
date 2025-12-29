@@ -43,6 +43,8 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import { sendErrorEmail } from "@/utils/reportError";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 const theme = createTheme({
   palette: {
@@ -179,6 +181,7 @@ const validationSchema = Yup.object().shape({
 const MAX_PHOTOS = 3;
 
 const EditEventForm: React.FC = () => {
+  const isMobile = useMediaQuery("(max-width:768px)");
   const router = useRouter();
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -1588,7 +1591,7 @@ const EditEventForm: React.FC = () => {
         </LocalizationProvider>
       </ThemeProvider>
       <Box sx={{ height: isXs ? "63.2px" : "0" }} />
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
     </>
   );
 };

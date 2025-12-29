@@ -17,7 +17,6 @@ import {
 import { jwtDecode } from "jwt-decode";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { io, Socket } from "socket.io-client";
 import {
   Home,
   Users,
@@ -29,7 +28,6 @@ import {
   X,
 } from "lucide-react";
 
-const SOCKET_URL = "https://api.nomolive.com/";
 const LS_KEYS = {
   LOGIN_INFO: "loginInfo",
   LOGGED_IN_PROFILE: "logged_in_profile",
@@ -42,14 +40,6 @@ interface MobileNavItem {
   path: string;
   badge?: boolean;
 }
-
-let socket: Socket | null = null;
-const getSocket = () => {
-  if (!socket) {
-    socket = io(SOCKET_URL, { transports: ["websocket"] });
-  }
-  return socket;
-};
 
 const Header: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -153,28 +143,6 @@ const Header: React.FC = () => {
 
     fetchUserData();
   }, [profileId]);
-
-  useEffect(() => {
-    const socketInstance = getSocket();
-
-    const handleMessage = (message: any) => {
-      const profileId = localStorage.getItem(LS_KEYS.LOGGED_IN_PROFILE);
-      if (message?.from === profileId || message?.to === profileId) {
-        setIsNewMessage(true);
-        localStorage.setItem(LS_KEYS.NEW_MESSAGE, "true");
-      }
-    };
-
-    socketInstance.on("message", handleMessage);
-    socketInstance.on("error", (error) =>
-      console.error("WebSocket error:", error)
-    );
-
-    return () => {
-      socketInstance.off("message", handleMessage);
-      socketInstance.off("error");
-    };
-  }, []);
 
   useEffect(() => {
     if (!("Notification" in window)) return;

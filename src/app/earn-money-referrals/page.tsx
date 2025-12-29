@@ -11,7 +11,6 @@ import {
   useMediaQuery,
   Stack,
 } from "@mui/material";
-import Footer from "@/components/Footer";
 import { jwtDecode } from "jwt-decode";
 import Swal from "sweetalert2";
 import AffiliateHistory from "@/pages/affiliateData/AffiliateHistory";
@@ -21,6 +20,8 @@ import ReferalForm from "@/components/ReferalForm";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 import Loader from "@/commonPage/Loader";
 import Header from "@/components/Header";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 const theme = createTheme({
   palette: {
@@ -107,7 +108,7 @@ const theme = createTheme({
 
 const page = () => {
   const [tabIndex, setTabIndex] = useState<number>(0);
-  const isSm = useMediaQuery("(max-width:900px)");
+  const isSm = useMediaQuery("(max-width:768px)");
   const [affiliateCode, setAffiliateCode] = useState<string | null>(null);
   const [affiliateStatus, setAffiliateStatus] = useState<boolean | null>(null);
   const [profileId, setProfileId] = useState<any>(null);
@@ -184,7 +185,7 @@ const page = () => {
       <ThemeProvider theme={theme}>
         <Header />
         <Loader />
-        <Footer />
+        {isSm ? <AppFooterMobile /> : <AppFooterDesktop />}
       </ThemeProvider>
     );
   }
@@ -194,7 +195,7 @@ const page = () => {
       <ThemeProvider theme={theme}>
         <Header />
         <ReferalForm onSuccess={handleReferralSuccess} />
-        <Footer />
+       {isSm ? <AppFooterMobile /> : <AppFooterDesktop />}
       </ThemeProvider>
     );
   }
@@ -271,7 +272,7 @@ const page = () => {
             </Box>
           </Box>
         </Box>
-        <Footer />
+        {isSm ? <AppFooterMobile /> : <AppFooterDesktop />}
       </ThemeProvider>
     </>
   );

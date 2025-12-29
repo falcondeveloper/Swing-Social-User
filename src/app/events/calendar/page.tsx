@@ -15,6 +15,8 @@ import { useState, useEffect } from "react";
 import isBetween from "dayjs/plugin/isBetween";
 import Footer from "@/components/Footer";
 import { ArrowLeft } from "lucide-react";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 dayjs.extend(isBetween);
 export default function Calendar() {
@@ -343,7 +345,7 @@ export default function Calendar() {
         </Box>
       </Box>
 
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
     </Box>
   );
 }

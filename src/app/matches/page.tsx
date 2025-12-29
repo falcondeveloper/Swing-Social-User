@@ -45,6 +45,8 @@ import { ArrowLeft } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import UserProfileModal from "@/components/UserProfileModal";
 import { toast } from "react-toastify";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 export default function MatchesPage() {
   const router = useRouter();
@@ -2123,7 +2125,7 @@ export default function MatchesPage() {
         open={showDetail}
         userid={selectedUserId}
       />
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
     </>
   );
 }

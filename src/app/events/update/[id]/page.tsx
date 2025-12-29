@@ -19,6 +19,7 @@ import {
   CardActions,
   IconButton,
   CardContent,
+  useMediaQuery,
 } from "@mui/material";
 import { Editor } from "@tinymce/tinymce-react";
 import Header from "@/components/Header";
@@ -28,6 +29,8 @@ import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import moment, { Moment } from "moment";
 import { toast } from "react-toastify";
 import { AddCircleOutline } from "@mui/icons-material";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 interface FormData {
   Id: string;
@@ -62,6 +65,7 @@ interface FormErrors {
 type Params = Promise<{ id: string }>;
 
 export default function EventDetail(props: { params: Params }) {
+  const isMobile = useMediaQuery("(max-width:768px)");
   const [id, setId] = useState<string>("");
   const [eventDetail, setEventDetail] = useState<any>(null);
   const [formData, setFormData] = useState<FormData>({
@@ -899,7 +903,7 @@ export default function EventDetail(props: { params: Params }) {
           </Button>
         </form>
       </Box>
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
     </Box>
   );
 }

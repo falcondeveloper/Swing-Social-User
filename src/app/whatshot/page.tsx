@@ -46,6 +46,8 @@ import Swal from "sweetalert2";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
 import Loader from "@/commonPage/Loader";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 export default function Whatshot() {
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
@@ -1159,7 +1161,7 @@ export default function Whatshot() {
         </Fade>
       </Modal>
 
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
     </Box>
   );
 }

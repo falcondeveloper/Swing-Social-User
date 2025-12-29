@@ -65,6 +65,8 @@ import Swal from "sweetalert2";
 import UserProfileModal from "@/components/UserProfileModal";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 import { formatDateEST } from "@/utils/formatDateEST";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 type Params = Promise<{ id: string }>;
 
@@ -2322,8 +2324,7 @@ export default function EventDetail(props: { params: Params }) {
           </Button>
         </DialogActions>
       </Dialog>
-      {/* Bottom Navigation Bar */}
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
 
       <UserProfileModal
         handleGrantAccess={handleGrantAccess}

@@ -35,6 +35,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import ClearIcon from "@mui/icons-material/Clear";
 import { useGeolocationWithAPI } from "@/components/useGeolocationWithAPI";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 export default function CalendarView() {
   const router = useRouter();
@@ -1054,7 +1056,7 @@ export default function CalendarView() {
             </>
           )}
         </Container>
-        <Footer />
+        {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
       </Box>
     </>
   );

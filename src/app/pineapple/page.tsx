@@ -17,6 +17,7 @@ import {
   Paper,
   CircularProgress,
   CardMedia,
+  useMediaQuery,
 } from "@mui/material";
 import FlagIcon from "@mui/icons-material/Flag";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -27,6 +28,8 @@ import Footer from "@/components/Footer";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 interface User {
   Id: string;
@@ -49,6 +52,7 @@ interface ReportOptions {
 
 export default function Pineapple() {
   const router = useRouter();
+  const isMobile = useMediaQuery("(max-width:768px)");
   const [profileId, setProfileId] = useState<string>("");
   const [targetId, setTargetId] = useState<string | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -638,7 +642,7 @@ export default function Pineapple() {
         open={showDetail}
         userid={selectedUserId}
       />
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
     </>
   );
 }

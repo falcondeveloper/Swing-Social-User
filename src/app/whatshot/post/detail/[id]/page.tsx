@@ -31,6 +31,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
 import { Save, X } from "lucide-react";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 type Params = Promise<{ id: string }>;
 
@@ -642,7 +644,7 @@ export default function PostDetail(props: { params: Params }) {
           </Box>
         </Paper>
       </Container>
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
     </Box>
   );
 }

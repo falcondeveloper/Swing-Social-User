@@ -39,8 +39,11 @@ import ProfileCard from "@/components/ProfileCard";
 import { Bold } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 export default function Home() {
+  const isMobile = useMediaQuery("(max-width:768px)");
   const [userProfiles, setUserProfiles] = useState<any[]>([]); // User profiles fetched from API
   const [totalUsers, setTotalUsers] = useState<any>(0); // User profiles fetched from API
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -73,8 +76,6 @@ export default function Home() {
 
   const router = useRouter();
   const theme = useTheme();
-  //const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
   const refs = useRef<{ [key: string]: React.RefObject<any> }>({});
   const [idParam, setIdparam] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -584,7 +585,7 @@ export default function Home() {
         userId: targetId,
         title: "❤️ New Match!",
         body: message,
-       type: "new_match", 
+        type: "new_match",
         url: `https://swing-social-user.vercel.app/members/${profileId}`,
       }),
     });
@@ -1401,7 +1402,7 @@ export default function Home() {
           </Box>
         </Box>
       )}
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
       <Modal open={isReportModalOpen} onClose={handleReportModalToggle}>
         <Box
           sx={{

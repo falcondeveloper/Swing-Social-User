@@ -37,6 +37,8 @@ import moment, { Moment } from "moment";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 interface FormData {
   eventName: string;
@@ -2292,7 +2294,8 @@ const EditEvent: React.FC = () => {
           </form>
         </Box>
       )}
-      <Footer />
+
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
     </Box>
   );
 };

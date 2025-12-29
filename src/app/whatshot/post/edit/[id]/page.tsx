@@ -18,6 +18,8 @@ import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
 import { Save, X, Camera } from 'lucide-react';
 import Swal from "sweetalert2";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 type Params = Promise<{ id: string }>;
 
@@ -285,7 +287,7 @@ export default function EditPost(props: { params: Params }) {
                     <Divider sx={{ bgcolor: 'rgba(255,255,255,0.1)' }} />
                 </Paper>
             </Container>
-            <Footer />
+            {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
         </Box>
     );
 }

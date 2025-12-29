@@ -46,6 +46,8 @@ import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import { sendErrorEmail } from "@/utils/reportError";
 import ProfileImgCheckerModel from "./ProfileImgCheckerModel";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 const theme = createTheme({
   palette: {
@@ -1789,7 +1791,7 @@ const CreateEventForm: React.FC = () => {
         </LocalizationProvider>
       </ThemeProvider>
       <Box sx={{ height: isXs ? "63.2px" : "0" }} />
-      <Footer />
+      {isXs ? <AppFooterMobile /> : <AppFooterDesktop />}
     </>
   );
 };

@@ -1,37 +1,22 @@
 "use client";
 
-import {
-  Box,
-  BottomNavigation,
-  Container,
-  IconButton,
-  useMediaQuery,
-  useTheme,
-  Typography,
-  Stack,
-  BottomNavigationAction,
-  alpha,
-} from "@mui/material";
+import { Box, Container, IconButton, Typography, Stack } from "@mui/material";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
 import {
   FacebookOutlined as FacebookIcon,
   Instagram as InstagramIcon,
 } from "@mui/icons-material";
 
-const Footer = () => {
-  const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
+const AppFooterDesktop = () => {
   const router = useRouter();
-  const [value, setValue] = useState(0);
-
   return (
-    <Box
-      sx={{
-        bgcolor: "#121212",
-        color: "white",
-      }}
-    >
-      {!isMobile && (
+    <>
+      <Box
+        sx={{
+          bgcolor: "#121212",
+          color: "white",
+        }}
+      >
         <Box
           sx={{
             bgcolor: "#1A1A1A",
@@ -304,96 +289,9 @@ const Footer = () => {
             </Box>
           </Container>
         </Box>
-      )}
-
-      {/* Bottom Navigation for Mobile */}
-      {isMobile && (
-        <>
-          <BottomNavigation
-            value={value}
-            onChange={(event, newValue) => {
-              setValue(newValue);
-            }}
-            sx={{
-              position: "fixed",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 1100,
-
-              bgcolor: alpha("#121212", 0.9),
-              backdropFilter: "blur(20px)",
-              borderTop: "1px solid",
-              borderColor: "rgba(255,255,255,0.1)",
-              "& .MuiBottomNavigationAction-root": {
-                color: "rgba(255,255,255,0.5)",
-                "&.Mui-selected": {
-                  color: "#FF1B6B",
-                },
-              },
-
-              height: {
-                xs: "calc(64px + env(safe-area-inset-bottom))",
-                sm: "calc(72px + env(safe-area-inset-bottom))",
-              },
-              pb: "env(safe-area-inset-bottom)",
-            }}
-          >
-            <BottomNavigationAction
-              onClick={() => router.push("/home")}
-              icon={
-                <img
-                  src="/icons/home.png"
-                  alt="Home"
-                  style={{ width: 50, height: 40 }}
-                />
-              }
-            />
-            <BottomNavigationAction
-              onClick={() => router.push("/members")}
-              icon={
-                <img
-                  src="/icons/members.png"
-                  alt="Members"
-                  style={{ width: 50, height: 40 }}
-                />
-              }
-            />
-            <BottomNavigationAction
-              onClick={() => router.push("/pineapple")}
-              icon={
-                <img
-                  src="/icons/pineapple.png"
-                  alt="Pineapples"
-                  style={{ width: 50, height: 40 }}
-                />
-              }
-            />
-            <BottomNavigationAction
-              onClick={() => router.push("/messaging")}
-              icon={
-                <img
-                  src="/icons/messaging.png"
-                  alt="Messaging"
-                  style={{ width: 50, height: 40 }}
-                />
-              }
-            />
-            <BottomNavigationAction
-              onClick={() => router.push("/matches")}
-              icon={
-                <img
-                  src="/icons/matches.png"
-                  alt="Matches"
-                  style={{ width: 50, height: 40 }}
-                />
-              }
-            />
-          </BottomNavigation>
-        </>
-      )}
-    </Box>
+      </Box>
+    </>
   );
 };
 
-export default Footer;
+export default AppFooterDesktop;

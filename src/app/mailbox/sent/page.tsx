@@ -45,9 +45,9 @@ import {
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { DeleteIcon, Search, SearchIcon } from "lucide-react";
-import io from "socket.io-client";
 import Swal from "sweetalert2";
 import { jwtDecode } from "jwt-decode";
+import AppFooterMobile from "@/layout/AppFooterMobile";
 
 interface Mail {
   Avatar: string;
@@ -66,7 +66,6 @@ interface Mail {
   CreatedAt: string;
 }
 
-const socket = io("https://api.nomolive.com/");
 
 export default function ChatPage() {
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
@@ -214,25 +213,7 @@ export default function ChatPage() {
     }
   }, []);
 
-  useEffect(() => {
-    socket.on("connect", () => {});
-
-    socket.on("disconnect", () => {});
-    socket.on("message", (message) => {
-      // Handle incoming message
-      fetchAllChats();
-    });
-    socket.on("error", (error) => {
-      console.error("WebSocket error:", error);
-      // Handle error, e.g., display an error message to the user
-    });
-
-    return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("message");
-    };
-  }, []);
+  
 
   const getMyProfile = async (userId: string) => {
     if (userId) {
@@ -1971,7 +1952,7 @@ export default function ChatPage() {
           </IconButton>
         </Dialog>
       </Box>
-      {isMobile ? <Footer /> : <></>}
+      {isMobile ? <AppFooterMobile /> : <></>}
       <UserProfileModal
         handleGrantAccess={handleGrantAccess}
         handleClose={handleCloseUserProfileModal}

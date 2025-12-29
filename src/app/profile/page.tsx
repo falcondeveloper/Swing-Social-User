@@ -72,6 +72,8 @@ import {
 import Cropper, { Area } from "react-easy-crop";
 import getCroppedImg from "../../utils/cropImage";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 // Enhanced theme with your brand guidelines
 const theme = createTheme({
@@ -1425,7 +1427,7 @@ const ProfileDetail: React.FC = () => {
             <CircularProgress sx={{ color: "#FF1B6B" }} />
           </Box>
         </Container>
-        <Footer />
+        {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
       </Box>
     );
   }
@@ -2090,7 +2092,7 @@ const ProfileDetail: React.FC = () => {
           </Alert>
         </Snackbar>
 
-        <Footer />
+        {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
       </Box>
     </ThemeProvider>
   );

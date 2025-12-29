@@ -21,6 +21,8 @@ import UserBottomNavigation from "@/components/BottomNavigation";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
+import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppFooterDesktop from "@/layout/AppFooterDesktop";
 
 const categories = [
   {
@@ -65,7 +67,8 @@ const categories = [
 
 const Home = () => {
   const router = useRouter();
-  const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
+  const isMobile = useMediaQuery("(max-width:768px)");
+  // const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
   const [profileId, setProfileId] = useState<any>();
   const [value, setValue] = useState(0);
   const [currentName, setCurrentName] = useState<any>("");
@@ -740,7 +743,7 @@ const Home = () => {
       )}
 
       {profileId && <ProfileImgCheckerModel profileId={profileId} />}
-      <Footer />
+      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
 
       {showNotificationPopup && (
         <Box
