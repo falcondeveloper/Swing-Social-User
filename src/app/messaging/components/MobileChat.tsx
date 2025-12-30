@@ -238,6 +238,7 @@ const MobileChat = () => {
 
   const startXRef = useRef(0);
   const isSwipingRef = useRef(false);
+  const activeSearchRef = useRef("");
   const typingTimeouts = useRef<Record<string, any>>({});
 
   useEffect(() => {
@@ -385,7 +386,13 @@ const MobileChat = () => {
     }
   };
 
-  const handleOpenNewChat = () => setChatOpen(true);
+  const handleOpenNewChat = () => {
+    setChatOpen(true);
+    setSearchQuery("");
+    setUserProfiles([]);
+    setPage(1);
+    setHasMore(true);
+  };
 
   const handleCloseNewChat = () => {
     setChatOpen(false);
@@ -396,28 +403,46 @@ const MobileChat = () => {
   };
 
   useEffect(() => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()) {
+      setUserProfiles([]);
+      setHasMore(true);
+      setPage(1);
+      return;
+    }
 
-    const timer = setTimeout(fetchUserProfiles, 400);
+    const timer = setTimeout(() => {
+      setPage(1);
+      setHasMore(true);
+      fetchUserProfiles(true);
+    }, 400);
+
     return () => clearTimeout(timer);
-  }, [searchQuery, page]);
+  }, [searchQuery]);
 
-  const fetchUserProfiles = async () => {
-    if (loading || !hasMore) return;
+  const fetchUserProfiles = async (isNewSearch = false) => {
+    if (loading || (!hasMore && !isNewSearch)) return;
+
+    const currentSearch = searchQuery.trim();
+    activeSearchRef.current = currentSearch;
 
     try {
       setLoading(true);
+
       const res = await fetch(
-        `/api/user/sweeping?page=${page}&size=100&search=${encodeURIComponent(
-          searchQuery
-        )}`
+        `/api/user/sweeping?page=${
+          isNewSearch ? 1 : page
+        }&size=100&search=${encodeURIComponent(currentSearch)}`
       );
+
       const data = await res.json();
+
+      if (activeSearchRef.current !== currentSearch) return;
 
       if (data?.profiles?.length) {
         setUserProfiles((prev) =>
-          page === 1 ? data.profiles : [...prev, ...data.profiles]
+          isNewSearch ? data.profiles : [...prev, ...data.profiles]
         );
+        setPage((prev) => prev + 1);
       } else {
         setHasMore(false);
       }
@@ -772,7 +797,7 @@ const MobileChat = () => {
             overflowY: "auto",
           }}
         >
-          {userProfiles.length === 0 && !loading && (
+          {searchQuery.trim() && userProfiles.length === 0 && !loading && (
             <Typography
               sx={{
                 color: "rgba(255,255,255,0.5)",

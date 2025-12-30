@@ -614,65 +614,61 @@ export default function ChatPage() {
     <>
       <Box
         sx={{
-          bgcolor: "#0A0A0A",
           minHeight: "100vh",
+          bgcolor: "#0A0A0A",
           color: "white",
+          flexDirection: "column",
           display: "flex",
-          background: "linear-gradient(to bottom, #0A0A0A, #1A1A1A)",
         }}
       >
         <Header />
         {isMobile ? (
           <Box
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              height: "calc(100vh - 150px)",
-              width: "100%",
-              backgroundColor: "#2d2d2d",
-              mt: 10,
+              flex: 1,
+              overflowY: "auto",
+              pb: "90px",
             }}
           >
             <Box
               sx={{
                 display: "flex",
-                borderTop: "1px solid #333",
+                borderBottom: "1px solid rgba(255,255,255,0.08)",
               }}
             >
-              <Typography
-                onClick={() => router.push("/messaging")}
-                sx={{
-                  width: "50%", // Divide width evenly
-                  textAlign: "center", // Center the text
-                  padding: "16px", // Add some padding
-                  // color: "#FF1B6B",
-                  cursor: "pointer",
-                  fontSize: "24px",
-                  fontWeight: "bold",
-                  "&:hover": { opacity: 0.8 },
-                  // borderRight: "1px solid #333" // Add a divider between buttons
-                }}
-              >
-                Chat
-              </Typography>
-              <Typography
-                onClick={() => router.push("/mailbox")}
-                sx={{
-                  width: "50%", // Divide width evenly
-                  textAlign: "center", // Center the text
-                  padding: "16px", // Add some padding
-                  // color: "#1E88E5",
-                  cursor: "pointer",
-                  fontSize: "24px",
-                  fontWeight: "bold",
-                  "&:hover": { opacity: 0.8 },
-                  borderBottom: "3px solid #FF1B6B",
-                }}
-              >
-                Mailbox
-              </Typography>
+              {["Chat", "Mailbox"].map((tab) => {
+                const active = tab === "Mailbox";
+                return (
+                  <Box
+                    key={tab}
+                    onClick={() =>
+                      router.push(tab === "Chat" ? "/messaging" : "/mailbox")
+                    }
+                    sx={{
+                      flex: 1,
+                      textAlign: "center",
+                      py: 2.5,
+                      fontWeight: 700,
+                      fontSize: 16,
+                      cursor: "pointer",
+                      color: active ? "#FF1B6B" : "rgba(255,255,255,0.5)",
+                      borderBottom: active
+                        ? "3px solid #FF1B6B"
+                        : "3px solid transparent",
+                    }}
+                  >
+                    {tab}
+                  </Box>
+                );
+              })}
             </Box>
-            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                bgcolor: "#121212",
+              }}
+            >
               <Button
                 onClick={handleCloseMailBox}
                 variant="contained"
@@ -718,7 +714,7 @@ export default function ChatPage() {
                 },
               }}
             >
-              <List>
+              <List sx={{ pt: 0 }}>
                 {chatList.length === 0 && (
                   <Typography
                     variant="body2"
@@ -737,20 +733,21 @@ export default function ChatPage() {
 
                   return (
                     <ListItem
-                      key={chat.ChatId}
                       sx={{
-                        px: 2,
-                        py: 1,
-                        bgcolor: "#000",
-                        borderRadius: 2,
+                        px: 1.5,
+                        py: 2.5,
+                        bgcolor: "#121212",
                         cursor: "pointer",
-                        mt: 1,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        "&:hover": { bgcolor: "rgba(255, 255, 255, 0.1)" },
+                        borderBottom: "1px solid rgba(255,255,255,0.06)",
+                        borderRadius: 0,
+                        mt: 0,
+                        "&:hover": {
+                          bgcolor: "rgba(255,255,255,0.04)",
+                        },
                       }}
-                      onClick={() => handleMailClick(chat)}
                     >
                       {/* Avatar */}
                       <ListItemAvatar>
