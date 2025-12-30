@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -12,11 +12,10 @@ import {
   useMediaQuery,
   Grid,
   alpha,
+  useTheme,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
-import Header from "@/components/Header";
-import UserBottomNavigation from "@/components/BottomNavigation";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
@@ -68,9 +67,10 @@ const categories = [
 
 const Home = () => {
   const router = useRouter();
-  const isMobile = useMediaQuery("(max-width:768px)");
+  const theme = useTheme();
+  const isMobileOrTablet = useMediaQuery(theme.breakpoints.down("md"));
+
   const [profileId, setProfileId] = useState<any>();
-  const [value, setValue] = useState(0);
   const [currentName, setCurrentName] = useState<any>("");
   const [isNewMessage, setNewMessage] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
@@ -78,17 +78,6 @@ const Home = () => {
     }
     return false;
   });
-  const [showNotificationPopup, setShowNotificationPopup] = useState(false);
-
-  useEffect(() => {
-    const seenPopup = localStorage.getItem("seenNotificationPopup");
-    if (!seenPopup) {
-      setTimeout(() => {
-        setShowNotificationPopup(true);
-        localStorage.setItem("seenNotificationPopup", "true");
-      }, 1200);
-    }
-  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -260,7 +249,7 @@ const Home = () => {
 
   return (
     <>
-      {isMobile ? (
+      {isMobileOrTablet ? (
         <Box sx={{ color: "white", padding: "16px", paddingBottom: "80px" }}>
           <AppHeaderMobile />
 
@@ -281,7 +270,6 @@ const Home = () => {
             }}
           ></Box>
 
-          {/* Category Card List */}
           <Box
             sx={{
               padding: {
@@ -425,13 +413,7 @@ const Home = () => {
               ))}
             </Grid>
           </Box>
-          {/* Bottom Navigation Bar */}
-          <UserBottomNavigation
-            value={value}
-            setValue={setValue}
-            isNewMessage={isNewMessage}
-            resetNewMessage={resetNewMessage}
-          />
+          <AppFooterMobile />
         </Box>
       ) : (
         <Box
@@ -442,9 +424,6 @@ const Home = () => {
           }}
         >
           <AppHeaderDesktop />
-          <Box sx={{ marginTop: "-90.5px" }} />
-
-          {/* Hero Section */}
           <Box
             sx={{
               pt: 15,
@@ -641,7 +620,6 @@ const Home = () => {
             </Container>
           </Box>
 
-          {/* Category Grid */}
           <Container maxWidth="lg" sx={{ py: 8 }}>
             <Box
               sx={{
@@ -740,101 +718,11 @@ const Home = () => {
               ))}
             </Box>
           </Container>
+          <AppFooterDesktop />
         </Box>
       )}
 
       {profileId && <ProfileImgCheckerModel profileId={profileId} />}
-      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
-
-      {showNotificationPopup && (
-        <Box
-          sx={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.65)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 9999,
-          }}
-        >
-          <Box
-            sx={{
-              width: "90%",
-              maxWidth: 400,
-              bgcolor: "#1a1a1a",
-              color: "white",
-              borderRadius: 4,
-              p: 3,
-              textAlign: "center",
-              boxShadow: "0px 4px 25px rgba(255,27,107,.4)",
-              animation: "popupScale .3s ease-out",
-            }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
-              🔔 Enable Notifications
-            </Typography>
-
-            <Typography variant="body2" sx={{ opacity: 0.85, mb: 3 }}>
-              Stay updated with messages & activity instantly.
-            </Typography>
-
-            <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
-              <button
-                onClick={() => {
-                  Notification.requestPermission();
-                  setShowNotificationPopup(false);
-                }}
-                style={{
-                  background: "#FF1B6B",
-                  padding: "10px 16px",
-                  borderRadius: 8,
-                  border: "none",
-                  color: "white",
-                  fontWeight: "bold",
-                }}
-              >
-                Allow
-              </button>
-
-              <button
-                onClick={() => {
-                  router.push("/notifications");
-                  setShowNotificationPopup(false);
-                }}
-                style={{
-                  background: "transparent",
-                  padding: "10px 16px",
-                  borderRadius: 8,
-                  border: "1px solid white",
-                  color: "white",
-                }}
-              >
-                Settings
-              </button>
-            </Box>
-
-            <Box sx={{ mt: 2 }}>
-              <button
-                onClick={() => setShowNotificationPopup(false)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "gray",
-                  fontSize: "12px",
-                  textDecoration: "underline",
-                  marginTop: 8,
-                }}
-              >
-                Not now
-              </button>
-            </Box>
-          </Box>
-        </Box>
-      )}
     </>
   );
 };

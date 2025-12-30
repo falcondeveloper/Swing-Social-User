@@ -34,7 +34,7 @@ const AppHeaderMobile = () => {
   const router = useRouter();
   const pathname = usePathname();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [avatar, setAvatar] = useState<string | null>(null);

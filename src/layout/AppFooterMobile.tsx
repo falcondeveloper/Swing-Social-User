@@ -19,7 +19,7 @@ const AppFooterMobile = () => {
   const router = useRouter();
   const pathname = usePathname();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const [unreadCount, setUnreadCount] = useState(0);
 
