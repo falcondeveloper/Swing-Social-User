@@ -969,10 +969,11 @@ export default function ChatPage(props: { params: Params }) {
                     top: "50%",
                     left: "50%",
                     transform: "translate(-50%, -50%)",
-                    bgcolor: "white",
-                    borderRadius: 2,
-                    p: 2,
-                    boxShadow: 3,
+                    bgcolor: "#FFF0F6",
+                    borderRadius: 3,
+                    p: 1.5,
+                    boxShadow: "0 12px 30px rgba(255, 27, 107, 0.25)",
+                    border: "1px solid rgba(255, 27, 107, 0.25)",
                   }}
                 >
                   <Picker onEmojiClick={handleEmojiClick} />
