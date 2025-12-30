@@ -916,7 +916,6 @@ export default function ChatPage(props: { params: Params }) {
                               width: "100%",
                               height: "auto",
                               borderRadius: "8px",
-                              marginTop: "6px",
                               display: "block",
                               objectFit: "contain",
                             },
