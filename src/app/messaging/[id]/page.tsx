@@ -905,7 +905,7 @@ export default function ChatPage(props: { params: Params }) {
                 }}
                 sx={{
                   position: "fixed",
-                  bottom: 64,
+                  bottom: 72,
                   bgcolor: "#1A1A1A",
                   px: 2,
                   py: 1.5,
@@ -943,8 +943,19 @@ export default function ChatPage(props: { params: Params }) {
                   />
                 </IconButton>
 
-                <IconButton onClick={handleSendMessage}>
-                  <SendIcon />
+                <IconButton
+                  onClick={handleSendMessage}
+                  sx={{
+                    bgcolor: "#FF1B6B",
+                    color: "#fff",
+                    width: 35,
+                    height: 35,
+                    "&:hover": {
+                      bgcolor: "#E0175F",
+                    },
+                  }}
+                >
+                  <SendIcon sx={{ fontSize: 20 }} />
                 </IconButton>
               </Box>
 
