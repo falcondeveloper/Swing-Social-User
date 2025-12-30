@@ -205,7 +205,6 @@ export default function ChatPage(props: { params: Params }) {
     };
   }, []);
 
-  // Emit online status when profileId is available
   useEffect(() => {
     if (!profileId) return;
 
@@ -220,24 +219,70 @@ export default function ChatPage(props: { params: Params }) {
   }, [profileId]);
 
   useEffect(() => {
-    const handleImageClick = (e: any) => {
-      if (e.target.tagName === "IMG") {
-        setOpenImage(e.target.src);
+    const messageElements = document.querySelectorAll(".message-content img");
+
+    const handleClick = (e: Event) => {
+      const target = e.target as HTMLImageElement;
+      if (target.src) {
+        setOpenImage(target.src);
       }
     };
 
-    const containers = document.querySelectorAll(".message-content");
-
-    containers.forEach((container) =>
-      container.addEventListener("click", handleImageClick)
-    );
+    messageElements.forEach((img) => {
+      const imageElement = img as HTMLImageElement;
+      imageElement.style.cursor = "pointer";
+      imageElement.addEventListener("click", handleClick);
+    });
 
     return () => {
-      containers.forEach((container) =>
-        container.removeEventListener("click", handleImageClick)
-      );
+      messageElements.forEach((img) => {
+        const imageElement = img as HTMLImageElement;
+        imageElement.removeEventListener("click", handleClick);
+      });
     };
   }, [messages]);
+
+  const useImageClickHandler = (onImageClick: (src: string) => void) => {
+    useEffect(() => {
+      const handleDocumentClick = (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+
+        if (target.tagName === "IMG" && target.closest(".message-content")) {
+          const imgSrc = target.getAttribute("src");
+          if (imgSrc) {
+            onImageClick(imgSrc);
+          }
+        }
+      };
+
+      document.addEventListener("click", handleDocumentClick);
+
+      return () => {
+        document.removeEventListener("click", handleDocumentClick);
+      };
+    }, [onImageClick]);
+  };
+
+  useImageClickHandler((src) => setOpenImage(src));
+
+  useEffect(() => {
+    const handleImageClick = (e: Event) => {
+      const target = e.target as HTMLElement;
+
+      if (target.tagName === "IMG" && target.closest(".message-content")) {
+        const imgElement = target as HTMLImageElement;
+        if (imgElement.src) {
+          setOpenImage(imgElement.src);
+        }
+      }
+    };
+
+    document.addEventListener("click", handleImageClick);
+
+    return () => {
+      document.removeEventListener("click", handleImageClick);
+    };
+  }, []);
 
   useEffect(() => {
     const storedProfileId = localStorage.getItem("logged_in_profile");
@@ -879,6 +924,16 @@ export default function ChatPage(props: { params: Params }) {
                         >
                           <Typography
                             component="div"
+                            className="message-content"
+                            sx={{
+                              "& img": {
+                                cursor: "pointer",
+                                transition: "transform 0.2s",
+                                "&:hover": {
+                                  transform: "scale(1.02)",
+                                },
+                              },
+                            }}
                             dangerouslySetInnerHTML={{
                               __html: m?.Conversation,
                             }}
