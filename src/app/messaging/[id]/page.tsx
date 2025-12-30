@@ -1288,6 +1288,19 @@ export default function ChatPage(props: { params: Params }) {
                   >
                     <Typography
                       component="div"
+                      className="message-content"
+                      sx={{
+                        "& img": {
+                          cursor: "pointer",
+                          width: "40%",
+                          height: "40%",
+                          borderRadius: "8px",
+                          transition: "transform 0.2s",
+                          "&:hover": {
+                            transform: "scale(1.02)",
+                          },
+                        },
+                      }}
                       dangerouslySetInnerHTML={{
                         __html: message?.Conversation,
                       }}
