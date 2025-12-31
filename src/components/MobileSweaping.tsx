@@ -948,21 +948,6 @@ export default function MobileSweaping() {
     );
   }
 
-  const swingStyleConfig: Record<string, { bg: string; color?: string }> = {
-    exploring: {
-      bg: "#3B4C6B",
-    },
-    fullSwap: {
-      bg: "#6B2F3B",
-    },
-    softSwap: {
-      bg: "#3B6B5A",
-    },
-    voyeur: {
-      bg: "#6B5A3B",
-    },
-  };
-
   const menuBtnStyle = {
     width: 36,
     height: 36,
@@ -1331,16 +1316,12 @@ export default function MobileSweaping() {
                   >
                     {profile?.SwingStyleTags?.slice(0, 4).map(
                       (tag: string, index: number) => {
-                        const style = swingStyleConfig[tag] || {
-                          bg: "#4D354B",
-                        };
-
                         return (
                           <Chip
                             key={`${tag}-${index}`}
                             label={tag}
                             sx={{
-                              bgcolor: style.bg,
+                              bgcolor: "#4D354B",
                               color: "rgba(255,255,255,0.7)",
                               fontSize: "13px",
                               height: "24px",
