@@ -39,11 +39,9 @@ const AboutSection: React.FC<AboutSectionProps> = ({ aboutText }) => {
         }
       `}</style>
 
-      <div className="about-container">
-        <p className="about-text" title={text}>
-          {text}
-        </p>
-      </div>
+      <p className="about-text" title={text}>
+        {text}
+      </p>
     </>
   );
 };

@@ -22,6 +22,8 @@ import Loader from "@/commonPage/Loader";
 import Header from "@/components/Header";
 import AppFooterMobile from "@/layout/AppFooterMobile";
 import AppFooterDesktop from "@/layout/AppFooterDesktop";
+import AppHeaderMobile from "@/layout/AppHeaderMobile";
+import AppHeaderDesktop from "@/layout/AppHeaderDesktop";
 
 const theme = createTheme({
   palette: {
@@ -182,11 +184,27 @@ const page = () => {
 
   if (affiliateStatus === null) {
     return (
-      <ThemeProvider theme={theme}>
-        <Header />
-        <Loader />
+      <Box
+        sx={{
+          height: "100dvh",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#121212",
+        }}
+      >
+        {isSm ? <AppHeaderMobile /> : <AppHeaderDesktop />}
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Loader />
+        </Box>
         {isSm ? <AppFooterMobile /> : <AppFooterDesktop />}
-      </ThemeProvider>
+      </Box>
     );
   }
 
@@ -195,7 +213,7 @@ const page = () => {
       <ThemeProvider theme={theme}>
         <Header />
         <ReferalForm onSuccess={handleReferralSuccess} />
-       {isSm ? <AppFooterMobile /> : <AppFooterDesktop />}
+        {isSm ? <AppFooterMobile /> : <AppFooterDesktop />}
       </ThemeProvider>
     );
   }

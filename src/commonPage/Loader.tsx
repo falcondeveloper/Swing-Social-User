@@ -1,72 +1,82 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
 import React from "react";
+import { Box, Typography } from "@mui/material";
+import { motion } from "framer-motion";
 
-interface LoadingScreenProps {
-  logoSrc?: string;
-}
-
-const Loader: React.FC<LoadingScreenProps> = ({ logoSrc = "/loading.png" }) => {
+const Loader = () => {
   return (
     <Box
+      component={motion.div}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       sx={{
         display: "flex",
         flexDirection: "column",
-        justifyContent: "center",
         alignItems: "center",
-        height: "100vh",
-        backgroundColor: "#121212",
-        position: "relative",
+        gap: 2,
+        textAlign: "center",
       }}
     >
-      {/* Logo + Title */}
+      {/* Logo */}
       <Box
+        component={motion.div}
+        animate={{ y: [0, -6, 0] }}
+        transition={{
+          duration: 1.6,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
         sx={{
           display: "flex",
           alignItems: "center",
-          mb: 1,
-          gap: "12px",
+          gap: 1.5,
         }}
       >
-        <Box component="img" src={logoSrc} alt="Logo" sx={{ width: 50 }} />
+        <Box
+          component="img"
+          src="/loading.png"
+          alt="logo"
+          sx={{ width: 44, height: 44 }}
+        />
 
         <Typography
           sx={{
-            fontSize: 32,
-            fontWeight: "bold",
+            fontSize: 28,
+            fontWeight: 800,
             color: "#C2185B",
+            letterSpacing: 1,
           }}
         >
           SWINGSOCIAL
         </Typography>
       </Box>
 
-      {/* Loading bar */}
+      {/* INFINITE LOADING LINE */}
       <Box
         sx={{
           position: "relative",
-          width: 120,
-          height: 2,
-          backgroundColor: "rgba(194,24,91,0.2)",
-          borderRadius: 4,
+          width: 180,
+          height: 3,
           overflow: "hidden",
+          borderRadius: 10,
+          backgroundColor: "rgba(194,24,91,0.25)",
         }}
       >
         <Box
+          component={motion.div}
           sx={{
             position: "absolute",
-            top: 0,
-            left: 0,
-            height: "100%",
-            backgroundColor: "#C2185B",
-            borderRadius: 4,
-            animation: "loadingBar 1.5s infinite",
-            "@keyframes loadingBar": {
-              "0%": { left: "-30%", width: "30%" },
-              "50%": { width: "40%" },
-              "100%": { left: "100%", width: "30%" },
-            },
+            inset: 0,
+            background:
+              "linear-gradient(90deg, transparent, #C2185B, transparent)",
+          }}
+          animate={{ x: ["-100%", "100%"] }}
+          transition={{
+            duration: 1.2,
+            repeat: Infinity,
+            ease: "linear",
           }}
         />
       </Box>
@@ -74,15 +84,14 @@ const Loader: React.FC<LoadingScreenProps> = ({ logoSrc = "/loading.png" }) => {
       {/* Subtitle */}
       <Typography
         sx={{
-          mt: 2,
-          fontSize: 14,
-          fontWeight: "bold",
+          fontSize: 13,
+          fontWeight: 600,
           color: "#C2185B",
-          opacity: 0.9,
-          textAlign: "center",
+          opacity: 0.85,
+          maxWidth: 260,
         }}
       >
-        The best dating and events platform for Swingers
+        The best dating & events platform for Swingers
       </Typography>
     </Box>
   );
