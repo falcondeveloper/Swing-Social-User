@@ -31,8 +31,6 @@ import TinderCard from "react-tinder-card";
 import { useRouter } from "next/navigation";
 import InstructionModal from "@/components/InstructionModal";
 import UserProfileModal from "@/components/UserProfileModal";
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
 import { toast } from "react-toastify";
 import MobileSweaping from "@/components/MobileSweaping";
 import { useMediaQuery } from "@mui/material";
@@ -41,6 +39,7 @@ import { jwtDecode } from "jwt-decode";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 import AppFooterMobile from "@/layout/AppFooterMobile";
 import AppFooterDesktop from "@/layout/AppFooterDesktop";
+import AppHeaderDesktop from "@/layout/AppHeaderDesktop";
 
 export default function Home() {
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
@@ -663,7 +662,7 @@ export default function Home() {
 
   return (
     <>
-      <Header />
+      <AppHeaderDesktop />
       <Container maxWidth={false} disableGutters>
         <Box
           display="flex"

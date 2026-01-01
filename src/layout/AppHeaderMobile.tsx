@@ -218,13 +218,14 @@ const AppHeaderMobile = () => {
                       borderRadius: 2,
                       mb: 0.5,
                       cursor: "pointer",
-                      bgcolor: isActive
+                      backgroundImage: isActive
                         ? "linear-gradient(135deg,#FF1B6B,#FF6FA5)"
-                        : "transparent",
+                        : "none",
+
                       "&:hover": {
-                        bgcolor: isActive
+                        backgroundImage: isActive
                           ? "linear-gradient(135deg,#FF1B6B,#FF6FA5)"
-                          : "rgba(255,27,107,0.15)",
+                          : "linear-gradient(135deg, rgba(255,27,107,0.15), rgba(255,27,107,0.15))",
                       },
                     }}
                   >

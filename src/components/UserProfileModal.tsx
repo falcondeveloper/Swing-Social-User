@@ -498,18 +498,11 @@ If you didn't expect this, ignore this message.
                   >
                     <span>
                       {advertiser.Username},
-                      {advertiser?.DateOfBirth
-                        ? new Date().getFullYear() -
-                          new Date(advertiser.DateOfBirth).getFullYear()
-                        : ""}
-                      {advertiser?.Gender === "Male"
-                        ? "M"
-                        : advertiser?.Gender === "Female"
-                        ? "F"
-                        : ""}
+                      {advertiser?.DateOfBirth ? new Date().getFullYear() - new Date(advertiser.DateOfBirth).getFullYear() : ""}
+                      {advertiser?.Gender === "Male" ? "M" : advertiser?.Gender === "Female" ? "F" : ""}
                       {advertiser?.PartnerDateOfBirth &&
                       advertiser?.PartnerGender
-                        ? `| ${
+                        ? ` | ${
                             new Date().getFullYear() -
                             new Date(
                               advertiser.PartnerDateOfBirth

@@ -33,8 +33,8 @@ import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
 import PreferencesSheet from "./PreferencesSheet";
 import Loader from "@/commonPage/Loader";
-import AppFooterMobile from "@/layout/AppFooterMobile";
 import AppHeaderMobile from "@/layout/AppHeaderMobile";
+import AppFooterMobile from "@/layout/AppFooterMobile";
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface DetailViewHandle {
@@ -960,6 +960,11 @@ export default function MobileSweaping() {
     },
   };
 
+  const getAge = (dob?: string) => {
+    if (!dob) return null;
+    return new Date().getFullYear() - new Date(dob).getFullYear();
+  };
+
   return (
     <>
       <AppHeaderMobile />
@@ -1229,9 +1234,9 @@ export default function MobileSweaping() {
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      alignContent: "center",
                       gap: 1,
                       mb: "8px",
+                      flexWrap: "wrap",
                     }}
                   >
                     <Typography
@@ -1240,26 +1245,80 @@ export default function MobileSweaping() {
                         fontWeight: 600,
                         color: "#F50057",
                         lineHeight: "34px",
-                        letterSpacing: 0,
                       }}
                     >
-                      {profile.Username},{" "}
-                      {profile.DateOfBirth
-                        ? new Date().getFullYear() -
-                          new Date(profile.DateOfBirth).getFullYear()
-                        : ""}
+                      {profile.Username},
                     </Typography>
 
-                    <Box
-                      component="img"
-                      src={
-                        profile.Gender === "Male"
-                          ? "/swiping-card/male.svg"
-                          : "/swiping-card/female.svg"
-                      }
-                      alt={profile.Gender}
-                      sx={{ width: 16, height: 16 }}
-                    />
+                    {profile?.DateOfBirth && profile?.Gender && (
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: "20px",
+                            fontWeight: 600,
+                            color: "#F50057",
+                          }}
+                        >
+                          {getAge(profile.DateOfBirth)}
+                        </Typography>
+
+                        <Box
+                          component="img"
+                          src={
+                            profile.Gender === "Male"
+                              ? "/swiping-card/male.svg"
+                              : "/swiping-card/female.svg"
+                          }
+                          alt={profile.Gender}
+                          sx={{ width: 16, height: 16 }}
+                        />
+                      </Box>
+                    )}
+
+                    {profile?.PartnerDateOfBirth && profile?.PartnerGender && (
+                      <>
+                        <Typography
+                          sx={{
+                            fontSize: "20px",
+                            fontWeight: 600,
+                            color: "#F50057",
+                          }}
+                        >
+                          |
+                        </Typography>
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontSize: "20px",
+                              fontWeight: 600,
+                              color: "#F50057",
+                            }}
+                          >
+                            {getAge(profile.PartnerDateOfBirth)}
+                          </Typography>
+
+                          <Box
+                            component="img"
+                            src={
+                              profile.PartnerGender === "Male"
+                                ? "/swiping-card/male.svg"
+                                : "/swiping-card/female.svg"
+                            }
+                            alt={profile.PartnerGender}
+                            sx={{ width: 16, height: 16 }}
+                          />
+                        </Box>
+                      </>
+                    )}
                   </Box>
 
                   <Box
