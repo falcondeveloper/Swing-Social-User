@@ -87,13 +87,13 @@ const SwipeIndicator = ({ type, opacity }: any) => {
         />
       ) : type === "delete" ? (
         <img
-          src="/delete.png"
+          src="/swiping-card/no.svg"
           alt="Delete"
           style={{ width: "80px", height: "80px" }}
         />
       ) : (
         <img
-          src="/like.png"
+          src="/swiping-card/like.svg"
           alt="Like"
           style={{ width: "80px", height: "80px" }}
         />
