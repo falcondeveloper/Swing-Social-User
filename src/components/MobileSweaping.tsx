@@ -1252,7 +1252,7 @@ export default function MobileSweaping() {
 
                     {profile?.DateOfBirth && profile?.Gender && (
                       <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                        sx={{ display: "flex", alignItems: "center", gap: "6px" }}
                       >
                         <Typography
                           sx={{
@@ -1279,21 +1279,22 @@ export default function MobileSweaping() {
 
                     {profile?.PartnerDateOfBirth && profile?.PartnerGender && (
                       <>
-                        <Typography
+                        <Box
+                          component="img"
+                          src="/swiping-card/separator.svg"
+                          alt="|"
                           sx={{
-                            fontSize: "20px",
-                            fontWeight: 600,
-                            color: "#F50057",
+                            width: 18,
+                            height: 25,
+                            mx: 0.30,
                           }}
-                        >
-                          |
-                        </Typography>
+                        />
 
                         <Box
                           sx={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 0.5,
+                            gap: "6px",
                           }}
                         >
                           <Typography
