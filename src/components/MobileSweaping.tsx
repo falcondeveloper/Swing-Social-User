@@ -1236,7 +1236,8 @@ export default function MobileSweaping() {
                       alignItems: "center",
                       gap: 1,
                       mb: "8px",
-                      flexWrap: "wrap",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
                     }}
                   >
                     <Typography
@@ -1245,6 +1246,12 @@ export default function MobileSweaping() {
                         fontWeight: 600,
                         color: "#F50057",
                         lineHeight: "34px",
+                        maxWidth: "60%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        flexShrink: 1,
+                        minWidth: 0,
                       }}
                     >
                       {profile.Username},
@@ -1252,7 +1259,12 @@ export default function MobileSweaping() {
 
                     {profile?.DateOfBirth && profile?.Gender && (
                       <Box
-                        sx={{ display: "flex", alignItems: "center", gap: "6px" }}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          flexShrink: 0,
+                        }}
                       >
                         <Typography
                           sx={{
@@ -1286,7 +1298,8 @@ export default function MobileSweaping() {
                           sx={{
                             width: 18,
                             height: 25,
-                            mx: 0.30,
+                            mx: 0.3,
+                            flexShrink: 0,
                           }}
                         />
 
@@ -1295,6 +1308,7 @@ export default function MobileSweaping() {
                             display: "flex",
                             alignItems: "center",
                             gap: "6px",
+                            flexShrink: 0,
                           }}
                         >
                           <Typography
