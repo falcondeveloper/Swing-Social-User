@@ -558,6 +558,7 @@ const DesktopChat = () => {
                       <ListItemAvatar sx={{ minWidth: 56 }}>
                         <LazyAvatar
                           src={user.Avatar}
+                          alt="avatar"
                           size={46}
                           border="2px solid #FF1B6B"
                         />

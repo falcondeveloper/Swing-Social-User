@@ -15,6 +15,7 @@ import {
   Dialog,
   DialogContent,
   Popover,
+  Skeleton,
 } from "@mui/material";
 import axios from "axios";
 import { useRouter } from "next/navigation";
@@ -82,6 +83,9 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
   const [typingChats, setTypingChats] = useState<Record<string, boolean>>({});
   const [isUserOnline, setIsUserOnline] = useState(false);
   const [lastSeen, setLastSeen] = useState<string | null>(null);
+  const [chatListLoading, setChatListLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const HEADER_HEIGHT = 90.5;
 
@@ -309,26 +313,15 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
   }, [userProfile]);
 
   const getUserProfile = async (userId: string) => {
-    if (userId) {
-      try {
-        const response = await fetch(`/api/user/sweeping/user?id=${userId}`);
-        if (!response.ok) {
-          console.error(
-            "Failed to fetch advertiser data:",
-            response.statusText
-          );
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const { user: userData } = await response.json();
-        if (!userData) {
-          console.error("Advertiser not found");
-        } else {
-          setUserProfile(userData);
-        }
-      } catch (error: any) {
-        console.error("Error fetching data:", error.message);
-      }
+    try {
+      setProfileLoading(true);
+      const res = await fetch(`/api/user/sweeping/user?id=${userId}`);
+      const { user } = await res.json();
+      setUserProfile(user);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -570,13 +563,16 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
 
   const fetchAllChats = async () => {
     try {
-      let profileid = await localStorage.getItem("logged_in_profile");
+      setChatListLoading(true);
+      let profileid = localStorage.getItem("logged_in_profile");
       const response = await axios.get(
         `/api/user/messaging?profileid=${profileid}`
       );
-      setChatList(response.data.data);
-    } catch (err: any) {
-      console.error("Error fetching chats:", err);
+      setChatList(response.data.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setChatListLoading(false);
     }
   };
 
@@ -588,26 +584,22 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
 
   const fetchChatConversation = async (profileId: any, userId: any) => {
     try {
-      const payload = {
-        ProfileIdfrom: profileId,
-        ProfileIDto: userId,
-      };
+      setMessagesLoading(true);
       const response = await fetch("/api/user/messaging/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ProfileIdfrom: profileId,
+          ProfileIDto: userId,
+        }),
       });
-      if (response.ok) {
-        const result = await response.json();
-        setMessages((prevMessages: any) => [...prevMessages, ...result?.data]);
-      } else {
-        const errorData = await response.json();
-        console.error("Error sending message:", errorData);
-      }
-    } catch (err: any) {
-      console.error("Error fetching chats:", err);
+
+      const result = await response.json();
+      setMessages(result?.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setMessagesLoading(false);
     }
   };
 
@@ -844,134 +836,150 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
             </Box>
 
             <List sx={{ px: 1 }}>
-              {chatList.map((chat: any) => {
-                const hasImage = /<img.*?src=/.test(chat.Conversation);
-                const isActive = userId === chat?.ToProfileId;
-
-                return (
-                  <ListItem
-                    key={chat.ToProfileId}
-                    disableGutters
-                    onClick={() =>
-                      router.push(`/messaging/${chat.ToProfileId}`)
-                    }
-                    sx={{
-                      px: 1.5,
-                      py: 1.5,
-                      mt: 0.8,
-                      borderRadius: 3,
-                      cursor: "pointer",
-                      alignItems: "flex-start",
-                      position: "relative",
-                      bgcolor: isActive
-                        ? "rgba(255,27,107,0.15)"
-                        : "rgba(255,255,255,0.02)",
-                      boxShadow: isActive
-                        ? "inset 0 0 0 1px rgba(255,27,107,0.4)"
-                        : "none",
-                      transition: "all 0.2s ease",
-
-                      "&:hover": {
-                        bgcolor: isActive
-                          ? "rgba(255,27,107,0.22)"
-                          : "rgba(255,255,255,0.07)",
-                      },
-                      "&::before": isActive
-                        ? {
-                            content: '""',
-                            position: "absolute",
-                            left: 0,
-                            top: "12%",
-                            height: "76%",
-                            width: 4,
-                            borderRadius: "0 6px 6px 0",
-                            bgcolor: "#FF1B6B",
-                          }
-                        : {},
-                    }}
-                  >
-                    <ListItemAvatar sx={{ minWidth: 56 }}>
-                      {chat.NewMessages > 0 ? (
-                        <Badge
-                          badgeContent={chat.NewMessages}
-                          color="error"
-                          overlap="circular"
-                          anchorOrigin={{
-                            vertical: "top",
-                            horizontal: "right",
-                          }}
-                        >
-                          <LazyAvatar
-                            src={chat.Avatar}
-                            size={46}
-                            border="2px solid #FF1B6B"
-                          />
-                        </Badge>
-                      ) : (
-                        <LazyAvatar
-                          src={chat.Avatar}
-                          size={46}
-                          border="2px solid #FF1B6B"
-                        />
-                      )}
-                    </ListItemAvatar>
-
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography
-                        noWrap
-                        sx={{
-                          fontSize: 15,
-                          fontWeight: 600,
-                          color: "#FF1B6B",
-                        }}
-                      >
-                        {chat.Username}
-                      </Typography>
-
-                      {typingChats[chat.ToProfileId] ? (
-                        <Typography
-                          sx={{ fontSize: 13, color: "#4CAF50", mt: 0.3 }}
-                        >
-                          Typing…
-                        </Typography>
-                      ) : (
-                        <Typography
-                          noWrap
-                          sx={{
-                            fontSize: 13,
-                            color: "rgba(255,255,255,0.65)",
-                            mt: 0.3,
-                          }}
-                        >
-                          {hasImage ? "📷 Sent an image" : chat.Conversation}
-                        </Typography>
-                      )}
-                    </Box>
-
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "flex-end",
-                        justifyContent: "space-between",
-                        height: 46,
-                        ml: 1,
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          fontSize: 11,
-                          color: "rgba(255,255,255,0.45)",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {formatLastUpSmart(chat.LastUp)}
-                      </Typography>
+              {chatListLoading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <ListItem key={i} sx={{ px: 1.5, py: 1.5 }}>
+                    <Skeleton variant="circular" width={46} height={46} />
+                    <Box sx={{ ml: 2, flex: 1 }}>
+                      <Skeleton width="60%" height={18} />
+                      <Skeleton width="90%" height={14} />
                     </Box>
                   </ListItem>
-                );
-              })}
+                ))
+              ) : (
+                <>
+                  {chatList.map((chat: any) => {
+                    const hasImage = /<img.*?src=/.test(chat.Conversation);
+                    const isActive = userId === chat?.ToProfileId;
+
+                    return (
+                      <ListItem
+                        key={chat.ToProfileId}
+                        disableGutters
+                        onClick={() =>
+                          router.push(`/messaging/${chat.ToProfileId}`)
+                        }
+                        sx={{
+                          px: 1.5,
+                          py: 1.5,
+                          mt: 0.8,
+                          borderRadius: 3,
+                          cursor: "pointer",
+                          alignItems: "flex-start",
+                          position: "relative",
+                          bgcolor: isActive
+                            ? "rgba(255,27,107,0.15)"
+                            : "rgba(255,255,255,0.02)",
+                          boxShadow: isActive
+                            ? "inset 0 0 0 1px rgba(255,27,107,0.4)"
+                            : "none",
+                          transition: "all 0.2s ease",
+
+                          "&:hover": {
+                            bgcolor: isActive
+                              ? "rgba(255,27,107,0.22)"
+                              : "rgba(255,255,255,0.07)",
+                          },
+                          "&::before": isActive
+                            ? {
+                                content: '""',
+                                position: "absolute",
+                                left: 0,
+                                top: "12%",
+                                height: "76%",
+                                width: 4,
+                                borderRadius: "0 6px 6px 0",
+                                bgcolor: "#FF1B6B",
+                              }
+                            : {},
+                        }}
+                      >
+                        <ListItemAvatar sx={{ minWidth: 56 }}>
+                          {chat.NewMessages > 0 ? (
+                            <Badge
+                              badgeContent={chat.NewMessages}
+                              color="error"
+                              overlap="circular"
+                              anchorOrigin={{
+                                vertical: "top",
+                                horizontal: "right",
+                              }}
+                            >
+                              <LazyAvatar
+                                src={chat.Avatar}
+                                size={46}
+                                border="2px solid #FF1B6B"
+                              />
+                            </Badge>
+                          ) : (
+                            <LazyAvatar
+                              src={chat.Avatar}
+                              size={46}
+                              border="2px solid #FF1B6B"
+                            />
+                          )}
+                        </ListItemAvatar>
+
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            noWrap
+                            sx={{
+                              fontSize: 15,
+                              fontWeight: 600,
+                              color: "#FF1B6B",
+                            }}
+                          >
+                            {chat.Username}
+                          </Typography>
+
+                          {typingChats[chat.ToProfileId] ? (
+                            <Typography
+                              sx={{ fontSize: 13, color: "#4CAF50", mt: 0.3 }}
+                            >
+                              Typing…
+                            </Typography>
+                          ) : (
+                            <Typography
+                              noWrap
+                              sx={{
+                                fontSize: 13,
+                                color: "rgba(255,255,255,0.65)",
+                                mt: 0.3,
+                              }}
+                            >
+                              {hasImage
+                                ? "📷 Sent an image"
+                                : chat.Conversation}
+                            </Typography>
+                          )}
+                        </Box>
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "flex-end",
+                            justifyContent: "space-between",
+                            height: 46,
+                            ml: 1,
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontSize: 11,
+                              color: "rgba(255,255,255,0.45)",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {formatLastUpSmart(chat.LastUp)}
+                          </Typography>
+                        </Box>
+                      </ListItem>
+                    );
+                  })}
+                </>
+              )}
             </List>
           </Drawer>
 
@@ -1000,65 +1008,79 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
                 bgcolor: "#1A1A1A",
               }}
             >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  cursor: "pointer",
-                }}
-                onClick={() => {
-                  setShowDetail(true);
-                  setSelectedUserId(userProfile?.Id);
-                }}
-              >
-                <Box>
-                  <LazyAvatar
-                    src={userProfile?.Avatar}
-                    size={36}
-                    border="2px solid #FF1B6B"
-                  />
+              {profileLoading ? (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Skeleton variant="circular" width={36} height={36} />
+                  <Box>
+                    <Skeleton width={120} height={16} />
+                    <Skeleton width={80} height={12} />
+                  </Box>
                 </Box>
-
-                <Box>
-                  <Typography
-                    noWrap
+              ) : (
+                <>
+                  <Box
                     sx={{
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: "#FF1B6B",
-                      letterSpacing: 0.6,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      setShowDetail(true);
+                      setSelectedUserId(userProfile?.Id);
                     }}
                   >
-                    {userProfile?.Username || "User"}
-                  </Typography>
+                    <Box>
+                      <LazyAvatar
+                        src={userProfile?.Avatar}
+                        size={36}
+                        border="2px solid #FF1B6B"
+                      />
+                    </Box>
 
-                  <Typography
-                    sx={{
-                      fontSize: 12,
-                      color: isUserOnline ? "#4CAF50" : "rgba(255,255,255,0.5)",
-                    }}
-                  >
-                    {isUserOnline
-                      ? "Online"
-                      : lastSeen
-                      ? `Last seen at ${formatMessageTime(lastSeen)}`
-                      : "Offline"}
-                  </Typography>
-                </Box>
-              </Box>
+                    <Box>
+                      <Typography
+                        noWrap
+                        sx={{
+                          fontSize: 15,
+                          fontWeight: 600,
+                          color: "#FF1B6B",
+                          letterSpacing: 0.6,
+                        }}
+                      >
+                        {userProfile?.Username || "User"}
+                      </Typography>
 
-              <Box sx={{ display: "flex", gap: 1 }}>
-                <IconButton
-                  sx={{ color: "rgba(255,255,255,0.7)" }}
-                  onClick={() => {
-                    setShowDetail(true);
-                    setSelectedUserId(userProfile?.Id);
-                  }}
-                >
-                  <InfoIcon />
-                </IconButton>
-              </Box>
+                      <Typography
+                        sx={{
+                          fontSize: 12,
+                          color: isUserOnline
+                            ? "#4CAF50"
+                            : "rgba(255,255,255,0.5)",
+                        }}
+                      >
+                        {isUserOnline
+                          ? "Online"
+                          : lastSeen
+                          ? `Last seen at ${formatMessageTime(lastSeen)}`
+                          : "Offline"}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <IconButton
+                      sx={{ color: "rgba(255,255,255,0.7)" }}
+                      onClick={() => {
+                        setShowDetail(true);
+                        setSelectedUserId(userProfile?.Id);
+                      }}
+                    >
+                      <InfoIcon />
+                    </IconButton>
+                  </Box>
+                </>
+              )}
             </Box>
 
             {/* Messages - ONLY this scrolls */}
@@ -1075,34 +1097,144 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
                 },
               }}
             >
-              {messages.length === 0 && (
-                <Typography
-                  sx={{
-                    mt: 4,
-                    textAlign: "center",
-                    color: "rgba(255,255,255,0.5)",
-                    fontSize: 14,
-                  }}
-                >
+              {messagesLoading ? (
+                Array.from({ length: 8 }).map((_, i) => (
+                  <ListItem key={i} disableGutters sx={{ mb: 1.5 }}>
+                    <Skeleton
+                      variant="rounded"
+                      width={`${Math.random() * 20 + 40}%`}
+                      height={36}
+                      sx={{ borderRadius: 3 }}
+                    />
+                  </ListItem>
+                ))
+              ) : messages.length === 0 ? (
+                <Typography sx={{ mt: 4, textAlign: "center", opacity: 0.6 }}>
                   💬 Say hi and start the spark
                 </Typography>
-              )}
+              ) : (
+                <>
+                  {messages.map((message: any, index: number) => {
+                    const isMine = message?.MemberIdFrom === profileId;
 
-              {messages.map((message: any, index: number) => {
-                const isMine = message?.MemberIdFrom === profileId;
+                    return (
+                      <ListItem
+                        key={index}
+                        disableGutters
+                        sx={{
+                          justifyContent: isMine ? "flex-end" : "flex-start",
+                          alignItems: "flex-end",
+                          mb: 1.4,
+                        }}
+                      >
+                        {/* Avatar (Only for received messages) */}
+                        {!isMine && (
+                          <ListItemAvatar sx={{ minWidth: 40, mr: 1 }}>
+                            <Avatar
+                              src={userProfile?.Avatar || "/noavatar.png"}
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                border: "2px solid #FF1B6B",
+                                cursor: "pointer",
+                              }}
+                              onClick={() => {
+                                setShowDetail(true);
+                                setSelectedUserId(userProfile?.Id);
+                              }}
+                            />
+                          </ListItemAvatar>
+                        )}
 
-                return (
-                  <ListItem
-                    key={index}
-                    disableGutters
-                    sx={{
-                      justifyContent: isMine ? "flex-end" : "flex-start",
-                      alignItems: "flex-end",
-                      mb: 1.4,
-                    }}
-                  >
-                    {/* Avatar (Only for received messages) */}
-                    {!isMine && (
+                        {/* Message Bubble */}
+                        <Box
+                          sx={{
+                            maxWidth: "50%",
+                            px: 2,
+                            py: 1.2,
+                            borderRadius: isMine
+                              ? "18px 18px 4px 18px"
+                              : "18px 18px 18px 4px",
+                            background: isMine
+                              ? "linear-gradient(135deg, #FF1B6B 0%, #FF4D8D 100%)"
+                              : "#2A2A2A",
+                            color: "white",
+                            wordBreak: "break-word",
+                            position: "relative",
+                          }}
+                        >
+                          {/* Message */}
+                          <Typography
+                            component="div"
+                            className="message-content"
+                            sx={{
+                              fontSize: 14,
+                              lineHeight: 1.5,
+                              pr: 6,
+                              "& img": {
+                                // mt: 1,
+                                maxWidth: "100%",
+                                borderRadius: isMine
+                                  ? "18px 18px 4px 18px"
+                                  : "18px 18px 18px 4px",
+                                cursor: "pointer",
+                                transition: "transform 0.2s ease",
+                                "&:hover": {
+                                  transform: "scale(1.03)",
+                                },
+                              },
+                            }}
+                            dangerouslySetInnerHTML={{
+                              __html: message?.Conversation,
+                            }}
+                          />
+
+                          {/* Time INSIDE bubble */}
+                          <Typography
+                            sx={{
+                              position: "absolute",
+                              bottom: 6,
+                              right: 10,
+                              fontWeight: 500,
+                              fontSize: 10,
+                              color: isMine
+                                ? "rgba(255,255,255,0.75)"
+                                : "rgba(255,255,255,0.45)",
+                              userSelect: "none",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {formatMessageTime(message?.CreatedAt)}
+                          </Typography>
+                        </Box>
+
+                        {isMine && (
+                          <ListItemAvatar sx={{ minWidth: 40, ml: 1 }}>
+                            <Avatar
+                              src={message?.AvatarFrom || "/noavatar.png"}
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                border: "2px solid #FF1B6B",
+                              }}
+                            />
+                          </ListItemAvatar>
+                        )}
+                      </ListItem>
+                    );
+                  })}
+
+                  <div ref={messagesEndRef} />
+
+                  {userId && typingChats[userId] && (
+                    <ListItem
+                      disableGutters
+                      sx={{
+                        justifyContent: "flex-start",
+                        alignItems: "flex-end",
+                        mb: 1,
+                      }}
+                    >
                       <ListItemAvatar sx={{ minWidth: 40, mr: 1 }}>
                         <Avatar
                           src={userProfile?.Avatar || "/noavatar.png"}
@@ -1110,134 +1242,30 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
                             width: 32,
                             height: 32,
                             border: "2px solid #FF1B6B",
-                            cursor: "pointer",
-                          }}
-                          onClick={() => {
-                            setShowDetail(true);
-                            setSelectedUserId(userProfile?.Id);
                           }}
                         />
                       </ListItemAvatar>
-                    )}
 
-                    {/* Message Bubble */}
-                    <Box
-                      sx={{
-                        maxWidth: "50%",
-                        px: 2,
-                        py: 1.2,
-                        borderRadius: isMine
-                          ? "18px 18px 4px 18px"
-                          : "18px 18px 18px 4px",
-                        background: isMine
-                          ? "linear-gradient(135deg, #FF1B6B 0%, #FF4D8D 100%)"
-                          : "#2A2A2A",
-                        color: "white",
-                        wordBreak: "break-word",
-                        position: "relative",
-                      }}
-                    >
-                      {/* Message */}
-                      <Typography
-                        component="div"
-                        className="message-content"
+                      <Box
                         sx={{
-                          fontSize: 14,
-                          lineHeight: 1.5,
-                          pr: 6,
-                          "& img": {
-                            // mt: 1,
-                            maxWidth: "100%",
-                            borderRadius: isMine
-                              ? "18px 18px 4px 18px"
-                              : "18px 18px 18px 4px",
-                            cursor: "pointer",
-                            transition: "transform 0.2s ease",
-                            "&:hover": {
-                              transform: "scale(1.03)",
-                            },
-                          },
-                        }}
-                        dangerouslySetInnerHTML={{
-                          __html: message?.Conversation,
-                        }}
-                      />
-
-                      {/* Time INSIDE bubble */}
-                      <Typography
-                        sx={{
-                          position: "absolute",
-                          bottom: 6,
-                          right: 10,
-                          fontWeight: 500,
-                          fontSize: 10,
-                          color: isMine
-                            ? "rgba(255,255,255,0.75)"
-                            : "rgba(255,255,255,0.45)",
-                          userSelect: "none",
-                          whiteSpace: "nowrap",
+                          px: 2,
+                          py: 1.7,
+                          borderRadius: "18px 18px 18px 4px",
+                          bgcolor: "#2A2A2A",
+                          display: "flex",
+                          alignItems: "center",
+                          minWidth: 42,
                         }}
                       >
-                        {formatMessageTime(message?.CreatedAt)}
-                      </Typography>
-                    </Box>
-
-                    {isMine && (
-                      <ListItemAvatar sx={{ minWidth: 40, ml: 1 }}>
-                        <Avatar
-                          src={message?.AvatarFrom || "/noavatar.png"}
-                          sx={{
-                            width: 32,
-                            height: 32,
-                            border: "2px solid #FF1B6B",
-                          }}
-                        />
-                      </ListItemAvatar>
-                    )}
-                  </ListItem>
-                );
-              })}
-
-              <div ref={messagesEndRef} />
-
-              {userId && typingChats[userId] && (
-                <ListItem
-                  disableGutters
-                  sx={{
-                    justifyContent: "flex-start",
-                    alignItems: "flex-end",
-                    mb: 1,
-                  }}
-                >
-                  <ListItemAvatar sx={{ minWidth: 40, mr: 1 }}>
-                    <Avatar
-                      src={userProfile?.Avatar || "/noavatar.png"}
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        border: "2px solid #FF1B6B",
-                      }}
-                    />
-                  </ListItemAvatar>
-
-                  <Box
-                    sx={{
-                      px: 2,
-                      py: 1.7,
-                      borderRadius: "18px 18px 18px 4px",
-                      bgcolor: "#2A2A2A",
-                      display: "flex",
-                      alignItems: "center",
-                      minWidth: 42,
-                    }}
-                  >
-                    <Box className="typing-dots">
-                      <span />
-                      <span />
-                      <span />
-                    </Box>
-                  </Box>
-                </ListItem>
+                        <Box className="typing-dots">
+                          <span />
+                          <span />
+                          <span />
+                        </Box>
+                      </Box>
+                    </ListItem>
+                  )}
+                </>
               )}
             </List>
 

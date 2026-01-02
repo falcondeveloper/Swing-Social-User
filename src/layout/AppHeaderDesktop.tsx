@@ -27,6 +27,7 @@ import {
   Sliders,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import LazyAvatar from "@/utils/LazyAvatar";
 
 const drawerMotion = {
   hidden: {
@@ -547,14 +548,17 @@ const AppHeaderDesktop = () => {
                 }}
               >
                 {avatar ? (
-                  <img
+                  <LazyAvatar
                     src={avatar}
                     alt="Avatar"
-                    style={{
-                      objectFit: "cover",
+                    size={40}
+                    sx={{
                       borderRadius: "10px",
-                      width: "100%",
+                    }}
+                    imgStyle={{
+                      objectFit: "cover",
                       height: "100%",
+                      width: "100%",
                     }}
                   />
                 ) : null}
