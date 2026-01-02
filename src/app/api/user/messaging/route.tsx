@@ -62,11 +62,7 @@ export async function POST(req: any) {
   }
 }
 
-// GET function to fetch all chats for a specific profile
 export async function GET(req: any) {
-  console.log("Fetching all chats");
-
-  // Parse query parameters
   const { searchParams } = new URL(req.url);
   const profileid = searchParams.get("profileid");
 
@@ -80,26 +76,20 @@ export async function GET(req: any) {
   }
 
   try {
-    // Execute the SQL query to get all chats
     const result = await pool.query("SELECT * FROM public.get_all_chats($1)", [
       profileid,
     ]);
 
-    console.log("Chats fetched:", result.rows);
-
-    // Return success response
     return NextResponse.json({
       message: "Chats fetched successfully",
       data: result.rows,
     });
   } catch (error: any) {
     console.error("Error fetching chats:", error);
-
-    // Return failure response
     return NextResponse.json(
       {
         message: "Failed to fetch chats",
-        error: error.message, // Include error details for debugging
+        error: error.message,
       },
       { status: 400 }
     );

@@ -10,31 +10,24 @@ import React, {
 import { getSocket } from "@/lib/socket";
 
 type SocketContextType = {
-  socket: ReturnType<typeof getSocket> | null;
+  socket: ReturnType<typeof getSocket>;
   isConnected: boolean;
 };
 
-const SocketContext = createContext<SocketContextType>({
-  socket: null,
-  isConnected: false,
-});
+const SocketContext = createContext<SocketContextType | null>(null);
 
-export const SocketProvider = ({
-  children,
-  profileId,
-}: {
-  children: React.ReactNode;
-  profileId?: string;
-}) => {
-  const socketRef = useRef(getSocket());
+export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
+  const socket = useRef(getSocket()).current;
   const [isConnected, setIsConnected] = useState(false);
   const initializedRef = useRef(false);
 
   useEffect(() => {
-    const socket = socketRef.current;
     if (initializedRef.current) return;
-
     initializedRef.current = true;
+
+    const profileId = localStorage.getItem("logged_in_profile");
+
+    socket.connect();
 
     socket.on("connect", () => {
       console.log("✅ Socket connected:", socket.id);
@@ -54,13 +47,17 @@ export const SocketProvider = ({
       socket.off("connect");
       socket.off("disconnect");
     };
-  }, [profileId]);
+  }, []);
 
   return (
-    <SocketContext.Provider value={{ socket: socketRef.current, isConnected }}>
+    <SocketContext.Provider value={{ socket, isConnected }}>
       {children}
     </SocketContext.Provider>
   );
 };
 
-export const useSocketContext = () => useContext(SocketContext);
+export const useSocketContext = () => {
+  const ctx = useContext(SocketContext);
+  if (!ctx) throw new Error("useSocketContext must be inside SocketProvider");
+  return ctx;
+};

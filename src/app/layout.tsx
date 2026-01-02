@@ -74,17 +74,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const profileId =
-    typeof window !== "undefined"
-      ? localStorage.getItem("logged_in_profile") ?? undefined
-      : undefined;
-
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ToastContainer />
         <ClientLayout>
-          <SocketProvider profileId={profileId}>
+          <SocketProvider>
             <PushNotificationsProvider>{children}</PushNotificationsProvider>
           </SocketProvider>
         </ClientLayout>

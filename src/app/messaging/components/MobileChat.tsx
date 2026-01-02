@@ -23,78 +23,45 @@ import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation";
 import AppHeaderMobile from "@/layout/AppHeaderMobile";
 import AppFooterMobile from "@/layout/AppFooterMobile";
-import { getSocket } from "@/lib/socket";
+import { useSocketContext } from "@/context/SocketProvider";
 
-const formatFullTime = (timestamp?: string): string => {
-  if (!timestamp) return "";
+const formatFullTime = (value?: string) => {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return "";
 
   const now = new Date();
-  const currentYear = now.getFullYear();
 
-  const match = timestamp.match(
-    /^([A-Za-z]{3})\s(\d{1,2}),\s?(\d{1,2}):(\d{2})$/
-  );
+  const isSameDay =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
 
-  if (!match) return timestamp;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
 
-  const [, monthStr, dayStr, hourStr, minuteStr] = match;
+  const isYesterday =
+    date.getFullYear() === yesterday.getFullYear() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getDate() === yesterday.getDate();
 
-  const monthMap: Record<string, number> = {
-    Jan: 0,
-    Feb: 1,
-    Mar: 2,
-    Apr: 3,
-    May: 4,
-    Jun: 5,
-    Jul: 6,
-    Aug: 7,
-    Sep: 8,
-    Oct: 9,
-    Nov: 10,
-    Dec: 11,
-  };
-
-  const messageDate = new Date(
-    currentYear,
-    monthMap[monthStr],
-    Number(dayStr),
-    Number(hourStr),
-    Number(minuteStr)
-  );
-
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  );
-
-  const startOfMessageDay = new Date(
-    messageDate.getFullYear(),
-    messageDate.getMonth(),
-    messageDate.getDate()
-  );
-
-  const diffDays = Math.floor(
-    (startOfToday.getTime() - startOfMessageDay.getTime()) /
-      (1000 * 60 * 60 * 24)
-  );
-
-  if (diffDays === 0) {
-    return messageDate.toLocaleTimeString("en-US", {
+  if (isSameDay) {
+    return date.toLocaleTimeString(undefined, {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
     });
   }
 
-  if (diffDays === 1) {
+  if (isYesterday) {
     return "Yesterday";
   }
 
-  return messageDate.toLocaleDateString("en-US", {
-    month: "2-digit",
+  return date.toLocaleDateString(undefined, {
     day: "2-digit",
-    year: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   });
 };
 
@@ -197,29 +164,9 @@ const ChatTypingIndicator = () => (
   </Box>
 );
 
-const toNYChatTimestamp = (iso: string) => {
-  const nyDate = new Date(
-    new Date(iso).toLocaleString("en-US", {
-      timeZone: "America/New_York",
-    })
-  );
-
-  const now = new Date();
-
-  nyDate.setFullYear(now.getFullYear());
-  nyDate.setMonth(now.getMonth());
-  nyDate.setDate(now.getDate());
-
-  const month = nyDate.toLocaleString("en-US", { month: "short" });
-  const day = nyDate.getDate();
-  const hour = nyDate.getHours() % 12 || 12;
-  const minute = String(nyDate.getMinutes()).padStart(2, "0");
-
-  return `${month} ${day}, ${hour}:${minute}`;
-};
-
 const MobileChat = () => {
   const router = useRouter();
+  const { socket, isConnected } = useSocketContext();
 
   const [profileId, setProfileId] = useState<string | null>(null);
   const [chatList, setChatList] = useState<any[]>([]);
@@ -242,8 +189,7 @@ const MobileChat = () => {
   const typingTimeouts = useRef<Record<string, any>>({});
 
   useEffect(() => {
-    const socket = getSocket();
-
+    if (!isConnected) return;
     socket.on("typing:start", ({ from }) => {
       setTypingChats((prev) => ({ ...prev, [from]: true }));
 
@@ -271,10 +217,7 @@ const MobileChat = () => {
           (c) => c.ToProfileId === otherUserId
         );
 
-        const rawTime =
-          msg.CreatedAt || msg.timestamp || new Date().toISOString();
-
-        const lastUpTime = toNYChatTimestamp(rawTime);
+        const lastUp = msg.CreatedAt;
 
         if (existingIndex !== -1) {
           const existingChat = prev[existingIndex];
@@ -282,7 +225,7 @@ const MobileChat = () => {
           const updatedChat = {
             ...existingChat,
             Conversation: msg.Conversation,
-            LastUp: lastUpTime,
+            LastUp: lastUp,
             NewMessages:
               msg.MemberIdFrom === profileId
                 ? 0
@@ -302,7 +245,7 @@ const MobileChat = () => {
             Username: msg.FromUsername || "User",
             Avatar: msg.AvatarFrom || "/noavatar.png",
             Conversation: msg.Conversation,
-            LastUp: lastUpTime,
+            LastUp: lastUp,
             ReceiptStatus: "delivered",
             NewMessages: msg.MemberIdFrom === profileId ? 0 : 1,
             IsOnline: true,
@@ -322,7 +265,7 @@ const MobileChat = () => {
       socket.off("typing:stop");
       socket.off("chat:receive");
     };
-  }, [profileId]);
+  }, [isConnected]);
 
   useEffect(() => {
     const pid = localStorage.getItem("logged_in_profile");
@@ -653,7 +596,7 @@ const MobileChat = () => {
                           fontSize={12}
                           color="rgba(255,255,255,0.45)"
                         >
-                          {formatFullTime(chat.LastUp).toLowerCase()}
+                          {formatFullTime(chat.LastUp)}
                         </Typography>
                       )}
 

@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import {
   Box,
-  Container,
   List,
   ListItem,
   ListItemText,
@@ -13,14 +12,9 @@ import {
   IconButton,
   TextField,
   Drawer,
-  Divider,
-  Modal,
   CircularProgress,
   Button,
   useMediaQuery,
-  Tabs,
-  Tab,
-  InputAdornment,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -29,28 +23,22 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import imageCompression from "browser-image-compression";
-
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import UserProfileModal from "@/components/UserProfileModal";
 import ReplyModal from "./components/ReplyModal";
-import UserBottomNavigation from "@/components/BottomNavigation";
-import Picker from "emoji-picker-react";
 import {
-  Send as SendIcon,
-  EmojiEmotions as EmojiIcon,
-  Image as ImageIcon,
   Delete,
   ArrowBack,
   AddPhotoAlternate,
   Close,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-import { DeleteIcon, Search, SearchIcon } from "lucide-react";
+import { Search } from "lucide-react";
 
 import Swal from "sweetalert2";
 import { jwtDecode } from "jwt-decode";
 import AppFooterMobile from "@/layout/AppFooterMobile";
+import AppHeaderMobile from "@/layout/AppHeaderMobile";
+import AppHeaderDesktop from "@/layout/AppHeaderDesktop";
 
 interface Mail {
   Avatar: string;
@@ -621,7 +609,7 @@ export default function ChatPage() {
           display: "flex",
         }}
       >
-        <Header />
+        {isMobile ? <AppHeaderMobile /> : <AppHeaderDesktop />}
         {isMobile ? (
           <Box
             sx={{
