@@ -143,13 +143,16 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
 
         const index = prev.findIndex((c) => c.ToProfileId === otherUserId);
 
+        const isChatOpen =
+          userId === otherUserId && document.visibilityState === "visible";
+
         if (index !== -1) {
           const updated = {
             ...prev[index],
             Conversation: msg.Conversation,
             LastUp: msg.CreatedAt,
             NewMessages:
-              msg.MemberIdFrom === myId
+              msg.MemberIdFrom === myId || isChatOpen
                 ? 0
                 : Number(prev[index].NewMessages || 0) + 1,
           };
@@ -167,7 +170,7 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
             Avatar: msg.AvatarFrom || "/noavatar.png",
             Conversation: msg.Conversation,
             LastUp: msg.CreatedAt,
-            NewMessages: msg.MemberIdFrom === myId ? 0 : 1,
+            NewMessages: isChatOpen ? 0 : 1,
           },
           ...prev,
         ];
@@ -181,6 +184,18 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
       socket.off("chat:receive");
     };
   }, [socket, isConnected, profileId]);
+
+  useEffect(() => {
+    if (!socket || !profileId || !userId) return;
+
+    socket.emit("chat:read", {
+      from: userId,
+      to: profileId,
+    });
+    setChatList((prev) =>
+      prev.map((c) => (c.ToProfileId === userId ? { ...c, NewMessages: 0 } : c))
+    );
+  }, [userId, socket, profileId]);
 
   useEffect(() => {
     const handleUnload = () => {
@@ -407,6 +422,11 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
       lastcommentinserted: 1,
       readAt: null,
     };
+
+    socket.emit("chat:send", {
+      ...newUserMessage,
+      ConversationId: tempConversationId,
+    });
 
     setMessages((prev) => [...prev, newUserMessage]);
 
