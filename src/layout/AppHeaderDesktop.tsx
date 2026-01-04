@@ -11,7 +11,7 @@ import {
   Chip,
   Skeleton,
 } from "@mui/material";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import {
   Home,
@@ -55,6 +55,7 @@ const drawerMotion = {
 
 const AppHeaderDesktop = () => {
   const router = useRouter();
+  const pathname = usePathname() ?? "";
 
   const [avatar, setAvatar] = useState<string | null>(null);
 
@@ -316,8 +317,8 @@ const AppHeaderDesktop = () => {
               ].map((item, index) => {
                 const Icon = item.icon;
                 const isActive =
-                  typeof window !== "undefined" &&
-                  window.location.pathname === item.path;
+                  pathname === item.path ||
+                  pathname.startsWith(item.path + "/");
 
                 return (
                   <Box key={item.label} sx={{ position: "relative" }}>

@@ -1027,12 +1027,49 @@ export default function MobileSweaping() {
             <Box
               sx={{
                 height: "100%",
-                px: "18px",
-                paddingTop: "18px",
-                background:
-                  "linear-gradient(180deg, rgba(86,30,67,1) 0%, rgba(72,26,55,1) 50%, rgba(25,14,15,1) 100%)",
+                px: "12px",
+                paddingTop: "12px",
+                background: `
+      linear-gradient(
+        180deg,
+        #0B0609 0%,
+        #3B1C34 48%,
+        #5A2A48 100%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(110, 45, 89, 0.18) 60%,
+        rgba(110, 45, 89, 0.0) 100%
+      )
+    `,
               }}
             >
+            {/* <Box
+              sx={{
+                height: "100%",
+                px: "12px",
+                paddingTop: "12px",
+                background: `
+      radial-gradient(
+        circle at top left,
+        rgba(0, 0, 0, 0.55) 0%,
+        rgba(0, 0, 0, 0.25) 35%,
+        rgba(0, 0, 0, 0.0) 65%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(110, 45, 89, 0.2) 0%,
+        rgba(110, 45, 89, 0.0) 40%
+      ),
+      linear-gradient(
+        180deg,
+        #5A2A48 0%,
+        #3B1C34 52%,
+        #0B0609 100%
+      )
+    `,
+              }}
+            > */}
               <Box
                 sx={{
                   height: "100%",
@@ -1040,7 +1077,7 @@ export default function MobileSweaping() {
                   position: "relative",
                 }}
               >
-                <Box sx={{ height: "65%", position: "relative" }}>
+                <Box sx={{ height: "73%", position: "relative" }}>
                   <Box
                     component="img"
                     src={profile.Avatar || "/fallback-avatar.png"}
@@ -1229,15 +1266,25 @@ export default function MobileSweaping() {
                   </Box> */}
                 </Box>
 
-                <Box sx={{ pt: "18px" }}>
+                <Box
+                  sx={{
+                    pt: "8px",
+                    px: "8px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center", // ✅ centers children horizontally
+                    textAlign: "center", // ✅ centers text
+                  }}
+                >
                   <Box
                     sx={{
                       display: "flex",
                       alignItems: "center",
                       gap: 1,
-                      mb: "8px",
+                      mb: "2px",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
+                      justifyContent: "center",
                     }}
                   >
                     <Typography
@@ -1246,12 +1293,14 @@ export default function MobileSweaping() {
                         fontWeight: 600,
                         color: "#F50057",
                         lineHeight: "34px",
-                        maxWidth: "60%",
+                        maxWidth: "100%",
+                        textAlign: "center",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
                         flexShrink: 1,
                         minWidth: 0,
+                        letterSpacing: "0",
                       }}
                     >
                       {profile.Username},
@@ -1271,6 +1320,8 @@ export default function MobileSweaping() {
                             fontSize: "20px",
                             fontWeight: 600,
                             color: "#F50057",
+                            lineHeight: "34px",
+                            letterSpacing: "0",
                           }}
                         >
                           {getAge(profile.DateOfBirth)}
@@ -1290,19 +1341,24 @@ export default function MobileSweaping() {
                     )}
 
                     {profile?.PartnerDateOfBirth && profile?.PartnerGender && (
-                      <>
-                        <Box
-                          component="img"
-                          src="/swiping-card/separator.svg"
-                          alt="|"
-                          sx={{
-                            width: 18,
-                            height: 25,
-                            mx: 0.3,
-                            flexShrink: 0,
-                          }}
-                        />
+                      <Box
+                        component="img"
+                        src="/swiping-card/separator.svg"
+                        alt="|"
+                        sx={{
+                          width: 2,
+                          height: 25,
+                          objectFit: "cover",
+                          objectPosition: "center",
+                          display: "block",
+                          flexShrink: 0,
+                          mx: "3px",
+                        }}
+                      />
+                    )}
 
+                    {profile?.PartnerDateOfBirth && profile?.PartnerGender && (
+                      <>
                         <Box
                           sx={{
                             display: "flex",
@@ -1316,6 +1372,8 @@ export default function MobileSweaping() {
                               fontSize: "20px",
                               fontWeight: 600,
                               color: "#F50057",
+                              lineHeight: "34px",
+                              letterSpacing: "0",
                             }}
                           >
                             {getAge(profile.PartnerDateOfBirth)}
@@ -1341,7 +1399,9 @@ export default function MobileSweaping() {
                       display: "flex",
                       alignItems: "center",
                       gap: "9px",
-                      mb: "12px",
+                      justifyContent: "center",
+                      width: "100%",
+                      mb: "10px",
                     }}
                   >
                     <Box
@@ -1365,24 +1425,28 @@ export default function MobileSweaping() {
                   <Typography
                     sx={{
                       fontSize: "13px",
-                      mb: "12px",
+                      mb: "14px",
                       lineHeight: "16px",
                       color: "rgba(255,255,255,0.7)",
                       fontWeight: 400,
                       letterSpacing: 0,
                       display: "-webkit-box",
-                      WebkitLineClamp: 2,
+                      WebkitLineClamp: 1,
                       WebkitBoxOrient: "vertical",
                       overflow: "hidden",
+                      textAlign: "center",
                       textOverflow: "ellipsis",
                     }}
-                    dangerouslySetInnerHTML={{ __html: profile?.About }}
+                    dangerouslySetInnerHTML={{
+                      __html: profile?.About ? profile?.About : ".",
+                    }}
                   />
 
                   <Box
                     sx={{
                       display: "flex",
                       flexWrap: "nowrap",
+                      justifyContent: "center",
                       gap: 1,
                       width: "100%",
                       overflow: "hidden",
