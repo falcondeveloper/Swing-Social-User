@@ -99,16 +99,6 @@ label {
   border: none !important;
 }
 
-.mobile-sweeping-container {
-  position: fixed;
-  top: 68px;
-  bottom: 72px;
-  left: 0;
-  right: 0;
-  overflow: hidden;
-  touch-action: none;
-}
-
 .typing-dots {
   display: flex;
   gap: 4px;
@@ -138,4 +128,38 @@ label {
   40% {
     transform: scale(1);
   }
+}
+
+.mobile-sweeping-container {
+  position: fixed;
+  top: 68px;
+  bottom: 72px;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.profile-gradient-bg {
+  height: 100%;
+  padding: 8px 12px 0 12px;
+  background: linear-gradient(180deg, #141014 0%, #2f1a2a 55%, #3f2438 100%),
+    linear-gradient(
+      180deg,
+      rgba(110, 45, 89, 0.12) 65%,
+      rgba(110, 45, 89, 0) 100%
+    );
+}
+
+.profile-gradient-bg-2 {
+  height: 100%;
+  padding: 12px 12px 0 12px;
+  background: radial-gradient(
+      circle at top left,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0.25) 35%,
+      rgba(0, 0, 0, 0) 65%
+    ),
+    linear-gradient(180deg, rgba(110, 45, 89, 0.2) 0%, rgba(110, 45, 89, 0) 40%),
+    linear-gradient(180deg, #5a2a48 0%, #3b1c34 52%, #0b0609 100%);
 }

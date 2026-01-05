@@ -1024,52 +1024,7 @@ export default function MobileSweaping() {
               }
             }}
           >
-            <Box
-              sx={{
-                height: "100%",
-                px: "12px",
-                paddingTop: "12px",
-                background: `
-      linear-gradient(
-        180deg,
-        #0B0609 0%,
-        #3B1C34 48%,
-        #5A2A48 100%
-      ),
-      linear-gradient(
-        180deg,
-        rgba(110, 45, 89, 0.18) 60%,
-        rgba(110, 45, 89, 0.0) 100%
-      )
-    `,
-              }}
-            >
-            {/* <Box
-              sx={{
-                height: "100%",
-                px: "12px",
-                paddingTop: "12px",
-                background: `
-      radial-gradient(
-        circle at top left,
-        rgba(0, 0, 0, 0.55) 0%,
-        rgba(0, 0, 0, 0.25) 35%,
-        rgba(0, 0, 0, 0.0) 65%
-      ),
-      linear-gradient(
-        180deg,
-        rgba(110, 45, 89, 0.2) 0%,
-        rgba(110, 45, 89, 0.0) 40%
-      ),
-      linear-gradient(
-        180deg,
-        #5A2A48 0%,
-        #3B1C34 52%,
-        #0B0609 100%
-      )
-    `,
-              }}
-            > */}
+            <Box className="profile-gradient-bg">
               <Box
                 sx={{
                   height: "100%",
@@ -1077,7 +1032,7 @@ export default function MobileSweaping() {
                   position: "relative",
                 }}
               >
-                <Box sx={{ height: "73%", position: "relative" }}>
+                <Box sx={{ height: "75%", position: "relative" }}>
                   <Box
                     component="img"
                     src={profile.Avatar || "/fallback-avatar.png"}
@@ -1272,8 +1227,8 @@ export default function MobileSweaping() {
                     px: "8px",
                     display: "flex",
                     flexDirection: "column",
-                    alignItems: "center", // ✅ centers children horizontally
-                    textAlign: "center", // ✅ centers text
+                    alignItems: "center",
+                    textAlign: "center",
                   }}
                 >
                   <Box
