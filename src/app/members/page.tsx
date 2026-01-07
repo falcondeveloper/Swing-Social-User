@@ -1,12 +1,5 @@
 "use client";
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  Suspense,
-  useCallback,
-} from "react";
-import { notify, handleGeolocationError } from "@/lib/notifications";
+import React, { useEffect, useRef, useState, Suspense } from "react";
 import {
   Box,
   Card,
@@ -22,34 +15,34 @@ import {
   DialogContent,
   DialogActions,
   Tooltip,
-  Container,
-  CircularProgress,
+  keyframes,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { Flag } from "@mui/icons-material";
 import TinderCard from "react-tinder-card";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import InstructionModal from "@/components/InstructionModal";
 import UserProfileModal from "@/components/UserProfileModal";
+import Footer from "@/components/Footer";
+import Header from "@/components/Header";
 import { toast } from "react-toastify";
 import MobileSweaping from "@/components/MobileSweaping";
-import { useMediaQuery } from "@mui/material";
+import { useTheme, useMediaQuery } from "@mui/material";
 import ProfileCard from "@/components/ProfileCard";
+import { Bold } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
-import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
-import AppFooterMobile from "@/layout/AppFooterMobile";
-import AppFooterDesktop from "@/layout/AppFooterDesktop";
-import AppHeaderDesktop from "@/layout/AppHeaderDesktop";
 
 export default function Home() {
-  const [userProfiles, setUserProfiles] = useState<any[]>([]);
+  const [userProfiles, setUserProfiles] = useState<any[]>([]); // User profiles fetched from API
+  const [totalUsers, setTotalUsers] = useState<any>(0); // User profiles fetched from API
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [swipeDirection, setSwipeDirection] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true); // Tracks loading state
+  const [swipeDirection, setSwipeDirection] = useState<string | null>(null); // Track swipe direction for animations
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showDetail, setShowDetail] = useState<any>(false);
   const [selectedUserId, setSelectedUserId] = useState<any>(null);
   const [profileId, setProfileId] = useState<any>(null);
+  const [customProfile, setCustomProfile] = useState<any>(null);
   const [showMatchPopup, setShowMatchPopup] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
   const [matchesOpen, setMatchesOpen] = useState(false);
@@ -58,23 +51,50 @@ export default function Home() {
   const [matchedProfile, setMatchedProfile] = useState<any>(null);
   const [swipeCount, setSwipeCount] = useState(0);
   const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
-  const [dailyLimit, setDailyLimit] = useState(30);
+  const [dailyLimit, setDailyLimit] = useState(15);
   const [isSwipingDisabled, setSwipingDisable] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [membership, setMembership] = useState(0);
   const [reportOptions, setReportOptions] = useState({
     reportUser: false,
     blockUser: false,
-    reportImage: false,
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [id, setId] = useState("");
   const [memberalarm, setMemberAlarm] = useState("0");
 
   const router = useRouter();
+  const theme = useTheme();
+  //const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isMobile = useMediaQuery("(max-width: 480px)") ? true : false;
   const refs = useRef<{ [key: string]: React.RefObject<any> }>({});
   const [idParam, setIdparam] = useState<any>(null);
+
+  const shimmerKeyframes = `
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%) skewX(-15deg);
+    }
+    100% {
+      transform: translateX(100%) skewX(-15deg);
+    }
+  }
+`;
+
+  const loadingBarKeyframes = `
+  @keyframes loadingBar {
+    0% {
+      left: -30%;
+      width: 30%;
+    }
+    50% {
+      width: 40%;
+    }
+    100% {
+      left: 100%;
+      width: 30%;
+    }
+  }
+`;
 
   useEffect(() => {
     if (userProfiles.length > 0) {
@@ -140,6 +160,7 @@ export default function Home() {
             "Failed to fetch advertiser data:",
             response.statusText
           );
+          setCustomProfile(undefined);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
@@ -158,6 +179,7 @@ export default function Home() {
 
   const fetchCurrentLoginProfileId = async (currentLoginProfileId: string) => {
     if (currentLoginProfileId) {
+      // setLoading(true);
       try {
         const response = await fetch(
           `/api/user/sweeping/user?id=${currentLoginProfileId}`
@@ -167,12 +189,15 @@ export default function Home() {
             "Failed to fetch advertiser data:",
             response.statusText
           );
+          setCustomProfile(undefined);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const { user: advertiserData } = await response.json();
         if (!advertiserData) {
           console.error("Advertiser not found");
+          setCustomProfile(undefined);
         } else {
+          setCustomProfile(advertiserData);
           setSwipeCount(advertiserData?.SwipeCount);
           setDailyLimit(advertiserData?.SwipeMax);
           if (
@@ -201,6 +226,7 @@ export default function Home() {
 
       const data = await response.json();
       setUserProfiles(data?.swipes || []);
+      setTotalUsers(data?.totalRows);
       if (data?.totalRows !== undefined && data.totalRows <= 0) {
         setShowEndPopup(true);
       }
@@ -364,24 +390,41 @@ export default function Home() {
     }
   };
 
-  const sendNotification = async (message: string) => {
-    if (!id) return;
+  const sendNotification = async (message: any) => {
+    // const params = await props.params
+    if (idParam != null) {
+      const id = idParam;
+      const response = await fetch("/api/user/notification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: id,
+          body: message,
+          image: "https://example.com/path/to/image.jpg",
+          url: `https://swing-social-website.vercel.app/members/${profileId}`,
+        }),
+      });
 
-    const response = await fetch("/api/user/notification/requestfriend", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        userId: id,
-        title: "❤️ New Match!",
-        body: message,
-        type: "new_match",
-        url: `https://swing-social-user.vercel.app/members/${profileId}`,
-      }),
-    });
+      const result = await response.json();
+    } else {
+      const id = userProfiles[currentIndex]?.Id;
+      const response = await fetch("/api/user/notification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: id,
+          body: message,
+          image: "https://example.com/path/to/image.jpg",
+          url: `https://swing-social-website.vercel.app/members/${profileId}`,
+        }),
+      });
 
-    return await response.json();
+      const result = await response.json();
+    }
   };
 
   const handleUpdateLikeMatch = async () => {
@@ -448,105 +491,9 @@ export default function Home() {
     }));
   };
 
-  const reportImageApi = async ({
-    reportedById,
-    reportedByName,
-    reportedUserId,
-    reportedUserName,
-    image,
-  }: {
-    reportedById: string;
-    reportedByName: string;
-    reportedUserId: string;
-    reportedUserName: string;
-    image: string;
-  }) => {
-    try {
-      const response = await fetch("/api/user/reportedUser", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          reportedById,
-          reportedByName,
-          reportedUserId,
-          reportedUserName,
-          image,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast.error(data?.message || "Failed to report image.");
-        return false;
-      }
-
-      toast.success("Image reported successfully!");
-      return true;
-    } catch (err) {
-      console.error("Error reporting image:", err);
-      toast.error("Error reporting image.");
-      return false;
-    }
+  const handleReportSubmit = () => {
+    setIsReportModalOpen(false);
   };
-
-  const handleReportSubmit = useCallback(async () => {
-    setIsSubmitting(true);
-    const token = localStorage.getItem("loginInfo");
-    const decodeToken = token ? jwtDecode<any>(token) : {};
-    const reportedByName = decodeToken?.profileName || "Me";
-
-    try {
-      if (reportOptions.reportImage) {
-        await reportImageApi({
-          reportedById: profileId,
-          reportedByName,
-          reportedUserId: userProfiles[currentIndex]?.Id,
-          reportedUserName: userProfiles[currentIndex]?.Username,
-          image: userProfiles[currentIndex]?.Avatar,
-        });
-      }
-
-      if (reportOptions.reportUser || reportOptions.blockUser) {
-        const res = await fetch("/api/user/sweeping/report", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            profileid: profileId,
-            targetid: userProfiles[currentIndex]?.Id,
-          }),
-        });
-
-        if (!res.ok) {
-          toast.error("Failed to report user.");
-          return null;
-        }
-
-        await res.json();
-        toast.success("User reported successfully");
-      }
-
-      if (
-        reportOptions.reportImage ||
-        reportOptions.reportUser ||
-        reportOptions.blockUser
-      ) {
-        setIsReportModalOpen(false);
-        setReportOptions({
-          reportUser: false,
-          blockUser: false,
-          reportImage: false,
-        });
-      }
-    } catch (err) {
-      toast.error("An error occurred while reporting.");
-      return null;
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [profileId, reportOptions]);
 
   const checkIfMobile = () => {
     setIsMobileDevice(isMobile);
@@ -563,39 +510,28 @@ export default function Home() {
   }, [profileId]);
 
   const getCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      notify.location.notSupported();
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
           const { latitude, longitude } = position.coords;
 
-          // Reverse geocoding to get the location name
+          // Reverse geocoding to get the location name (you may need a third-party service here)
           const locationName = await getLocationName(latitude, longitude);
 
           // Send the location to your API
           await sendLocationToAPI(locationName, latitude, longitude);
-        } catch (error) {
-          console.error("Error processing location:", error);
-          //    notify.error("Failed to process your location. Please try again.");
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
         }
-      },
-      (error) => {
-        handleGeolocationError(error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000,
-      }
-    );
+      );
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+    }
   };
 
   const getLocationName = async (latitude: number, longitude: number) => {
-    const apiKey = "AIzaSyBEr0k_aQ_Sns6YbIQ4UBxCUTdPV9AhdF0"; // Replace with your actual API key
+    const apiKey = "AIzaSyAbs5Umnu4RhdgslS73_TKDSV5wkWZnwi0"; // Replace with your actual API key
 
     try {
       // Call the Google Maps Geocoding API
@@ -648,6 +584,7 @@ export default function Home() {
 
       const data = await response.json();
       if (response.ok) {
+        console.log("Location sent successfully:", data);
       } else {
         console.error("Error sending location:", data.message);
       }
@@ -656,32 +593,45 @@ export default function Home() {
     }
   };
 
-  if (isMobile) {
+  if (userProfiles.length === 0) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+        bgcolor="#121212"
+      >
+        <Typography variant="h6" color="white">
+          Please wait...
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (isMobileDevice) {
     return <MobileSweaping />;
   }
 
   return (
     <>
-      <AppHeaderDesktop />
-      <Container maxWidth={false} disableGutters>
+      {isMobile ? (
+        <MobileSweaping />
+      ) : (
         <Box
           display="flex"
           height="100vh"
           position="relative"
           overflow="hidden"
-          marginTop="30px"
         >
+          <Header />
           {memberalarm && parseInt(memberalarm) > 2 ? null : (
             <InstructionModal />
           )}
           <Box
             flex={1}
             display="flex"
-            sx={{
-              pb: { xs: 1, sm: 2, md: 3 },
-              paddingTop: { xs: "56px", sm: "64px" },
-              backgroundColor: "#121212",
-            }}
+            sx={{ pb: 3, paddingTop: "64px", backgroundColor: "#121212" }}
           >
             <ProfileCard profile={selectedUserProfile} />
           </Box>
@@ -701,6 +651,12 @@ export default function Home() {
               height="100%"
               sx={{ overflow: "hidden", position: "relative" }}
             >
+              <UserProfileModal
+                handleGrantAccess={handleGrantAccess}
+                handleClose={handleClose}
+                open={showDetail}
+                userid={selectedUserId}
+              />
               {idParam && isMobile === false
                 ? selectedUserProfile && (
                     <TinderCard
@@ -756,30 +712,21 @@ export default function Home() {
                                 <img
                                   src="/delete.png"
                                   alt="Dislike"
-                                  style={{
-                                    width: "100px",
-                                    height: "100px",
-                                  }}
+                                  style={{ width: "100px", height: "100px" }}
                                 />
                               )}
                               {swipeDirection === "right" && (
                                 <img
                                   src="/like.png"
                                   alt="Like"
-                                  style={{
-                                    width: "100px",
-                                    height: "100px",
-                                  }}
+                                  style={{ width: "100px", height: "100px" }}
                                 />
                               )}
                               {swipeDirection === "down" && (
                                 <img
                                   src="/maybe.png"
                                   alt="Maybe"
-                                  style={{
-                                    width: "100px",
-                                    height: "100px",
-                                  }}
+                                  style={{ width: "100px", height: "100px" }}
                                 />
                               )}
                             </Box>
@@ -1162,17 +1109,8 @@ export default function Home() {
             </Box>
           </Box>
         </Box>
-      </Container>
-      {isMobile ? <AppFooterMobile /> : <AppFooterDesktop />}
-      <UserProfileModal
-        handleGrantAccess={handleGrantAccess}
-        handleClose={handleClose}
-        open={showDetail}
-        userid={selectedUserId}
-      />
-
-      {profileId && <ProfileImgCheckerModel profileId={profileId} />}
-
+      )}
+      <Footer />
       <Modal open={isReportModalOpen} onClose={handleReportModalToggle}>
         <Box
           sx={{
@@ -1191,25 +1129,6 @@ export default function Home() {
           <Typography variant="h6" gutterBottom>
             Report or Block User
           </Typography>
-          <FormControlLabel
-            sx={{
-              color: "white",
-              "& .MuiCheckbox-root": {
-                color: "#9c27b0",
-              },
-              "& .MuiCheckbox-root.Mui-checked": {
-                color: "#9c27b0",
-              },
-            }}
-            control={
-              <Checkbox
-                checked={reportOptions.reportImage}
-                onChange={handleCheckboxChange}
-                name="reportImage"
-              />
-            }
-            label="Inappropriate Image"
-          />
           <FormControlLabel
             sx={{
               color: "white", // Label color
@@ -1254,11 +1173,7 @@ export default function Home() {
               variant="contained"
               color="secondary"
             >
-              {isSubmitting ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Submit"
-              )}
+              Submit
             </Button>
           </Box>
         </Box>
@@ -1443,7 +1358,6 @@ export default function Home() {
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog open={messageOpen}>
         <DialogTitle sx={{ m: 0, p: 2 }} id="customized-dialog-title">
           Messages
