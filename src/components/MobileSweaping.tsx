@@ -1049,7 +1049,7 @@ export default function MobileSweaping() {
                 }}
               >
                 <Box sx={{ height: "75%", position: "relative" }}>
-                  {(() => {
+                  {/* {(() => {
                     const { publicImgs, privateImgs, all } =
                       getAllImages(profile);
                     const isPrivate =
@@ -1077,9 +1077,22 @@ export default function MobileSweaping() {
                         />
                       </Box>
                     );
-                  })()}
+                  })()} */}
 
                   <Box
+                    component="img"
+                    src={profile.Avatar || "/fallback-avatar.png"}
+                    alt={profile.Username}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      border: "2px solid rgba(255, 255, 255, 0.35)",
+                      borderRadius: "20px",
+                    }}
+                  />
+
+                  {/* <Box
                     sx={{
                       position: "absolute",
                       bottom: 12,
@@ -1107,7 +1120,7 @@ export default function MobileSweaping() {
                         />
                       ));
                     })()}
-                  </Box>
+                  </Box> */}
 
                   {index === 0 && cardStyles.active && (
                     <SwipeIndicator
@@ -1213,7 +1226,7 @@ export default function MobileSweaping() {
                     />
                   </IconButton> */}
 
-                  <Box
+                  {/* <Box
                     sx={{
                       position: "absolute",
                       bottom: 30,
@@ -1292,7 +1305,7 @@ export default function MobileSweaping() {
                         }}
                       />
                     </IconButton>
-                  </Box>
+                  </Box> */}
                 </Box>
 
                 <Box
