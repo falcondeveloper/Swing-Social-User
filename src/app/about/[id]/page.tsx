@@ -21,7 +21,6 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import Carousel from "@/commonPage/Carousel";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 const theme = createTheme({
   palette: {
@@ -109,7 +108,10 @@ export default function About(props: { params: Params }) {
 
   const validationSchema = Yup.object({
     tagline: Yup.string().required("Tagline is required."),
-    about: Yup.string().required("About me is required."),
+
+    about: Yup.string()
+      .required("About me is required.")
+      .min(20, "About must be at least 20 characters."),
   });
 
   const formik = useFormik({
@@ -301,14 +303,18 @@ export default function About(props: { params: Params }) {
                   fullWidth
                   multiline
                   rows={3}
-                  placeholder="Write about yourself"
+                  placeholder="Write about yourself (min 20 characters)"
                   variant="outlined"
                   name="about"
                   value={formik.values.about}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={formik.touched.about && Boolean(formik.errors.about)}
-                  helperText={formik.touched.about && formik.errors.about}
+                  helperText={
+                    formik.touched.about && formik.errors.about
+                      ? formik.errors.about
+                      : `${formik.values.about.length}/20 characters`
+                  }
                   sx={{
                     mt: 1,
                     mb: 2,

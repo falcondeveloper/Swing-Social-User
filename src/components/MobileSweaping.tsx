@@ -28,14 +28,12 @@ import {
 } from "@mui/material";
 import InstructionModal from "@/components/InstructionModal";
 import UserProfileModal from "@/components/UserProfileModal";
-import { Close, MoreHoriz } from "@mui/icons-material";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
 import PreferencesSheet from "./PreferencesSheet";
 import Loader from "@/commonPage/Loader";
 import AppHeaderMobile from "@/layout/AppHeaderMobile";
 import AppFooterMobile from "@/layout/AppFooterMobile";
-import { motion, AnimatePresence } from "framer-motion";
 
 export interface DetailViewHandle {
   open: (id: string) => void;
@@ -125,7 +123,6 @@ export default function MobileSweaping() {
   const [profileId, setProfileId] = useState<any>();
   const [showDetail, setShowDetail] = useState<any>(false);
   const [selectedUserId, setSelectedUserId] = useState<any>(null);
-  const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
   const [membership, setMembership] = useState(0);
   const [id, setId] = useState("");
   const [memberalarm, setMemberAlarm] = useState("0");
@@ -145,20 +142,14 @@ export default function MobileSweaping() {
   );
   const [emptyMessage, setEmptyMessage] = useState<string>("");
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-
   const [prefsOpen, setPrefsOpen] = useState(false);
+  const [imageIndex, setImageIndex] = useState(0);
 
   const [snack, setSnack] = useState({
     open: false,
     message: "",
     severity: "success" as "success" | "error" | "info" | "warning",
   });
-
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const toggleMenu = () => {
-    setIsMenuOpen((prev) => !prev);
-  };
 
   const openPrefs = () => setPrefsOpen(true);
   const closePrefs = () => setPrefsOpen(false);
@@ -226,32 +217,6 @@ export default function MobileSweaping() {
     },
     [profileId, sendNotification]
   );
-
-  const fetchCurrentProfileInfo = useCallback(async (currentProfileId: any) => {
-    if (currentProfileId) {
-      try {
-        const response = await fetch(
-          `/api/user/sweeping/user?id=${currentProfileId}`
-        );
-        if (!response.ok) {
-          console.error(
-            "Failed to fetch advertiser data:",
-            response.statusText
-          );
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const { user: advertiserData } = await response.json();
-        if (!advertiserData) {
-          console.error("Advertiser not found");
-        } else {
-          setSelectedUserProfile(advertiserData);
-        }
-      } catch (error: any) {
-        console.error("Error fetching data:", error.message);
-      }
-    }
-  }, []);
 
   const getUserList = useCallback(async (profileId: string) => {
     try {
@@ -793,7 +758,6 @@ export default function MobileSweaping() {
         const decodeToken = jwtDecode<any>(token);
         setProfileId(decodeToken.profileId);
         setMembership(decodeToken.membership);
-        fetchCurrentProfileInfo(decodeToken.profileId);
         getUserList(decodeToken.profileId);
       } else {
         router.push("/login");
@@ -801,16 +765,12 @@ export default function MobileSweaping() {
     }
   }, []);
 
+  useEffect(() => {
+    setImageIndex(0);
+  }, [currentIndex]);
+
   const handleReportModalToggle = useCallback(() => {
     setIsReportModalOpen((prev) => !prev);
-  }, []);
-
-  const handleCheckboxChange = useCallback((event: any) => {
-    const { name, checked } = event.target;
-    setReportOptions((prev) => ({
-      ...prev,
-      [name]: checked,
-    }));
   }, []);
 
   const reportImageApi = async ({
@@ -948,21 +908,77 @@ export default function MobileSweaping() {
     );
   }
 
-  const menuBtnStyle = {
-    width: 36,
-    height: 36,
-    bgcolor: "rgba(114,114,148,0.5)",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
-    borderRadius: "50%",
-    "&:hover": {
-      bgcolor: "rgba(114,114,148,0.65)",
-    },
-  };
-
   const getAge = (dob?: string) => {
     if (!dob) return null;
     return new Date().getFullYear() - new Date(dob).getFullYear();
+  };
+
+  const getAllImages = (profile: any) => {
+    const publicImgs = profile?.public_images || [];
+    const privateImgs = profile?.private_images || [];
+    return {
+      publicImgs,
+      privateImgs,
+      all: [...publicImgs, ...privateImgs],
+    };
+  };
+
+  const ProfileImage = ({
+    src,
+    isPrivate,
+    isPremium,
+    onUpgrade,
+  }: {
+    src: string;
+    isPrivate?: boolean;
+    isPremium: boolean;
+    onUpgrade: () => void;
+  }) => {
+    const isLocked = isPrivate && !isPremium;
+
+    return (
+      <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
+        <Box
+          component="img"
+          src={src}
+          sx={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: isLocked ? "blur(12px)" : "none",
+            transition: "filter 0.3s ease",
+          }}
+        />
+
+        {isLocked && (
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+              bgcolor: "rgba(0,0,0,0.35)",
+              gap: 1,
+            }}
+          >
+            <Typography sx={{ color: "#fff", fontWeight: 600 }}>
+              Premium Photo
+            </Typography>
+
+            <Button
+              size="small"
+              variant="contained"
+              sx={{ bgcolor: "#F50057" }}
+              onClick={onUpgrade}
+            >
+              Upgrade
+            </Button>
+          </Box>
+        )}
+      </Box>
+    );
   };
 
   return (
@@ -1033,20 +1049,37 @@ export default function MobileSweaping() {
                 }}
               >
                 <Box sx={{ height: "75%", position: "relative" }}>
-                  <Box
-                    component="img"
-                    src={profile.Avatar || "/fallback-avatar.png"}
-                    alt={profile.Username}
-                    sx={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      border: "2px solid rgba(255, 255, 255, 0.35)",
-                      borderRadius: "20px",
-                    }}
-                  />
+                  {(() => {
+                    const { publicImgs, privateImgs, all } =
+                      getAllImages(profile);
+                    const isPrivate =
+                      imageIndex >= publicImgs.length && privateImgs.length > 0;
 
-                  {/* <Box
+                    return (
+                      <Box
+                        sx={{
+                          width: "100%",
+                          height: "100%",
+                          border: "2px solid rgba(255, 255, 255, 0.35)",
+                          borderRadius: "20px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <ProfileImage
+                          src={
+                            all[imageIndex] ||
+                            profile.Avatar ||
+                            "/fallback-avatar.png"
+                          }
+                          isPrivate={isPrivate}
+                          isPremium={membership === 1}
+                          onUpgrade={() => router.push("/membership")}
+                        />
+                      </Box>
+                    );
+                  })()}
+
+                  <Box
                     sx={{
                       position: "absolute",
                       bottom: 12,
@@ -1056,18 +1089,25 @@ export default function MobileSweaping() {
                       gap: "8px",
                     }}
                   >
-                    {[1, 2, 3, 4].map((_, i) => (
-                      <Box
-                        key={i}
-                        sx={{
-                          flex: 1,
-                          height: 4,
-                          borderRadius: "5px",
-                          bgcolor: i === 0 ? "#fff" : "rgba(255,255,255,0.35)",
-                        }}
-                      />
-                    ))}
-                  </Box> */}
+                    {(() => {
+                      const { all } = getAllImages(profile);
+
+                      return all.slice(0, 4).map((_, i) => (
+                        <Box
+                          key={i}
+                          sx={{
+                            flex: 1,
+                            height: 4,
+                            borderRadius: "5px",
+                            bgcolor:
+                              i === imageIndex
+                                ? "#fff"
+                                : "rgba(255,255,255,0.35)",
+                          }}
+                        />
+                      ));
+                    })()}
+                  </Box>
 
                   {index === 0 && cardStyles.active && (
                     <SwipeIndicator
@@ -1104,8 +1144,11 @@ export default function MobileSweaping() {
                     />
                   </IconButton>
 
-                  {/* <IconButton
-                    onClick={handleReportModalToggle}
+                  <IconButton
+                    onClick={() => {
+                      setShowDetail(true);
+                      setSelectedUserId(profile?.Id);
+                    }}
                     sx={{
                       position: "absolute",
                       top: 14,
@@ -1116,109 +1159,140 @@ export default function MobileSweaping() {
                       backdropFilter: "blur(8px)",
                       WebkitBackdropFilter: "blur(8px)",
                       borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: 0,
                       "&:hover": {
                         bgcolor: "rgba(114, 114, 148, 0.65)",
                       },
                     }}
                   >
-                    <Flag sx={{ color: "#fff", fontSize: 18 }} />
-                  </IconButton> */}
+                    <Box
+                      component="img"
+                      src="/swiping-card/info.svg"
+                      alt="info button"
+                      sx={{
+                        width: 18,
+                        height: 18,
+                        display: "block",
+                      }}
+                    />
+                  </IconButton>
 
-                  <IconButton
-                    onClick={toggleMenu}
+                  {/* <IconButton
+                    onClick={handleReportModalToggle}
                     sx={{
                       position: "absolute",
-                      top: 14,
+                      bottom: 24,
                       right: 14,
                       width: 36,
                       height: 36,
-                      bgcolor: isMenuOpen
-                        ? "rgba(255, 138, 155, 0.86)"
-                        : "rgba(114,114,148,0.5)",
+                      bgcolor: "rgba(114, 114, 148, 0.5)",
                       backdropFilter: "blur(8px)",
+                      WebkitBackdropFilter: "blur(8px)",
                       borderRadius: "50%",
-                      zIndex: 5,
-                      transition: "all 0.25s ease",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: 0,
                       "&:hover": {
-                        bgcolor: isMenuOpen
-                          ? "#FF6FA3" // hover pink
-                          : "rgba(114,114,148,0.65)",
+                        bgcolor: "rgba(114, 114, 148, 0.65)",
                       },
                     }}
                   >
-                    {isMenuOpen ? (
-                      <Close sx={{ color: "#fff", fontSize: 18 }} />
-                    ) : (
-                      <MoreHoriz sx={{ color: "#fff", fontSize: 20 }} />
-                    )}
-                  </IconButton>
+                    <Box
+                      component="img"
+                      src="/swiping-card/flag.svg"
+                      alt="info button"
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        display: "block",
+                      }}
+                    />
+                  </IconButton> */}
 
-                  <AnimatePresence>
-                    {isMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -8, scale: 0.9 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        style={{
-                          position: "absolute",
-                          top: 60,
-                          right: 14,
-                          zIndex: 4,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "10px",
-                        }}
-                      >
-                        <IconButton
-                          sx={menuBtnStyle}
-                          onClick={() => {
-                            setShowDetail(true);
-                            setSelectedUserId(profile?.Id);
-                          }}
-                        >
-                          <Box component="img" src="/swiping-card/info.svg" />
-                        </IconButton>
-
-                        <IconButton
-                          onClick={handleReportModalToggle}
-                          sx={menuBtnStyle}
-                        >
-                          <Box component="img" src="/swiping-card/flag.svg" />
-                        </IconButton>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* <Box
+                  <Box
                     sx={{
                       position: "absolute",
                       bottom: 30,
                       right: 14,
-                      gap: "8px",
                       display: "flex",
+                      gap: "8px",
                     }}
                   >
                     <IconButton
                       sx={{
-                        width: "36px",
-                        height: "36px",
-                        borderRadius: "30px",
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        bgcolor: "rgba(114, 114, 148, 0.5)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 0,
+                        "&:hover": {
+                          bgcolor: "rgba(114, 114, 148, 0.65)",
+                        },
                       }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setImageIndex((prev) => Math.max(prev - 1, 0));
+                      }}
+                      disabled={imageIndex === 0}
                     >
-                      <ArrowBackIosNew
-                        sx={{ fontSize: 18, color: "##72729480" }}
+                      <Box
+                        component="img"
+                        src="/swiping-card/left-arrow.svg"
+                        alt="previous"
+                        sx={{
+                          width: 16,
+                          height: 16,
+                          display: "block",
+                        }}
                       />
                     </IconButton>
 
                     <IconButton
                       sx={{
-                        bgcolor: "rgba(0,0,0,0.5)",
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        bgcolor: "rgba(114, 114, 148, 0.5)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 0,
+                        "&:hover": {
+                          bgcolor: "rgba(114, 114, 148, 0.65)",
+                        },
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+
+                        const { all } = getAllImages(profile);
+                        setImageIndex((prev) =>
+                          Math.min(prev + 1, all.length - 1)
+                        );
                       }}
                     >
-                      <ArrowForwardIos sx={{ fontSize: 18, color: "#fff" }} />
+                      <Box
+                        component="img"
+                        src="/swiping-card/right-arrow.svg"
+                        alt="next"
+                        sx={{
+                          width: 16,
+                          height: 16,
+                          display: "block",
+                        }}
+                      />
                     </IconButton>
-                  </Box> */}
+                  </Box>
                 </Box>
 
                 <Box
@@ -1232,6 +1306,10 @@ export default function MobileSweaping() {
                   }}
                 >
                   <Box
+                    onClick={() => {
+                      setShowDetail(true);
+                      setSelectedUserId(profile?.Id);
+                    }}
                     sx={{
                       display: "flex",
                       alignItems: "center",
@@ -1570,7 +1648,6 @@ export default function MobileSweaping() {
         </Fade>
       </Modal>
 
-      {/* Popup #1: Daily Limit */}
       <Dialog
         open={showLimitPopup}
         onClose={() => setShowLimitPopup(false)}
@@ -1616,7 +1693,6 @@ export default function MobileSweaping() {
         </DialogContent>
       </Dialog>
 
-      {/* Popup #2: Match! */}
       <Dialog
         open={showMatchPopup}
         onClose={() => setShowMatchPopup(false)}
@@ -1695,7 +1771,6 @@ export default function MobileSweaping() {
         </DialogContent>
       </Dialog>
 
-      {/* Popup #3: No more profiles */}
       <Dialog
         open={showEndPopup}
         onClose={() => setShowEndPopup(false)}
