@@ -192,22 +192,28 @@ export default function Home() {
 
   const fetchAllUserProfiles = async (userid: any) => {
     try {
-      const response = await fetch("/api/user/sweeping/swipes?id=" + userid, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
+      const response = await fetch(
+        "/api/user/sweeping/swipes?id=" + profileId,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       const data = await response.json();
-      setUserProfiles(data?.swipes || []);
+      const profiles = data?.swipes || [];
+      setUserProfiles(profiles);
+
       if (data?.totalRows !== undefined && data.totalRows <= 0) {
+        setShowEndPopup(true);
+      } else if (profiles.length === 0) {
         setShowEndPopup(true);
       }
     } catch (error) {
       console.error("Error fetching user profiles:", error);
     } finally {
-      // setLoading(false);
+      setLoading(false);
     }
   };
 
