@@ -403,6 +403,11 @@ export default function MobileSweaping() {
       setCurrentIndex((prevIndex) => {
         const nextIndex = prevIndex + 1;
 
+        if (nextIndex >= userProfiles?.length) {
+          setShowEndPopup(true);
+          return prevIndex;
+        }
+
         const PREFETCH_THRESHOLD = 20;
         const remaining = Math.max(0, userProfiles.length - nextIndex);
 
@@ -475,8 +480,12 @@ export default function MobileSweaping() {
 
   const getEventPoint = (e: any) => (e.touches ? e.touches[0] : e);
 
+  const hasMoreProfiles = currentIndex < userProfiles?.length;
+
   const handleSwipeStart = (e: any) => {
-    if (!currentProfile || isProcessingSwipe || isExiting) return;
+    if (!currentProfile || !hasMoreProfiles || isProcessingSwipe || isExiting) {
+      return;
+    }
     isSwiping.current = true;
     const point = getEventPoint(e);
     startPoint.current = { x: point.clientX, y: point.clientY };
@@ -539,6 +548,10 @@ export default function MobileSweaping() {
 
   const triggerExitAnimation = useCallback(
     (action: string) => {
+      if (!currentProfile || !hasMoreProfiles) {
+        setShowEndPopup(true);
+        return;
+      }
       const now = Date.now();
       if (now - lastSwipeTimeRef.current < SWIPE_THROTTLE_MS) {
         return;
@@ -1007,52 +1020,53 @@ export default function MobileSweaping() {
       </div>
 
       <div className="mobile-sweeping-container">
-        {visibleProfiles.map((profile: any, index: number) => (
-          <Card
-            key={profile.Id}
-            ref={index === 0 ? currentCardRef : null}
-            elevation={0}
-            sx={{
-              position: "absolute",
-              inset: 0,
-              background: "transparent",
-              boxShadow: "none",
-              transform:
-                index === 0
-                  ? cardStyles.active.transform
-                  : cardStyles.next.transform,
-              transition:
-                index === 0
-                  ? cardStyles.active.transition
-                  : cardStyles.next.transition,
-              zIndex: index === 0 ? 2 : 1,
-            }}
-            onTransitionEnd={(e) => {
-              if (
-                index === 0 &&
-                isExiting &&
-                e.propertyName === "transform" &&
-                pendingSwipeAction
-              ) {
-                const actionMap: any = {
-                  delete: "left",
-                  like: "right",
-                  maybe: "down",
-                };
-                processSwipe(actionMap[pendingSwipeAction], profile);
-              }
-            }}
-          >
-            <Box className="profile-gradient-bg">
-              <Box
-                sx={{
-                  height: "100%",
-                  overflow: "hidden",
-                  position: "relative",
-                }}
-              >
-                <Box sx={{ height: "75%", position: "relative" }}>
-                  {/* {(() => {
+        {visibleProfiles.length > 0 ? (
+          visibleProfiles.map((profile: any, index: number) => (
+            <Card
+              key={profile.Id}
+              ref={index === 0 ? currentCardRef : null}
+              elevation={0}
+              sx={{
+                position: "absolute",
+                inset: 0,
+                background: "transparent",
+                boxShadow: "none",
+                transform:
+                  index === 0
+                    ? cardStyles.active.transform
+                    : cardStyles.next.transform,
+                transition:
+                  index === 0
+                    ? cardStyles.active.transition
+                    : cardStyles.next.transition,
+                zIndex: index === 0 ? 2 : 1,
+              }}
+              onTransitionEnd={(e) => {
+                if (
+                  index === 0 &&
+                  isExiting &&
+                  e.propertyName === "transform" &&
+                  pendingSwipeAction
+                ) {
+                  const actionMap: any = {
+                    delete: "left",
+                    like: "right",
+                    maybe: "down",
+                  };
+                  processSwipe(actionMap[pendingSwipeAction], profile);
+                }
+              }}
+            >
+              <Box className="profile-gradient-bg">
+                <Box
+                  sx={{
+                    height: "100%",
+                    overflow: "hidden",
+                    position: "relative",
+                  }}
+                >
+                  <Box sx={{ height: "75%", position: "relative" }}>
+                    {/* {(() => {
                     const { publicImgs, privateImgs, all } =
                       getAllImages(profile);
                     const isPrivate =
@@ -1082,20 +1096,20 @@ export default function MobileSweaping() {
                     );
                   })()} */}
 
-                  <Box
-                    component="img"
-                    src={profile.Avatar || "/fallback-avatar.png"}
-                    alt={profile.Username}
-                    sx={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      border: "2px solid rgba(255, 255, 255, 0.35)",
-                      borderRadius: "20px",
-                    }}
-                  />
+                    <Box
+                      component="img"
+                      src={profile.Avatar || "/fallback-avatar.png"}
+                      alt={profile.Username}
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        border: "2px solid rgba(255, 255, 255, 0.35)",
+                        borderRadius: "20px",
+                      }}
+                    />
 
-                  {/* <Box
+                    {/* <Box
                     sx={{
                       position: "absolute",
                       bottom: 12,
@@ -1125,79 +1139,79 @@ export default function MobileSweaping() {
                     })()}
                   </Box> */}
 
-                  {index === 0 && cardStyles.active && (
-                    <SwipeIndicator
-                      type={cardStyles.active.swipeType}
-                      opacity={cardStyles.active.swipeOpacity}
-                    />
-                  )}
+                    {index === 0 && cardStyles.active && (
+                      <SwipeIndicator
+                        type={cardStyles.active.swipeType}
+                        opacity={cardStyles.active.swipeOpacity}
+                      />
+                    )}
 
-                  <IconButton
-                    onClick={openPrefs}
-                    sx={{
-                      position: "absolute",
-                      top: 14,
-                      left: 14,
-                      width: 36,
-                      height: 36,
-                      bgcolor: "rgba(114, 114, 148, 0.5)",
-                      backdropFilter: "blur(8px)",
-                      WebkitBackdropFilter: "blur(8px)",
-                      borderRadius: "50%",
-                      "&:hover": {
-                        bgcolor: "rgba(114, 114, 148, 0.65)",
-                      },
-                    }}
-                  >
-                    <img
-                      src="/swiping-card/preferences.svg"
-                      alt="preferences"
-                      style={{
-                        width: 16,
-                        height: 16,
-                        objectFit: "contain",
-                      }}
-                    />
-                  </IconButton>
-
-                  <IconButton
-                    onClick={() => {
-                      setShowDetail(true);
-                      setSelectedUserId(profile?.Id);
-                      window.history.pushState({ modal: "userProfile" }, "");
-                    }}
-                    sx={{
-                      position: "absolute",
-                      top: 14,
-                      right: 14,
-                      width: 36,
-                      height: 36,
-                      bgcolor: "rgba(114, 114, 148, 0.5)",
-                      backdropFilter: "blur(8px)",
-                      WebkitBackdropFilter: "blur(8px)",
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: 0,
-                      "&:hover": {
-                        bgcolor: "rgba(114, 114, 148, 0.65)",
-                      },
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src="/swiping-card/info.svg"
-                      alt="info button"
+                    <IconButton
+                      onClick={openPrefs}
                       sx={{
-                        width: 18,
-                        height: 18,
-                        display: "block",
+                        position: "absolute",
+                        top: 14,
+                        left: 14,
+                        width: 36,
+                        height: 36,
+                        bgcolor: "rgba(114, 114, 148, 0.5)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        borderRadius: "50%",
+                        "&:hover": {
+                          bgcolor: "rgba(114, 114, 148, 0.65)",
+                        },
                       }}
-                    />
-                  </IconButton>
+                    >
+                      <img
+                        src="/swiping-card/preferences.svg"
+                        alt="preferences"
+                        style={{
+                          width: 16,
+                          height: 16,
+                          objectFit: "contain",
+                        }}
+                      />
+                    </IconButton>
 
-                  {/* <IconButton
+                    <IconButton
+                      onClick={() => {
+                        setShowDetail(true);
+                        setSelectedUserId(profile?.Id);
+                        window.history.pushState({ modal: "userProfile" }, "");
+                      }}
+                      sx={{
+                        position: "absolute",
+                        top: 14,
+                        right: 14,
+                        width: 36,
+                        height: 36,
+                        bgcolor: "rgba(114, 114, 148, 0.5)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 0,
+                        "&:hover": {
+                          bgcolor: "rgba(114, 114, 148, 0.65)",
+                        },
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src="/swiping-card/info.svg"
+                        alt="info button"
+                        sx={{
+                          width: 18,
+                          height: 18,
+                          display: "block",
+                        }}
+                      />
+                    </IconButton>
+
+                    {/* <IconButton
                     onClick={handleReportModalToggle}
                     sx={{
                       position: "absolute",
@@ -1230,7 +1244,7 @@ export default function MobileSweaping() {
                     />
                   </IconButton> */}
 
-                  {/* <Box
+                    {/* <Box
                     sx={{
                       position: "absolute",
                       bottom: 30,
@@ -1310,106 +1324,54 @@ export default function MobileSweaping() {
                       />
                     </IconButton>
                   </Box> */}
-                </Box>
+                  </Box>
 
-                <Box
-                  sx={{
-                    pt: "8px",
-                    px: "8px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    textAlign: "center",
-                  }}
-                >
                   <Box
-                    onClick={() => {
-                      setShowDetail(true);
-                      setSelectedUserId(profile?.Id);
-                      window.history.pushState({ modal: "userProfile" }, "");
-                    }}
                     sx={{
+                      pt: "8px",
+                      px: "8px",
                       display: "flex",
+                      flexDirection: "column",
                       alignItems: "center",
-                      gap: 1,
-                      mb: "2px",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      justifyContent: "center",
+                      textAlign: "center",
                     }}
                   >
-                    <Typography
+                    <Box
+                      onClick={() => {
+                        setShowDetail(true);
+                        setSelectedUserId(profile?.Id);
+                        window.history.pushState({ modal: "userProfile" }, "");
+                      }}
                       sx={{
-                        fontSize: "20px",
-                        fontWeight: 600,
-                        color: "#F50057",
-                        lineHeight: "34px",
-                        maxWidth: "100%",
-                        textAlign: "center",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: "2px",
                         whiteSpace: "nowrap",
-                        flexShrink: 1,
-                        minWidth: 0,
-                        letterSpacing: "0",
+                        overflow: "hidden",
+                        justifyContent: "center",
                       }}
                     >
-                      {profile.Username},
-                    </Typography>
-
-                    {profile?.DateOfBirth && profile?.Gender && (
-                      <Box
+                      <Typography
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          flexShrink: 0,
+                          fontSize: "20px",
+                          fontWeight: 600,
+                          color: "#F50057",
+                          lineHeight: "34px",
+                          maxWidth: "100%",
+                          textAlign: "center",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          flexShrink: 1,
+                          minWidth: 0,
+                          letterSpacing: "0",
                         }}
                       >
-                        <Typography
-                          sx={{
-                            fontSize: "20px",
-                            fontWeight: 600,
-                            color: "#F50057",
-                            lineHeight: "34px",
-                            letterSpacing: "0",
-                          }}
-                        >
-                          {getAge(profile.DateOfBirth)}
-                        </Typography>
+                        {profile.Username},
+                      </Typography>
 
-                        <Box
-                          component="img"
-                          src={
-                            profile.Gender === "Male"
-                              ? "/swiping-card/male.svg"
-                              : "/swiping-card/female.svg"
-                          }
-                          alt={profile.Gender}
-                          sx={{ width: 16, height: 16 }}
-                        />
-                      </Box>
-                    )}
-
-                    {profile?.PartnerDateOfBirth && profile?.PartnerGender && (
-                      <Box
-                        component="img"
-                        src="/swiping-card/separator.svg"
-                        alt="|"
-                        sx={{
-                          width: 2,
-                          height: 25,
-                          objectFit: "cover",
-                          objectPosition: "center",
-                          display: "block",
-                          flexShrink: 0,
-                          mx: "3px",
-                        }}
-                      />
-                    )}
-
-                    {profile?.PartnerDateOfBirth && profile?.PartnerGender && (
-                      <>
+                      {profile?.DateOfBirth && profile?.Gender && (
                         <Box
                           sx={{
                             display: "flex",
@@ -1427,117 +1389,272 @@ export default function MobileSweaping() {
                               letterSpacing: "0",
                             }}
                           >
-                            {getAge(profile.PartnerDateOfBirth)}
+                            {getAge(profile.DateOfBirth)}
                           </Typography>
 
                           <Box
                             component="img"
                             src={
-                              profile.PartnerGender === "Male"
+                              profile.Gender === "Male"
                                 ? "/swiping-card/male.svg"
                                 : "/swiping-card/female.svg"
                             }
-                            alt={profile.PartnerGender}
+                            alt={profile.Gender}
                             sx={{ width: 16, height: 16 }}
                           />
                         </Box>
-                      </>
-                    )}
-                  </Box>
+                      )}
 
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "9px",
-                      justifyContent: "center",
-                      width: "100%",
-                      mb: "10px",
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src="/swiping-card/location.svg"
-                      alt="Location"
-                      sx={{ width: 16, height: 16 }}
-                    />
-                    <Typography
-                      sx={{
-                        fontSize: 14,
-                        color: "#FFFFFF",
-                        fontWeight: "400",
-                        lineHeight: "18px",
-                      }}
-                    >
-                      {profile.Location?.replace(", USA", "")}
-                    </Typography>
-                  </Box>
-
-                  <Typography
-                    sx={{
-                      fontSize: "13px",
-                      mb: "14px",
-                      lineHeight: "16px",
-                      color: "rgba(255,255,255,0.7)",
-                      fontWeight: 400,
-                      letterSpacing: 0,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 1,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                      textAlign: "center",
-                      textOverflow: "ellipsis",
-                    }}
-                    dangerouslySetInnerHTML={{
-                      __html: profile?.About ? profile?.About : ".",
-                    }}
-                  />
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexWrap: "nowrap",
-                      justifyContent: "center",
-                      gap: 1,
-                      width: "100%",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {profile?.SwingStyleTags?.slice(0, 4).map(
-                      (tag: string, index: number) => {
-                        return (
-                          <Chip
-                            key={`${tag}-${index}`}
-                            label={tag}
+                      {profile?.PartnerDateOfBirth &&
+                        profile?.PartnerGender && (
+                          <Box
+                            component="img"
+                            src="/swiping-card/separator.svg"
+                            alt="|"
                             sx={{
-                              bgcolor: "#4D354B",
-                              color: "rgba(255,255,255,0.7)",
-                              fontSize: "13px",
-                              height: "24px",
-                              borderRadius: "8px",
-                              fontWeight: 400,
-                              textTransform: "capitalize",
-                              flexShrink: 1,
-                              minWidth: 0,
-                              maxWidth: "25%",
-
-                              "& .MuiChip-label": {
-                                px: 1,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              },
+                              width: 2,
+                              height: 25,
+                              objectFit: "cover",
+                              objectPosition: "center",
+                              display: "block",
+                              flexShrink: 0,
+                              mx: "3px",
                             }}
                           />
-                        );
-                      }
-                    )}
+                        )}
+
+                      {profile?.PartnerDateOfBirth &&
+                        profile?.PartnerGender && (
+                          <>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                flexShrink: 0,
+                              }}
+                            >
+                              <Typography
+                                sx={{
+                                  fontSize: "20px",
+                                  fontWeight: 600,
+                                  color: "#F50057",
+                                  lineHeight: "34px",
+                                  letterSpacing: "0",
+                                }}
+                              >
+                                {getAge(profile.PartnerDateOfBirth)}
+                              </Typography>
+
+                              <Box
+                                component="img"
+                                src={
+                                  profile.PartnerGender === "Male"
+                                    ? "/swiping-card/male.svg"
+                                    : "/swiping-card/female.svg"
+                                }
+                                alt={profile.PartnerGender}
+                                sx={{ width: 16, height: 16 }}
+                              />
+                            </Box>
+                          </>
+                        )}
+                    </Box>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "9px",
+                        justifyContent: "center",
+                        width: "100%",
+                        mb: "10px",
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src="/swiping-card/location.svg"
+                        alt="Location"
+                        sx={{ width: 16, height: 16 }}
+                      />
+                      <Typography
+                        sx={{
+                          fontSize: 14,
+                          color: "#FFFFFF",
+                          fontWeight: "400",
+                          lineHeight: "18px",
+                        }}
+                      >
+                        {profile.Location?.replace(", USA", "")}
+                      </Typography>
+                    </Box>
+
+                    <Typography
+                      sx={{
+                        fontSize: "13px",
+                        mb: "14px",
+                        lineHeight: "16px",
+                        color: "rgba(255,255,255,0.7)",
+                        fontWeight: 400,
+                        letterSpacing: 0,
+                        display: "-webkit-box",
+                        WebkitLineClamp: 1,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                        textAlign: "center",
+                        textOverflow: "ellipsis",
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: profile?.About ? profile?.About : ".",
+                      }}
+                    />
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexWrap: "nowrap",
+                        justifyContent: "center",
+                        gap: 1,
+                        width: "100%",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {profile?.SwingStyleTags?.slice(0, 4).map(
+                        (tag: string, index: number) => {
+                          return (
+                            <Chip
+                              key={`${tag}-${index}`}
+                              label={tag}
+                              sx={{
+                                bgcolor: "#4D354B",
+                                color: "rgba(255,255,255,0.7)",
+                                fontSize: "13px",
+                                height: "24px",
+                                borderRadius: "8px",
+                                fontWeight: 400,
+                                textTransform: "capitalize",
+                                flexShrink: 1,
+                                minWidth: 0,
+                                maxWidth: "25%",
+
+                                "& .MuiChip-label": {
+                                  px: 1,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                },
+                              }}
+                            />
+                          );
+                        }
+                      )}
+                    </Box>
                   </Box>
                 </Box>
               </Box>
+            </Card>
+          ))
+        ) : (
+          <Box
+            sx={{
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              color: "white",
+              px: 3,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+                maxWidth: 340,
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  lineHeight: "26px",
+                }}
+              >
+                No more profiles right now ❤️
+              </Typography>
+
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  color: "rgba(255,255,255,0.75)",
+                  lineHeight: "20px",
+                }}
+              >
+                You’ve seen everyone that matches your current preferences. Try
+                adjusting them to discover more people.
+              </Typography>
+
+              <Box
+                sx={{
+                  textAlign: "left",
+                  width: "100%",
+                  mt: 1,
+                  px: 1,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    mb: 0.5,
+                    color: "#F50057",
+                  }}
+                >
+                  Try adjusting:
+                </Typography>
+
+                <Typography
+                  sx={{ fontSize: "13px", color: "rgba(255,255,255,0.7)" }}
+                >
+                  • Max Distance / location
+                  <br />• Gender or partner preferences
+                </Typography>
+              </Box>
+
+              <Button
+                variant="contained"
+                onClick={openPrefs}
+                sx={{
+                  mt: 2,
+                  px: 3,
+                  py: 1,
+                  color: "white",
+                  borderRadius: "999px",
+                  backgroundColor: "#F50057",
+                  fontWeight: 600,
+                  textTransform: "none",
+                  "&:hover": {
+                    backgroundColor: "#c51162",
+                  },
+                }}
+              >
+                Adjust Preferences
+              </Button>
+
+              <Typography
+                sx={{
+                  fontSize: "12px",
+                  color: "rgba(255,255,255,0.5)",
+                  mt: 0.5,
+                }}
+              >
+                Check back later for new matches ✨
+              </Typography>
             </Box>
-          </Card>
-        ))}
+          </Box>
+        )}
       </div>
       <AppFooterMobile />
 
