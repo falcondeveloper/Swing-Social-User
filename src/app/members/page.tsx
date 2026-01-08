@@ -1,11 +1,5 @@
 "use client";
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  Suspense,
-  useCallback,
-} from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { notify, handleGeolocationError } from "@/lib/notifications";
 import {
   Box,
@@ -40,6 +34,7 @@ import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 import AppFooterMobile from "@/layout/AppFooterMobile";
 import AppFooterDesktop from "@/layout/AppFooterDesktop";
 import AppHeaderDesktop from "@/layout/AppHeaderDesktop";
+import Loader from "@/commonPage/Loader";
 
 export default function Home() {
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
@@ -661,6 +656,32 @@ export default function Home() {
 
   if (isMobile) {
     return <MobileSweaping />;
+  }
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          height: "100dvh",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#121212",
+        }}
+      >
+        <AppHeaderDesktop />
+
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Loader />
+        </Box>
+      </Box>
+    );
   }
 
   return (

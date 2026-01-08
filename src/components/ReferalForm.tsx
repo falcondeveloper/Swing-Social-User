@@ -33,7 +33,6 @@ const theme = createTheme({
     success: { main: "#00D179" },
     background: { default: "#0A0118" },
   },
-  typography: { fontFamily: '"Poppins", "Roboto", "Arial", sans-serif' },
 });
 
 const fieldSx = {

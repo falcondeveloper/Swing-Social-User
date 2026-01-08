@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     images: {
         domains: ["truecontractingsolutions.app"],
     },
+    allowedDevOrigins: ['local-origin.dev', '*.local-origin.dev'],
 };
 
 export default nextConfig;

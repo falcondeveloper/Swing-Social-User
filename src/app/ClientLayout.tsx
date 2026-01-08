@@ -1,5 +1,8 @@
 "use client";
+
 import { useEffect } from "react";
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import theme from "@/theme/theme";
 
 export default function ClientLayout({
   children,
@@ -9,12 +12,23 @@ export default function ClientLayout({
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
-    navigator.serviceWorker.addEventListener("message", (event) => {
+    const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === "NAVIGATE" && event.data.url) {
         window.location.href = event.data.url;
       }
-    });
+    };
+
+    navigator.serviceWorker.addEventListener("message", handleMessage);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", handleMessage);
+    };
   }, []);
 
-  return <>{children}</>;
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
+  );
 }

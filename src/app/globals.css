@@ -1,6 +1,8 @@
 :root {
   --background: #121212;
   --foreground: #171717;
+  --font-heading: var(--font-playfair);
+  --font-body: var(--font-inter);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,15 +22,42 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-body), system-ui, sans-serif;
 }
 
 * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #c2185b #1a1a1a;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #ff4d8d, #c2185b);
+  border-radius: 10px;
+  transition: background 0.3s ease, opacity 0.3s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #ff6fa2, #d81b60);
+}
+
+/* Optional: hide scrollbar when not scrolling */
+*::-webkit-scrollbar-thumb {
+  opacity: 0.75;
 }
 
 a {

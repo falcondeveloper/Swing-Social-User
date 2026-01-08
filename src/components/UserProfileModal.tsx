@@ -329,6 +329,24 @@ If you didn't expect this, ignore this message.
     setModalImageSrc(null);
   };
 
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePopState = (event: PopStateEvent) => {
+      event.preventDefault();
+
+      if (open) {
+        handleClose();
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [open, handleClose]);
+
   return (
     <>
       <Dialog
@@ -498,8 +516,15 @@ If you didn't expect this, ignore this message.
                   >
                     <span>
                       {advertiser.Username},
-                      {advertiser?.DateOfBirth ? new Date().getFullYear() - new Date(advertiser.DateOfBirth).getFullYear() : ""}
-                      {advertiser?.Gender === "Male" ? "M" : advertiser?.Gender === "Female" ? "F" : ""}
+                      {advertiser?.DateOfBirth
+                        ? new Date().getFullYear() -
+                          new Date(advertiser.DateOfBirth).getFullYear()
+                        : ""}
+                      {advertiser?.Gender === "Male"
+                        ? "M"
+                        : advertiser?.Gender === "Female"
+                        ? "F"
+                        : ""}
                       {advertiser?.PartnerDateOfBirth &&
                       advertiser?.PartnerGender
                         ? ` | ${

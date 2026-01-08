@@ -26,7 +26,6 @@ export async function POST(req: any) {
             );
         }
 
-        console.log('Received Data:', { profileId, locationName, latitude, longitude });
 
         // Execute the database query with the provided parameters
         const result = await pool.query(

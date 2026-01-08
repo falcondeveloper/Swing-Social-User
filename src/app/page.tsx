@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { jwtDecode } from "jwt-decode";
+import Loader from "@/commonPage/Loader";
 
 const UserSelectionPage = () => {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -16,9 +17,14 @@ const UserSelectionPage = () => {
         router.push("/login");
       }
     }
-  }, []);
+    setIsLoading(false);
+  }, [router]);
 
-  return <></>;
+  if (isLoading) {
+    return <Loader />;
+  }
+
+  return null;
 };
 
 export default UserSelectionPage;

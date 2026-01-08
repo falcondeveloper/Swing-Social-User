@@ -1483,7 +1483,6 @@ const MobileInbox = () => {
                     style={{
                       textAlign: "center",
                       padding: "20px",
-                      fontFamily: "Arial, sans-serif",
                     }}
                   >
                     <h2 style={{ color: "#fff" }}>Friend Request</h2>

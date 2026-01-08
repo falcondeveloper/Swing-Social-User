@@ -14,7 +14,6 @@ export async function POST(req: any) {
     try {
         const { commentId, content } = await req.json();
 
-        console.log('Received Data:', { commentId, content });
         const result = await pool.query(
             'SELECT * FROM update_comments_post_fn($1, $2)',
             [commentId, content]

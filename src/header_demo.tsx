@@ -36,7 +36,10 @@ import {
 const Header = () => {
   const router = useRouter();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery(
+    theme.breakpoints.down("sm"),
+    { noSsr: true }
+  );
   const [avatar, setAvatar] = useState<any>("");
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [userName, setUserName] = useState<string>("");

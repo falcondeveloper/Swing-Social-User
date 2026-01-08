@@ -46,10 +46,6 @@ const theme = createTheme({
       default: "#0A0118",
     },
   },
-
-  typography: {
-    fontFamily: '"Poppins", "Roboto", "Arial", sans-serif',
-  },
 });
 
 const ParticleField = memo(() => {

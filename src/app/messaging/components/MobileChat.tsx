@@ -14,6 +14,7 @@ import {
   CircularProgress,
   Avatar,
   Skeleton,
+  Drawer,
 } from "@mui/material";
 import { ArrowBack, Search } from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
@@ -24,6 +25,7 @@ import { useRouter } from "next/navigation";
 import AppHeaderMobile from "@/layout/AppHeaderMobile";
 import AppFooterMobile from "@/layout/AppFooterMobile";
 import { useSocketContext } from "@/context/SocketProvider";
+import CloseIcon from "@mui/icons-material/Close";
 
 const formatFullTime = (value?: string) => {
   if (!value) return "";
@@ -183,6 +185,8 @@ const MobileChat = () => {
   const [swipeChatId, setSwipeChatId] = useState<string | null>(null);
   const [typingChats, setTypingChats] = useState<Record<string, boolean>>({});
 
+  const [drawerHeight, setDrawerHeight] = useState("70vh");
+
   const startXRef = useRef(0);
   const isSwipingRef = useRef(false);
   const activeSearchRef = useRef("");
@@ -335,6 +339,7 @@ const MobileChat = () => {
     setUserProfiles([]);
     setPage(1);
     setHasMore(true);
+    window.history.pushState({ drawer: true }, "");
   };
 
   const handleCloseNewChat = () => {
@@ -343,6 +348,9 @@ const MobileChat = () => {
     setUserProfiles([]);
     setPage(1);
     setHasMore(true);
+    if (window.history.state?.drawer) {
+      window.history.back();
+    }
   };
 
   useEffect(() => {
@@ -423,6 +431,44 @@ const MobileChat = () => {
     setSwipeChatId(null);
     isSwipingRef.current = false;
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    const handleResize = () => {
+      const keyboardOpen = window.innerHeight - viewport.height > 150;
+
+      setDrawerHeight(keyboardOpen ? "100vh" : "70vh");
+    };
+
+    viewport.addEventListener("resize", handleResize);
+
+    return () => {
+      viewport.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (chatOpen) {
+        event.preventDefault();
+        setChatOpen(false);
+        setSearchQuery("");
+        setUserProfiles([]);
+        setPage(1);
+        setHasMore(true);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [chatOpen]);
 
   return (
     <Box
@@ -651,71 +697,60 @@ const MobileChat = () => {
 
       <AppFooterMobile />
 
-      <Dialog
+      <Drawer
+        anchor="bottom"
         open={chatOpen}
         onClose={handleCloseNewChat}
-        fullWidth
-        maxWidth="xs"
+        ModalProps={{ keepMounted: true }}
         PaperProps={{
           sx: {
-            position: "fixed",
-            bottom: 0,
-            m: 0,
-            width: "100%",
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            bgcolor: "#121212",
-            height: "70vh",
+            height: drawerHeight,
+            bgcolor: "#0B0B0E",
+            borderTopLeftRadius: drawerHeight === "100vh" ? 0 : 24,
+            borderTopRightRadius: drawerHeight === "100vh" ? 0 : 24,
+            overflow: "hidden",
+            transition: "height 0.25s ease",
           },
         }}
       >
         <Box
           sx={{
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            px: 2,
+            py: 1.5,
             display: "flex",
             alignItems: "center",
             gap: 1,
-            px: 2,
-            py: 1.5,
+            bgcolor: "#0B0B0E",
             borderBottom: "1px solid rgba(255,255,255,0.08)",
-            position: "sticky",
-            top: 0,
-            bgcolor: "#121212",
-            zIndex: 2,
           }}
         >
           <IconButton onClick={handleCloseNewChat}>
             <ArrowBack sx={{ color: "#fff" }} />
           </IconButton>
 
-          <Typography
-            sx={{
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: 16,
-            }}
-          >
+          <Typography sx={{ color: "#fff", fontSize: 16, fontWeight: 700 }}>
             New Message
           </Typography>
         </Box>
 
-        <Box
-          sx={{
-            px: 2,
-            py: 1.5,
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
-          }}
-        >
+        <Box sx={{ px: 2, py: 2 }}>
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
-              bgcolor: "#1E1E1E",
+              gap: 1,
+              bgcolor: "#141417",
               px: 2,
-              py: 1,
-              borderRadius: 3,
+              py: 1.2,
+              borderRadius: 999,
+              border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
             <Search sx={{ color: "rgba(255,255,255,0.5)" }} />
+
             <TextField
               variant="standard"
               placeholder="Search profiles"
@@ -726,11 +761,39 @@ const MobileChat = () => {
                 disableUnderline: true,
                 sx: {
                   color: "#fff",
-                  ml: 1,
                   fontSize: 14,
+
+                  "& input": {
+                    backgroundColor: "transparent",
+                    color: "#fff",
+                  },
+
+                  "& input::placeholder": {
+                    color: "rgba(255,255,255,0.45)",
+                  },
                 },
               }}
             />
+
+            {searchQuery && (
+              <IconButton
+                size="small"
+                onClick={() => {
+                  setSearchQuery("");
+                  setUserProfiles([]);
+                  setPage(1);
+                  setHasMore(true);
+                }}
+                sx={{
+                  color: "rgba(255,255,255,0.6)",
+                  "&:hover": {
+                    color: "#fff",
+                  },
+                }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            )}
           </Box>
         </Box>
 
@@ -738,14 +801,15 @@ const MobileChat = () => {
           sx={{
             p: 1,
             overflowY: "auto",
+            background: "linear-gradient(180deg, #0A0A0A 0%, #0F0F0F 100%)",
           }}
         >
-          {searchQuery.trim() && userProfiles.length === 0 && !loading && (
+          {searchQuery && !loading && userProfiles.length === 0 && (
             <Typography
               sx={{
-                color: "rgba(255,255,255,0.5)",
+                mt: 6,
                 textAlign: "center",
-                mt: 4,
+                color: "rgba(255,255,255,0.5)",
                 fontSize: 14,
               }}
             >
@@ -753,54 +817,44 @@ const MobileChat = () => {
             </Typography>
           )}
 
-          <List>
+          <List sx={{ px: 1 }}>
             {userProfiles.map((user) => (
               <ListItem
                 key={user.Id}
                 onClick={() => openChatDetails(user.Id)}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
                   gap: 2,
-                  py: 1.2,
+                  py: 1.3,
                   px: 1.5,
+                  mb: 0.8,
                   borderRadius: 3,
                   cursor: "pointer",
+                  bgcolor: "#141417",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  transition: "all 0.2s ease",
                   "&:hover": {
-                    bgcolor: "rgba(255,27,107,0.12)",
+                    bgcolor: "#1A1A22",
                   },
                   "&:active": {
-                    transform: "scale(0.98)",
+                    transform: "scale(0.97)",
                   },
                 }}
               >
-                <Box
+                <Avatar
+                  src={user.Avatar || "/noavatar.png"}
                   sx={{
                     width: 48,
                     height: 48,
-                    borderRadius: "50%",
-                    overflow: "hidden",
                     border: "2px solid #FF1B6B",
-                    flexShrink: 0,
                   }}
-                >
-                  <img
-                    src={user.Avatar || "/noavatar.png"}
-                    alt={user.Username}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                </Box>
+                />
+
                 <Box sx={{ flex: 1 }}>
                   <Typography
                     sx={{
                       color: "#fff",
                       fontWeight: 600,
                       fontSize: 15,
-                      lineHeight: 1.2,
                     }}
                   >
                     {user.Username}
@@ -808,7 +862,7 @@ const MobileChat = () => {
 
                   <Typography
                     sx={{
-                      color: "rgba(255,255,255,0.6)",
+                      color: "rgba(255,255,255,0.55)",
                       fontSize: 13,
                     }}
                   >
@@ -820,12 +874,12 @@ const MobileChat = () => {
           </List>
 
           {loading && (
-            <Box textAlign="center" py={3}>
+            <Box py={4} textAlign="center">
               <CircularProgress size={22} />
             </Box>
           )}
         </DialogContent>
-      </Dialog>
+      </Drawer>
     </Box>
   );
 };

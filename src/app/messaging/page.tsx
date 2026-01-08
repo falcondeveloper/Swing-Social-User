@@ -5,7 +5,9 @@ import MobileChat from "./components/MobileChat";
 import DesktopChat from "./components/DesktopChat";
 
 export default function ChatPage() {
-  const isMobile = useMediaQuery("(max-width:768px)");
+  const isMobile = useMediaQuery("(max-width:768px)", {
+    noSsr: true,
+  });
 
   return isMobile ? <MobileChat /> : <DesktopChat />;
 }

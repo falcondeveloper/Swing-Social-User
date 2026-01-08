@@ -195,7 +195,29 @@ export default function Preferences() {
   };
 
   if (loadingPreferences) {
-    return <Loader />;
+    return (
+      <>
+        <Box
+          sx={{
+            height: "100dvh",
+            display: "flex",
+            flexDirection: "column",
+            backgroundColor: "#121212",
+          }}
+        >
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Loader />
+          </Box>
+        </Box>
+      </>
+    );
   }
 
   return (

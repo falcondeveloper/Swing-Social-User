@@ -940,7 +940,6 @@ const DesktopInbox = () => {
                           style={{
                             textAlign: "center",
                             padding: "20px",
-                            fontFamily: "Arial, sans-serif",
                           }}
                         >
                           <h2 style={{ color: "#fff" }}>Friend Request</h2>
@@ -1838,7 +1837,6 @@ const DesktopInbox = () => {
                     style={{
                       textAlign: "center",
                       padding: "20px",
-                      fontFamily: "Arial, sans-serif",
                     }}
                   >
                     <h2 style={{ color: "#fff" }}>Friend Request</h2>

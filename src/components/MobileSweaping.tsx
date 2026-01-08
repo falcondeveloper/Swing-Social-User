@@ -747,6 +747,9 @@ export default function MobileSweaping() {
   const handleClose = () => {
     setShowDetail(false);
     setSelectedUserId(null);
+    if (window.history.state?.modal === "userProfile") {
+      window.history.back();
+    }
   };
 
   useEffect(() => {
@@ -1161,6 +1164,7 @@ export default function MobileSweaping() {
                     onClick={() => {
                       setShowDetail(true);
                       setSelectedUserId(profile?.Id);
+                      window.history.pushState({ modal: "userProfile" }, "");
                     }}
                     sx={{
                       position: "absolute",
@@ -1322,6 +1326,7 @@ export default function MobileSweaping() {
                     onClick={() => {
                       setShowDetail(true);
                       setSelectedUserId(profile?.Id);
+                      window.history.pushState({ modal: "userProfile" }, "");
                     }}
                     sx={{
                       display: "flex",
@@ -1548,10 +1553,10 @@ export default function MobileSweaping() {
 
       {selectedUserId && (
         <UserProfileModal
-          handleGrantAccess={handleGrantAccess}
-          handleClose={handleClose}
           open={showDetail}
           userid={selectedUserId}
+          handleClose={handleClose}
+          handleGrantAccess={handleGrantAccess}
         />
       )}
 
@@ -1738,6 +1743,7 @@ export default function MobileSweaping() {
                   onClick={() => {
                     setShowDetail(true);
                     setSelectedUserId(matchedProfile?.Id);
+                    window.history.pushState({ modal: "userProfile" }, "");
                   }}
                   variant="contained"
                   sx={{

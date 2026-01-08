@@ -14,7 +14,6 @@ export async function POST(req: any) {
     try {
         const { postId } = await req.json();
 
-        console.log('Received Data:', { postId });
         const result = await pool.query(
             'SELECT * FROM delete_comments_post_fn($1)',
             [postId]
