@@ -400,6 +400,7 @@ export default function MobileSweaping() {
 
   const processSwipe = useCallback(
     (direction: string, targetProfile: any) => {
+      setImageIndex(0);
       setCurrentIndex((prevIndex) => {
         const nextIndex = prevIndex + 1;
 
@@ -766,10 +767,6 @@ export default function MobileSweaping() {
   };
 
   useEffect(() => {
-    setImageIndex(0);
-  }, [currentIndex]);
-
-  useEffect(() => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("loginInfo");
       const count = localStorage.getItem("memberalarm");
@@ -933,18 +930,15 @@ export default function MobileSweaping() {
     const publicImgs: string[] = [];
     const privateImgs: string[] = [];
 
-    // avatar first
     if (profile.Avatar) {
       publicImgs.push(profile.Avatar);
     }
 
-    // public images
     for (let i = 1; i <= 6; i++) {
       const key = profile[`imgpub${i}`];
       if (key) publicImgs.push(key);
     }
 
-    // private images
     for (let i = 1; i <= 6; i++) {
       const key = profile[`imgpriv${i}`];
       if (key) privateImgs.push(key);
