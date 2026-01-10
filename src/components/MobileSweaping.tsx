@@ -979,7 +979,7 @@ export default function MobileSweaping() {
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            filter: isLocked ? "blur(12px)" : "none",
+            filter: isLocked ? "blur(24px)" : "none",
             transition: "filter 0.3s ease",
           }}
         />
@@ -993,21 +993,54 @@ export default function MobileSweaping() {
               alignItems: "center",
               justifyContent: "center",
               flexDirection: "column",
-              bgcolor: "rgba(0,0,0,0.35)",
-              gap: 1,
+              bgcolor: "rgba(0,0,0,0.45)",
+              gap: 1.2,
+              px: 3,
+              textAlign: "center",
             }}
           >
-            <Typography sx={{ color: "#fff", fontWeight: 600 }}>
-              Premium Photo
+            <Typography
+              sx={{
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: "16px",
+                letterSpacing: "0.3px",
+              }}
+            >
+              Private Photos
+            </Typography>
+
+            <Typography
+              sx={{
+                color: "rgba(255,255,255,0.85)",
+                fontSize: "13px",
+                lineHeight: "18px",
+                maxWidth: 220,
+              }}
+            >
+              Upgrade your account to unlock and view this member's private
+              photos.
             </Typography>
 
             <Button
               size="small"
               variant="contained"
-              sx={{ bgcolor: "#F50057" }}
+              sx={{
+                mt: 0.5,
+                bgcolor: "#F50057",
+                px: 2.5,
+                py: 0.6,
+                borderRadius: "999px",
+                fontSize: "13px",
+                fontWeight: 600,
+                textTransform: "none",
+                "&:hover": {
+                  bgcolor: "#c51162",
+                },
+              }}
               onClick={onUpgrade}
             >
-              Upgrade
+              Upgrade to View
             </Button>
           </Box>
         )}
