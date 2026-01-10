@@ -1028,6 +1028,7 @@ export default function MobileSweaping() {
               sx={{
                 mt: 0.5,
                 bgcolor: "#F50057",
+                color: "#fff",
                 px: 2.5,
                 py: 0.6,
                 borderRadius: "999px",
