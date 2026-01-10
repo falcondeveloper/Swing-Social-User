@@ -776,9 +776,9 @@ export default function MobileSweaping() {
       setMemberAlarm(count ?? "0");
       if (token) {
         const decodeToken = jwtDecode<any>(token);
-        setProfileId(decodeToken.profileId);
-        setMembership(decodeToken.membership);
-        getUserList(decodeToken.profileId);
+        setProfileId(decodeToken?.profileId);
+        setMembership(decodeToken?.membership);
+        getUserList(decodeToken?.profileId);
       } else {
         router.push("/login");
       }
@@ -946,7 +946,7 @@ export default function MobileSweaping() {
 
     // private images
     for (let i = 1; i <= 6; i++) {
-      const key = profile[`imgpri${i}`];
+      const key = profile[`imgpriv${i}`];
       if (key) privateImgs.push(key);
     }
 
