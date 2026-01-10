@@ -8,8 +8,8 @@ interface LazyAvatarProps {
   alt?: string;
   size?: number;
   border?: string;
-  sx?: SxProps<Theme>; // 👈 for Avatar styling
-  imgStyle?: React.CSSProperties; // 👈 for img styling
+  sx?: SxProps<Theme>;
+  imgStyle?: React.CSSProperties;
 }
 
 const LazyAvatar = ({
@@ -32,7 +32,7 @@ const LazyAvatar = ({
         border,
         bgcolor: "rgba(255,255,255,0.08)",
         overflow: "hidden",
-        ...sx, // ✅ override only when needed
+        ...sx,
       }}
     >
       {!loaded && (
@@ -60,7 +60,7 @@ const LazyAvatar = ({
           filter: loaded ? "blur(0px)" : "blur(12px)",
           transform: loaded ? "scale(1)" : "scale(1.05)",
           transition: "filter 0.4s ease, transform 0.4s ease",
-          ...imgStyle, // ✅ header-only override
+          ...imgStyle,
         }}
       />
     </Avatar>

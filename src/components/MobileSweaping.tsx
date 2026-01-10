@@ -979,7 +979,7 @@ export default function MobileSweaping() {
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            filter: isLocked ? "blur(24px)" : "none",
+            filter: isLocked ? "blur(32px)" : "none",
             transition: "filter 0.3s ease",
           }}
         />
