@@ -1308,7 +1308,7 @@ export default function MobileSweaping() {
                           e.stopPropagation();
                           setImageIndex((prev) => Math.max(prev - 1, 0));
                         }}
-                        disabled={imageIndex === 0}
+                        // disabled={imageIndex === 0}
                       >
                         <Box
                           component="img"
