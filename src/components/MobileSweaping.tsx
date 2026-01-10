@@ -766,6 +766,10 @@ export default function MobileSweaping() {
   };
 
   useEffect(() => {
+    setImageIndex(0);
+  }, [currentIndex]);
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("loginInfo");
       const count = localStorage.getItem("memberalarm");
@@ -780,10 +784,6 @@ export default function MobileSweaping() {
       }
     }
   }, []);
-
-  useEffect(() => {
-    setImageIndex(0);
-  }, [currentIndex]);
 
   const handleReportModalToggle = useCallback(() => {
     setIsReportModalOpen((prev) => !prev);
@@ -930,8 +930,26 @@ export default function MobileSweaping() {
   };
 
   const getAllImages = (profile: any) => {
-    const publicImgs = profile?.public_images || [];
-    const privateImgs = profile?.private_images || [];
+    const publicImgs: string[] = [];
+    const privateImgs: string[] = [];
+
+    // avatar first
+    if (profile.Avatar) {
+      publicImgs.push(profile.Avatar);
+    }
+
+    // public images
+    for (let i = 1; i <= 6; i++) {
+      const key = profile[`imgpub${i}`];
+      if (key) publicImgs.push(key);
+    }
+
+    // private images
+    for (let i = 1; i <= 6; i++) {
+      const key = profile[`imgpri${i}`];
+      if (key) privateImgs.push(key);
+    }
+
     return {
       publicImgs,
       privateImgs,
@@ -1066,78 +1084,67 @@ export default function MobileSweaping() {
                   }}
                 >
                   <Box sx={{ height: "75%", position: "relative" }}>
-                    {/* {(() => {
-                    const { publicImgs, privateImgs, all } =
-                      getAllImages(profile);
-                    const isPrivate =
-                      imageIndex >= publicImgs.length && privateImgs.length > 0;
+                    {(() => {
+                      const { publicImgs, privateImgs, all } =
+                        getAllImages(profile);
 
-                    return (
-                      <Box
-                        sx={{
-                          width: "100%",
-                          height: "100%",
-                          border: "2px solid rgba(255, 255, 255, 0.35)",
-                          borderRadius: "20px",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <ProfileImage
-                          src={
-                            all[imageIndex] ||
-                            profile.Avatar ||
-                            "/fallback-avatar.png"
-                          }
-                          isPrivate={isPrivate}
-                          isPremium={membership === 1}
-                          onUpgrade={() => router.push("/membership")}
-                        />
-                      </Box>
-                    );
-                  })()} */}
+                      const isPrivate =
+                        imageIndex >= publicImgs.length &&
+                        privateImgs.length > 0;
+
+                      const currentSrc =
+                        all[imageIndex] ||
+                        profile.Avatar ||
+                        "/fallback-avatar.png";
+
+                      return (
+                        <Box
+                          sx={{
+                            width: "100%",
+                            height: "100%",
+                            border: "2px solid rgba(255,255,255,0.35)",
+                            borderRadius: "20px",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <ProfileImage
+                            src={currentSrc}
+                            isPrivate={isPrivate}
+                            isPremium={membership === 1}
+                            onUpgrade={() => router.push("/membership")}
+                          />
+                        </Box>
+                      );
+                    })()}
 
                     <Box
-                      component="img"
-                      src={profile.Avatar || "/fallback-avatar.png"}
-                      alt={profile.Username}
                       sx={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        border: "2px solid rgba(255, 255, 255, 0.35)",
-                        borderRadius: "20px",
+                        position: "absolute",
+                        bottom: 12,
+                        left: 12,
+                        right: 12,
+                        display: "flex",
+                        gap: "6px",
                       }}
-                    />
-
-                    {/* <Box
-                    sx={{
-                      position: "absolute",
-                      bottom: 12,
-                      left: 12,
-                      right: 12,
-                      display: "flex",
-                      gap: "8px",
-                    }}
-                  >
-                    {(() => {
-                      const { all } = getAllImages(profile);
-
-                      return all.slice(0, 4).map((_, i) => (
-                        <Box
-                          key={i}
-                          sx={{
-                            flex: 1,
-                            height: 4,
-                            borderRadius: "5px",
-                            bgcolor:
-                              i === imageIndex
-                                ? "#fff"
-                                : "rgba(255,255,255,0.35)",
-                          }}
-                        />
-                      ));
-                    })()}
-                  </Box> */}
+                    >
+                      {(() => {
+                        const { all } = getAllImages(profile);
+                        return all.map((_, i) => (
+                          <Box
+                            key={i}
+                            sx={{
+                              flex: 1,
+                              height: 4,
+                              borderRadius: 4,
+                              bgcolor:
+                                i === imageIndex
+                                  ? "#fff"
+                                  : "rgba(255,255,255,0.35)",
+                            }}
+                          />
+                        ));
+                      })()}
+                    </Box>
 
                     {index === 0 && cardStyles.active && (
                       <SwipeIndicator
@@ -1244,86 +1251,85 @@ export default function MobileSweaping() {
                     />
                   </IconButton> */}
 
-                    {/* <Box
-                    sx={{
-                      position: "absolute",
-                      bottom: 30,
-                      right: 14,
-                      display: "flex",
-                      gap: "8px",
-                    }}
-                  >
-                    <IconButton
+                    <Box
                       sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: "50%",
-                        bgcolor: "rgba(114, 114, 148, 0.5)",
-                        backdropFilter: "blur(8px)",
-                        WebkitBackdropFilter: "blur(8px)",
+                        position: "absolute",
+                        bottom: 30,
+                        right: 14,
                         display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: 0,
-                        "&:hover": {
-                          bgcolor: "rgba(114, 114, 148, 0.65)",
-                        },
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImageIndex((prev) => Math.max(prev - 1, 0));
-                      }}
-                      disabled={imageIndex === 0}
-                    >
-                      <Box
-                        component="img"
-                        src="/swiping-card/left-arrow.svg"
-                        alt="previous"
-                        sx={{
-                          width: 16,
-                          height: 16,
-                          display: "block",
-                        }}
-                      />
-                    </IconButton>
-
-                    <IconButton
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: "50%",
-                        bgcolor: "rgba(114, 114, 148, 0.5)",
-                        backdropFilter: "blur(8px)",
-                        WebkitBackdropFilter: "blur(8px)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: 0,
-                        "&:hover": {
-                          bgcolor: "rgba(114, 114, 148, 0.65)",
-                        },
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-
-                        const { all } = getAllImages(profile);
-                        setImageIndex((prev) =>
-                          Math.min(prev + 1, all.length - 1)
-                        );
+                        gap: "8px",
                       }}
                     >
-                      <Box
-                        component="img"
-                        src="/swiping-card/right-arrow.svg"
-                        alt="next"
+                      <IconButton
                         sx={{
-                          width: 16,
-                          height: 16,
-                          display: "block",
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          bgcolor: "rgba(114, 114, 148, 0.5)",
+                          backdropFilter: "blur(8px)",
+                          WebkitBackdropFilter: "blur(8px)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: 0,
+                          "&:hover": {
+                            bgcolor: "rgba(114, 114, 148, 0.65)",
+                          },
                         }}
-                      />
-                    </IconButton>
-                  </Box> */}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setImageIndex((prev) => Math.max(prev - 1, 0));
+                        }}
+                        disabled={imageIndex === 0}
+                      >
+                        <Box
+                          component="img"
+                          src="/swiping-card/left-arrow.svg"
+                          alt="previous"
+                          sx={{
+                            width: 16,
+                            height: 16,
+                            display: "block",
+                          }}
+                        />
+                      </IconButton>
+
+                      <IconButton
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          bgcolor: "rgba(114, 114, 148, 0.5)",
+                          backdropFilter: "blur(8px)",
+                          WebkitBackdropFilter: "blur(8px)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: 0,
+                          "&:hover": {
+                            bgcolor: "rgba(114, 114, 148, 0.65)",
+                          },
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const { all } = getAllImages(profile);
+                          setImageIndex((prev) =>
+                            Math.min(prev + 1, all.length - 1)
+                          );
+                        }}
+                      >
+                        <Box
+                          component="img"
+                          src="/swiping-card/right-arrow.svg"
+                          alt="next"
+                          sx={{
+                            width: 16,
+                            height: 16,
+                            display: "block",
+                          }}
+                        />
+                      </IconButton>
+                    </Box>
                   </Box>
 
                   <Box
