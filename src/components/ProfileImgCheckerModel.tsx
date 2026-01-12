@@ -69,19 +69,7 @@ const ProfileImgCheckerModel = ({
     };
 
     if (openDialog) {
-      try {
-        document.documentElement.style.overflow = "hidden";
-        document.body.style.overflow = "hidden";
-      } catch (err) {
-        console.error("Error setting overflow hidden:", err);
-      }
-
-      window.addEventListener("wheel", preventWheel, { passive: false });
-      window.addEventListener("touchmove", preventTouch, { passive: false });
-      window.addEventListener("keydown", preventKey, { passive: false });
-      document.addEventListener("touchmove", preventDefault, {
-        passive: false,
-      });
+      document.body.style.overflow = "hidden";
     }
 
     return () => {
@@ -294,7 +282,7 @@ const ProfileImgCheckerModel = ({
     <>
       <Dialog
         open={openDialog}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
         disableEscapeKeyDown
         onClose={() => {}}
@@ -331,6 +319,16 @@ const ProfileImgCheckerModel = ({
           sx={{
             color: "#fff",
             pt: 0,
+            maxHeight: "99vh",
+            overflowY: "auto",
+            scrollbarWidth: "thin",
+            "&::-webkit-scrollbar": {
+              width: "6px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: "#c2185b",
+              borderRadius: "10px",
+            },
           }}
         >
           <form onSubmit={formik.handleSubmit} style={{ width: "100%" }}>
@@ -344,7 +342,7 @@ const ProfileImgCheckerModel = ({
                   mb: 1,
                 }}
               >
-                We noticed you haven’t uploaded a profile picture yet. Upload
+                We noticed you haven't uploaded a profile picture yet. Upload
                 one now to unlock the full experience your photo helps others
                 recognize you and improves content recommendations.
               </Typography>
