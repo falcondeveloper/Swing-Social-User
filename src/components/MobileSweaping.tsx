@@ -1832,7 +1832,12 @@ export default function MobileSweaping() {
 
       <Dialog
         open={showLimitPopup}
-        onClose={() => setShowLimitPopup(false)}
+        onClose={(event, reason) => {
+          if (reason === "backdropClick" || reason === "escapeKeyDown") {
+            return;
+          }
+          setShowLimitPopup(false);
+        }}
         PaperProps={{
           sx: {
             backgroundColor: "#121212",
@@ -1956,7 +1961,12 @@ export default function MobileSweaping() {
 
       <Dialog
         open={showEndPopup}
-        onClose={() => setShowEndPopup(false)}
+        onClose={(event, reason) => {
+          if (reason === "backdropClick" || reason === "escapeKeyDown") {
+            return;
+          }
+          setShowEndPopup(false);
+        }}
         PaperProps={{
           sx: {
             backgroundColor: "#121212",
