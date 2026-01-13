@@ -3,7 +3,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
     reactStrictMode: true,
     images: {
-        domains: ["truecontractingsolutions.app"],
+        remotePatterns: [
+            {
+                protocol: "https",
+                hostname: "truecontractingsolutions.app",
+            },
+        ],
     },
     allowedDevOrigins: ['local-origin.dev', '*.local-origin.dev'],
 };
