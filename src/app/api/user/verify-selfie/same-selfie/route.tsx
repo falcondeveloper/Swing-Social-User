@@ -6,14 +6,10 @@ import {
 } from "@aws-sdk/client-rekognition";
 
 const rekognitionClient = new RekognitionClient({
-  region: "us-east-1",
-  credentials: {
-    accessKeyId: "AKIAUHA2HZBFEYGPDMYQ",
-    secretAccessKey: "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",
-  },
+  region: process.env.AWS_REGION!,
 });
 
-const BUCKET = "swingsocial-face-verification";
+const BUCKET = process.env.S3_BUCKET_NAME!;
 
 export async function POST(req: Request) {
   console.log("🔥 VERIFY-SELFIE API HIT");

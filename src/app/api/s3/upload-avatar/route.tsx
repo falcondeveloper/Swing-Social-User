@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
+const BUCKET = process.env.S3_BUCKET_NAME!;
+
 const s3 = new S3Client({
-  region: "us-east-1",
-  credentials: {
-    accessKeyId: "AKIAUHA2HZBFEYGPDMYQ",
-    secretAccessKey: "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",
-  },
+  region: process.env.AWS_REGION!,
 });
 
 export async function POST(req: Request) {
@@ -30,7 +28,7 @@ export async function POST(req: Request) {
 
     await s3.send(
       new PutObjectCommand({
-        Bucket: "swingsocial-face-verification",
+        Bucket: BUCKET,
         Key: key,
         Body: buffer,
         ContentType: "image/jpeg",

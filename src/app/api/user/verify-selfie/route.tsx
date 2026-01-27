@@ -5,11 +5,7 @@ import {
 } from "@aws-sdk/client-rekognition";
 
 const rekognition = new RekognitionClient({
-  region: "us-east-1",
-  credentials: {
-    accessKeyId: "AKIAUHA2HZBFEYGPDMYQ",
-    secretAccessKey: "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",
-  },
+  region: process.env.AWS_REGION!,
 });
 
 export async function POST(req: Request) {
@@ -19,7 +15,7 @@ export async function POST(req: Request) {
     if (!selfieBase64) {
       return NextResponse.json(
         { ok: false, reason: "NO_IMAGE" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -91,7 +87,7 @@ export async function POST(req: Request) {
     console.error("Rekognition error:", error);
     return NextResponse.json(
       { ok: false, reason: "SERVER_ERROR" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
