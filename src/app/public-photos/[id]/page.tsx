@@ -209,8 +209,11 @@ const page = ({ params }: { params: Params }) => {
     validationSchema: Yup.object().shape({
       photos: Yup.array()
         .of(Yup.mixed<File>())
-        .max(MAX_PHOTOS, `You can upload up to ${MAX_PHOTOS} photos`),
+        .min(1, "At least one public photo is required")
+        .max(MAX_PHOTOS, `You can upload up to ${MAX_PHOTOS} photos`)
+        .required("At least one public photo is required"),
     }),
+
     onSubmit: async (values, { setSubmitting, setFieldError }) => {
       try {
         const uploadedUrls: string[] = [];
@@ -435,7 +438,8 @@ const page = ({ params }: { params: Params }) => {
 
   const firstEmpty = firstEmptyIndex();
   const showAddBadgeIndex = firstEmpty === -1 ? undefined : firstEmpty;
-  const isUploading = formik.isSubmitting;
+  const isSubmitting = formik.isSubmitting;
+  const isDisabled = formik.values.photos.length === 0 || isSubmitting;
 
   return (
     <ThemeProvider theme={theme}>
@@ -453,7 +457,7 @@ const page = ({ params }: { params: Params }) => {
       >
         <ParticleField />
         <Container
-          maxWidth="sm"
+          maxWidth="md"
           sx={{ px: { xs: 1, sm: 2, md: 3 }, py: { xs: 1.5, sm: 2 } }}
         >
           <Paper
@@ -478,9 +482,13 @@ const page = ({ params }: { params: Params }) => {
                     mb: { xs: 2, sm: 3 },
                   }}
                 >
-                  Public Photos{" "}
-                  <Typography component="span" sx={{ fontWeight: 400 }}>
-                    (Optional)
+                  Public Photos
+                  <Typography
+                    component="span"
+                    sx={{ color: "#FF2D55", fontWeight: 600 }}
+                  >
+                    {" "}
+                    *Required
                   </Typography>
                 </Typography>
 
@@ -567,7 +575,7 @@ const page = ({ params }: { params: Params }) => {
                 >
                   <Button
                     type="submit"
-                    disabled={isUploading}
+                    disabled={isDisabled}
                     sx={{
                       width: { xs: 52, sm: 56 },
                       height: { xs: 52, sm: 56 },
@@ -578,13 +586,14 @@ const page = ({ params }: { params: Params }) => {
                       position: "relative",
                     }}
                   >
-                    {isUploading ? (
+                    {isSubmitting ? (
                       <CircularProgress size={24} sx={{ color: "#fff" }} />
                     ) : (
                       <ArrowForwardIosIcon />
                     )}
                   </Button>
-                  {isUploading && (
+
+                  {isSubmitting && (
                     <Typography
                       sx={{
                         mt: 2,
@@ -599,12 +608,24 @@ const page = ({ params }: { params: Params }) => {
                     </Typography>
                   )}
                 </Grid>
-
-                <Box sx={{ mt: { xs: 3, sm: 4 } }}>
-                  <Carousel title="These users want to see your pics!" />
-                </Box>
               </Grid>
+              {formik.values.photos.length === 0 && !formik.isSubmitting && (
+                <Typography
+                  sx={{
+                    mt: 1.5,
+                    textAlign: "center",
+                    color: "#FF2D55",
+                    fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                    fontWeight: 600,
+                  }}
+                >
+                  At least one photo is required to continue
+                </Typography>
+              )}
             </form>
+            <Box sx={{ mt: { xs: 3, sm: 4 } }}>
+              <Carousel title="These users want to see your pics!" />
+            </Box>
           </Paper>
         </Container>
       </Box>

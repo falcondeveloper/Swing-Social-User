@@ -117,7 +117,6 @@ export default function MobileSweaping() {
   const [loading, setLoading] = useState(true);
   const [showMatchPopup, setShowMatchPopup] = useState(false);
   const [showLimitPopup, setShowLimitPopup] = useState(false);
-  const [showEndPopup, setShowEndPopup] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState<any>(null);
   const [swipeCount, setSwipeCount] = useState(0);
   const DAILY_LIMIT = 30;
@@ -141,7 +140,6 @@ export default function MobileSweaping() {
   const [pendingSwipeAction, setPendingSwipeAction] = useState<string | null>(
     null
   );
-  const [emptyMessage, setEmptyMessage] = useState<string>("");
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [imageIndex, setImageIndex] = useState(0);
@@ -161,8 +159,8 @@ export default function MobileSweaping() {
   }, [userProfiles, currentIndex]);
 
   const preloadProfiles = useMemo(() => {
-    return userProfiles.slice(currentIndex + 2, currentIndex + 7);
-  }, [userProfiles, currentIndex]);
+    return userProfiles;
+  }, [userProfiles]);
 
   const currentProfile = useMemo(() => {
     return userProfiles[currentIndex];
@@ -244,17 +242,7 @@ export default function MobileSweaping() {
       );
       const data = await response.json();
       const profiles = data?.swipes || [];
-      const totalRows = data?.totalRows ?? 0;
-
       setUserProfiles(profiles);
-      setEmptyMessage(data?.message || "");
-
-      if (totalRows === 0 && profiles.length === 0) {
-        setShowEndPopup(true);
-      } else {
-        setShowEndPopup(false);
-      }
-
       preloadProfileImages(profiles);
     } catch (error) {
       console.error("Error fetching user profiles:", error);
@@ -285,32 +273,31 @@ export default function MobileSweaping() {
 
   const preloadProfileImages = useCallback(
     (profiles: any[]) => {
-      if (!profiles || profiles.length === 0) return;
+      if (!profiles?.length) return;
 
-      const imageUrls = new Set<string>();
+      const canAccessPrivate = membership === 1;
 
       profiles.forEach((profile) => {
-        if (profile?.Avatar) {
-          imageUrls.add(profile.Avatar);
-        }
-      });
+        const urls = getPreloadImages(profile, canAccessPrivate);
 
-      imageUrls.forEach((url) => {
-        if (!preloadedImages.has(url)) {
-          const img = document.createElement("img");
-          img.src = url;
-          img.onload = () => {
-            setPreloadedImages((prev) => {
-              const updated = new Set(prev);
-              updated.add(url);
-              return updated;
-            });
-          };
-        }
+        urls.forEach((url) => {
+          if (!preloadedImages.has(url)) {
+            const img = new Image();
+            img.src = url;
+            img.onload = () => {
+              setPreloadedImages((prev) => new Set(prev).add(url));
+            };
+          }
+        });
       });
     },
-    [preloadedImages]
+    [membership, preloadedImages]
   );
+
+  useEffect(() => {
+    const nextProfiles = userProfiles.slice(currentIndex, currentIndex + 3);
+    preloadProfileImages(nextProfiles);
+  }, [currentIndex, userProfiles, preloadProfileImages]);
 
   const handleUpdateCategoryRelation = useCallback(
     async (category: any, targetProfile: any) => {
@@ -401,10 +388,6 @@ export default function MobileSweaping() {
       }
     }
 
-    if (!appended && data?.totalRows === 0) {
-      setShowEndPopup(true);
-    }
-
     setIsFetchingMore(false);
   }, [profileId, userProfiles, preloadProfileImages]);
 
@@ -416,10 +399,6 @@ export default function MobileSweaping() {
       setImageIndex(0);
       setCurrentIndex((prevIndex) => {
         const nextIndex = prevIndex + 1;
-
-        if (nextIndex >= userProfiles.length) {
-          return prevIndex;
-        }
 
         const PREFETCH_THRESHOLD = 20;
         const remaining = Math.max(0, userProfiles.length - nextIndex);
@@ -483,7 +462,6 @@ export default function MobileSweaping() {
       handleUpdateLikeMatch,
       setSwipeCount,
       setShowLimitPopup,
-      setShowEndPopup,
       setCurrentIndex,
       fetchNextBatchAndAppend,
       isFetchingMore,
@@ -561,10 +539,6 @@ export default function MobileSweaping() {
 
   const triggerExitAnimation = useCallback(
     (action: string) => {
-      if (!currentProfile || !hasMoreProfiles) {
-        setShowEndPopup(true);
-        return;
-      }
       const now = Date.now();
       if (now - lastSwipeTimeRef.current < SWIPE_THROTTLE_MS) {
         return;
@@ -845,32 +819,6 @@ export default function MobileSweaping() {
     }
   }, [currentProfile, profileId, reportOptions]);
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          height: "100dvh",
-          display: "flex",
-          flexDirection: "column",
-          backgroundColor: "#121212",
-        }}
-      >
-        <AppHeaderMobile />
-        <Box
-          sx={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Loader />
-        </Box>
-        <AppFooterMobile />
-      </Box>
-    );
-  }
-
   const getAge = (dob?: string) => {
     if (!dob) return null;
     return new Date().getFullYear() - new Date(dob).getFullYear();
@@ -920,7 +868,10 @@ export default function MobileSweaping() {
     onUpgrade: () => void;
   }) => {
     const isPrivateLocked = isPrivate && !isPremium;
-    const isPublicLocked = isPublic && !isAvatar && publicImageCount === 0;
+    const MIN_PUBLIC_IMAGES = 2;
+
+    const isPublicLocked =
+      isPublic && !isAvatar && publicImageCount < MIN_PUBLIC_IMAGES;
 
     return (
       <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
@@ -1006,8 +957,8 @@ export default function MobileSweaping() {
                 opacity: 0.95,
               }}
             >
-              Upload at least one photo to start seeing profiles. Your photos
-              help others recognize you.
+              Upload at least two photos to start seeing profiles. Your photos
+              help others recognize you
             </Typography>
 
             <Button
@@ -1172,6 +1123,55 @@ export default function MobileSweaping() {
     );
   };
 
+  const getPreloadImages = (
+    profile: any,
+    canAccessPrivate: boolean
+  ): string[] => {
+    const urls: string[] = [];
+
+    if (profile.Avatar) urls.push(profile.Avatar);
+
+    for (let i = 1; i <= 6; i++) {
+      const img = profile[`imgpub${i}`];
+      if (img) urls.push(img);
+    }
+
+    if (canAccessPrivate) {
+      for (let i = 1; i <= 6; i++) {
+        const img = profile[`imgpriv${i}`];
+        if (img) urls.push(img);
+      }
+    }
+
+    return urls;
+  };
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          height: "100dvh",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#121212",
+        }}
+      >
+        <AppHeaderMobile />
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Loader />
+        </Box>
+        <AppFooterMobile />
+      </Box>
+    );
+  }
+
   return (
     <>
       <AppHeaderMobile />
@@ -1290,6 +1290,44 @@ export default function MobileSweaping() {
                             publicImageCount={data?.PublicImage ?? 0}
                             onUpgrade={() => router.push("/membership")}
                           />
+                          {profile?.selfie_verification_status === "true" && (
+                            <Box
+                              sx={{
+                                position: "absolute",
+                                bottom: 14,
+                                left: 14,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                px: "10px",
+                                py: "6px",
+                                bgcolor: "rgba(0,0,0,0.6)",
+                                backdropFilter: "blur(16px)",
+                                WebkitBackdropFilter: "blur(16px)",
+                                borderRadius: "14px",
+                                zIndex: 10,
+                              }}
+                            >
+                              <Box
+                                component="img"
+                                src="/verified-badge.svg"
+                                alt="Verified"
+                                sx={{ width: 14, height: 14 }}
+                              />
+                              <Typography
+                                sx={{
+                                  fontSize: "12px",
+                                  color: "#fff",
+                                  fontWeight: 500,
+                                  lineHeight: 1,
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                Profile Verified
+                              </Typography>
+                            </Box>
+                          )}
+
                           <Box
                             sx={{
                               position: "absolute",
@@ -1306,47 +1344,49 @@ export default function MobileSweaping() {
                       );
                     })()}
 
-                    {/* <Box
-                      component="img"
-                      src={profile.Avatar || "/fallback-avatar.png"}
-                      alt={profile.Username}
-                      sx={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        border: "2px solid rgba(255, 255, 255, 0.35)",
-                        borderRadius: "20px",
-                      }}
-                    /> */}
-
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        bottom: 12,
-                        left: 12,
-                        right: 12,
-                        display: "flex",
-                        gap: "6px",
-                      }}
-                    >
-                      {(() => {
-                        const { all } = getAllImages(profile);
-                        return all.map((_, i) => (
-                          <Box
-                            key={i}
-                            sx={{
-                              flex: 1,
-                              height: 4,
-                              borderRadius: 4,
-                              bgcolor:
-                                i === imageIndex
-                                  ? "#fff"
-                                  : "rgba(255,255,255,0.35)",
-                            }}
-                          />
-                        ));
-                      })()}
-                    </Box>
+                    {[
+                      profile?.imgpriv1,
+                      profile?.imgpriv2,
+                      profile?.imgpriv3,
+                      profile?.imgpriv4,
+                      profile?.imgpriv5,
+                      profile?.imgpriv6,
+                      profile?.imgpub1,
+                      profile?.imgpub2,
+                      profile?.imgpub3,
+                      profile?.imgpub4,
+                      profile?.imgpub5,
+                      profile?.imgpub6,
+                    ].some(Boolean) ? (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: 12,
+                          left: 12,
+                          right: 12,
+                          display: "flex",
+                          gap: "6px",
+                        }}
+                      >
+                        {(() => {
+                          const { all } = getAllImages(profile);
+                          return all.map((_, i) => (
+                            <Box
+                              key={i}
+                              sx={{
+                                flex: 1,
+                                height: 4,
+                                borderRadius: 4,
+                                bgcolor:
+                                  i === imageIndex
+                                    ? "#fff"
+                                    : "rgba(255,255,255,0.35)",
+                              }}
+                            />
+                          ));
+                        })()}
+                      </Box>
+                    ) : null}
 
                     {index === 0 && cardStyles.active && (
                       <SwipeIndicator
@@ -1455,89 +1495,104 @@ export default function MobileSweaping() {
                     />
                   </IconButton> */}
 
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        bottom: 30,
-                        right: 14,
-                        display: "flex",
-                        gap: "8px",
-                      }}
-                    >
-                      <IconButton
+                    {[
+                      profile?.imgpriv1,
+                      profile?.imgpriv2,
+                      profile?.imgpriv3,
+                      profile?.imgpriv4,
+                      profile?.imgpriv5,
+                      profile?.imgpriv6,
+                      profile?.imgpub1,
+                      profile?.imgpub2,
+                      profile?.imgpub3,
+                      profile?.imgpub4,
+                      profile?.imgpub5,
+                      profile?.imgpub6,
+                    ].some(Boolean) ? (
+                      <Box
                         sx={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: "50%",
-                          bgcolor: "rgba(114, 114, 148, 0.5)",
-                          backdropFilter: "blur(8px)",
-                          WebkitBackdropFilter: "blur(8px)",
+                          position: "absolute",
+                          bottom: 30,
+                          right: 14,
                           display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          position: "relative",
-                          zIndex: 10,
-                          padding: 0,
-                          "&:hover": {
-                            bgcolor: "rgba(114, 114, 148, 0.65)",
-                          },
+                          gap: "8px",
                         }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setImageIndex((prev) => Math.max(prev - 1, 0));
-                        }}
-                        // disabled={imageIndex === 0}
                       >
-                        <Box
-                          component="img"
-                          src="/swiping-card/left-arrow.svg"
-                          alt="previous"
+                        <IconButton
                           sx={{
-                            width: 16,
-                            height: 16,
-                            display: "block",
+                            width: 36,
+                            height: 36,
+                            borderRadius: "50%",
+                            bgcolor: "rgba(114, 114, 148, 0.5)",
+                            backdropFilter: "blur(8px)",
+                            WebkitBackdropFilter: "blur(8px)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            position: "relative",
+                            zIndex: 10,
+                            padding: 0,
+                            "&:hover": {
+                              bgcolor: "rgba(114, 114, 148, 0.65)",
+                            },
                           }}
-                        />
-                      </IconButton>
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setImageIndex((prev) => Math.max(prev - 1, 0));
+                          }}
+                          // disabled={imageIndex === 0}
+                        >
+                          <Box
+                            component="img"
+                            src="/swiping-card/left-arrow.svg"
+                            alt="previous"
+                            sx={{
+                              width: 16,
+                              height: 16,
+                              display: "block",
+                            }}
+                          />
+                        </IconButton>
 
-                      <IconButton
-                        sx={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: "50%",
-                          bgcolor: "rgba(114, 114, 148, 0.5)",
-                          backdropFilter: "blur(8px)",
-                          WebkitBackdropFilter: "blur(8px)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          position: "relative",
-                          zIndex: 10,
-                          padding: 0,
-                          "&:hover": {
-                            bgcolor: "rgba(114, 114, 148, 0.65)",
-                          },
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const { all } = getAllImages(profile);
-                          setImageIndex((prev) =>
-                            Math.min(prev + 1, all.length - 1)
-                          );
-                        }}
-                      >
-                        <Box
-                          component="img"
-                          src="/swiping-card/right-arrow.svg"
-                          alt="next"
+                        <IconButton
                           sx={{
-                            width: 16,
-                            height: 16,
-                            display: "block",
+                            width: 36,
+                            height: 36,
+                            borderRadius: "50%",
+                            bgcolor: "rgba(114, 114, 148, 0.5)",
+                            backdropFilter: "blur(8px)",
+                            WebkitBackdropFilter: "blur(8px)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            position: "relative",
+                            zIndex: 10,
+                            padding: 0,
+                            "&:hover": {
+                              bgcolor: "rgba(114, 114, 148, 0.65)",
+                            },
                           }}
-                        />
-                      </IconButton>
-                    </Box>
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const { all } = getAllImages(profile);
+                            setImageIndex((prev) =>
+                              Math.min(prev + 1, all.length - 1)
+                            );
+                          }}
+                        >
+                          <Box
+                            component="img"
+                            src="/swiping-card/right-arrow.svg"
+                            alt="next"
+                            sx={{
+                              width: 16,
+                              height: 16,
+                              display: "block",
+                            }}
+                          />
+                        </IconButton>
+                      </Box>
+                    ) : null}
                   </Box>
 
                   <Box
@@ -2124,51 +2179,6 @@ export default function MobileSweaping() {
               </Box>
             </Box>
           )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={showEndPopup}
-        // onClose={(event, reason) => {
-        //   if (reason === "backdropClick" || reason === "escapeKeyDown") {
-        //     return;
-        //   }
-        //   setShowEndPopup(false);
-        // }}
-        onClose={() => {
-          setShowEndPopup(false);
-        }}
-        PaperProps={{
-          sx: {
-            backgroundColor: "#121212",
-            color: "#ffffff",
-          },
-        }}
-      >
-        <DialogTitle sx={{ color: "white" }}>End of Records</DialogTitle>
-        <DialogContent>
-          <Typography>
-            {emptyMessage ||
-              "You've run out of matches. Adjust your preferences to view more members."}
-          </Typography>
-          <Button
-            onClick={() => {
-              openPrefs();
-              setShowEndPopup(false);
-            }}
-            variant="outlined"
-            sx={{
-              mt: 2,
-              color: "white",
-              borderColor: "#e91e63",
-              "&:hover": {
-                borderColor: "#e64a19",
-                color: "#e64a19",
-              },
-            }}
-          >
-            Update Preferences
-          </Button>
         </DialogContent>
       </Dialog>
 

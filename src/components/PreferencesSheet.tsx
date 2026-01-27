@@ -658,10 +658,10 @@ export default function PreferencesSheet({
   );
 
   const tabContents = [
-    { label: "Who Can See Me", content: renderWhoCanSeeMe() },
-    { label: "Max Distance", content: renderMaxDistance() },
     { label: "Who to Block", content: renderWhoToBlock() },
+    { label: "Max Distance", content: renderMaxDistance() },
     { label: "Block Location", content: renderLocationToBlock() },
+    { label: "Who Can See Me", content: renderWhoCanSeeMe() },
   ];
 
   return (

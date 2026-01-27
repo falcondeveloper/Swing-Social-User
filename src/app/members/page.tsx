@@ -432,6 +432,9 @@ export default function Home() {
   const handleClose = () => {
     setShowDetail(false);
     setSelectedUserId(null);
+     if (window.history.state?.modal === "userProfile") {
+      window.history.back();
+    }
   };
 
   const handleReportModalToggle = () => {
@@ -825,6 +828,7 @@ export default function Home() {
                                 onClick={() => {
                                   setShowDetail(true);
                                   setSelectedUserId(selectedUserProfile?.Id);
+                                  window.history.pushState({ modal: "userProfile" }, "");
                                 }}
                                 sx={{ fontSize: 48 }} // Added explicit size control
                               />
@@ -1011,6 +1015,7 @@ export default function Home() {
                                       onClick={() => {
                                         setShowDetail(true);
                                         setSelectedUserId(profile?.Id);
+                                        window.history.pushState({ modal: "userProfile" }, "");
                                       }}
                                       sx={{ fontSize: 48 }} // Added explicit size control
                                     />

@@ -315,12 +315,12 @@ export default function Home() {
     if (currentProfileId) {
       try {
         const response = await fetch(
-          `/api/user/sweeping/user?id=${currentProfileId}`
+          `/api/user/sweeping/user?id=${currentProfileId}`,
         );
         if (!response.ok) {
           console.error(
             "Failed to fetch advertiser data:",
-            response.statusText
+            response.statusText,
           );
           setCustomProfile(undefined);
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -344,12 +344,12 @@ export default function Home() {
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/user/sweeping/user?id=${currentLoginProfileId}`
+          `/api/user/sweeping/user?id=${currentLoginProfileId}`,
         );
         if (!response.ok) {
           console.error(
             "Failed to fetch advertiser data:",
-            response.statusText
+            response.statusText,
           );
           setCustomProfile(undefined);
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -380,7 +380,7 @@ export default function Home() {
   const fetchAllUserProfiles = async (
     userid: any,
     targetId: any,
-    eventId: any
+    eventId: any,
   ) => {
     try {
       const response = await fetch("/api/user/sweeping/attendee", {
@@ -643,6 +643,9 @@ export default function Home() {
   const handleClose = () => {
     setShowDetail(false);
     setSelectedUserId(null);
+    if (window.history.state?.modal === "userProfile") {
+      window.history.back();
+    }
   };
 
   const handleReportModalToggle = () => {
@@ -785,7 +788,7 @@ export default function Home() {
         },
         (error) => {
           console.error("Geolocation error:", error);
-        }
+        },
       );
     } else {
       console.error("Geolocation is not supported by this browser.");
@@ -798,7 +801,7 @@ export default function Home() {
     try {
       // Call the Google Maps Geocoding API
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`,
       );
 
       if (!response.ok) {
@@ -823,7 +826,7 @@ export default function Home() {
   const sendLocationToAPI = async (
     locationName: string,
     latitude: number,
-    longitude: number
+    longitude: number,
   ) => {
     if (!profileId) {
       console.error("Profile ID is missing.");
@@ -1042,6 +1045,7 @@ export default function Home() {
                                   onClick={() => {
                                     setShowDetail(true);
                                     setSelectedUserId(selectedUserProfile?.Id);
+                                    window.history.pushState({ modal: "userProfile" }, "");
                                   }}
                                 />
                               </Box>
@@ -1077,7 +1081,7 @@ export default function Home() {
                             >
                               {selectedUserProfile?.Location?.replace(
                                 ", USA",
-                                ""
+                                "",
                               )}
                             </Typography>
                             <Typography
@@ -1227,6 +1231,7 @@ export default function Home() {
                                       onClick={() => {
                                         setShowDetail(true);
                                         setSelectedUserId(profile?.Id);
+                                        window.history.pushState({ modal: "userProfile" }, "");
                                       }}
                                     />
                                   </Box>
@@ -1573,6 +1578,7 @@ export default function Home() {
                   onClick={() => {
                     setShowDetail(true);
                     setSelectedUserId(matchedProfile?.Id);
+                    window.history.pushState({ modal: "userProfile" }, "");
                   }}
                   variant="contained"
                   sx={{

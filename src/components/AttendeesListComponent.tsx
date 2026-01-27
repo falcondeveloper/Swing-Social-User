@@ -87,6 +87,7 @@ const AttendeesListComponent: React.FC<AttendeesListProps> = ({
                       state: true,
                       id: item.ProfileId,
                     });
+                    window.history.pushState({ modal: "userProfile" }, "");
                   }}
                   sx={{
                     width: "100%",
