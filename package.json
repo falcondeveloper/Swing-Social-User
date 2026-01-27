@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-rekognition": "^3.970.0",
-    "@aws-sdk/client-s3": "^3.974.0",
+    "@aws-sdk/client-s3": "^3.975.0",
     "@aws-sdk/s3-request-presigner": "^3.974.0",
     "@azure/storage-blob": "^12.26.0",
     "@emotion/react": "^11.13.5",
