@@ -70,10 +70,7 @@ export default function MobileAttendeeSwing() {
 
   const handleClose = () => {
     setShowDetail(false);
-    setSelectedUserId(null);if (window.history.state?.modal === "userProfile") {
-      window.history.back();
-    }
-
+    setSelectedUserId(null);
   };
   const [bottomNav, setBottomNav] = useState();
 
@@ -874,7 +871,6 @@ export default function MobileAttendeeSwing() {
                 onClick={() => {
                   setShowDetail(true);
                   setSelectedUserId(userProfiles[currentIndex]?.Id);
-                  window.history.pushState({ modal: "userProfile" }, "");
                 }}
               >
                 <img
@@ -1003,7 +999,6 @@ export default function MobileAttendeeSwing() {
                     onClick={() => {
                       setShowDetail(true);
                       setSelectedUserId(userProfiles[currentIndex]?.Id);
-                      window.history.pushState({ modal: "userProfile" }, "");
                     }}
                   >
                     <img
@@ -1264,7 +1259,6 @@ export default function MobileAttendeeSwing() {
                   onClick={() => {
                     setShowDetail(true);
                     setSelectedUserId(matchedProfile?.Id);
-                    window.history.pushState({ modal: "userProfile" }, "");
                   }}
                   variant="contained"
                   sx={{

@@ -600,9 +600,6 @@ export default function EventDetail(props: { params: Params }) {
   const handleClose = () => {
     setShowDetail(false);
     setSelectedUserId(null);
-    if (window.history.state?.modal === "userProfile") {
-      window.history.back();
-    }
   };
 
   const handleEmailRequest = async () => {
@@ -936,7 +933,6 @@ export default function EventDetail(props: { params: Params }) {
                         onClick={() => {
                           setShowDetail(true);
                           setSelectedUserId(eventDetail?.OrganizerId);
-                          window.history.pushState({ modal: "userProfile" }, "");
                         }}
                       >
                         <TableCell
@@ -1739,7 +1735,6 @@ export default function EventDetail(props: { params: Params }) {
                               ? () => {
                                   setShowDetail(true);
                                   setSelectedUserId(eventDetail?.OrganizerId);
-                                  window.history.pushState({ modal: "userProfile" }, "");
                                 }
                               : undefined
                           }

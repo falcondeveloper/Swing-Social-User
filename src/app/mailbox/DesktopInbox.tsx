@@ -580,9 +580,6 @@ const DesktopInbox = () => {
   const handleCloseUserProfileModal = () => {
     setShowDetail(false);
     setSelectedUserId(null);
-    if (window.history.state?.modal === "userProfile") {
-      window.history.back();
-    }
   };
 
   const handleGrantAccess = async () => {
@@ -925,7 +922,6 @@ const DesktopInbox = () => {
                           onClick={() => {
                             setShowDetail(true);
                             setSelectedUserId(selectedMail?.ProfileFromId);
-                            window.history.pushState({ modal: "userProfile" }, "");
                           }}
                         />
                         <Typography variant="h6" color="white">
@@ -1066,7 +1062,6 @@ const DesktopInbox = () => {
                             onClick={() => {
                               setShowDetail(true);
                               setSelectedUserId(mail?.ProfileIdFrom);
-                              window.history.pushState({ modal: "userProfile" }, "");
                             }}
                           />
                           <Typography variant="h6" color="white">
@@ -1824,7 +1819,6 @@ const DesktopInbox = () => {
                     onClick={() => {
                       setShowDetail(true);
                       setSelectedUserId(selectedMail?.ProfileFromId);
-                      window.history.pushState({ modal: "userProfile" }, "");
                     }}
                   />
                   <Typography variant="h6" color="white">
@@ -1965,7 +1959,6 @@ const DesktopInbox = () => {
                       onClick={() => {
                         setShowDetail(true);
                         setSelectedUserId(mail?.ProfileIdFrom);
-                        window.history.pushState({ modal: "userProfile" }, "");
                       }}
                     />
                     <Typography variant="h6" color="white">

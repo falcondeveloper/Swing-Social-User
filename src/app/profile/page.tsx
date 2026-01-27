@@ -68,14 +68,12 @@ import {
   AlertCircle,
   Settings2,
   Bell,
-  ShieldCheck,
 } from "lucide-react";
 import Cropper, { Area } from "react-easy-crop";
 import getCroppedImg from "../../utils/cropImage";
 import ProfileImgCheckerModel from "@/components/ProfileImgCheckerModel";
 import AppFooterMobile from "@/layout/AppFooterMobile";
 import AppFooterDesktop from "@/layout/AppFooterDesktop";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 // Enhanced theme with your brand guidelines
 const theme = createTheme({
@@ -433,13 +431,14 @@ const ProfileDetail: React.FC = () => {
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)");
 
+  // Handle mounting to prevent hydration issues
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const showSnackbar = (
     message: string,
-    severity: "success" | "error" = "success",
+    severity: "success" | "error" = "success"
   ) => {
     setSnackbar({ open: true, message, severity });
   };
@@ -483,7 +482,7 @@ const ProfileDetail: React.FC = () => {
 
   const handleImageAdd = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    type: "public" | "private",
+    type: "public" | "private"
   ) => {
     const files = event.target.files;
     if (!files?.length) return;
@@ -523,7 +522,7 @@ const ProfileDetail: React.FC = () => {
               profileId: profileId,
               imageURL: uploadURL,
             }),
-          },
+          }
         );
 
         const data = await response.json();
@@ -533,7 +532,7 @@ const ProfileDetail: React.FC = () => {
             { Id: data.imageId, Url: uploadURL },
           ]);
           setPublicImagePreviews((prev) =>
-            prev.filter((preview) => preview.id !== tempId),
+            prev.filter((preview) => preview.id !== tempId)
           );
           showSnackbar("Image uploaded successfully!");
         }
@@ -547,7 +546,7 @@ const ProfileDetail: React.FC = () => {
               profileId: profileId,
               imageURL: uploadURL,
             }),
-          },
+          }
         );
 
         const data = await response.json();
@@ -557,7 +556,7 @@ const ProfileDetail: React.FC = () => {
             { Id: data.imageId, Url: uploadURL },
           ]);
           setPrivateImagePreviews((prev) =>
-            prev.filter((preview) => preview.id !== tempId),
+            prev.filter((preview) => preview.id !== tempId)
           );
           showSnackbar("Private image uploaded successfully!");
         }
@@ -567,11 +566,11 @@ const ProfileDetail: React.FC = () => {
       showSnackbar("Failed to upload image", "error");
       if (type === "public") {
         setPublicImagePreviews((prev) =>
-          prev.filter((preview) => preview.id !== tempId),
+          prev.filter((preview) => preview.id !== tempId)
         );
       } else {
         setPrivateImagePreviews((prev) =>
-          prev.filter((preview) => preview.id !== tempId),
+          prev.filter((preview) => preview.id !== tempId)
         );
       }
     }
@@ -579,7 +578,7 @@ const ProfileDetail: React.FC = () => {
 
   const handleImageDelete = async (
     imageId: string,
-    type: "public" | "private",
+    type: "public" | "private"
   ) => {
     try {
       const endpoint =
@@ -600,11 +599,11 @@ const ProfileDetail: React.FC = () => {
       if (data.status === 200) {
         if (type === "public") {
           setProfileImages((prev: any) =>
-            prev.filter((image: any) => image.Id !== imageId),
+            prev.filter((image: any) => image.Id !== imageId)
           );
         } else {
           setPrivateImages((prev: any) =>
-            prev.filter((image: any) => image.Id !== imageId),
+            prev.filter((image: any) => image.Id !== imageId)
           );
         }
         showSnackbar("Image deleted successfully!");
@@ -666,7 +665,7 @@ const ProfileDetail: React.FC = () => {
   const getProfileImages = async (userId: string) => {
     try {
       const response = await fetch(
-        `/api/user/sweeping/images/profile?id=${userId}`,
+        `/api/user/sweeping/images/profile?id=${userId}`
       );
       const data = await response.json();
       setProfileImages(data?.images || []);
@@ -692,7 +691,7 @@ const ProfileDetail: React.FC = () => {
 
   const handleImageUpload = (
     event: React.ChangeEvent<HTMLInputElement>,
-    type: "avatar" | "cover",
+    type: "avatar" | "cover"
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -1052,8 +1051,8 @@ const ProfileDetail: React.FC = () => {
                         advertiser.Gender === "Male"
                           ? "M"
                           : advertiser.Gender === "Female"
-                            ? "F"
-                            : ""
+                          ? "F"
+                          : ""
                       }`}
                       sx={{
                         bgcolor: "rgba(255, 27, 107, 0.1)",
@@ -1161,10 +1160,10 @@ const ProfileDetail: React.FC = () => {
                 field === "BodyType"
                   ? BODY_TYPES
                   : field === "HairColor"
-                    ? HAIR_COLORS
-                    : field === "EyeColor"
-                      ? EYE_COLORS
-                      : ORIENTATIONS;
+                  ? HAIR_COLORS
+                  : field === "EyeColor"
+                  ? EYE_COLORS
+                  : ORIENTATIONS;
               const label =
                 field === "SexualOrientation"
                   ? "Orientation"
@@ -1204,7 +1203,7 @@ const ProfileDetail: React.FC = () => {
                   )}
                 </Grid>
               );
-            },
+            }
           )}
 
           <Grid item xs={12}>
@@ -1299,7 +1298,7 @@ const ProfileDetail: React.FC = () => {
                         >
                           {tag}
                         </Box>
-                      ),
+                      )
                     )
                   ) : (
                     <Typography sx={{ color: "white" }}>
@@ -1316,7 +1315,7 @@ const ProfileDetail: React.FC = () => {
   );
 
   const uploadImagesSequentially = async (
-    images: File[],
+    images: File[]
   ): Promise<(string | null)[]> => {
     const results: (string | null)[] = [];
 
@@ -1376,7 +1375,7 @@ const ProfileDetail: React.FC = () => {
         const { cities } = await response.json();
         const uniqueCities = cities.filter(
           (city: any, index: any, self: any) =>
-            index === self.findIndex((t: any) => t.City === city.City),
+            index === self.findIndex((t: any) => t.City === city.City)
         );
 
         setCityOption(uniqueCities);
@@ -1525,7 +1524,7 @@ const ProfileDetail: React.FC = () => {
 
       if (privateImagePreviews.length > 0) {
         const privateFiles = privateImagePreviews.map(
-          (preview) => preview.file,
+          (preview) => preview.file
         );
         const privateUrls = await uploadImagesSequentially(privateFiles);
         updatedProfileData.PrivateImages = privateUrls;
@@ -1572,7 +1571,7 @@ const ProfileDetail: React.FC = () => {
     try {
       const croppedImage = await getCroppedImg(
         selectedImage,
-        croppedAreaPixels,
+        croppedAreaPixels
       );
 
       // Convert base64 -> File
@@ -1766,7 +1765,6 @@ const ProfileDetail: React.FC = () => {
                         objectFit: "cover",
                       }}
                     />
-
                     {isEditing && (
                       <Box
                         sx={{
@@ -1824,63 +1822,7 @@ const ProfileDetail: React.FC = () => {
                       >
                         {advertiser.Username}
                       </Typography>
-                      {advertiser?.selfie_verification_status === "true" ? (
-                        <Box
-                          sx={{
-                            transform: "translateX(-50%)",
-                            bgcolor: "rgba(255, 255, 255, 0.9)",
-                            color: "#e91e63",
-                            ml: 6,
-                            px: 1.5,
-                            py: 0.3,
-                            borderRadius: "20px",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 0.6,
-                            backdropFilter: "blur(6px)",
-                            boxShadow: "0 4px 12px rgba(233, 30, 99, 0.2)",
-                            border: "1px solid rgba(233, 30, 99, 0.3)",
-                            zIndex: 1,
-                          }}
-                        >
-                          <CheckCircleIcon
-                            sx={{ fontSize: 14, color: "#4CAF50" }}
-                          />
-                          Verified
-                        </Box>
-                      ) : (
-                        <Button
-                          variant="contained"
-                          size="small"
-                          startIcon={<ShieldCheck size={14} />}
-                          onClick={() => router.push("/profile-verificaiton")}
-                          sx={{
-                            ml: 2,
-                            px: 2,
-                            py: 0.5,
-                            borderRadius: "999px",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            textTransform: "none",
-                            color: "#fff",
-                            backgroundColor: "#1D9BF0", // Official "Verified Blue"
-                            boxShadow: "0 2px 8px rgba(29, 155, 240, 0.25)",
-                            transition: "all 0.2s ease-in-out",
-                            "&:hover": {
-                              backgroundColor: "#1a8cd8",
-                              boxShadow: "0 4px 12px rgba(29, 155, 240, 0.35)",
-                              transform: "translateY(-1px)",
-                            },
-                            "&:active": {
-                              transform: "translateY(0)",
-                            },
-                          }}
-                        >
-                          Verify Profile
-                        </Button>
-                      )}
+                      <Check size={20} color="#03dac5" />
                     </Box>
                     <Typography
                       variant="body2"

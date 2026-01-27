@@ -278,7 +278,7 @@ const AppHeaderMobile = () => {
         </Box>
       </Drawer>
 
-      <Box sx={{ height: 69 }} />
+      <Box sx={{ height: 68 }} />
     </>
   );
 };

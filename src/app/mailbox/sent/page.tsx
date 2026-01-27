@@ -528,9 +528,6 @@ export default function ChatPage() {
   const handleCloseUserProfileModal = () => {
     setShowDetail(false);
     setSelectedUserId(null);
-    if (window.history.state?.modal === "userProfile") {
-      window.history.back();
-    }
   };
 
   const handleGrantAccess = async () => {
@@ -1091,7 +1088,6 @@ export default function ChatPage() {
                                 onClick={() => {
                                   setShowDetail(true);
                                   setSelectedUserId(mail?.ProfileTo);
-                                  window.history.pushState({ modal: "userProfile" }, "");
                                 }}
                               />
                               <Typography variant="h6" color="white">
@@ -1828,7 +1824,6 @@ export default function ChatPage() {
                     onClick={() => {
                       setShowDetail(true);
                       setSelectedUserId(mail?.ProfileTo);
-                      window.history.pushState({ modal: "userProfile" }, "");
                     }}
                   />
                   <Typography variant="h6" color="white">

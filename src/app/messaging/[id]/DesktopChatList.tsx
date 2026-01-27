@@ -292,9 +292,6 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
   const handleClose = () => {
     setShowDetail(false);
     setSelectedUserId(null);
-    if (window.history.state?.modal === "userProfile") {
-      window.history.back();
-    }
   };
 
   const handleGrantAccess = async () => {
@@ -1031,7 +1028,6 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
                     onClick={() => {
                       setShowDetail(true);
                       setSelectedUserId(userProfile?.Id);
-                      window.history.pushState({ modal: "userProfile" }, "");
                     }}
                   >
                     <Box>
@@ -1078,7 +1074,6 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
                       onClick={() => {
                         setShowDetail(true);
                         setSelectedUserId(userProfile?.Id);
-                        window.history.pushState({ modal: "userProfile" }, "");
                       }}
                     >
                       <InfoIcon />
@@ -1146,7 +1141,6 @@ const DesktopChatList = ({ userId }: DesktopChatListProps) => {
                               onClick={() => {
                                 setShowDetail(true);
                                 setSelectedUserId(userProfile?.Id);
-                                window.history.pushState({ modal: "userProfile" }, "");
                               }}
                             />
                           </ListItemAvatar>

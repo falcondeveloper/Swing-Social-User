@@ -589,9 +589,6 @@ const MobileInbox = () => {
   const handleCloseUserProfileModal = () => {
     setShowDetail(false);
     setSelectedUserId(null);
-    if (window.history.state?.modal === "userProfile") {
-      window.history.back();
-    }
   };
 
   const handleGrantAccess = async () => {
@@ -1468,7 +1465,6 @@ const MobileInbox = () => {
                     onClick={() => {
                       setShowDetail(true);
                       setSelectedUserId(selectedMail?.ProfileFromId);
-                      window.history.pushState({ modal: "userProfile" }, "");
                     }}
                   />
                   <Typography variant="h6" color="white">
@@ -1609,7 +1605,6 @@ const MobileInbox = () => {
                       onClick={() => {
                         setShowDetail(true);
                         setSelectedUserId(mail?.ProfileIdFrom);
-                        window.history.pushState({ modal: "userProfile" }, "");
                       }}
                     />
                     <Typography variant="h6" color="white">
