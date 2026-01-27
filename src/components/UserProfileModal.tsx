@@ -30,10 +30,11 @@ import {
 import { Block, Close } from "@mui/icons-material";
 import DialogActions from "@mui/material/DialogActions";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { ShieldCheck, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 import { Calendar, MapPin, Clock } from "lucide-react";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 interface UserProfileModalProps {
   handleGrantAccess: () => void;
@@ -232,7 +233,7 @@ If you didn't expect this, ignore this message.
             type: "friend_request",
             url: `https://swing-social-user.vercel.app/mailbox/${userid}`,
           }),
-        }
+        },
       );
       if (!notifyResponse.ok) {
         throw new Error(`Failed to notify. Status: ${notifyResponse.status}`);
@@ -302,7 +303,7 @@ If you didn't expect this, ignore this message.
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsDragging(true);
     setStartY(
-      e.touches[0].pageY - (scrollContainerRef.current?.offsetTop || 0)
+      e.touches[0].pageY - (scrollContainerRef.current?.offsetTop || 0),
     );
     setScrollTop(scrollContainerRef.current?.scrollTop || 0);
   };
@@ -466,16 +467,23 @@ If you didn't expect this, ignore this message.
                 {/* Avatar and Basic Info */}
                 <Box sx={{ position: "relative", mt: -8, px: 3 }}>
                   <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+                    {/* Avatar */}
                     <Box
                       sx={{
-                        width: 128,
-                        height: 128,
+                        width: 110,
+                        height: 110,
+                        minWidth: 110,
+                        minHeight: 110,
                         borderRadius: "50%",
                         overflow: "hidden",
-                        border: "4px solid white",
+                        border: "2px solid white",
                         boxShadow: 2,
-                        position: "relative",
+                        bgcolor: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                         cursor: "pointer",
+                        flexShrink: 0,
                       }}
                       onClick={() =>
                         handleOpenImage(advertiser?.Avatar ?? "/noavatar.png")
@@ -486,19 +494,48 @@ If you didn't expect this, ignore this message.
                         alt="user-avatar"
                         loading="lazy"
                         style={{
-                          objectFit: "cover",
                           width: "100%",
-                          height: "auto",
+                          height: "100%",
+                          objectFit: "contain",
+                          borderRadius: "50%",
                         }}
                       />
                     </Box>
 
-                    <Box>
+                    {/* Chips column */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 0.8,
+                      }}
+                    >
                       <Chip
                         label={advertiser?.AccountType}
                         color="primary"
                         size="small"
+                        sx={{ width: "fit-content" }}
                       />
+
+                      {advertiser?.selfie_verification_status === "true" && (
+                        <Chip
+                          icon={
+                            <CheckCircleIcon
+                              sx={{ color: "#4CAF50 !important", fontSize: 16 }}
+                            />
+                          }
+                          label="Profile Verified"
+                          size="small"
+                          sx={{
+                            width: "fit-content",
+                            bgcolor: "rgba(255,255,255,0.9)",
+                            fontWeight: 600,
+                            border: "1px solid rgba(76,175,80,0.4)",
+                            backdropFilter: "blur(6px)",
+                            color: "#e91e63",
+                          }}
+                        />
+                      )}
                     </Box>
                   </Box>
                 </Box>
@@ -523,21 +560,21 @@ If you didn't expect this, ignore this message.
                       {advertiser?.Gender === "Male"
                         ? "M"
                         : advertiser?.Gender === "Female"
-                        ? "F"
-                        : ""}
+                          ? "F"
+                          : ""}
                       {advertiser?.PartnerDateOfBirth &&
                       advertiser?.PartnerGender
                         ? ` | ${
                             new Date().getFullYear() -
                             new Date(
-                              advertiser.PartnerDateOfBirth
+                              advertiser.PartnerDateOfBirth,
                             ).getFullYear()
                           }${
                             advertiser.PartnerGender === "Male"
                               ? "M"
                               : advertiser.PartnerGender === "Female"
-                              ? "F"
-                              : ""
+                                ? "F"
+                                : ""
                           }`
                         : ""}
                     </span>
@@ -1340,7 +1377,7 @@ If you didn't expect this, ignore this message.
                                       />
                                       <strong>Start:</strong>{" "}
                                       {new Date(
-                                        item.StartTime
+                                        item.StartTime,
                                       ).toLocaleString()}
                                     </Typography>
 

@@ -96,6 +96,9 @@ export default function MatchesPage() {
   const handleClose = () => {
     setShowDetail(false);
     setSelectedUserId(null);
+    if (window.history.state?.modal === "userProfile") {
+      window.history.back();
+    }
   };
 
   useEffect(() => {
@@ -515,6 +518,7 @@ export default function MatchesPage() {
                         setSelectedUserId(
                           profile?.Id ? profile?.Id : profile?.Id
                         );
+                        window.history.pushState({ modal: "userProfile" }, "");
                       }}
                     >
                       <Box
@@ -1033,6 +1037,7 @@ export default function MatchesPage() {
                                       onClick={() => {
                                         setShowDetail(true);
                                         setSelectedUserId(profile?.Id);
+                                        window.history.pushState({ modal: "userProfile" }, "");
                                       }}
                                     >
                                       <img
@@ -1861,6 +1866,7 @@ export default function MatchesPage() {
                                   onClick={() => {
                                     setShowDetail(true);
                                     setSelectedUserId(profile?.Id);
+                                    window.history.pushState({ modal: "userProfile" }, "");
                                   }}
                                 >
                                   <img

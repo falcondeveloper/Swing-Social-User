@@ -70,6 +70,9 @@ export default function Whatshot() {
   const handleClose = () => {
     setShowDetail(false);
     setSelectedUserId(null);
+    if (window.history.state?.modal === "userProfile") {
+      window.history.back();
+    }
   };
 
   const handleGrantAccess = async () => {
@@ -460,6 +463,10 @@ export default function Whatshot() {
                             onClick={() => {
                               setShowDetail(true);
                               setSelectedUserId(post?.ProfileId);
+                              window.history.pushState(
+                                { modal: "userProfile" },
+                                "",
+                              );
                             }}
                           >
                             <Stack
@@ -497,7 +504,7 @@ export default function Whatshot() {
                                 >
                                   on{" "}
                                   {new Date(
-                                    post?.CreatedAt
+                                    post?.CreatedAt,
                                   ).toLocaleDateString()}
                                 </Typography>
                               </Box>
@@ -604,7 +611,7 @@ export default function Whatshot() {
                                   fullWidth
                                   onClick={() =>
                                     router.push(
-                                      `/whatshot/post/detail/${post?.Id}`
+                                      `/whatshot/post/detail/${post?.Id}`,
                                     )
                                   }
                                   startIcon={<Comment />}
@@ -667,7 +674,7 @@ export default function Whatshot() {
                                     onClick={() => {
                                       setAnchorEl(null);
                                       router.push(
-                                        `/whatshot/post/detail/${post?.Id}`
+                                        `/whatshot/post/detail/${post?.Id}`,
                                       );
                                     }}
                                     sx={{
@@ -759,6 +766,7 @@ export default function Whatshot() {
                   color="primary"
                   sx={{
                     mt: 1,
+                    color: "#fff",
                     textTransform: "none",
                     backgroundColor: "#f50057",
                     fontSize: "16px",
@@ -807,6 +815,10 @@ export default function Whatshot() {
                             onClick={() => {
                               setShowDetail(true);
                               setSelectedUserId(post?.ProfileId);
+                              window.history.pushState(
+                                { modal: "userProfile" },
+                                "",
+                              );
                             }}
                           >
                             <Avatar
@@ -873,7 +885,7 @@ export default function Whatshot() {
                                   onClick={() => {
                                     setAnchorEl(null);
                                     router.push(
-                                      `/whatshot/post/detail/${post?.Id}`
+                                      `/whatshot/post/detail/${post?.Id}`,
                                     );
                                   }}
                                   sx={{
@@ -991,6 +1003,7 @@ export default function Whatshot() {
                                 sx={{
                                   textTransform: "none",
                                   backgroundColor: "#f50057",
+                                  color: "#fff",
                                   py: 1.5,
                                   fontSize: "16px",
                                   fontWeight: "bold",
@@ -1003,7 +1016,7 @@ export default function Whatshot() {
                               <Button
                                 onClick={() =>
                                   router.push(
-                                    "/whatshot/post/detail/" + post?.Id
+                                    "/whatshot/post/detail/" + post?.Id,
                                   )
                                 }
                                 fullWidth

@@ -303,6 +303,9 @@ const MobileChatList = ({ userId }: DesktopChatListProps) => {
   const handleClose = () => {
     setShowDetail(false);
     setSelectedUserId(null);
+    if (window.history.state?.modal === "userProfile") {
+      window.history.back();
+    }
   };
 
   const handleGrantAccess = async () => {
@@ -830,6 +833,7 @@ const MobileChatList = ({ userId }: DesktopChatListProps) => {
               onClick={() => {
                 setShowDetail(true);
                 setSelectedUserId(userProfile?.Id);
+                window.history.pushState({ modal: "userProfile" }, "");
               }}
             >
               <Avatar

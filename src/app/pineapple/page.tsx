@@ -297,6 +297,9 @@ export default function Pineapple() {
   const handleClose = () => {
     setShowDetail(false);
     setSelectedUserId(null);
+    if (window.history.state?.modal === "userProfile") {
+      window.history.back();
+    }
   };
 
   const handleGrantAccess = async () => {
@@ -391,6 +394,7 @@ export default function Pineapple() {
                       onClick={() => {
                         setShowDetail(true);
                         setSelectedUserId(user.Id);
+                        window.history.pushState({ modal: "userProfile" }, "");
                       }}
                     />
 
@@ -497,6 +501,7 @@ export default function Pineapple() {
                         onClick={() => {
                           setShowDetail(true);
                           setSelectedUserId(user.Id);
+                          window.history.pushState({ modal: "userProfile" }, "");
                         }}
                         sx={{
                           "&:hover": { transform: "scale(1.1)" },
