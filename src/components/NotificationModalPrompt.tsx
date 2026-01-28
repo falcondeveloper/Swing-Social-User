@@ -11,7 +11,6 @@ export default function NotificationModal() {
     const dismissed = localStorage.getItem("notificationModalDismissed");
     if (dismissed === "true") return;
 
-    // Show modal only if permission not granted
     if (Notification.permission !== "granted") {
       setOpen(true);
     }
@@ -38,11 +37,11 @@ export default function NotificationModal() {
   return (
     <div style={overlay}>
       <div style={modal}>
-        <div style={{ fontSize: 36 }}>🔔</div>
+        <div style={{ fontSize: 30 }}>🔔</div>
 
-        <h2 style={{ marginTop: 10 }}>Turn On Notifications</h2>
+        <h2 style={title}>Turn On Notifications</h2>
 
-        <p style={{ color: "#666", margin: "10px 0 20px" }}>
+        <p style={description}>
           Get notified instantly when someone likes or messages you.
         </p>
 
@@ -72,34 +71,46 @@ const overlay: React.CSSProperties = {
 
 const modal: React.CSSProperties = {
   background: "#fff",
-  padding: 24,
+  padding: 18, // reduced
   width: "90%",
-  maxWidth: 380,
-  borderRadius: 16,
+  maxWidth: 320, // reduced
+  borderRadius: 14,
   color: "#000",
   textAlign: "center",
-  boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+  boxShadow: "0 16px 30px rgba(0,0,0,0.25)",
+};
+
+const title: React.CSSProperties = {
+  marginTop: 8,
+  marginBottom: 6,
+  fontSize: 18, // reduced
+};
+
+const description: React.CSSProperties = {
+  color: "#666",
+  fontSize: 13, // reduced
+  marginBottom: 14,
 };
 
 const primaryBtn: React.CSSProperties = {
   width: "100%",
-  padding: "12px",
-  borderRadius: 10,
+  padding: "10px",
+  borderRadius: 8,
   border: "none",
-  fontSize: 15,
+  fontSize: 14,
   fontWeight: 600,
   cursor: "pointer",
   color: "#fff",
   background: "linear-gradient(135deg, #ff4d6d, #ff758f)",
-  marginBottom: 10,
+  marginBottom: 8,
 };
 
 const secondaryBtn: React.CSSProperties = {
   width: "100%",
-  padding: "10px",
+  padding: "8px",
   background: "transparent",
   border: "none",
   color: "#777",
-  fontSize: 13,
+  fontSize: 12,
   cursor: "pointer",
 };
