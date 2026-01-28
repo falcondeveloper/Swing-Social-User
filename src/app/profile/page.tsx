@@ -1855,7 +1855,7 @@ const ProfileDetail: React.FC = () => {
                           variant="contained"
                           size="small"
                           startIcon={<ShieldCheck size={14} />}
-                          onClick={() => router.push("/profile-verificaiton")}
+                          onClick={() => router.push("/profile-verification")}
                           sx={{
                             ml: 2,
                             px: 2,
